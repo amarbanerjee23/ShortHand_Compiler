@@ -1,0 +1,512 @@
+#ifndef _AST_H
+#define _AST_H
+
+#include <vector>
+#include <string>
+
+using namespace std;
+
+// main AST node
+class AST_NODE;
+class AST_PROGRAM;
+
+// declaration block nodes
+class AST_DATA_DECLARATION_BLOCK;
+class AST_DATA_DECLARATION_RULE;
+class AST_DATA_DECLARATION_VARIABLE;
+class AST_DATA_DECLARATION_SIMPLE;
+class AST_DATA_DECLARATION_ARRAY;
+
+//functions
+class AST_FUNCTION_LIST_RULE;
+class AST_FUNCTION_RULE;
+// code block node
+class AST_LOGIC_BLOCK;
+
+// a statement node
+class AST_STATEMENT_RULE;
+
+
+// all statements nodes derived from AST_statement
+class AST_EXPRESSION_STATEMENT_RULE;
+class AST_ASSIGNMENT_RULE;
+class AST_STATEMENTS_BLOCK;
+class AST_IF_STATEMENT;
+
+class AST_FUNCTION_CALL_RULE;
+class AST_IF_ELSE_STATEMENT;
+class AST_FOR_LOOP_STATEMENT_RULE;
+class AST_WHILE_LOOP_STATEMENT_RULE;
+class AST_GOTO_STATEMENT_RULE;
+class AST_READ_RULE;
+class AST_PRINT_RULE;
+class AST_LABEL_RULE;
+
+
+// expression node and derived expressions nodes
+class AST_EXPRESSION_RULE;
+class AST_BINARY_EXPRESSION_RULE;
+class AST_UNARY_EXPRESSION_RULE;
+
+class AST_VARIABLE_RULE;
+class AST_SIMPLE_VARIABLE;
+class AST_ARRAY_VARIABLE;
+class AST_LITERAL;
+class AST_STRING_LITERAL;
+
+enum class ShortType {
+	Int = 1,
+	String = 2,
+	Void = 3,
+	Boolean = 4,
+	Float = 5
+};
+
+
+// union for TTSTYPE
+union _NODE_
+{
+    int int_val;
+    char * string_val;
+    //AST_node * node;
+    AST_PROGRAM * program;
+
+    AST_DATA_DECLARATION_BLOCK * decl_block;
+    AST_DATA_DECLARATION_RULE * decl_statement;
+    AST_DATA_DECLARATION_VARIABLE * decl_variable;
+    AST_DATA_DECLARATION_SIMPLE * decl_single_int;
+    AST_DATA_DECLARATION_ARRAY * decl_int_array;
+    AST_FUNCTION_LIST_RULE * functions;
+    AST_LOGIC_BLOCK * code_block;
+
+
+    AST_STATEMENT_RULE * statement;
+    AST_FUNCTION_RULE * function;
+    AST_FUNCTION_CALL_RULE * function_called;
+    AST_ASSIGNMENT_RULE * assignment_statement;
+    AST_STATEMENTS_BLOCK * block_statement;
+    AST_IF_STATEMENT * if_statement;
+    AST_IF_ELSE_STATEMENT * ifelse_statement;
+    AST_FOR_LOOP_STATEMENT_RULE * for_statement;
+    AST_WHILE_LOOP_STATEMENT_RULE * while_statement;
+    AST_GOTO_STATEMENT_RULE * goto_statement;
+    AST_READ_RULE * read_statement;
+    AST_PRINT_RULE * print_statement;
+    AST_LABEL_RULE * label_statement;
+
+    AST_EXPRESSION_RULE * expression;
+    AST_BINARY_EXPRESSION_RULE * binary_operator_expression;
+    AST_UNARY_EXPRESSION_RULE * unary_operator_expression;
+
+    AST_VARIABLE_RULE * variable;
+    AST_SIMPLE_VARIABLE * variable_single_int;
+    AST_ARRAY_VARIABLE * variable_array_int;
+    AST_LITERAL * int_literal;
+    AST_STRING_LITERAL * string_literal;
+
+    ShortType type;
+};
+typedef union _NODE_ YYSTYPE;
+#define YYSTYPE_IS_DECLARED 1
+
+
+
+class Visitor
+{
+public:
+    virtual ~Visitor(){};
+    virtual int visit(AST_PROGRAM *) = 0;
+    virtual int visit(AST_DATA_DECLARATION_BLOCK *) = 0;
+    virtual int visit(AST_FUNCTION_LIST_RULE*) = 0;
+    virtual int visit(AST_LOGIC_BLOCK *) = 0;
+
+    virtual int visit(AST_EXPRESSION_STATEMENT_RULE *) = 0;
+    virtual int visit(AST_FUNCTION_RULE *) = 0;
+    virtual int visit(AST_FUNCTION_CALL_RULE *) = 0;
+    virtual int visit(AST_ASSIGNMENT_RULE *) = 0;
+    virtual int visit(AST_STATEMENTS_BLOCK *) = 0;
+    virtual int visit(AST_IF_STATEMENT *) = 0;
+    virtual int visit(AST_IF_ELSE_STATEMENT *) = 0;
+    virtual int visit(AST_FOR_LOOP_STATEMENT_RULE *) = 0;
+    virtual int visit(AST_WHILE_LOOP_STATEMENT_RULE *) = 0;
+    virtual int visit(AST_GOTO_STATEMENT_RULE *) = 0;
+    virtual int visit(AST_READ_RULE *) = 0;
+    virtual int visit(AST_PRINT_RULE *) = 0;
+    virtual int visit(AST_LABEL_RULE *) = 0;
+
+    virtual int visit(AST_BINARY_EXPRESSION_RULE *) = 0;
+    virtual int visit(AST_UNARY_EXPRESSION_RULE *) = 0;
+
+    virtual int visit(AST_SIMPLE_VARIABLE *) = 0;
+    virtual int visit(AST_ARRAY_VARIABLE *) = 0;
+    virtual int visit(AST_LITERAL *) = 0;
+    virtual int visit(AST_STRING_LITERAL *) = 0;
+};
+
+
+
+// main AST_node
+class AST_NODE
+{
+public:
+    virtual int accept(Visitor &) = 0;
+    virtual ~AST_NODE(){};
+};
+
+// program node
+class AST_PROGRAM : public AST_NODE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    char * program_name;
+    AST_DATA_DECLARATION_BLOCK * decl_block;
+    AST_LOGIC_BLOCK * code_block;
+    AST_FUNCTION_LIST_RULE * functions;
+public:
+    void setProgramName(char *);
+    AST_PROGRAM(AST_DATA_DECLARATION_BLOCK * decl_block, AST_FUNCTION_LIST_RULE * functions, AST_LOGIC_BLOCK * code_block);
+    int accept(Visitor &);
+
+};
+
+// declaration block node
+class AST_DATA_DECLARATION_BLOCK : public AST_NODE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    vector<string> single_ints;
+    vector<pair<string, int> > array_ints;
+public:
+    void push_back(string name);
+    void push_back(string name, int size);
+    void push_back(AST_DATA_DECLARATION_BLOCK * decl_block);
+    int accept(Visitor &);
+    virtual ~AST_DATA_DECLARATION_BLOCK(){
+
+    };
+};
+
+class AST_FUNCTION_LIST_RULE: public AST_NODE{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+
+    vector<AST_FUNCTION_RULE*> functions = new vector<AST_FUNCTION_RULE*>();
+
+public:
+    void push_back(AST_FUNCTION_RULE * function);
+    int accept(Visitor &);
+    virtual ~AST_FUNCTION_LIST_RULE(){
+    };
+};
+
+class AST_FUNCTION_RULE: public AST_NODE{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    char * function_name;
+    ShortType type;
+    AST_DATA_DECLARATION_BLOCK * parameters;
+    AST_STATEMENTS_BLOCK * block_statement;
+
+public:
+
+    AST_FUNCTION_RULE(ShortType type,char * function_name,AST_DATA_DECLARATION_BLOCK * parameters, AST_STATEMENTS_BLOCK * block_statement);
+    int accept(Visitor &);
+};
+
+
+// code block node
+class AST_LOGIC_BLOCK : public AST_NODE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_STATEMENTS_BLOCK * block_statement;
+public:
+    AST_LOGIC_BLOCK(AST_STATEMENTS_BLOCK * block_statement = NULL);
+    int accept(Visitor &);
+    virtual ~AST_LOGIC_BLOCK(){};
+};
+
+
+/*
+======================== all statements =======================
+main statement node and all other derived statements node except expression
+*/
+
+class AST_STATEMENT_RULE : public AST_NODE
+{
+};
+
+class AST_EXPRESSION_STATEMENT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * expression;
+public:
+    AST_EXPRESSION_STATEMENT_RULE(AST_EXPRESSION_RULE * expression);
+    int accept(Visitor &);
+};
+
+
+class AST_FUNCTION_CALL_RULE: public AST_STATEMENT_RULE{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    char * function_name;
+    AST_READ_RULE * parameters;
+
+public:
+    AST_FUNCTION_CALL_RULE(char * function_name, AST_READ_RULE * parameters);
+    int accept(Visitor &);
+};
+
+
+class AST_ASSIGNMENT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_VARIABLE_RULE * variable;
+    AST_EXPRESSION_RULE * expression;
+public:
+    AST_ASSIGNMENT_RULE(AST_VARIABLE_RULE * variable, AST_EXPRESSION_RULE * expression);
+    int accept(Visitor &);
+};
+
+class AST_STATEMENTS_BLOCK : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    vector<AST_STATEMENT_RULE*> statements;
+public:
+    void push_back(AST_STATEMENT_RULE * statement);
+    int accept(Visitor &);
+};
+
+class AST_IF_STATEMENT : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * condition;
+    AST_STATEMENTS_BLOCK * if_block;
+public:
+    AST_IF_STATEMENT(AST_EXPRESSION_RULE * condition, AST_STATEMENTS_BLOCK * if_block);
+    int accept(Visitor &);
+};
+
+class AST_IF_ELSE_STATEMENT : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * condition;
+    AST_STATEMENTS_BLOCK * if_block;
+    AST_STATEMENTS_BLOCK * else_block;
+public:
+    AST_IF_ELSE_STATEMENT(AST_EXPRESSION_RULE * condition, AST_STATEMENTS_BLOCK * if_block, AST_STATEMENTS_BLOCK * else_block);
+    int accept(Visitor &);
+};
+
+
+class AST_FOR_LOOP_STATEMENT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_VARIABLE_RULE * variable;
+    AST_EXPRESSION_RULE * from;
+    AST_EXPRESSION_RULE * step;
+    AST_EXPRESSION_RULE * to;
+    AST_STATEMENTS_BLOCK * for_block;
+public:
+    AST_FOR_LOOP_STATEMENT_RULE(AST_VARIABLE_RULE * variable, AST_EXPRESSION_RULE * from, AST_EXPRESSION_RULE * step, AST_EXPRESSION_RULE * to, AST_STATEMENTS_BLOCK * for_block);
+    AST_FOR_LOOP_STATEMENT_RULE(AST_VARIABLE_RULE * variable, AST_EXPRESSION_RULE * from, AST_EXPRESSION_RULE * to, AST_STATEMENTS_BLOCK * for_block);
+    int accept(Visitor &);
+};
+
+class AST_WHILE_LOOP_STATEMENT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * condition;
+    AST_STATEMENTS_BLOCK * while_block;
+public:
+    AST_WHILE_LOOP_STATEMENT_RULE(AST_EXPRESSION_RULE * condition, AST_STATEMENTS_BLOCK * while_block);
+    int accept(Visitor &);
+};
+
+class AST_GOTO_STATEMENT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * condition;
+    string label;
+public:
+    AST_GOTO_STATEMENT_RULE(AST_EXPRESSION_RULE * condition, string label);
+    AST_GOTO_STATEMENT_RULE(string label);
+    int accept(Visitor &);
+};
+
+class AST_READ_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    vector<AST_VARIABLE_RULE*> variables;
+public:
+    void push_back(AST_VARIABLE_RULE * variable);
+    int accept(Visitor &);
+};
+
+
+struct AST_printable
+{
+    AST_STRING_LITERAL * string_literal;
+    AST_EXPRESSION_RULE * expression;
+};
+class AST_PRINT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    vector<AST_printable> printables;
+public:
+    void push_back(AST_STRING_LITERAL * string_literal);
+    void push_back(AST_EXPRESSION_RULE * expression);
+    int accept(Visitor &);
+};
+
+
+class AST_LABEL_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    string label;
+public:
+    AST_LABEL_RULE(string label);
+    int accept(Visitor &);
+};
+
+
+/*
+==================== all expressions =======================
+main expression node and all derived expressions nodes
+*/
+class AST_EXPRESSION_RULE : public AST_NODE
+{
+};
+
+class AST_BINARY_EXPRESSION_RULE : public AST_EXPRESSION_RULE
+{
+public:
+    static const int ERROR = 0;
+    static const int PLUS = 1;
+    static const int MINUS = 2;
+    static const int MULTIPLY = 3;
+    static const int DIVIDE = 4;
+    static const int MODULO = 5;
+    static const int LESS = 6;
+    static const int GREATER = 7;
+    static const int LESS_OR_EQUAL = 8;
+    static const int GREATER_OR_EQUAL = 9;
+    static const int EQUAL = 10;
+    static const int NOT_EQUAL = 11;
+    static const int OR = 12;
+    static const int AND = 13;
+
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * left;
+    AST_EXPRESSION_RULE * right;
+    int op;
+public:
+    AST_BINARY_EXPRESSION_RULE(AST_EXPRESSION_RULE * left, AST_EXPRESSION_RULE * right, string op_);
+    int accept(Visitor &);
+};
+
+
+class AST_UNARY_EXPRESSION_RULE : public AST_EXPRESSION_RULE
+{
+public:
+    static const int ERROR = 0;
+    static const int UMINUS = 1;
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    AST_EXPRESSION_RULE * expression;
+    int op;
+public:
+    AST_UNARY_EXPRESSION_RULE(AST_EXPRESSION_RULE * expression, string op);
+    int accept(Visitor &);
+};
+
+
+
+class AST_VARIABLE_RULE : public AST_EXPRESSION_RULE
+{
+public:
+    string type;
+
+};
+
+class AST_SIMPLE_VARIABLE : public AST_VARIABLE_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    string variable_name;
+public:
+    AST_SIMPLE_VARIABLE(string variable_name);
+    int accept(Visitor &);
+};
+
+class AST_ARRAY_VARIABLE : public AST_VARIABLE_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    string array_name;
+    AST_EXPRESSION_RULE* index;
+public:
+    AST_ARRAY_VARIABLE(string array_name, AST_EXPRESSION_RULE * index);
+    int accept(Visitor &);
+};
+
+class AST_LITERAL : public AST_EXPRESSION_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    int int_literal;
+public:
+    AST_LITERAL(int int_literal);
+    int accept(Visitor &);
+};
+
+class AST_STRING_LITERAL : public AST_NODE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    string string_literal;
+public:
+    AST_STRING_LITERAL(string string_literal);
+    int accept(Visitor &);
+};
+
+typedef union _NODE_ YYSTYPE;
+#define YYSTYPE_IS_DECLARED 1
+
+#endif
+

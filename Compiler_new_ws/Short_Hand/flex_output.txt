@@ -1,0 +1,34 @@
+identifier: i
+integer literal: 6
+identifier: max
+identifier: j
+identifier: k
+identifier: max
+integer literal: 0
+identifier: j
+integer literal: 0
+identifier: k
+integer literal: 0
+identifier: k
+integer literal: 6
+identifier: i
+identifier: k
+identifier: k
+identifier: k
+integer literal: 1
+identifier: j
+integer literal: 6
+string literal: "Value::"
+identifier: i
+identifier: j
+identifier: i
+identifier: j
+identifier: max
+identifier: max
+identifier: i
+identifier: j
+identifier: j
+identifier: j
+integer literal: 1
+string literal: "Largest Number is"
+identifier: max

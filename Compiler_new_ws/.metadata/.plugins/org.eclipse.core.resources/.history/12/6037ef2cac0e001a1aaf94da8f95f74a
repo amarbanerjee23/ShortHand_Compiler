@@ -1,0 +1,37 @@
+#ifndef _astPrintVisitor_H
+#define _astPrintVisitor_H
+#include "../ast/AST.h"
+
+class AST_Printer;
+
+class AST_Printer : public Visitor
+{
+public:
+
+    int visit(AST_PROGRAM * program);
+    int visit(AST_DATA_DECLARATION_BLOCK * decl_block);
+    int visit(AST_LOGIC_BLOCK * code_block);
+
+    int visit(AST_expression_statement * expression_statement);
+    int visit(AST_ASSIGNMENT_RULE * assignment_statement);
+    int visit(AST_FUNCTION_RULE *);
+    int visit(AST_FUNCTION_CALL_RULE *);
+    int visit(AST_STATEMENTS_BLOCK * block_statement);
+    int visit(AST_IF_STATEMENT * if_statement);
+    int visit(AST_IF_ELSE_STATEMENT * ifelse_statement);
+    int visit(AST_FOR_LOOP_STATEMENT_RULE * for_statement);
+    int visit(AST_WHILE_LOOP_STATEMENT_RULE * while_statement);
+    int visit(AST_GOTO_STATEMENT_RULE * goto_statement);
+    int visit(AST_read_statement * read_statement);
+    int visit(AST_print_statement * print_statement);
+    int visit(AST_label_statement * label_statement);
+
+    int visit(AST_binary_operator_expression * binary_operator_expression);
+    int visit(AST_unary_operator_expression * unary_operator_expression);
+
+    int visit(AST_variable_single_int * variable_single_int);
+    int visit(AST_variable_array_int * variable_array_int);
+    int visit(AST_int_literal * int_literal);
+    int visit(AST_string_literal * string_literal);
+};
+#endif

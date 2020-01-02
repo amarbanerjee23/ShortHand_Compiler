@@ -1,0 +1,10 @@
+int i;
+
+i = 0;
+
+    loop i < 3 {
+        
+        print "I::", i;
+        i = i + 1;
+
+    }

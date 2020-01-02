@@ -1,0 +1,20 @@
+int i,n,m,n = 0;
+float x, h = 2.3;
+int h = call_function(m,2,4.5 );
+if ( (n / i) == 0)
+{ 
+flag = 1;
+};
+if (n >1)
+{
+print '1 is neither a prime nor a composite number';
+}else {
+	if (flag == 0)
+	{
+	print 'is a prime number';
+	}
+	else
+	{
+	print 'is not a prime number.';
+	};
+};

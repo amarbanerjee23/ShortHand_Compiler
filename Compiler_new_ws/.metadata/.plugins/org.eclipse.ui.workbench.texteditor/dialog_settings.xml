@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item key="selection" value=""/>
+		<item key="wrap" value="false"/>
+		<item key="casesensitive" value="true"/>
+		<item key="wholeword" value="true"/>
+		<item key="incremental" value="false"/>
+		<item key="isRegEx" value="false"/>
+		<list key="findhistory">
+			<item value="get_continue_stack"/>
+			<item value="ret"/>
+			<item value="getVo"/>
+			<item value="getInt32Ty"/>
+			<item value="getInt32PtrTy"/>
+			<item value="AST_FUNCTION_RULE"/>
+			<item value="Int32"/>
+			<item value="AST_BREAK"/>
+			<item value="BREAK"/>
+			<item value="break"/>
+			<item value="AST_SIM"/>
+			<item value="AST_VARIABLE_RULE"/>
+			<item value="ST_VARIABLE_RULE"/>
+			<item value="cast"/>
+			<item value="StringRef"/>
+		</list>
+		<list key="replacehistory">
+			<item value=""/>
+			<item value="ShortType"/>
+			<item value="EXPRESSION_RULE"/>
+			<item value="PRINT_VARIABLE_LIST_RULE"/>
+			<item value="VARIABLE_RULE"/>
+			<item value="READ_VARIABLE_LIST_RULE"/>
+			<item value="STATEMENT_RULE"/>
+			<item value="STATEMENT_LIST_RULE"/>
+			<item value="STATEMENT_BLOCK_RULE"/>
+			<item value="LOGIC_BLOCK"/>
+			<item value="DECLARATION_VARIABLE_LIST_RULE"/>
+			<item value="DECLARATION_STATEMENT_RULE"/>
+			<item value="DECLARATION_STATEMENT_LIST_RULE"/>
+			<item value="AST_LITERAL"/>
+			<item value="AST_STRING_LITERAL"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item key="DIALOG_X_ORIGIN" value="839"/>
+		<item key="DIALOG_Y_ORIGIN" value="222"/>
+		<item key="DIALOG_WIDTH" value="469"/>
+		<item key="DIALOG_HEIGHT" value="501"/>
+		<item key="DIALOG_FONT_NAME" value="1|Ubuntu|11.0|0|GTK|1|"/>
+	</section>
+</section>

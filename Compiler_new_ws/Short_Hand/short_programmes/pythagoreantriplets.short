@@ -1,0 +1,33 @@
+int gcd(int m, int n)
+{
+int t;
+while (n) { t = n; n = m % n; m = t; }
+return m;
+}
+int computePythagoreadTriplet()
+{
+int a, b, c, pytha = 0, prim = 0, max_p = 100, aa, bb, cc;
+loop (a = 1; a <= max_p / 3) {
+aa = a * a;
+##
+max_p/2: valid limit, because one side of triangle
+must be less than the sum of the other two ##
+loop (b = a + 1; b < max_p/2) {
+bb = b * b;
+loop (c = b + 1; c < max_p/2) {
+cc = c * c;
+if (aa + bb < cc) break;
+if (a + b + c > max_p) break;
+if (aa + bb == cc) {
+pytha++;
+if (gcd(a, b) == 1) prim++;
+}
+c = c + 1;
+b = b + 1;
+}
+b = b + 1;
+}
+a = a + 1;
+}
+}
+print "Up to " max_p ", there are " pytha " triples";

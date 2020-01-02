@@ -1,0 +1,12 @@
+AbstractTextEditor.Color.Background=243,243,243
+AbstractTextEditor.Color.Background.SystemDefault=false
+AbstractTextEditor.Color.Foreground.SystemDefault=false
+AbstractTextEditor.Color.SelectionBackground.SystemDefault=false
+AbstractTextEditor.Color.SelectionForeground=0,0,255
+AbstractTextEditor.Color.SelectionForeground.SystemDefault=false
+currentLineColor=196,160,0
+eclipse.preferences.version=1
+hoverReplaceMode=1
+lineNumberColor=0,0,0
+overviewRuler_migration=migrated_3.1
+spellingEngine=org.eclipse.jdt.internal.ui.text.spelling.DefaultSpellingEngine

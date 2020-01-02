@@ -1,0 +1,12 @@
+buildConsoleBackgroundColor=0,0,0
+buildConsoleInfoStreamColor=255,255,255
+buildConsoleOutputStreamColor=255,255,255
+buildConsoleProblemBackgroundColor=164,0,0
+buildConsoleProblemInfoBackgroundColor=239,41,41
+buildConsoleProblemWarningBackgroundColor=252,233,79
+eclipse.preferences.version=1
+org.eclipse.cdt.ui.text.templates.custom=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?><templates/>
+sourceHoverBackgroundColor=0,0,0
+spelling_locale_initialized=true
+useAnnotationsPrefPage=true
+useQuickDiffPrefPage=true

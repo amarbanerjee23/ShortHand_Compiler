@@ -1,0 +1,15 @@
+
+    int kulin;
+    int bholo;int ke;
+
+kulin = 2;
+bholo = 4;
+ke = kulin + bholo;
+
+
+int showMessage(int a)
+{
+print "Message is ::: ", (a+1);
+}
+showMessage(22); 
+print "Sum Is:::: ",ke;

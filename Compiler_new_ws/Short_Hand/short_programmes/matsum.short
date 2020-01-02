@@ -1,0 +1,31 @@
+int m, n, c, d, first[10][10], second[10][10], sum[10][10];
+print 'Enter the number of rows and columns of matrix\n';
+read m,n;
+print 'Enter the elements of first matrix\n';
+loop (c = 0; c < m)
+{
+loop (d = 0; d < n)
+{
+read first[c][d];
+d = d + 1;
+};
+c = c + 1;
+};
+read x;
+loop (c = 0; c < m; c++)
+{
+loop (d = 0 ; d < n; d++)
+{
+read second[c][d];
+};
+};
+read x;
+loop (c = 0; c < m) {
+loop (d = 0 ; d < n) {
+sum[c][d] = first[c][d] + second[c][d];
+print sum[c][d];
+d = d + 1;
+};
+c = c + 1;
+print "\n";
+};

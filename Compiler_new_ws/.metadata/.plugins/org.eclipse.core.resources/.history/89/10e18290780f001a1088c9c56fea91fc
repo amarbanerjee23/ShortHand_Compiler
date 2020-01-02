@@ -1,0 +1,16 @@
+int a;
+int b;
+
+
+
+
+
+a=0;
+b = 1;
+
+read b;
+
+
+
+
+print "A is now ", a;

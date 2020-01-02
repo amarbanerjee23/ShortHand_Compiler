@@ -1,0 +1,368 @@
+%{
+
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include "./ast/AST.h"
+#include "./ast/AST.cpp"
+
+  using namespace std;
+
+  extern "C" int yylex();
+  extern "C" int yyparse();
+  extern "C" void yyerror(char *s);
+  extern "C" int yywrap(void){return 1;}
+  extern "C" int yylineno;
+  extern "C" int yydebug;
+  extern union _NODE_ yylval;
+  extern class AST_PROGRAM * main_program;
+
+
+%}
+
+
+/*
+================ tokens ===================
+*/
+
+%start PROGRAMME_RULE
+
+%type <program> PROGRAMME_RULE
+%type <decl_block> DECLARATION_STATEMENT_LIST_RULE
+%type <decl_block> DECLARATION_STATEMENT_RULE
+%type <decl_block> DECLARATION_VARIABLE_LIST_RULE
+%type <functions>  FUNCTION_LIST_RULE
+%type <function>   FUNCTION_RULE
+%type <code_block> LOGIC_BLOCK
+%type <block_statement> STATEMENT_BLOCK_RULE
+%type <block_statement> STATEMENT_LIST_RULE
+%type <statement> STATEMENT_RULE
+%type <read_statement> READ_VARIABLE_LIST_RULE
+%type <variable> VARIABLE_RULE
+%type <print_statement> PRINT_VARIABLE_LIST_RULE
+%type <expression> EXPRESSION_RULE
+%type <type> ShortType
+
+%token ETOK
+
+%right '='
+
+%left OR
+%left AND
+%left EQUAL NOT_EQUAL
+%left LESS LESS_OR_EQUAL GREATER GREATER_OR_EQUAL
+%left '+' '-'
+%left '*' '/' '%'
+%right UMINUS
+
+%token <string_val> STRING_LITERAL
+%token <string_val> IDENTIFIER
+%token <int_val> INT_LITERAL
+%token READ
+%token PRINT
+%token GOTO
+%token WHILE
+%token FOR
+%token ELSE
+%token IF DEF
+%token INT FLOAT STRING VOID BOOL
+
+%%
+
+
+PROGRAMME_RULE:    DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK 
+            {
+                //fprintf(bison_output, "program\n");
+                $$ = new AST_PROGRAM($1,$2,$3);
+                main_program = $$;
+            }
+;
+
+
+FUNCTION_LIST_RULE: FUNCTION_LIST_RULE ';' FUNCTION_RULE ';'
+									{
+									$$->push_back($3);
+									}
+                    |
+                    FUNCTION_RULE ';'
+                    {
+                    $$->push_back($1);
+                    }
+                    | %empty {$$=new AST_FUNCTION_LIST_RULE();};
+                    
+FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
+	      		{
+	        	$$ = new AST_FUNCTION_RULE($2,$3,$5,$7);
+	      		}
+
+DECLARATION_STATEMENT_LIST_RULE:   DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';'
+                       {
+                           $$ = $1;
+                           $$->push_back($2);
+                       }
+		       
+                       |   DECLARATION_STATEMENT_RULE ';'
+                       {
+                           $$ = $1;
+                       }
+;
+
+
+ShortType: INT {$$=ShortType::Int;}
+      | FLOAT {$$=ShortType::Float;} 
+      | STRING {$$=ShortType::String;}
+      | VOID {$$=ShortType::Void;}
+      | BOOL{$$=ShortType::Boolean;}
+      ;                      
+                       
+DECLARATION_STATEMENT_RULE:    ShortType DECLARATION_VARIABLE_LIST_RULE
+                   {
+                       //fprintf(bison_output, "DECLARATION_STATEMENT_RULE\n");
+                       $$ = $2;
+                   }
+;
+
+
+DECLARATION_VARIABLE_LIST_RULE:    DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER
+                       {
+                           $$ = $1;
+                           $$->push_back(string($3));
+                       }
+                  |    DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'
+                       {
+                           $$ = $1;
+                           $$->push_back(string($3), $5);
+                       }
+                  |    IDENTIFIER
+                       {
+                           $$ = new AST_DATA_DECLARATION_BLOCK();
+                           $$->push_back(string($1));
+                       }
+                  |    IDENTIFIER '[' INT_LITERAL ']'
+                       {
+                           $$ = new AST_DATA_DECLARATION_BLOCK();
+                           $$->push_back(string($1), $3);
+                       }
+                  | %empty {$$ = new AST_DATA_DECLARATION_BLOCK();}
+;
+
+
+LOGIC_BLOCK:     STATEMENT_LIST_RULE
+               {
+                   //fprintf(bison_output, "LOGIC_BLOCK\n");
+                   $$ = new AST_LOGIC_BLOCK($1);
+               }
+;
+
+
+STATEMENT_BLOCK_RULE:    '{' STATEMENT_LIST_RULE '}'
+                    {
+                        //fprintf(bison_output, "STATEMENT_BLOCK_RULE\n");
+                        $$ = $2;
+                    }
+;
+
+STATEMENT_LIST_RULE:    STATEMENT_LIST_RULE STATEMENT_RULE
+                   {
+                       $$->push_back($2);
+                   }
+              |    STATEMENT_RULE
+                   {
+                       $$ = new AST_STATEMENTS_BLOCK();
+                       $$->push_back($1);
+                   }
+;
+
+STATEMENT_RULE:    EXPRESSION_RULE ';'
+              {
+                  $$ = new AST_EXPRESSION_STATEMENT_RULE($1);
+              }
+         |    VARIABLE_RULE '=' EXPRESSION_RULE ';'
+              {
+                  $$ = new AST_ASSIGNMENT_RULE($1, $3);
+              }
+         
+         |    IDENTIFIER'(' READ_VARIABLE_LIST_RULE ')' ';'
+	      {
+	       $$ = new AST_FUNCTION_CALL_RULE($1,$3);
+	      }
+         |    STATEMENT_BLOCK_RULE
+              {
+                  $$ = $1;
+              }
+         |    IF EXPRESSION_RULE STATEMENT_BLOCK_RULE
+              {
+                  $$ = new AST_IF_STATEMENT($2, $3);
+              }
+         |    IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE
+              {
+                  $$ = new AST_IF_ELSE_STATEMENT($2, $3, $5);
+              }
+         |    FOR VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+              {
+                  $$ = new AST_FOR_LOOP_STATEMENT_RULE($2, $4, $6, $7);
+              }
+         |    FOR VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+              {
+                  $$ = new AST_FOR_LOOP_STATEMENT_RULE($2, $4, $6, $8, $9);
+              }
+         |    WHILE EXPRESSION_RULE STATEMENT_BLOCK_RULE
+              {
+                  $$ = new AST_WHILE_LOOP_STATEMENT_RULE($2, $3);
+              }
+         |    GOTO IDENTIFIER ';'
+              {
+                  $$ = new AST_GOTO_STATEMENT_RULE(string($2));
+              }
+         |    GOTO IDENTIFIER IF EXPRESSION_RULE ';'
+              {
+                  $$ = new AST_GOTO_STATEMENT_RULE($4, string($2));
+              }
+         |    READ READ_VARIABLE_LIST_RULE ';'
+              {
+                  $$ = $2;
+              }
+         |    PRINT PRINT_VARIABLE_LIST_RULE ';'
+              {
+                  $$ = $2;
+              }
+         |    IDENTIFIER ':'
+              {
+                  $$ = new AST_LABEL_RULE(string($1));
+              }
+/*
+small hack
+*/
+         |    ';'
+              {
+                  $$ = new AST_EXPRESSION_STATEMENT_RULE(new AST_LITERAL(1));
+              }
+
+;
+
+
+EXPRESSION_RULE:    EXPRESSION_RULE '+' EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "+");
+               }
+          |    EXPRESSION_RULE '-' EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "-");
+               }
+          |    EXPRESSION_RULE '*' EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "*");
+               }
+          |    EXPRESSION_RULE '/' EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "/");
+               }
+          |    EXPRESSION_RULE '%' EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "%");
+               }
+          |    EXPRESSION_RULE LESS EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "<");
+               }
+          |    EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "<=");
+               }
+          |    EXPRESSION_RULE GREATER EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, ">");
+               }
+          |    EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, ">=");
+               }
+          |    EXPRESSION_RULE EQUAL EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "==");
+               }
+          |    EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "!=");
+               }
+          |    EXPRESSION_RULE OR EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "||");
+               }
+          |    EXPRESSION_RULE AND EXPRESSION_RULE
+               {
+                   $$ = new AST_BINARY_EXPRESSION_RULE($1, $3, "&&");
+               }
+          |    '-' EXPRESSION_RULE    %prec UMINUS
+               {
+                   $$ = new AST_UNARY_EXPRESSION_RULE($2, "-");
+               }
+          |    '(' EXPRESSION_RULE ')'
+               {
+                   $$ = $2;
+               }
+          |    VARIABLE_RULE
+               {
+                   $$ = $1;
+               }
+          |    INT_LITERAL
+               {
+                   $$ = new AST_LITERAL($1);
+               }
+;
+
+
+VARIABLE_RULE:    IDENTIFIER
+             {
+                 $$ = new AST_SIMPLE_VARIABLE(string($1));
+             }
+        |    IDENTIFIER '[' EXPRESSION_RULE ']'
+             {
+                 $$ = new AST_ARRAY_VARIABLE(string($1), $3);
+             }
+;
+
+READ_VARIABLE_LIST_RULE:    READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE
+                       {
+                           $$->push_back($3);
+                       }
+                  |    VARIABLE_RULE
+                       {
+                           $$ = new AST_READ_RULE();
+                           $$->push_back($1);
+                       }
+;
+
+
+PRINT_VARIABLE_LIST_RULE:    PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL
+                   {
+                       $$->push_back(new AST_STRING_LITERAL(string($3)));
+                   }
+              |    PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE
+                   {
+                       $$->push_back($3);
+                   }
+              |    STRING_LITERAL
+                   {
+                       $$ = new AST_PRINT_RULE();
+                       $$->push_back(new AST_STRING_LITERAL(string($1)));
+                   }
+              |    EXPRESSION_RULE
+                   {
+                       $$ = new AST_PRINT_RULE();
+                       $$->push_back($1);
+                   }
+;
+
+
+%%
+
+
+
+void yyerror (char const *s)
+{
+        fprintf (stderr, "----------------ERROR----------------\n");
+        fprintf (stderr, "%s\n", s);
+}
+
+

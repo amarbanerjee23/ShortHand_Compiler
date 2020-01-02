@@ -1,0 +1,664 @@
+#include <llvm-8/llvm/IR/BasicBlock.h>
+#include <llvm-8/llvm/IR/Constants.h>
+#include <llvm-8/llvm/IR/Function.h>
+#include<llvm-8/llvm/IR/Attributes.h>
+#include <llvm-8/llvm/IR/GlobalVariable.h>
+#include <llvm-8/llvm/IR/IRBuilder.h>
+#include <llvm-8/llvm/IR/Instructions.h>
+#include <llvm-8/llvm/IR/IRPrintingPasses.h>
+#include <llvm-8/llvm/IR/LegacyPassManager.h>
+#include <llvm-8/llvm/IR/LLVMContext.h>
+#include <llvm-8/llvm/IR/Module.h>
+#include <llvm-8/llvm/IR/Type.h>
+#include <llvm-8/llvm/IR/Verifier.h>
+#include <llvm-8/llvm/Pass.h>
+#include <llvm-8/llvm/Support/raw_ostream.h>
+#include<llvm-8/llvm/Bitcode/BitcodeWriter.h>
+#include<llvm-8/llvm/Support/FileSystem.h>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include<iostream>
+#include <vector>
+#include <algorithm>
+#include <typeinfo>
+#include "Symbol_Table.h"
+#include "../util/util.h"
+#include "IR_Generator.h"
+
+using namespace llvm;
+
+Value*
+ShowError(const char *str) {
+	printf("Error:\n%s\n", str);
+	return 0;
+}
+Value*
+ShowError(string str) {
+	cout << "Error:\n" << str << "\n";
+	return 0;
+}
+
+static Module *module;
+static map<string, Value*> NamedValues;
+static llvm::LLVMContext ShortGlobalContext;
+static IRBuilder<> Builder(ShortGlobalContext);
+Symbol_Table symbol_table_obj;
+
+Constant *CalleeF, *CalleeR;
+
+// constructor
+IR_Generator::IR_Generator() {
+	module = new Module(this->getModuleName().c_str(), ShortGlobalContext);
+	CalleeF = module->getOrInsertFunction("printf",
+			FunctionType::get(IntegerType::getInt32Ty(ShortGlobalContext),
+					PointerType::get(Type::getInt8Ty(ShortGlobalContext), 0),
+					true));
+
+	CalleeR = module->getOrInsertFunction("scanf",
+			FunctionType::get(IntegerType::getInt32Ty(ShortGlobalContext),
+					PointerType::get(Type::getInt8Ty(ShortGlobalContext), 0),
+					true));
+
+	load_variable = 0;
+	is_condition = 0;
+	is_expression = 0;
+
+}
+IR_Generator::~IR_Generator() {
+
+}
+;
+
+void IR_Generator::dump() {
+  llvm::verifyModule (*module);
+//  llvm::legacy::PassManager PM;
+//  PM.add (llvm::createPrintModulePass (llvm::outs ()));
+//  PM.run (*module);
+
+	cerr << "Generating LLVM IR Code\n\n";
+	std::string Str;
+	raw_string_ostream OS(Str);
+	OS.changeColor(llvm::raw_ostream::Colors::BLUE, true, true);
+	OS << *module;
+	OS.flush();
+	cerr << Str;
+	std::ofstream out("ir_file.ir");
+	out << Str;
+	out.close();
+	delete module;
+//      system("sh decaf_linker.sh");
+//      system("sh decaf_linker.sh");
+//  system(std::strcat("./codegen_interpret.sh ", (ir_filename+extn).c_str()));
+
+}
+
+// helper to get expression
+Value*
+IR_Generator::get_expression() {
+	Value *v = ret;
+	if (load_variable) {
+		v = Builder.CreateLoad(v);
+		load_variable = 0;
+	}
+	if (is_condition)
+		v = Builder.CreateIntCast(v, Type::getInt32Ty(ShortGlobalContext),
+				true);
+
+	is_condition = 0;
+	is_expression = 1;
+	return v;
+}
+
+// helper to get expression
+Value*
+IR_Generator::get_condition() {
+	Value *v = ret;
+	if (load_variable) {
+		v = Builder.CreateLoad(v);
+		load_variable = 0;
+	}
+	if (is_expression)
+		v = Builder.CreateICmpNE(v,
+				ConstantInt::get(Type::getInt32Ty(ShortGlobalContext), 0,
+						true));
+
+	is_condition = 1;
+	is_expression = 0;
+	return v;
+}
+
+// program
+int IR_Generator::visit(AST_PROGRAM *program) {
+
+	program->decl_block->accept(*this);
+
+	program->functions->accept(*this);
+
+	FunctionType *ftype = FunctionType::get(Type::getVoidTy(ShortGlobalContext),
+			false);
+	main_function = Function::Create(ftype, GlobalValue::ExternalLinkage,
+			"main", module);
+
+
+	BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry",
+			main_function);
+	Builder.SetInsertPoint(BB);
+	program->code_block->accept(*this);
+
+	Builder.CreateRetVoid();
+	return 0;
+}
+
+// decl_block
+int IR_Generator::visit(AST_DATA_DECLARATION_BLOCK *decl_block) {
+	Type *ty = Type::getInt32Ty(ShortGlobalContext);
+
+	for (int i = 0; i < (int) decl_block->single_ints.size(); i++) {
+		/*
+		 PointerType * ptr_typ = PointerType::get(ty, 0);
+		 GlobalVariable * gv = new GlobalVariable(*module, ptr_typ, false, GlobalValue::ExternalLinkage, 0, decl_block->single_ints[i]);
+		 gv->setInitializer(ConstantInt::get(module->getContext(), APInt(32, 0)));
+		 */
+		module->getOrInsertGlobal(decl_block->single_ints[i],
+				Builder.getInt32Ty());
+		//PointerType* ptr_type = PointerType::get(ty,0);
+		GlobalVariable *gv = module->getNamedGlobal(decl_block->single_ints[i]);
+		gv->setLinkage(GlobalValue::CommonLinkage);
+		gv->setInitializer(ConstantInt::get(ShortGlobalContext, APInt(32, 0)));
+	}
+	//cout << endl;
+
+	//cout << "array ints : ";
+	for (int i = 0; i < (int) decl_block->array_ints.size(); i++) {
+		ArrayType *arr_type = ArrayType::get(ty,
+				decl_block->array_ints[i].second);
+		//PointerType * ptr_typ = PointerType::get(arr_type, 0);
+		GlobalVariable *gv = new GlobalVariable(*module, arr_type, false,
+				GlobalValue::ExternalLinkage, 0,
+				decl_block->array_ints[i].first);
+		gv->setInitializer(ConstantAggregateZero::get(arr_type));
+	}
+	return 0;
+}
+
+// code_block
+int IR_Generator::visit(AST_LOGIC_BLOCK *code_block) {
+	code_block->block_statement->accept(*this);
+	load_variable = 0;
+	return 0;
+}
+
+//
+// all statements
+//
+
+int IR_Generator::visit(AST_FUNCTION_LIST_RULE *functions) {
+    // Define function's signature
+
+	for(auto function : functions->functions)
+		{
+		function->accept(*this);
+		}
+	return 0;
+}
+
+
+int IR_Generator::visit(AST_FUNCTION_RULE *function) {
+
+    // Define function's signature
+    std::vector<Type*> Integers(function->parameters->single_ints.size(), Builder.getInt32Ty());
+
+	FunctionType *ftype = FunctionType::get(parseType(function->type),Integers, false);
+	std::vector<llvm::Type*> argTypes;
+	llvm::Function *llvm_function = Function::Create(ftype,
+			GlobalValue::ExternalLinkage, function->function_name, module);
+
+
+	BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry",
+			llvm_function);
+	symbol_table_obj.push_block(BB);
+	Builder.SetInsertPoint(BB);
+	function->block_statement->accept(*this);
+	Builder.CreateRet(nullptr);
+
+
+	symbol_table_obj.pop_block();
+	return 0;
+}
+;
+
+int IR_Generator::visit(AST_FUNCTION_CALL_RULE *function_called) {
+	 vector<Type *> argTypes;
+	    vector<Value *> Args;
+
+
+	    for (auto &i : function_called->parameters->variables) {
+	    	i->accept(*this);
+	        Value *tmp = ret;
+	        if (tmp == nullptr) {
+	            return 0;
+	        }
+	        Args.push_back(tmp);
+	        argTypes.push_back(tmp->getType());
+
+	    }
+
+	    ArrayRef<Type *> argsRef(argTypes);
+	    ArrayRef<Value *> funcargs(Args);
+	    FunctionType *FType = FunctionType::get(Type::getInt32Ty(ShortGlobalContext), argsRef, false);
+	    Constant *func = module->getFunction(function_called->function_name);
+
+	    if (!func) {
+	    	ShowError("Function Not Defined");
+	        return 0;
+	    }
+	    Value *v = Builder.CreateCall(func, funcargs);
+	return 0;
+}
+;
+
+int IR_Generator::visit(AST_EXPRESSION_STATEMENT_RULE *expression_statement) {
+	expression_statement->expression->accept(*this);
+	get_expression();
+	return 0;
+}
+
+int IR_Generator::visit(AST_ASSIGNMENT_RULE *assignment_statement) {
+	assignment_statement->expression->accept(*this);
+	Value *expr_value = get_expression();
+
+	assignment_statement->variable->accept(*this);
+	Value *variable_value = ret;
+	ret = Builder.CreateStore(expr_value, variable_value);
+
+	load_variable = 0;
+	return 0;
+}
+
+int IR_Generator::visit(AST_STATEMENTS_BLOCK *block_statement) {
+	for (int i = 0; i < (int) block_statement->statements.size(); i++)
+		block_statement->statements[i]->accept(*this), load_variable = 0;
+	return 0;
+}
+
+int IR_Generator::visit(AST_IF_STATEMENT *if_statement) {
+	Function *funct = Builder.GetInsertBlock()->getParent();
+	BasicBlock *if_BB = BasicBlock::Create(ShortGlobalContext, "if", funct);
+	BasicBlock *next_BB = BasicBlock::Create(ShortGlobalContext, "ifnext",
+			funct);
+
+	if_statement->condition->accept(*this);
+	Value *condition_value = get_condition();
+	//condition_value = Builder.CreateICmpEQ(condition_value, ConstantInt::get(Type::getInt1Ty(ShortGlobalContext), true, true),"ifcond");
+	Builder.CreateCondBr(condition_value, if_BB, next_BB);
+
+	Builder.SetInsertPoint(if_BB);
+
+	if_statement->if_block->accept(*this);
+	//Value * if_value = ret;
+	//if(load_variable){ if_value = Builder.CreateLoad(if_value); load_variable = 0;}
+	Builder.CreateBr(next_BB);
+
+	Builder.SetInsertPoint(next_BB);
+
+	return 0;
+}
+
+int IR_Generator::visit(AST_IF_ELSE_STATEMENT *ifelse_statement) {
+	Function *funct = Builder.GetInsertBlock()->getParent();
+	BasicBlock *if_BB = BasicBlock::Create(ShortGlobalContext, "if", funct);
+	BasicBlock *else_BB = BasicBlock::Create(ShortGlobalContext, "else", funct);
+	BasicBlock *next_BB = BasicBlock::Create(ShortGlobalContext, "ifnext",
+			funct);
+
+	ifelse_statement->condition->accept(*this);
+	Value *condition_value = get_condition();
+	//if(load_variable){ condition_value = Builder.CreateLoad(condition_value); load_variable = 0;}
+	//condition_value = Builder.CreateICmpEQ(condition_value, ConstantInt::get(Type::getInt1Ty(ShortGlobalContext), true, true),"ifcond");
+
+	Builder.CreateCondBr(condition_value, if_BB, else_BB);
+
+	Builder.SetInsertPoint(if_BB);
+
+	ifelse_statement->if_block->accept(*this);
+	//Value * if_value = ret;
+	//if(load_variable){ if_value = Builder.CreateLoad(if_value); load_variable = 0;}
+
+	Builder.CreateBr(next_BB);
+	//if_BB = Builder.GetInsertBlock();
+
+	//funct->getBasicBlockList().push_back(else_BB);
+	Builder.SetInsertPoint(else_BB);
+
+	ifelse_statement->else_block->accept(*this);
+	//Value * else_value = ret;
+	//if(load_variable){ else_value = Builder.CreateLoad(else_value); load_variable = 0;}
+
+	Builder.CreateBr(next_BB);
+	//else_BB = Builder.GetInsertBlock();
+	//funct->getBasicBlockList().push_back(next_BB);
+	Builder.SetInsertPoint(next_BB);
+
+	return 0;
+}
+
+int IR_Generator::visit(AST_FOR_LOOP_STATEMENT_RULE *for_statement) {
+	Function *funct = Builder.GetInsertBlock()->getParent();
+
+	for_statement->from->accept(*this);
+	Value *start = get_expression();
+
+	for_statement->variable->accept(*this);
+	Value *variable = ret;
+	ret = Builder.CreateStore(start, variable);
+	load_variable = 0;
+
+	Value *cur_val = Builder.CreateLoad(variable);
+
+	BasicBlock *for_condition_BB = BasicBlock::Create(ShortGlobalContext,
+			"for_condition", funct);
+	BasicBlock *for_body_BB = BasicBlock::Create(ShortGlobalContext, "for_body",
+			funct);
+	BasicBlock *for_after_BB = BasicBlock::Create(ShortGlobalContext,
+			"for_after", funct);
+	BasicBlock *preheaderBB = Builder.GetInsertBlock();
+
+	Builder.CreateBr(for_condition_BB);
+
+	Builder.SetInsertPoint(for_condition_BB);
+
+	PHINode *phi = Builder.CreatePHI(Type::getInt32Ty(ShortGlobalContext), 2);
+	phi->addIncoming(cur_val, preheaderBB);
+
+	for_statement->to->accept(*this);
+	Value *to_val = get_expression();
+
+	//Value * cur_val = Builder.CreateLoad(variable);
+	Value *cond = Builder.CreateICmpSLT(phi, to_val);
+	Builder.CreateCondBr(cond, for_body_BB, for_after_BB);
+
+	Builder.SetInsertPoint(for_body_BB);
+	for_statement->for_block->accept(*this);
+	//Value * body = ret;
+	//if(load_variable){ body = Builder.CreateLoad(body); load_variable = 0;}
+
+	for_statement->step->accept(*this);
+	Value *step = get_expression();
+
+	cur_val = Builder.CreateLoad(variable);
+	cur_val = Builder.CreateAdd(cur_val, step);
+	Builder.CreateStore(cur_val, variable);
+
+	BasicBlock *loop_end_block = Builder.GetInsertBlock();
+
+	Builder.CreateBr(for_condition_BB);
+
+	Builder.SetInsertPoint(for_after_BB);
+
+	phi->addIncoming(cur_val, loop_end_block);
+
+	return 0;
+}
+
+int IR_Generator::visit(AST_WHILE_LOOP_STATEMENT_RULE *while_statement) {
+	Function *funct = Builder.GetInsertBlock()->getParent();
+
+	Builder.GetInsertBlock();
+	BasicBlock *cond_body = BasicBlock::Create(ShortGlobalContext,
+			"while_condition", funct);
+	BasicBlock *loop_body = BasicBlock::Create(ShortGlobalContext, "loop",
+			funct);
+	BasicBlock *afterBB = BasicBlock::Create(ShortGlobalContext, "afterloop",
+			funct);
+
+	Builder.CreateBr(cond_body);
+	Builder.SetInsertPoint(cond_body);
+	while_statement->condition->accept(*this);
+	Value *condition_value = get_condition();
+	//condition_value = Builder.CreateICmpEQ(condition_value, ConstantInt::get(Type::getInt1Ty(ShortGlobalContext), true, true),"ifcond");
+	Builder.CreateCondBr(condition_value, loop_body, afterBB);
+
+	Builder.SetInsertPoint(loop_body);
+	while_statement->while_block->accept(*this);
+	//Value * body = ret;
+	//if(load_variable){ body = Builder.CreateLoad(body); load_variable = 0;}
+
+	Builder.CreateBr(cond_body);
+	Builder.GetInsertBlock();
+	Builder.SetInsertPoint(afterBB);
+
+	return 0;
+}
+
+int IR_Generator::visit(AST_GOTO_STATEMENT_RULE *goto_statement) {
+	Value *cond;
+	if (goto_statement->condition) {
+		goto_statement->condition->accept(*this);
+		cond = get_condition();
+	}
+
+	string &label = goto_statement->label;
+
+	Function *funct = Builder.GetInsertBlock()->getParent();
+	BasicBlock *label_BB;
+
+	if (goto_labels.find(label) == goto_labels.end()) {
+		label_BB = BasicBlock::Create(ShortGlobalContext, label, funct);
+		goto_labels[label] = label_BB;
+	} else
+		label_BB = goto_labels[label];
+
+	BasicBlock *next_BB = BasicBlock::Create(ShortGlobalContext, "goto_next",
+			funct);
+
+	if (goto_statement->condition)
+		Builder.CreateCondBr(cond, label_BB, next_BB);
+	else
+		Builder.CreateBr(label_BB);
+	Builder.SetInsertPoint(next_BB);
+
+	return 0;
+}
+
+int IR_Generator::visit(AST_READ_RULE *read_statement) {
+
+	for(auto *var : read_statement->variables)
+	{
+		vector<Value*> args;
+				AST_FUNCTION_CALL_RULE *call = new AST_FUNCTION_CALL_RULE("scanf",read_statement);
+				var->accept(*this);
+				Value *v = ret;
+				Value *val = Builder.CreateGlobalStringPtr("%d");
+				args.push_back(val);
+				args.push_back(v);
+				ret = Builder.CreateCall(CalleeR, args, "printfCall");
+
+	}
+
+
+	return 0;
+};
+
+int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
+	int sz = (int) print_statement->printables.size();
+	for (int i = 0; i < sz; i++) {
+		vector<Value*> args;
+
+		AST_PRINTABLE_ITEM &p = print_statement->printables[i];
+		if (p.expression) {
+			p.expression->accept(*this);
+			Value *v = get_expression();
+
+			Value *val = Builder.CreateGlobalStringPtr("%d");
+			args.push_back(val);
+			args.push_back(v);
+		} else {
+			print_statement->printables[i].string_literal->accept(*this);
+			Value *val = Builder.CreateGlobalStringPtr("%s");
+			str_ = str_.substr(1, str_.length() - 2);
+			Value *v = Builder.CreateGlobalStringPtr(str_);
+			args.push_back(val);
+			args.push_back(v);
+		}
+		ret = Builder.CreateCall(CalleeF, args, "printfCall");
+
+		args.clear();
+		if (i != sz - 1)
+			str_ = " ";
+		else
+			str_ = "\n";
+
+		Value *val = Builder.CreateGlobalStringPtr("%s");
+		Value *v = Builder.CreateGlobalStringPtr(str_);
+		args.push_back(val);
+		args.push_back(v);
+		ret = Builder.CreateCall(CalleeF, args, "printfCall");
+	}
+	return 0;
+}
+
+int IR_Generator::visit(AST_LABEL_RULE *label_statement) {
+	string &label = label_statement->label;
+	Function *funct = Builder.GetInsertBlock()->getParent();
+	BasicBlock *label_BB;
+	if (goto_labels.find(label) == goto_labels.end()) {
+		label_BB = BasicBlock::Create(ShortGlobalContext, label, funct);
+		goto_labels[label] = label_BB;
+	} else
+		label_BB = goto_labels[label];
+
+	Builder.CreateBr(label_BB);
+	Builder.SetInsertPoint(label_BB);
+	return 0;
+}
+
+//
+// all expressions
+//
+int IR_Generator::visit(
+		AST_BINARY_EXPRESSION_RULE *binary_operator_expression) {
+	int op = binary_operator_expression->op;
+
+	binary_operator_expression->left->accept(*this);
+	Value *L = get_expression();
+
+	binary_operator_expression->right->accept(*this);
+	Value *R = get_expression();
+
+	is_condition = is_expression = 0;
+
+	if (op == PLUS)
+		ret = Builder.CreateAdd(L, R, "addtmp"), is_expression = 1;
+	else if (op == MINUS)
+		ret = Builder.CreateSub(L, R, "subtmp"), is_expression = 1;
+	else if (op == MULTIPLY)
+		ret = Builder.CreateMul(L, R, "multmp"), is_expression = 1;
+	else if (op == DIVIDE)
+		ret = Builder.CreateSDiv(L, R, "divtmp"), is_expression = 1;
+	else if (op == MODULO)
+		ret = Builder.CreateSRem(L, R, "modtmp"), is_expression = 1;
+
+	else if (op == LESS)
+		ret = Builder.CreateICmpSLT(L, R, "lttmp"), is_condition = 1;
+	else if (op == GREATER)
+		ret = Builder.CreateICmpSGT(L, R, "gttmp"), is_condition = 1;
+	else if (op == LESS_OR_EQUAL)
+		ret = Builder.CreateICmpSLE(L, R, "letmp"), is_condition = 1;
+	else if (op == GREATER_OR_EQUAL)
+		ret = Builder.CreateICmpSGE(L, R, "getmp"), is_condition = 1;
+	else if (op == EQUAL)
+		ret = Builder.CreateICmpEQ(L, R, "eqtmp"), is_condition = 1;
+	else if (op == NOT_EQUAL)
+		ret = Builder.CreateICmpNE(L, R, "netmp"), is_condition = 1;
+	else
+		ret = ShowError("Not a binary operator");
+
+	load_variable = 0;
+	return 0;
+}
+
+int IR_Generator::visit(AST_UNARY_EXPRESSION_RULE *unary_operator_expression) {
+	int op = unary_operator_expression->op;
+
+	unary_operator_expression->expression->accept(*this);
+	Value *R = get_expression();
+
+	if (op == UMINUS)
+		ret = Builder.CreateNeg(R, "negtmp");
+	else
+		ret = ShowError("Not a binary operator");
+
+	is_expression = 1;
+	is_condition = 0;
+	load_variable = 0;
+	return 0;
+}
+
+//
+// variables and literals
+//
+int IR_Generator::visit(AST_SIMPLE_VARIABLE *variable_single_int) {
+	string &var_name = variable_single_int->variable_name;
+	ret = module->getNamedGlobal(var_name);
+	if (ret == NULL)
+		ret = ShowError("Unknown Variable name " + var_name);
+	load_variable = 1;
+	is_expression = 1;
+	return 0;
+}
+
+int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
+	string &array_name = variable_array_int->array_name;
+
+	variable_array_int->index->accept(*this);
+	Value *index = get_expression();
+
+	//index = ConstantInt::get(ShortGlobalContext, APInt(32, 2));
+
+	if (index == NULL)
+		ret = ShowError("Invalid Array Index in " + array_name);
+
+	vector<Value*> array_index;
+	array_index.push_back(Builder.getInt32(0));
+	array_index.push_back(index);
+	ret = Builder.CreateGEP(module->getNamedGlobal(array_name), array_index,
+			array_name + "_IDX");
+	load_variable = 1;
+	is_expression = 1;
+	//ret = Builder.CreateLoad(ret);
+	return 0;
+}
+
+int IR_Generator::visit(AST_LITERAL *int_literal) {
+	is_expression = 1;
+	ret = ConstantInt::get(ShortGlobalContext,
+			llvm::APInt(32, int_literal->int_literal));
+	return 0;
+}
+
+int IR_Generator::visit(AST_STRING_LITERAL *string_literal) {
+	//ret = Builder.CreateGlobalStringPtr(string_literal->string_literal);
+	str_ = string_literal->string_literal;
+	return 0;
+}
+
+llvm::Type* IR_Generator::parseType(ShortType type) {
+	switch (type) {
+	case ShortType::Boolean: {
+		return llvm::Type::getInt64Ty(ShortGlobalContext);
+	}
+	case ShortType::Int: {
+		return llvm::Type::getInt64Ty(ShortGlobalContext);
+	}
+	case ShortType::Void: {
+		return llvm::Type::getVoidTy(ShortGlobalContext);
+	}
+	case ShortType::Float: {
+		return llvm::Type::getInt64Ty(ShortGlobalContext);
+	}
+	case ShortType::String: {
+		return llvm::Type::getInt64Ty(ShortGlobalContext);
+	}
+	}
+}

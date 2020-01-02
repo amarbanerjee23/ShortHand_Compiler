@@ -1,0 +1,32 @@
+    int N, arr[10];
+    int i, j, temp;
+    int p, P;
+
+
+
+    P = 31;
+    p = 1;
+
+    N = 10;
+    loop i = 0, N {
+        arr[i] = p;
+        p = (p * P) % 12;
+    }
+
+    loop i = 0, i < N {
+        loop j = 0, N - i - 1 {
+            if arr[j] > arr[j + 1] {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+    
+    loop i=0, N{
+	
+     print "Value :: ", arr[i];
+    i = i + 2;
+    }
+
+

@@ -1,0 +1,6 @@
+09:26:32 **** Build of configuration Build (GNU) for project Short_Hand ****
+make short_hand 
+bison --debug -v -d ./scanner_parser/parser.yy
+./scanner_parser/parser.yy: warning: 1 shift/reduce conflict [-Wconflicts-sr]
+flex ./scanner_parser/scanner.ll
+g++ -o ../build/short_hand main.cpp lex.yy.c parser.tab.cc -lfl -ly -O3 -flto -Wall -std=c++14 `llvm-config --cppflags --ldflags --system-libs --libs core` -g -w

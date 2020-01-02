@@ -1,0 +1,2035 @@
+Terminals unused in grammar
+
+    ETOK
+    WHILE
+
+
+State 7 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: PROGRAMME_RULE $end
+
+    1 PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK
+
+    2 FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'
+    3                   | FUNCTION_RULE ';'
+    4                   | %empty
+
+    5 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
+
+    6 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';'
+    7                                | DECLARATION_STATEMENT_RULE ';'
+
+    8 ShortType: INT
+    9          | FLOAT
+   10          | STRING
+   11          | VOID
+   12          | BOOL
+
+   13 DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE
+
+   14 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER
+   15                               | DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'
+   16                               | IDENTIFIER
+   17                               | IDENTIFIER '[' INT_LITERAL ']'
+   18                               | %empty
+
+   19 LOGIC_BLOCK: STATEMENT_LIST_RULE
+
+   20 STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'
+
+   21 STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE
+   22                    | STATEMENT_RULE
+
+   23 STATEMENT_RULE: EXPRESSION_RULE ';'
+   24               | VARIABLE_RULE '=' EXPRESSION_RULE ';'
+   25               | IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';'
+   26               | STATEMENT_BLOCK_RULE
+   27               | IF EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   28               | IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE
+   29               | LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   30               | LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   31               | LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   32               | GOTO IDENTIFIER ';'
+   33               | GOTO IDENTIFIER IF EXPRESSION_RULE ';'
+   34               | READ READ_VARIABLE_LIST_RULE ';'
+   35               | BREAK
+   36               | PRINT PRINT_VARIABLE_LIST_RULE ';'
+   37               | IDENTIFIER ':'
+   38               | ';'
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE AND EXPRESSION_RULE
+   52                | '-' EXPRESSION_RULE
+   53                | '(' EXPRESSION_RULE ')'
+   54                | VARIABLE_RULE
+   55                | INT_LITERAL
+
+   56 VARIABLE_RULE: IDENTIFIER
+   57              | IDENTIFIER '[' EXPRESSION_RULE ']'
+
+   58 READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE
+   59                        | VARIABLE_RULE
+
+   60 PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL
+   61                         | PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE
+   62                         | STRING_LITERAL
+   63                         | EXPRESSION_RULE
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    '%' (37) 43
+    '(' (40) 5 25 53
+    ')' (41) 5 25 53
+    '*' (42) 41
+    '+' (43) 39
+    ',' (44) 14 15 29 30 58 60 61
+    '-' (45) 40 52
+    '/' (47) 42
+    ':' (58) 37
+    ';' (59) 2 3 6 7 23 24 25 32 33 34 36 38
+    '=' (61) 24 29 30
+    '[' (91) 15 17 57
+    ']' (93) 15 17 57
+    '{' (123) 20
+    '}' (125) 20
+    error (256)
+    ETOK (258)
+    OR (259) 50
+    AND (260) 51
+    EQUAL (261) 48
+    NOT_EQUAL (262) 49
+    LESS (263) 44
+    LESS_OR_EQUAL (264) 45
+    GREATER (265) 46
+    GREATER_OR_EQUAL (266) 47
+    UMINUS (267)
+    STRING_LITERAL <string_val> (268) 60 62
+    IDENTIFIER <string_val> (269) 5 14 15 16 17 25 32 33 37 56 57
+    INT_LITERAL <int_val> (270) 15 17 55
+    READ (271) 34
+    PRINT (272) 36
+    GOTO (273) 32 33
+    BREAK <break_statement> (274) 35
+    WHILE (275)
+    LOOP (276) 29 30 31
+    ELSE (277) 28
+    IF (278) 27 28 33
+    DEF (279) 5
+    INT (280) 8
+    FLOAT (281) 9
+    STRING (282) 10
+    VOID (283) 11
+    BOOL (284) 12
+
+
+Nonterminals, with rules where they appear
+
+    $accept (45)
+        on left: 0
+    PROGRAMME_RULE <program> (46)
+        on left: 1
+        on right: 0
+    FUNCTION_LIST_RULE <functions> (47)
+        on left: 2 3 4
+        on right: 1 2
+    FUNCTION_RULE <function> (48)
+        on left: 5
+        on right: 2 3
+    DECLARATION_STATEMENT_LIST_RULE <decl_block> (49)
+        on left: 6 7
+        on right: 1 5 6
+    ShortType <type> (50)
+        on left: 8 9 10 11 12
+        on right: 5 13
+    DECLARATION_STATEMENT_RULE <decl_block> (51)
+        on left: 13
+        on right: 6 7
+    DECLARATION_VARIABLE_LIST_RULE <decl_block> (52)
+        on left: 14 15 16 17 18
+        on right: 13 14 15
+    LOGIC_BLOCK <code_block> (53)
+        on left: 19
+        on right: 1
+    STATEMENT_BLOCK_RULE <block_statement> (54)
+        on left: 20
+        on right: 5 26 27 28 29 30 31
+    STATEMENT_LIST_RULE <block_statement> (55)
+        on left: 21 22
+        on right: 19 20 21
+    STATEMENT_RULE <statement> (56)
+        on left: 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38
+        on right: 21 22
+    EXPRESSION_RULE <expression> (57)
+        on left: 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55
+        on right: 23 24 27 28 29 30 31 33 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 57 61 63
+    VARIABLE_RULE <variable> (58)
+        on left: 56 57
+        on right: 24 29 30 54 58 59
+    READ_VARIABLE_LIST_RULE <read_statement> (59)
+        on left: 58 59
+        on right: 25 34 58
+    PRINT_VARIABLE_LIST_RULE <print_statement> (60)
+        on left: 60 61 62 63
+        on right: 36 60 61
+
+
+State 0
+
+    0 $accept: . PROGRAMME_RULE $end
+
+    INT     shift, and go to state 1
+    FLOAT   shift, and go to state 2
+    STRING  shift, and go to state 3
+    VOID    shift, and go to state 4
+    BOOL    shift, and go to state 5
+
+    PROGRAMME_RULE                   go to state 6
+    DECLARATION_STATEMENT_LIST_RULE  go to state 7
+    ShortType                        go to state 8
+    DECLARATION_STATEMENT_RULE       go to state 9
+
+
+State 1
+
+    8 ShortType: INT .
+
+    $default  reduce using rule 8 (ShortType)
+
+
+State 2
+
+    9 ShortType: FLOAT .
+
+    $default  reduce using rule 9 (ShortType)
+
+
+State 3
+
+   10 ShortType: STRING .
+
+    $default  reduce using rule 10 (ShortType)
+
+
+State 4
+
+   11 ShortType: VOID .
+
+    $default  reduce using rule 11 (ShortType)
+
+
+State 5
+
+   12 ShortType: BOOL .
+
+    $default  reduce using rule 12 (ShortType)
+
+
+State 6
+
+    0 $accept: PROGRAMME_RULE . $end
+
+    $end  shift, and go to state 10
+
+
+State 7
+
+    1 PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE . FUNCTION_LIST_RULE LOGIC_BLOCK
+    6 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE . DECLARATION_STATEMENT_RULE ';'
+
+    DEF     shift, and go to state 11
+    INT     shift, and go to state 1
+    FLOAT   shift, and go to state 2
+    STRING  shift, and go to state 3
+    VOID    shift, and go to state 4
+    BOOL    shift, and go to state 5
+
+    DEF       [reduce using rule 4 (FUNCTION_LIST_RULE)]
+    $default  reduce using rule 4 (FUNCTION_LIST_RULE)
+
+    FUNCTION_LIST_RULE          go to state 12
+    FUNCTION_RULE               go to state 13
+    ShortType                   go to state 8
+    DECLARATION_STATEMENT_RULE  go to state 14
+
+
+State 8
+
+   13 DECLARATION_STATEMENT_RULE: ShortType . DECLARATION_VARIABLE_LIST_RULE
+
+    IDENTIFIER  shift, and go to state 15
+
+    $default  reduce using rule 18 (DECLARATION_VARIABLE_LIST_RULE)
+
+    DECLARATION_VARIABLE_LIST_RULE  go to state 16
+
+
+State 9
+
+    7 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_RULE . ';'
+
+    ';'  shift, and go to state 17
+
+
+State 10
+
+    0 $accept: PROGRAMME_RULE $end .
+
+    $default  accept
+
+
+State 11
+
+    5 FUNCTION_RULE: DEF . ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
+
+    INT     shift, and go to state 1
+    FLOAT   shift, and go to state 2
+    STRING  shift, and go to state 3
+    VOID    shift, and go to state 4
+    BOOL    shift, and go to state 5
+
+    ShortType  go to state 18
+
+
+State 12
+
+    1 PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE . LOGIC_BLOCK
+    2 FUNCTION_LIST_RULE: FUNCTION_LIST_RULE . FUNCTION_RULE ';'
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 20
+    INT_LITERAL  shift, and go to state 21
+    READ         shift, and go to state 22
+    PRINT        shift, and go to state 23
+    GOTO         shift, and go to state 24
+    BREAK        shift, and go to state 25
+    LOOP         shift, and go to state 26
+    IF           shift, and go to state 27
+    DEF          shift, and go to state 11
+    ';'          shift, and go to state 28
+    '('          shift, and go to state 29
+    '{'          shift, and go to state 30
+
+    FUNCTION_RULE         go to state 31
+    LOGIC_BLOCK           go to state 32
+    STATEMENT_BLOCK_RULE  go to state 33
+    STATEMENT_LIST_RULE   go to state 34
+    STATEMENT_RULE        go to state 35
+    EXPRESSION_RULE       go to state 36
+    VARIABLE_RULE         go to state 37
+
+
+State 13
+
+    3 FUNCTION_LIST_RULE: FUNCTION_RULE . ';'
+
+    ';'  shift, and go to state 38
+
+
+State 14
+
+    6 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE . ';'
+
+    ';'  shift, and go to state 39
+
+
+State 15
+
+   16 DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER .
+   17                               | IDENTIFIER . '[' INT_LITERAL ']'
+
+    '['  shift, and go to state 40
+
+    $default  reduce using rule 16 (DECLARATION_VARIABLE_LIST_RULE)
+
+
+State 16
+
+   13 DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE .
+   14 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE . ',' IDENTIFIER
+   15                               | DECLARATION_VARIABLE_LIST_RULE . ',' IDENTIFIER '[' INT_LITERAL ']'
+
+    ','  shift, and go to state 41
+
+    $default  reduce using rule 13 (DECLARATION_STATEMENT_RULE)
+
+
+State 17
+
+    7 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_RULE ';' .
+
+    $default  reduce using rule 7 (DECLARATION_STATEMENT_LIST_RULE)
+
+
+State 18
+
+    5 FUNCTION_RULE: DEF ShortType . IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
+
+    IDENTIFIER  shift, and go to state 42
+
+
+State 19
+
+   52 EXPRESSION_RULE: '-' . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 44
+    VARIABLE_RULE    go to state 45
+
+
+State 20
+
+   25 STATEMENT_RULE: IDENTIFIER . '(' READ_VARIABLE_LIST_RULE ')' ';'
+   37               | IDENTIFIER . ':'
+   56 VARIABLE_RULE: IDENTIFIER .
+   57              | IDENTIFIER . '[' EXPRESSION_RULE ']'
+
+    '('  shift, and go to state 46
+    '['  shift, and go to state 47
+    ':'  shift, and go to state 48
+
+    $default  reduce using rule 56 (VARIABLE_RULE)
+
+
+State 21
+
+   55 EXPRESSION_RULE: INT_LITERAL .
+
+    $default  reduce using rule 55 (EXPRESSION_RULE)
+
+
+State 22
+
+   34 STATEMENT_RULE: READ . READ_VARIABLE_LIST_RULE ';'
+
+    IDENTIFIER  shift, and go to state 43
+
+    VARIABLE_RULE            go to state 49
+    READ_VARIABLE_LIST_RULE  go to state 50
+
+
+State 23
+
+   36 STATEMENT_RULE: PRINT . PRINT_VARIABLE_LIST_RULE ';'
+
+    '-'             shift, and go to state 19
+    STRING_LITERAL  shift, and go to state 51
+    IDENTIFIER      shift, and go to state 43
+    INT_LITERAL     shift, and go to state 21
+    '('             shift, and go to state 29
+
+    EXPRESSION_RULE           go to state 52
+    VARIABLE_RULE             go to state 45
+    PRINT_VARIABLE_LIST_RULE  go to state 53
+
+
+State 24
+
+   32 STATEMENT_RULE: GOTO . IDENTIFIER ';'
+   33               | GOTO . IDENTIFIER IF EXPRESSION_RULE ';'
+
+    IDENTIFIER  shift, and go to state 54
+
+
+State 25
+
+   35 STATEMENT_RULE: BREAK .
+
+    $default  reduce using rule 35 (STATEMENT_RULE)
+
+
+State 26
+
+   29 STATEMENT_RULE: LOOP . VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   30               | LOOP . VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   31               | LOOP . EXPRESSION_RULE STATEMENT_BLOCK_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 55
+    VARIABLE_RULE    go to state 56
+
+
+State 27
+
+   27 STATEMENT_RULE: IF . EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   28               | IF . EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 57
+    VARIABLE_RULE    go to state 45
+
+
+State 28
+
+   38 STATEMENT_RULE: ';' .
+
+    $default  reduce using rule 38 (STATEMENT_RULE)
+
+
+State 29
+
+   53 EXPRESSION_RULE: '(' . EXPRESSION_RULE ')'
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 58
+    VARIABLE_RULE    go to state 45
+
+
+State 30
+
+   20 STATEMENT_BLOCK_RULE: '{' . STATEMENT_LIST_RULE '}'
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 20
+    INT_LITERAL  shift, and go to state 21
+    READ         shift, and go to state 22
+    PRINT        shift, and go to state 23
+    GOTO         shift, and go to state 24
+    BREAK        shift, and go to state 25
+    LOOP         shift, and go to state 26
+    IF           shift, and go to state 27
+    ';'          shift, and go to state 28
+    '('          shift, and go to state 29
+    '{'          shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 33
+    STATEMENT_LIST_RULE   go to state 59
+    STATEMENT_RULE        go to state 35
+    EXPRESSION_RULE       go to state 36
+    VARIABLE_RULE         go to state 37
+
+
+State 31
+
+    2 FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE . ';'
+
+    ';'  shift, and go to state 60
+
+
+State 32
+
+    1 PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK .
+
+    $default  reduce using rule 1 (PROGRAMME_RULE)
+
+
+State 33
+
+   26 STATEMENT_RULE: STATEMENT_BLOCK_RULE .
+
+    $default  reduce using rule 26 (STATEMENT_RULE)
+
+
+State 34
+
+   19 LOGIC_BLOCK: STATEMENT_LIST_RULE .
+   21 STATEMENT_LIST_RULE: STATEMENT_LIST_RULE . STATEMENT_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 20
+    INT_LITERAL  shift, and go to state 21
+    READ         shift, and go to state 22
+    PRINT        shift, and go to state 23
+    GOTO         shift, and go to state 24
+    BREAK        shift, and go to state 25
+    LOOP         shift, and go to state 26
+    IF           shift, and go to state 27
+    ';'          shift, and go to state 28
+    '('          shift, and go to state 29
+    '{'          shift, and go to state 30
+
+    $default  reduce using rule 19 (LOGIC_BLOCK)
+
+    STATEMENT_BLOCK_RULE  go to state 33
+    STATEMENT_RULE        go to state 61
+    EXPRESSION_RULE       go to state 36
+    VARIABLE_RULE         go to state 37
+
+
+State 35
+
+   22 STATEMENT_LIST_RULE: STATEMENT_RULE .
+
+    $default  reduce using rule 22 (STATEMENT_LIST_RULE)
+
+
+State 36
+
+   23 STATEMENT_RULE: EXPRESSION_RULE . ';'
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ';'               shift, and go to state 75
+
+
+State 37
+
+   24 STATEMENT_RULE: VARIABLE_RULE . '=' EXPRESSION_RULE ';'
+   54 EXPRESSION_RULE: VARIABLE_RULE .
+
+    '='  shift, and go to state 76
+
+    $default  reduce using rule 54 (EXPRESSION_RULE)
+
+
+State 38
+
+    3 FUNCTION_LIST_RULE: FUNCTION_RULE ';' .
+
+    $default  reduce using rule 3 (FUNCTION_LIST_RULE)
+
+
+State 39
+
+    6 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';' .
+
+    $default  reduce using rule 6 (DECLARATION_STATEMENT_LIST_RULE)
+
+
+State 40
+
+   17 DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' . INT_LITERAL ']'
+
+    INT_LITERAL  shift, and go to state 77
+
+
+State 41
+
+   14 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' . IDENTIFIER
+   15                               | DECLARATION_VARIABLE_LIST_RULE ',' . IDENTIFIER '[' INT_LITERAL ']'
+
+    IDENTIFIER  shift, and go to state 78
+
+
+State 42
+
+    5 FUNCTION_RULE: DEF ShortType IDENTIFIER . '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
+
+    '('  shift, and go to state 79
+
+
+State 43
+
+   56 VARIABLE_RULE: IDENTIFIER .
+   57              | IDENTIFIER . '[' EXPRESSION_RULE ']'
+
+    '['  shift, and go to state 47
+
+    $default  reduce using rule 56 (VARIABLE_RULE)
+
+
+State 44
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+   52                | '-' EXPRESSION_RULE .
+
+    $default  reduce using rule 52 (EXPRESSION_RULE)
+
+
+State 45
+
+   54 EXPRESSION_RULE: VARIABLE_RULE .
+
+    $default  reduce using rule 54 (EXPRESSION_RULE)
+
+
+State 46
+
+   25 STATEMENT_RULE: IDENTIFIER '(' . READ_VARIABLE_LIST_RULE ')' ';'
+
+    IDENTIFIER  shift, and go to state 43
+
+    VARIABLE_RULE            go to state 49
+    READ_VARIABLE_LIST_RULE  go to state 80
+
+
+State 47
+
+   57 VARIABLE_RULE: IDENTIFIER '[' . EXPRESSION_RULE ']'
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 81
+    VARIABLE_RULE    go to state 45
+
+
+State 48
+
+   37 STATEMENT_RULE: IDENTIFIER ':' .
+
+    $default  reduce using rule 37 (STATEMENT_RULE)
+
+
+State 49
+
+   59 READ_VARIABLE_LIST_RULE: VARIABLE_RULE .
+
+    $default  reduce using rule 59 (READ_VARIABLE_LIST_RULE)
+
+
+State 50
+
+   34 STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE . ';'
+   58 READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE . ',' VARIABLE_RULE
+
+    ';'  shift, and go to state 82
+    ','  shift, and go to state 83
+
+
+State 51
+
+   62 PRINT_VARIABLE_LIST_RULE: STRING_LITERAL .
+
+    $default  reduce using rule 62 (PRINT_VARIABLE_LIST_RULE)
+
+
+State 52
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+   63 PRINT_VARIABLE_LIST_RULE: EXPRESSION_RULE .
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+
+    $default  reduce using rule 63 (PRINT_VARIABLE_LIST_RULE)
+
+
+State 53
+
+   36 STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE . ';'
+   60 PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE . ',' STRING_LITERAL
+   61                         | PRINT_VARIABLE_LIST_RULE . ',' EXPRESSION_RULE
+
+    ';'  shift, and go to state 84
+    ','  shift, and go to state 85
+
+
+State 54
+
+   32 STATEMENT_RULE: GOTO IDENTIFIER . ';'
+   33               | GOTO IDENTIFIER . IF EXPRESSION_RULE ';'
+
+    IF   shift, and go to state 86
+    ';'  shift, and go to state 87
+
+
+State 55
+
+   31 STATEMENT_RULE: LOOP EXPRESSION_RULE . STATEMENT_BLOCK_RULE
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    '{'               shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 88
+
+
+State 56
+
+   29 STATEMENT_RULE: LOOP VARIABLE_RULE . '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   30               | LOOP VARIABLE_RULE . '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   54 EXPRESSION_RULE: VARIABLE_RULE .
+
+    '='  shift, and go to state 89
+
+    $default  reduce using rule 54 (EXPRESSION_RULE)
+
+
+State 57
+
+   27 STATEMENT_RULE: IF EXPRESSION_RULE . STATEMENT_BLOCK_RULE
+   28               | IF EXPRESSION_RULE . STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    '{'               shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 90
+
+
+State 58
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+   53                | '(' EXPRESSION_RULE . ')'
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ')'               shift, and go to state 91
+
+
+State 59
+
+   20 STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE . '}'
+   21 STATEMENT_LIST_RULE: STATEMENT_LIST_RULE . STATEMENT_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 20
+    INT_LITERAL  shift, and go to state 21
+    READ         shift, and go to state 22
+    PRINT        shift, and go to state 23
+    GOTO         shift, and go to state 24
+    BREAK        shift, and go to state 25
+    LOOP         shift, and go to state 26
+    IF           shift, and go to state 27
+    ';'          shift, and go to state 28
+    '('          shift, and go to state 29
+    '{'          shift, and go to state 30
+    '}'          shift, and go to state 92
+
+    STATEMENT_BLOCK_RULE  go to state 33
+    STATEMENT_RULE        go to state 61
+    EXPRESSION_RULE       go to state 36
+    VARIABLE_RULE         go to state 37
+
+
+State 60
+
+    2 FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';' .
+
+    $default  reduce using rule 2 (FUNCTION_LIST_RULE)
+
+
+State 61
+
+   21 STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE .
+
+    $default  reduce using rule 21 (STATEMENT_LIST_RULE)
+
+
+State 62
+
+   50 EXPRESSION_RULE: EXPRESSION_RULE OR . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 93
+    VARIABLE_RULE    go to state 45
+
+
+State 63
+
+   51 EXPRESSION_RULE: EXPRESSION_RULE AND . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 94
+    VARIABLE_RULE    go to state 45
+
+
+State 64
+
+   48 EXPRESSION_RULE: EXPRESSION_RULE EQUAL . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 95
+    VARIABLE_RULE    go to state 45
+
+
+State 65
+
+   49 EXPRESSION_RULE: EXPRESSION_RULE NOT_EQUAL . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 96
+    VARIABLE_RULE    go to state 45
+
+
+State 66
+
+   44 EXPRESSION_RULE: EXPRESSION_RULE LESS . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 97
+    VARIABLE_RULE    go to state 45
+
+
+State 67
+
+   45 EXPRESSION_RULE: EXPRESSION_RULE LESS_OR_EQUAL . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 98
+    VARIABLE_RULE    go to state 45
+
+
+State 68
+
+   46 EXPRESSION_RULE: EXPRESSION_RULE GREATER . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 99
+    VARIABLE_RULE    go to state 45
+
+
+State 69
+
+   47 EXPRESSION_RULE: EXPRESSION_RULE GREATER_OR_EQUAL . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 100
+    VARIABLE_RULE    go to state 45
+
+
+State 70
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE '+' . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 101
+    VARIABLE_RULE    go to state 45
+
+
+State 71
+
+   40 EXPRESSION_RULE: EXPRESSION_RULE '-' . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 102
+    VARIABLE_RULE    go to state 45
+
+
+State 72
+
+   41 EXPRESSION_RULE: EXPRESSION_RULE '*' . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 103
+    VARIABLE_RULE    go to state 45
+
+
+State 73
+
+   42 EXPRESSION_RULE: EXPRESSION_RULE '/' . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 104
+    VARIABLE_RULE    go to state 45
+
+
+State 74
+
+   43 EXPRESSION_RULE: EXPRESSION_RULE '%' . EXPRESSION_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 105
+    VARIABLE_RULE    go to state 45
+
+
+State 75
+
+   23 STATEMENT_RULE: EXPRESSION_RULE ';' .
+
+    $default  reduce using rule 23 (STATEMENT_RULE)
+
+
+State 76
+
+   24 STATEMENT_RULE: VARIABLE_RULE '=' . EXPRESSION_RULE ';'
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 106
+    VARIABLE_RULE    go to state 45
+
+
+State 77
+
+   17 DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL . ']'
+
+    ']'  shift, and go to state 107
+
+
+State 78
+
+   14 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER .
+   15                               | DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER . '[' INT_LITERAL ']'
+
+    '['  shift, and go to state 108
+
+    $default  reduce using rule 14 (DECLARATION_VARIABLE_LIST_RULE)
+
+
+State 79
+
+    5 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' . DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
+
+    INT     shift, and go to state 1
+    FLOAT   shift, and go to state 2
+    STRING  shift, and go to state 3
+    VOID    shift, and go to state 4
+    BOOL    shift, and go to state 5
+
+    DECLARATION_STATEMENT_LIST_RULE  go to state 109
+    ShortType                        go to state 8
+    DECLARATION_STATEMENT_RULE       go to state 9
+
+
+State 80
+
+   25 STATEMENT_RULE: IDENTIFIER '(' READ_VARIABLE_LIST_RULE . ')' ';'
+   58 READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE . ',' VARIABLE_RULE
+
+    ')'  shift, and go to state 110
+    ','  shift, and go to state 83
+
+
+State 81
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+   57 VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE . ']'
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ']'               shift, and go to state 111
+
+
+State 82
+
+   34 STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE ';' .
+
+    $default  reduce using rule 34 (STATEMENT_RULE)
+
+
+State 83
+
+   58 READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' . VARIABLE_RULE
+
+    IDENTIFIER  shift, and go to state 43
+
+    VARIABLE_RULE  go to state 112
+
+
+State 84
+
+   36 STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE ';' .
+
+    $default  reduce using rule 36 (STATEMENT_RULE)
+
+
+State 85
+
+   60 PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' . STRING_LITERAL
+   61                         | PRINT_VARIABLE_LIST_RULE ',' . EXPRESSION_RULE
+
+    '-'             shift, and go to state 19
+    STRING_LITERAL  shift, and go to state 113
+    IDENTIFIER      shift, and go to state 43
+    INT_LITERAL     shift, and go to state 21
+    '('             shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 114
+    VARIABLE_RULE    go to state 45
+
+
+State 86
+
+   33 STATEMENT_RULE: GOTO IDENTIFIER IF . EXPRESSION_RULE ';'
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 115
+    VARIABLE_RULE    go to state 45
+
+
+State 87
+
+   32 STATEMENT_RULE: GOTO IDENTIFIER ';' .
+
+    $default  reduce using rule 32 (STATEMENT_RULE)
+
+
+State 88
+
+   31 STATEMENT_RULE: LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE .
+
+    $default  reduce using rule 31 (STATEMENT_RULE)
+
+
+State 89
+
+   29 STATEMENT_RULE: LOOP VARIABLE_RULE '=' . EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   30               | LOOP VARIABLE_RULE '=' . EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 116
+    VARIABLE_RULE    go to state 45
+
+
+State 90
+
+   27 STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE .
+   28               | IF EXPRESSION_RULE STATEMENT_BLOCK_RULE . ELSE STATEMENT_BLOCK_RULE
+
+    ELSE  shift, and go to state 117
+
+    $default  reduce using rule 27 (STATEMENT_RULE)
+
+
+State 91
+
+   53 EXPRESSION_RULE: '(' EXPRESSION_RULE ')' .
+
+    $default  reduce using rule 53 (EXPRESSION_RULE)
+
+
+State 92
+
+   20 STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}' .
+
+    $default  reduce using rule 20 (STATEMENT_BLOCK_RULE)
+
+
+State 93
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   50                | EXPRESSION_RULE OR EXPRESSION_RULE .
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+
+    $default  reduce using rule 50 (EXPRESSION_RULE)
+
+
+State 94
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+   51                | EXPRESSION_RULE AND EXPRESSION_RULE .
+
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+
+    $default  reduce using rule 51 (EXPRESSION_RULE)
+
+
+State 95
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE EQUAL EXPRESSION_RULE .
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+
+    $default  reduce using rule 48 (EXPRESSION_RULE)
+
+
+State 96
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE .
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+
+    $default  reduce using rule 49 (EXPRESSION_RULE)
+
+
+State 97
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   44                | EXPRESSION_RULE LESS EXPRESSION_RULE .
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    '+'  shift, and go to state 70
+    '-'  shift, and go to state 71
+    '*'  shift, and go to state 72
+    '/'  shift, and go to state 73
+    '%'  shift, and go to state 74
+
+    $default  reduce using rule 44 (EXPRESSION_RULE)
+
+
+State 98
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   45                | EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE .
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    '+'  shift, and go to state 70
+    '-'  shift, and go to state 71
+    '*'  shift, and go to state 72
+    '/'  shift, and go to state 73
+    '%'  shift, and go to state 74
+
+    $default  reduce using rule 45 (EXPRESSION_RULE)
+
+
+State 99
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   46                | EXPRESSION_RULE GREATER EXPRESSION_RULE .
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    '+'  shift, and go to state 70
+    '-'  shift, and go to state 71
+    '*'  shift, and go to state 72
+    '/'  shift, and go to state 73
+    '%'  shift, and go to state 74
+
+    $default  reduce using rule 46 (EXPRESSION_RULE)
+
+
+State 100
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   47                | EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE .
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    '+'  shift, and go to state 70
+    '-'  shift, and go to state 71
+    '*'  shift, and go to state 72
+    '/'  shift, and go to state 73
+    '%'  shift, and go to state 74
+
+    $default  reduce using rule 47 (EXPRESSION_RULE)
+
+
+State 101
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   39                | EXPRESSION_RULE '+' EXPRESSION_RULE .
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    '*'  shift, and go to state 72
+    '/'  shift, and go to state 73
+    '%'  shift, and go to state 74
+
+    $default  reduce using rule 39 (EXPRESSION_RULE)
+
+
+State 102
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   40                | EXPRESSION_RULE '-' EXPRESSION_RULE .
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    '*'  shift, and go to state 72
+    '/'  shift, and go to state 73
+    '%'  shift, and go to state 74
+
+    $default  reduce using rule 40 (EXPRESSION_RULE)
+
+
+State 103
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   41                | EXPRESSION_RULE '*' EXPRESSION_RULE .
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    $default  reduce using rule 41 (EXPRESSION_RULE)
+
+
+State 104
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   42                | EXPRESSION_RULE '/' EXPRESSION_RULE .
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    $default  reduce using rule 42 (EXPRESSION_RULE)
+
+
+State 105
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   43                | EXPRESSION_RULE '%' EXPRESSION_RULE .
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    $default  reduce using rule 43 (EXPRESSION_RULE)
+
+
+State 106
+
+   24 STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE . ';'
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ';'               shift, and go to state 118
+
+
+State 107
+
+   17 DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL ']' .
+
+    $default  reduce using rule 17 (DECLARATION_VARIABLE_LIST_RULE)
+
+
+State 108
+
+   15 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' . INT_LITERAL ']'
+
+    INT_LITERAL  shift, and go to state 119
+
+
+State 109
+
+    5 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE . ')' STATEMENT_BLOCK_RULE
+    6 DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE . DECLARATION_STATEMENT_RULE ';'
+
+    INT     shift, and go to state 1
+    FLOAT   shift, and go to state 2
+    STRING  shift, and go to state 3
+    VOID    shift, and go to state 4
+    BOOL    shift, and go to state 5
+    ')'     shift, and go to state 120
+
+    ShortType                   go to state 8
+    DECLARATION_STATEMENT_RULE  go to state 14
+
+
+State 110
+
+   25 STATEMENT_RULE: IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' . ';'
+
+    ';'  shift, and go to state 121
+
+
+State 111
+
+   57 VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE ']' .
+
+    $default  reduce using rule 57 (VARIABLE_RULE)
+
+
+State 112
+
+   58 READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE .
+
+    $default  reduce using rule 58 (READ_VARIABLE_LIST_RULE)
+
+
+State 113
+
+   60 PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL .
+
+    $default  reduce using rule 60 (PRINT_VARIABLE_LIST_RULE)
+
+
+State 114
+
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+   61 PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE .
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+
+    $default  reduce using rule 61 (PRINT_VARIABLE_LIST_RULE)
+
+
+State 115
+
+   33 STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE . ';'
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ';'               shift, and go to state 122
+
+
+State 116
+
+   29 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE . ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   30               | LOOP VARIABLE_RULE '=' EXPRESSION_RULE . ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ','               shift, and go to state 123
+
+
+State 117
+
+   28 STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE . STATEMENT_BLOCK_RULE
+
+    '{'  shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 124
+
+
+State 118
+
+   24 STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE ';' .
+
+    $default  reduce using rule 24 (STATEMENT_RULE)
+
+
+State 119
+
+   15 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL . ']'
+
+    ']'  shift, and go to state 125
+
+
+State 120
+
+    5 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' . STATEMENT_BLOCK_RULE
+
+    '{'  shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 126
+
+
+State 121
+
+   25 STATEMENT_RULE: IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';' .
+
+    $default  reduce using rule 25 (STATEMENT_RULE)
+
+
+State 122
+
+   33 STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE ';' .
+
+    $default  reduce using rule 33 (STATEMENT_RULE)
+
+
+State 123
+
+   29 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' . EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   30               | LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' . EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 127
+    VARIABLE_RULE    go to state 45
+
+
+State 124
+
+   28 STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE .
+
+    $default  reduce using rule 28 (STATEMENT_RULE)
+
+
+State 125
+
+   15 DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']' .
+
+    $default  reduce using rule 15 (DECLARATION_VARIABLE_LIST_RULE)
+
+
+State 126
+
+    5 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE .
+
+    $default  reduce using rule 5 (FUNCTION_RULE)
+
+
+State 127
+
+   29 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE . STATEMENT_BLOCK_RULE
+   30               | LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE . ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    ','               shift, and go to state 128
+    '{'               shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 129
+
+
+State 128
+
+   30 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' . EXPRESSION_RULE STATEMENT_BLOCK_RULE
+
+    '-'          shift, and go to state 19
+    IDENTIFIER   shift, and go to state 43
+    INT_LITERAL  shift, and go to state 21
+    '('          shift, and go to state 29
+
+    EXPRESSION_RULE  go to state 130
+    VARIABLE_RULE    go to state 45
+
+
+State 129
+
+   29 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE .
+
+    $default  reduce using rule 29 (STATEMENT_RULE)
+
+
+State 130
+
+   30 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE . STATEMENT_BLOCK_RULE
+   39 EXPRESSION_RULE: EXPRESSION_RULE . '+' EXPRESSION_RULE
+   40                | EXPRESSION_RULE . '-' EXPRESSION_RULE
+   41                | EXPRESSION_RULE . '*' EXPRESSION_RULE
+   42                | EXPRESSION_RULE . '/' EXPRESSION_RULE
+   43                | EXPRESSION_RULE . '%' EXPRESSION_RULE
+   44                | EXPRESSION_RULE . LESS EXPRESSION_RULE
+   45                | EXPRESSION_RULE . LESS_OR_EQUAL EXPRESSION_RULE
+   46                | EXPRESSION_RULE . GREATER EXPRESSION_RULE
+   47                | EXPRESSION_RULE . GREATER_OR_EQUAL EXPRESSION_RULE
+   48                | EXPRESSION_RULE . EQUAL EXPRESSION_RULE
+   49                | EXPRESSION_RULE . NOT_EQUAL EXPRESSION_RULE
+   50                | EXPRESSION_RULE . OR EXPRESSION_RULE
+   51                | EXPRESSION_RULE . AND EXPRESSION_RULE
+
+    OR                shift, and go to state 62
+    AND               shift, and go to state 63
+    EQUAL             shift, and go to state 64
+    NOT_EQUAL         shift, and go to state 65
+    LESS              shift, and go to state 66
+    LESS_OR_EQUAL     shift, and go to state 67
+    GREATER           shift, and go to state 68
+    GREATER_OR_EQUAL  shift, and go to state 69
+    '+'               shift, and go to state 70
+    '-'               shift, and go to state 71
+    '*'               shift, and go to state 72
+    '/'               shift, and go to state 73
+    '%'               shift, and go to state 74
+    '{'               shift, and go to state 30
+
+    STATEMENT_BLOCK_RULE  go to state 131
+
+
+State 131
+
+   30 STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE .
+
+    $default  reduce using rule 30 (STATEMENT_RULE)

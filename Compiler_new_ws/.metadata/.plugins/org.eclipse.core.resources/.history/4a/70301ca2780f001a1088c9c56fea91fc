@@ -1,0 +1,24 @@
+int a;
+int b;
+
+
+
+def int incr(int c;)
+{
+a = a + a;
+}
+
+def int incrAgain(int c;)
+{
+a = a + a;
+}
+
+a=0;
+b = 1;
+
+read b;
+
+
+
+
+print "A is now ", a;

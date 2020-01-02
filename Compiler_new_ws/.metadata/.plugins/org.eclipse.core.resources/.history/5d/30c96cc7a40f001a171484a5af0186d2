@@ -1,0 +1,17 @@
+int scanned_N, scanned_k, final_sum;
+read scanned_N;
+read scanned_k;
+def int power(int base, int num)
+{
+if (num == 0)
+{return 1;}
+else
+{return base * power(base, num - 1);};
+};
+def int g(int N, int k)
+{
+loop(int i=1;i<=N;i++){
+final_sum = final_sum + power(i,k);
+};
+};
+g(N,k);

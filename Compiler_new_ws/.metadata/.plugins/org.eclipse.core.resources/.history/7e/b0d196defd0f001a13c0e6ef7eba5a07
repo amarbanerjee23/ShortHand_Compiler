@@ -1,0 +1,22 @@
+int a;
+int b;
+
+def void incr(int c;)
+{
+a = a + a;
+};
+
+def void incrAgain(int c;)
+{
+a = a + a;
+};
+
+a=2;
+b = 1;
+
+
+
+read b;
+
+
+print "B is now ", b;

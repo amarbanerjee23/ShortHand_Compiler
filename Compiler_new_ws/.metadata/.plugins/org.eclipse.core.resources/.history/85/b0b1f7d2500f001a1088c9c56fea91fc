@@ -1,0 +1,9 @@
+declblock{
+    int kulin;
+    int bholo;int ke;
+}
+
+kulin = 2;
+bholo = 4;
+ke = kulin + bholo;
+print ke;

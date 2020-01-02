@@ -1,0 +1,27 @@
+int i[6];
+int max;
+int j;
+int k;
+
+
+max = 0;
+
+j = 0;
+k=0;
+
+loop k < 6 {      
+read i[k];
+k = k + 1;
+}
+
+    loop j=0,j < 6 {      
+    	print "Value::", i[j];
+        if i[j] > max
+        {
+        max = i[j];
+        }
+ 
+        j = j + 1;
+    }
+    
+    print "Largest Number is", max;

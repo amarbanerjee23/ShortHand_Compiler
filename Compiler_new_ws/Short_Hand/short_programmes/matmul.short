@@ -1,0 +1,56 @@
+int m, n, p, q, c, d, k, sum = 0;
+int first[10][10], second[10][10], multiply[10][10];
+print 'Enter number of rows and columns of first matrix\n';
+
+
+read m , n;
+print 'Enter elements of first matrix\n';
+loop (c = 0; c < m; x++)
+{ 
+loop (d = 0; d < n; c++)
+{
+read first[c][d];
+};
+c = c + 1;
+};
+print 'Enter number of rows and columns of second matrix\n';
+read p,q;
+if (n != p)
+{
+print 'The matrices can’t be multiplied with each other.\n';
+}
+else
+{
+print 'Enter elements of second matrix\n';
+loop (c = 0; c < p; c++)
+{
+
+loop (d = 0; d < q; d++)
+{
+read second[c][d];
+};
+read second[c][d];
+c = c + 1;
+};
+loop (c = 0; c < m;c++) {
+loop (d = 0; d < q;d++) {
+loop (k = 0; k < p;k++) {
+sum = sum + first[c][k]*second[k][d];
+k = k + 1;
+};
+d = d + 1;
+multiply[c][d] = sum;
+sum = 0;
+};
+c = c + 1;
+};
+print 'Product of the matrices:\n';
+loop (c = 0; c < m;c++) {
+loop (d = 0; d < q;d++){
+print multiply[c][d];
+};
+d = d + 1;
+print '\n';
+};
+c = c+ 1;
+};

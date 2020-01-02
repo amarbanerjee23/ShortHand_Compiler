@@ -1,0 +1,99 @@
+#ifndef _codePrintVisitor_H
+#define _codePrintVisitor_H
+
+#include <llvm-8/llvm/IR/BasicBlock.h>
+#include <llvm-8/llvm/IR/Constants.h>
+#include <llvm-8/llvm/IR/Function.h>
+#include <llvm-8/llvm/IR/GlobalVariable.h>
+#include <llvm-8/llvm/IR/Instructions.h>
+#include <llvm-8/llvm/IR/IRPrintingPasses.h>
+#include <llvm-8/llvm/IR/LegacyPassManager.h>
+#include <llvm-8/llvm/IR/LLVMContext.h>
+#include <llvm-8/llvm/IR/Module.h>
+#include <llvm-8/llvm/IR/Type.h>
+#include <llvm-8/llvm/IR/Verifier.h>
+#include <llvm-8/llvm/Pass.h>
+#include <llvm-8/llvm/Support/raw_ostream.h>
+#include<llvm-8/llvm/Bitcode/BitcodeWriter.h>
+#include<llvm-8/llvm/Support/FileSystem.h>
+#include <cstdlib>
+#include <iostream>
+#include<iostream>
+#include <vector>
+#include <algorithm>
+#include <typeinfo>
+#include "../ast/AST.h"
+
+
+class IR_Generator;
+
+llvm::Value *ShowError(const char *str);
+
+class IR_Generator : public Visitor
+{
+private:
+    const char * module_name;
+    llvm::Value * ret;
+    llvm::Function * main_function;
+    int load_variable;
+    int is_condition;
+    int is_expression;
+    string str_;
+    map<string, llvm::BasicBlock*> goto_labels;
+
+    static const int ERROR = 0;
+    static const int PLUS = 1;
+    static const int MINUS = 2;
+    static const int MULTIPLY = 3;
+    static const int DIVIDE = 4;
+    static const int MODULO = 5;
+    static const int LESS = 6;
+    static const int GREATER = 7;
+    static const int LESS_OR_EQUAL = 8;
+    static const int GREATER_OR_EQUAL = 9;
+    static const int EQUAL = 10;
+    static const int NOT_EQUAL = 11;
+    static const int OR = 12;
+    static const int AND = 13;
+    static const int UMINUS = 1;
+public:
+    IR_Generator();
+    virtual ~IR_Generator();
+    void dump();
+    llvm::Value * get_expression();
+    llvm::Value * get_condition();
+    void setModuleName(const char * mod_name){
+      this->module_name = mod_name;
+    };
+    const char * getModuleName(){
+         return this->module_name;
+       };
+    llvm::IntegerType * parseType(ShortType type);
+
+    int visit(AST_PROGRAM * program);
+    int visit(AST_DATA_DECLARATION_BLOCK * decl_block);
+    int visit(AST_LOGIC_BLOCK * code_block);
+    int visit(AST_FUNCTION_RULE * function);
+    int visit(AST_FUNCTION_CALL_RULE * function_called);
+    int visit(AST_expression_statement * expression_statement);
+    int visit(AST_ASSIGNMENT_RULE * assignment_statement);
+    int visit(AST_STATEMENTS_BLOCK * block_statement);
+    int visit(AST_IF_STATEMENT * if_statement);
+    int visit(AST_ifelse_statement * ifelse_statement);
+    int visit(AST_for_statement * for_statement);
+    int visit(AST_while_statement * while_statement);
+    int visit(AST_goto_statement * goto_statement);
+    int visit(AST_read_statement * read_statement);
+    int visit(AST_print_statement * print_statement);
+    int visit(AST_label_statement * label_statement);
+
+    int visit(AST_binary_operator_expression * binary_operator_expression);
+    int visit(AST_unary_operator_expression * unary_operator_expression);
+
+    int visit(AST_variable_single_int * variable_single_int);
+    int visit(AST_variable_array_int * variable_array_int);
+    int visit(AST_int_literal * int_literal);
+    int visit(AST_string_literal * string_literal);
+};
+
+#endif

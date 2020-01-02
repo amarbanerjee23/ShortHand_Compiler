@@ -1,0 +1,9 @@
+
+    int isprime[5000005];
+    int N;
+    int primes[5000005];
+    int i, j, k;
+
+
+
+
