@@ -1,20 +1,20 @@
-#include <llvm-8/llvm/IR/BasicBlock.h>
-#include <llvm-8/llvm/IR/Constants.h>
-#include <llvm-8/llvm/IR/Function.h>
-#include<llvm-8/llvm/IR/Attributes.h>
-#include <llvm-8/llvm/IR/GlobalVariable.h>
-#include <llvm-8/llvm/IR/IRBuilder.h>
-#include <llvm-8/llvm/IR/Instructions.h>
-#include <llvm-8/llvm/IR/IRPrintingPasses.h>
-#include <llvm-8/llvm/IR/LegacyPassManager.h>
-#include <llvm-8/llvm/IR/LLVMContext.h>
-#include <llvm-8/llvm/IR/Module.h>
-#include <llvm-8/llvm/IR/Type.h>
-#include <llvm-8/llvm/IR/Verifier.h>
-#include <llvm-8/llvm/Pass.h>
-#include <llvm-8/llvm/Support/raw_ostream.h>
-#include<llvm-8/llvm/Bitcode/BitcodeWriter.h>
-#include<llvm-8/llvm/Support/FileSystem.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Function.h>
+#include<llvm/IR/Attributes.h>
+#include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/IRPrintingPasses.h>
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/raw_ostream.h>
+#include<llvm/Bitcode/BitcodeWriter.h>
+#include<llvm/Support/FileSystem.h>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -66,7 +66,7 @@ IR_Generator::IR_Generator() {
 
 }
 IR_Generator::~IR_Generator() {
-
+	delete module;
 }
 ;
 
@@ -83,14 +83,53 @@ void IR_Generator::dump() {
 	OS << *module;
 	OS.flush();
 	cerr << Str;
-	std::ofstream out("ir_file.ir");
+	std::string ir_file = this->getModuleName() + ".ir";
+	std::ofstream out(ir_file);
 	out << Str;
 	out.close();
-	delete module;
 //      system("sh decaf_linker.sh");
 //      system("sh decaf_linker.sh");
 //  system(std::strcat("./codegen_interpret.sh ", (ir_filename+extn).c_str()));
 
+}
+
+bool IR_Generator::dumpBitcode() {
+	std::string bc_file = this->getModuleName() + ".bc";
+	std::error_code ec;
+	raw_fd_ostream bc_out(bc_file, ec, sys::fs::OF_None);
+	if (ec) {
+		cerr << "Failed to create bitcode file: " << bc_file << "\n";
+		return false;
+	}
+	WriteBitcodeToFile(*module, bc_out);
+	bc_out.flush();
+	cerr << "Generated LLVM bitcode: " << bc_file << "\n";
+	return true;
+}
+
+bool IR_Generator::dumpNativeBinary() {
+	if (!dumpBitcode()) {
+		return false;
+	}
+
+	std::string base = this->getModuleName();
+	std::string cmd_obj = "llc -filetype=obj " + base + ".bc -o " + base + ".o";
+	std::string cmd_bin = "clang " + base + ".o -o " + base;
+
+	int llc_code = std::system(cmd_obj.c_str());
+	if (llc_code != 0) {
+		cerr << "Failed to run llc. Ensure LLVM tools are installed and in PATH.\n";
+		return false;
+	}
+
+	int clang_code = std::system(cmd_bin.c_str());
+	if (clang_code != 0) {
+		cerr << "Failed to run clang linker step.\n";
+		return false;
+	}
+
+	cerr << "Generated native binary: " << base << "\n";
+	return true;
 }
 
 // helper to get expression

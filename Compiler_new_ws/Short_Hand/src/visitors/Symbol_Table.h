@@ -1,8 +1,8 @@
 #ifndef _symbolTable_H
 #define _symbolTable_H
 
-#include <llvm-8/llvm/IR/BasicBlock.h>
-#include <llvm-8/llvm/IR/Value.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Value.h>
 #include <iostream>
 #include <list>
 #include <map>
