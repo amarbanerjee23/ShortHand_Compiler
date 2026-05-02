@@ -3,11 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "./ast/AST.h"
-#include "./visitors/AST_Printer.cpp"
 #include "./visitors/AST_Printer.h"
-#include "./visitors/Interpreter.cpp"
 #include "./visitors/Interpreter.h"
-#include "./visitors/IR_Generator.cpp"
 #include "./visitors/IR_Generator.h"
 
 FILE * flex_output;
@@ -20,20 +17,15 @@ int main(int argc, char *argv[])
 {
 
 	if (argc < 3) {
-			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile]\n");
+			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
 			exit(1);
 		}
 
-	if (argc < 3) {
-		fprintf(stderr, "Correct usage: short_hand filename [run|print|compile]\n");
-		exit(1);
-	}
-
 	if (argc > 3) {
 		fprintf(stderr, "Passing more arguments than necessary.\n");
-		fprintf(stderr, "Correct usage: short_hand filename\n");
-        exit(1);
-	}
+			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
+	        exit(1);
+		}
 
 
     flex_output = fopen("flex_output.txt", "w");
@@ -76,12 +68,34 @@ int main(int argc, char *argv[])
         main_program->accept(c);
 
         c.dump();
+        c.dumpBitcode();
+    }
+    else if(!strcmp(argv[2], "compile-bc"))
+    {
+        IR_Generator c;
+        c.setModuleName(file_without_extension);
+        main_program->accept(c);
+        c.dumpBitcode();
+    }
+    else if(!strcmp(argv[2], "compile-native"))
+    {
+        IR_Generator c;
+        c.setModuleName(file_without_extension);
+        main_program->accept(c);
+        c.dump();
+        if (!c.dumpNativeBinary())
+        {
+            fprintf(stderr, "Native build failed. Install llc/clang and retry.\n");
+            exit(1);
+        }
     }
     else
     {
         fprintf (stderr, "----------------ERROR----------------\n");
-        fprintf(stderr, "Correct usage: short_hand filename run|print|compile]\n");
+        fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
         exit(1);
     }
+    fclose(flex_output);
+    fclose(bison_output);
     return 0;
 }
