@@ -122,6 +122,7 @@ From repo root:
 chmod +x scripts/bootstrap_framework.sh scripts/verify_env.sh
 ./scripts/bootstrap_framework.sh
 ./scripts/verify_env.sh
+./scripts/smoke_test.sh
 ```
 
 This script:
@@ -129,6 +130,7 @@ This script:
 2. Downloads ONNX Runtime CPU binaries into `third_party/onnxruntime/`.
 3. Downloads LibTorch CPU binaries into `third_party/libtorch/`.
 4. Prints environment variables and build commands.
+5. `smoke_test.sh` validates optional AI binaries and fallback behavior.
 
 ### Manual setup (if you prefer controlled versions)
 
@@ -182,3 +184,14 @@ The repository currently implements the grammar + interpreter + LLVM IR backend 
 - optimizer and diagnostics hardening.
 
 This README and scripts now provide the complete resource links and installation path needed to build and run the current framework immediately.
+
+## Validation quickstart
+
+From repo root:
+
+```bash
+./scripts/verify_env.sh
+./scripts/smoke_test.sh
+```
+
+The smoke test intentionally validates that missing optional SDKs are handled with clear runtime messages, and that build targets still complete.

@@ -15,8 +15,18 @@ mkdir -p "${THIRD_PARTY_DIR}"
 
 echo "[1/4] Installing system build tooling (Ubuntu/Debian)..."
 if command -v apt-get >/dev/null 2>&1; then
-  sudo apt-get update
-  sudo apt-get install -y \
+  if [ "$(id -u)" -eq 0 ]; then
+    APT_PREFIX=""
+  elif command -v sudo >/dev/null 2>&1; then
+    APT_PREFIX="sudo"
+  else
+    echo "No root privileges and sudo unavailable; skipping apt package install."
+    APT_PREFIX="skip"
+  fi
+
+  if [ "${APT_PREFIX}" != "skip" ]; then
+    ${APT_PREFIX} apt-get update
+    ${APT_PREFIX} apt-get install -y \
     build-essential \
     cmake \
     ninja-build \
@@ -29,6 +39,7 @@ if command -v apt-get >/dev/null 2>&1; then
     clang \
     llvm \
     llvm-dev
+  fi
 else
   echo "apt-get not found; skipping system package install."
 fi

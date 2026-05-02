@@ -1,0 +1,8 @@
+third_party/
+Compiler_new_ws/Short_Hand/build/short_ai_app
+Compiler_new_ws/Short_Hand/build/short_ai_train
+Compiler_new_ws/Short_Hand/build/short_hand
+*.bc
+*.ir
+*.o
+*.pt
