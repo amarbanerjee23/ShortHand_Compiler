@@ -5,10 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
 
-echo "[1/3] Building optional AI binaries..."
+echo "[1/4] Building optional AI binaries..."
 make -C "${SRC_DIR}" ai_app ai_train
 
-echo "[2/3] Verifying graceful runtime guidance without optional SDKs..."
+echo "[2/4] Verifying graceful runtime guidance without optional SDKs..."
 APP_OUTPUT="$("${BUILD_DIR}/short_ai_app" fake.onnx 1,3 0.1,0.2,0.3 2>&1 || true)"
 if echo "${APP_OUTPUT}" | grep -q "ONNX Runtime support not enabled"; then
   echo "short_ai_app fallback message OK"
@@ -25,7 +25,13 @@ else
   exit 1
 fi
 
-echo "[3/3] Verifying environment checker script..."
+echo "[3/4] Verifying environment checker script..."
 "${ROOT_DIR}/scripts/verify_env.sh" >/dev/null
+
+echo "[4/4] Verifying compiled C++ Green AI evidence tooling..."
+make -C "${SRC_DIR}" green_ai_tool >/dev/null
+"${BUILD_DIR}/green_ai_tool" validate "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --strict strict
+"${ROOT_DIR}/scripts/green-report" "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --output /tmp/short_hand_green_report.json --strict strict
+"${ROOT_DIR}/scripts/green-check" "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --baseline /tmp/short_hand_green_report.json --threshold-percent 10
 
 echo "Smoke tests completed successfully."

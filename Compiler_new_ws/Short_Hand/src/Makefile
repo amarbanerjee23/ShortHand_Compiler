@@ -26,6 +26,8 @@ AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
 AI_APP_BIN := ../build/short_ai_app
 AI_TRAIN_BIN := ../build/short_ai_train
+GREEN_AI_TOOL_BIN := ../build/green_ai_tool
+GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
 
 all: short_hand
 
@@ -45,10 +47,17 @@ ai_train: ai_train.cpp $(AI_TRAIN_SRC)
 	@mkdir -p ../build
 	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) -o $(AI_TRAIN_BIN) ai_train.cpp $(AI_TRAIN_SRC) $(LDFLAGS) $(AI_LDLIBS)
 
+green_ai_tool: $(GREEN_AI_TOOL_SRC)
+	@mkdir -p ../build
+	$(CXX) $(CXXFLAGS) -o $(GREEN_AI_TOOL_BIN) $(GREEN_AI_TOOL_SRC)
+
+test-green: green_ai_tool
+	../../../tests/green_ai/test_green_ai_tool.sh
+
 regen:
 	bison --debug -v -d ./scanner_parser/parser.yy
 	flex ./scanner_parser/scanner.ll
 
-.PHONY: all short_hand ai_app ai_train regen clean
+.PHONY: all short_hand ai_app ai_train green_ai_tool test-green regen clean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train lex.yy.c parser.tab.cc parser.tab.hh parser.output
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool lex.yy.c parser.tab.cc parser.tab.hh parser.output
