@@ -1,0 +1,59 @@
+green {
+  product: "ShortHand ai_infer sidecar evidence"
+  green_mode: "strict"
+  certification_profile: "C3-ECO-AI"
+  functional_unit: "1000_inferences"
+  success_criteria: { p95_latency_ms_max: 250 error_rate_max: 0.01 }
+  boundary: { include: ["inference", "model_loading", "onnxruntime", "monitoring"] exclude: [] embodied_hardware: "allocated" }
+  measurement_quality: "MQ1"
+  data_quality: "DQ1"
+  audit_evidence: ["Compiler_new_ws/Short_Hand/examples/ai_infer.short"]
+  assumptions: ["estimated_watts supplied by user until power telemetry is connected"]
+}
+
+budgets {
+  energy_per_inference_j_max: 150
+  carbon_per_1000_inferences_gco2e_max: 50
+  memory_peak_mb_max: 2048
+}
+
+carbon {
+  accounting_method: "location_based"
+  region: "IN-WEST"
+  grid_factor_kgco2e_per_kwh: 0.475
+  grid_factor_source: "declared_by_user"
+  factor_year: 2026
+  report_market_based_separately: true
+  offsets_allowed_in_core_score: false
+}
+
+model demo_onnx_model {
+  type: "demo"
+  format: "onnx"
+  precision: "fp32"
+  compression: { quantized: false pruned: false distilled: false }
+  green_model: { parameters_count: 10000 model_size_mb: 2 accuracy_energy_frontier_required: false model_necessity_justification: "demo inference path" smaller_model_evaluated: true }
+}
+
+infer endpoint ai_infer_example {
+  model: "demo_onnx_model"
+  batch_size: 1
+  cache: "disabled"
+  green_infer: { measure_energy_per_inference: true measure_latency_energy: ["p95"] max_joules_per_inference: 0.25 idle_baseline_subtraction: false warm_and_cold_measurement: false }
+}
+
+target local_cpp_runtime {
+  hardware: "developer_machine"
+  accelerator: "unknown"
+  runtime: "onnxruntime"
+  language_backend: "cpp"
+  green_target: { measure_idle_watts: false support_low_resource_mode: true max_memory_mb: 2048 }
+}
+
+measurements {
+  functional_unit_count: 1000
+  inference_energy_kwh: 0.03
+  memory_peak_mb: 512
+  model_size_mb: 2
+  p95_latency_ms: 120
+}

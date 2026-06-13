@@ -1,0 +1,4 @@
+int epochs, learning_rate_scaled;
+epochs = 5;
+learning_rate_scaled = 1;
+print "AI training uses native LibTorch C++ via short_ai_train";

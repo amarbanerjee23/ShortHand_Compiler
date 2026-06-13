@@ -1,0 +1,7 @@
+int inferences, watts, seconds;
+inferences = 1000;
+watts = 45;
+seconds = 12;
+print "ShortHand compiled Green AI pipeline";
+ai_infer("models/demo.onnx", "1,3", "0.1,0.2,0.3");
+greenai("compiled_pipeline", inferences, watts, seconds);

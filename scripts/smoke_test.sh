@@ -28,8 +28,9 @@ fi
 echo "[3/4] Verifying environment checker script..."
 "${ROOT_DIR}/scripts/verify_env.sh" >/dev/null
 
-echo "[4/4] Verifying Green AI evidence tooling..."
-"${ROOT_DIR}/tools/green_ai_tool.py" validate "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --strict strict
+echo "[4/4] Verifying compiled C++ Green AI evidence tooling..."
+make -C "${SRC_DIR}" green_ai_tool >/dev/null
+"${BUILD_DIR}/green_ai_tool" validate "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --strict strict
 "${ROOT_DIR}/scripts/green-report" "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --output /tmp/short_hand_green_report.json --strict strict
 "${ROOT_DIR}/scripts/green-check" "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --baseline /tmp/short_hand_green_report.json --threshold-percent 10
 
