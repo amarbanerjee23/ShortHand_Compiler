@@ -66,6 +66,22 @@ Yes — this can be evolved into a language for AI-assisted systems programming 
   - introduce module imports and standard library primitives,
   - expose a stable CLI/JSON diagnostics format so AI agents can compile, inspect errors, and auto-fix code loops.
 
+## GreenAI language primitive
+
+ShortHand now includes a first end-to-end GreenAI reporting primitive in the language itself:
+
+```short
+int inferences, watts, seconds;
+inferences = 1000;
+watts = 50;
+seconds = 10;
+greenai("edge_model_v1", inferences, watts, seconds);
+```
+
+`greenai(name, inferences, watts, seconds);` is available to the interpreter and LLVM IR backend. It reports total energy in joules (`watts * seconds`) and integer inference efficiency (`inferences / energy_j`). See `Compiler_new_ws/Short_Hand/examples/greenai_report.short` for a runnable example.
+
+ShortHand also exposes native model inference through `ai_infer(model_path, shape_csv, input_csv);`. The interpreter routes this statement through the C++ `AI_Runtime` abstraction, so ONNX Runtime-backed inference works when the compiler is built with `ONNXRUNTIME_ROOT`; otherwise it emits the same clear fallback guidance as the standalone `short_ai_app`. See `Compiler_new_ws/Short_Hand/examples/ai_infer.short` for an end-to-end AI + GreenAI program.
+
 ## State-of-the-art AI runtime integration
 
 This repository now includes optional native integrations for AI workloads:

@@ -27,6 +27,8 @@ public:
     int visit(AST_READ_RULE * read_statement);
     int visit(AST_PRINT_RULE * print_statement);
     int visit(AST_LABEL_RULE * label_statement);
+    int visit(AST_GREENAI_REPORT_RULE * greenai_report);
+    int visit(AST_AI_INFER_RULE * ai_infer);
 
     int visit(AST_BINARY_EXPRESSION_RULE * binary_operator_expression);
     int visit(AST_UNARY_EXPRESSION_RULE * unary_operator_expression);
