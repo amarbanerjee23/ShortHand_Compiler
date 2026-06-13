@@ -1,0 +1,60 @@
+green {
+  product: "Green LLM RAG support assistant"
+  green_mode: "strict"
+  certification_profile: "C3-ECO-AI"
+  functional_unit: "1000_tokens"
+  boundary: { include: ["inference", "retrieval", "reranking", "cache", "network", "storage"] exclude: [] embodied_hardware: "allocated" }
+  measurement_quality: "MQ1"
+  data_quality: "DQ2"
+  audit_evidence: ["prompt_eval_summary.json"]
+}
+
+budgets {
+  energy_per_1000_tokens_wh_max: 1.5
+  carbon_per_1000_inferences_gco2e_max: 70
+  memory_peak_mb_max: 4096
+  network_mb_per_task_max: 2
+}
+
+carbon {
+  accounting_method: "location_based"
+  region: "US-WEST"
+  grid_factor_kgco2e_per_kwh: 0.32
+  report_market_based_separately: true
+  offsets_allowed_in_core_score: false
+}
+
+llm task answer_question {
+  model: "small-model-first"
+  max_input_tokens: 2000
+  max_output_tokens: 500
+  rag: true
+  green_llm: { token_budget_per_task: 2500 prefer_small_model: true enable_model_routing: true cache_repeated_prompts: true retrieve_top_k_max: 5 rerank_only_if_needed: true report_wh_per_1000_tokens: true }
+}
+
+model_route support_router {
+  strategy: "small_to_large"
+  default_model: "tiny_classifier"
+  fallback_model: "large_transformer"
+  fallback_condition: "confidence < 0.80"
+  green_route: { track_routing_rate: true target_small_model_handling_percent: 70 report_energy_saved: true }
+}
+
+target cloud_endpoint {
+  hardware: "cpu_gpu_pool"
+  accelerator: "a10g"
+  runtime: "onnxruntime"
+  language_backend: "cpp"
+  green_target: { measure_idle_watts: true support_low_resource_mode: true max_memory_mb: 4096 }
+}
+
+measurements {
+  functional_unit_count: 1000
+  inference_energy_kwh: 0.0012
+  network_energy_kwh: 0.0002
+  memory_peak_mb: 2048
+  network_mb_per_task: 1.2
+  tokens_per_task: 1800
+  p95_latency_energy_j: 0.8
+  model_size_mb: 950
+}

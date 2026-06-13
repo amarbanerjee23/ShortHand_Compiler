@@ -82,6 +82,19 @@ greenai("edge_model_v1", inferences, watts, seconds);
 
 ShortHand also exposes native model inference through `ai_infer(model_path, shape_csv, input_csv);`. The interpreter routes this statement through the C++ `AI_Runtime` abstraction, so ONNX Runtime-backed inference works when the compiler is built with `ONNXRUNTIME_ROOT`; otherwise it emits the same clear fallback guidance as the standalone `short_ai_app`. See `Compiler_new_ws/Short_Hand/examples/ai_infer.short` for an end-to-end AI + GreenAI program.
 
+## Green AI evidence and eco-regression tooling
+
+ShortHand now includes a dependency-free Green AI manifest workflow for C3-ECO-style evidence generation. Green manifests are sidecar `.greenai` DSL files that declare functional units, system boundaries, carbon factors, energy/carbon budgets, MQ/DQ classes, model metadata, routing/cascade controls, hardware targets, data movement controls, and measured or estimated resource use. Existing `.short` programs remain backward-compatible; green validation is opt-in and controlled by `green_mode: "off" | "advisory" | "strict"`.
+
+```bash
+./tools/green_ai_tool.py validate examples/green_ai/image_classification.greenai --strict strict
+./scripts/green-report examples/green_ai/image_classification.greenai --output green-report.json --strict strict
+./scripts/green-check examples/green_ai/image_classification.greenai --baseline green-baseline.json --threshold-percent 10
+python3 tests/test_green_ai_tool.py
+```
+
+See `docs/green_ai_certification.md` and the examples in `examples/green_ai/` for image inference, LLM/RAG inference, and training pipeline manifests.
+
 ## State-of-the-art AI runtime integration
 
 This repository now includes optional native integrations for AI workloads:
