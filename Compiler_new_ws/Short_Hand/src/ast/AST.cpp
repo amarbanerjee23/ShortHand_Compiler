@@ -263,6 +263,31 @@ int AST_LABEL_RULE::accept(Visitor & v)
     return v.visit(this);
 }
 
+//------------------------------
+AST_GREENAI_REPORT_RULE::AST_GREENAI_REPORT_RULE(string workload_name, AST_EXPRESSION_RULE * inferences, AST_EXPRESSION_RULE * watts, AST_EXPRESSION_RULE * seconds)
+{
+    this->workload_name = workload_name;
+    this->inferences = inferences;
+    this->watts = watts;
+    this->seconds = seconds;
+}
+int AST_GREENAI_REPORT_RULE::accept(Visitor & v)
+{
+    return v.visit(this);
+}
+
+//------------------------------
+AST_AI_INFER_RULE::AST_AI_INFER_RULE(string model_path, string shape_csv, string input_csv)
+{
+    this->model_path = model_path;
+    this->shape_csv = shape_csv;
+    this->input_csv = input_csv;
+}
+int AST_AI_INFER_RULE::accept(Visitor & v)
+{
+    return v.visit(this);
+}
+
 
 /*
 ============== expression ==================

@@ -42,6 +42,8 @@ class AST_READ_RULE;
 class AST_PRINT_RULE;
 class AST_LABEL_RULE;
 class AST_BREAK;
+class AST_GREENAI_REPORT_RULE;
+class AST_AI_INFER_RULE;
 
 
 // expression node and derived expressions nodes
@@ -95,6 +97,8 @@ union _NODE_
     AST_READ_RULE * read_statement;
     AST_PRINT_RULE * print_statement;
     AST_LABEL_RULE * label_statement;
+    AST_GREENAI_REPORT_RULE * greenai_report;
+    AST_AI_INFER_RULE * ai_infer;
 
     AST_EXPRESSION_RULE * expression;
     AST_BINARY_EXPRESSION_RULE * binary_operator_expression;
@@ -136,6 +140,8 @@ public:
     virtual int visit(AST_READ_RULE *) = 0;
     virtual int visit(AST_PRINT_RULE *) = 0;
     virtual int visit(AST_LABEL_RULE *) = 0;
+    virtual int visit(AST_GREENAI_REPORT_RULE *) = 0;
+    virtual int visit(AST_AI_INFER_RULE *) = 0;
 
     virtual int visit(AST_BINARY_EXPRESSION_RULE *) = 0;
     virtual int visit(AST_UNARY_EXPRESSION_RULE *) = 0;
@@ -404,6 +410,33 @@ public:
     int accept(Visitor &);
 };
 
+class AST_GREENAI_REPORT_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    string workload_name;
+    AST_EXPRESSION_RULE * inferences;
+    AST_EXPRESSION_RULE * watts;
+    AST_EXPRESSION_RULE * seconds;
+public:
+    AST_GREENAI_REPORT_RULE(string workload_name, AST_EXPRESSION_RULE * inferences, AST_EXPRESSION_RULE * watts, AST_EXPRESSION_RULE * seconds);
+    int accept(Visitor &);
+};
+
+class AST_AI_INFER_RULE : public AST_STATEMENT_RULE
+{
+private:
+    friend class Interpreter; friend class IR_Generator;
+    friend class AST_Printer;
+    string model_path;
+    string shape_csv;
+    string input_csv;
+public:
+    AST_AI_INFER_RULE(string model_path, string shape_csv, string input_csv);
+    int accept(Visitor &);
+};
+
 
 /*
 ==================== all expressions =======================
@@ -519,4 +552,3 @@ typedef union _NODE_ YYSTYPE;
 #define YYSTYPE_IS_DECLARED 1
 
 #endif
-
