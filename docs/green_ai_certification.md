@@ -1,36 +1,10 @@
-# ShortHand Green AI certification-readiness workflow
+# Green AI evidence workflow for ShortHand
 
-ShortHand produces Green AI **evidence** for certification readiness. It does not grant certification. Every generated report includes the note: “Evidence report only; this tool does not grant certification.”
+ShortHand does **not** grant a certification by itself. The Green AI tooling added in this repository produces transparent, machine-readable evidence that can support a C3-ECO-style Green Software / Green AI review.
 
-## C++/LLVM-first direction
+## Green manifest DSL
 
-The official Green AI path is now compiled C++ only. The former Python manifest utility has been moved to `deprecated/python_tools/` for historical reference and is not used by official commands, tests, examples, or documentation.
-
-The supported binaries are:
-
-```bash
-make -C Compiler_new_ws/Short_Hand/src green_ai_tool
-./Compiler_new_ws/Short_Hand/build/green_ai_tool validate app.greenai --strict strict
-./Compiler_new_ws/Short_Hand/build/green_ai_tool report app.greenai --output green-report.json --strict strict
-./Compiler_new_ws/Short_Hand/build/green_ai_tool check app.greenai --baseline green-baseline.json --threshold-percent 10
-```
-
-## `.short` versus `.greenai`
-
-Use `.short` for executable compiled behavior: control flow, native AI inference requests through `ai_infer(...)`, and runtime energy summaries through `greenai(...)`. Use `.greenai` sidecar manifests for audit metadata: functional units, boundaries, carbon factors, model necessity, measurement/data quality, budgets, assumptions, and evidence files.
-
-## In-language primitives
-
-```short
-ai_infer("models/demo.onnx", "1,3", "0.1,0.2,0.3");
-greenai("edge_model_v1", inferences, watts, seconds);
-```
-
-`greenai(...)` computes joules as `watts * seconds` and reports inferences per joule. `ai_infer(...)` is implemented in C++ and routes to ONNX Runtime when the optional SDK is enabled; otherwise it reports a clear native fallback message. No Python runtime is involved.
-
-## Manifest blocks
-
-The C++ parser supports identifiers, strings, numbers, booleans, arrays, nested maps, comments, named blocks, and multi-word block headers such as `infer endpoint classify` and `data pipeline training_data`.
+A `.greenai` manifest is a sidecar DSL file for a `.short` application or native AI workflow. Green features are optional for backward compatibility, but manifests can opt into strict validation:
 
 ```text
 green {
@@ -38,103 +12,108 @@ green {
   green_mode: "strict"
   certification_profile: "C3-ECO-AI"
   functional_unit: "1000_inferences"
-  success_criteria: { accuracy_min: 0.92 p95_latency_ms_max: 250 error_rate_max: 0.01 }
   boundary: { include: ["inference", "data_loading", "model_serving"] exclude: [] embodied_hardware: "allocated" }
   measurement_quality: "MQ2"
   data_quality: "DQ2"
-  audit_evidence: ["onnxruntime_profile.json", "power_meter_run_42.csv"]
 }
+```
 
+`green_mode` behavior:
+
+- `off`: ignore green checks.
+- `advisory`: report warnings without failing validation.
+- `strict`: missing mandatory evidence fields are validation errors.
+
+## Functional units
+
+A functional unit is the useful-work denominator for energy and carbon intensity. Supported examples include:
+
+- `1000_inferences`
+- `1000_tokens`
+- `1_training_run`
+- `1_GB_processed`
+- `1_user_hour`
+- `1000_api_requests`
+- `1_batch_job`
+
+Strict mode requires `green.functional_unit`.
+
+## Boundaries and carbon factors
+
+The `boundary` block declares included and excluded system components. The `carbon` block declares accounting method, region, and grid factor:
+
+```text
 carbon {
   accounting_method: "location_based"
   region: "IN-WEST"
   grid_factor_kgco2e_per_kwh: 0.475
+  report_market_based_separately: true
   offsets_allowed_in_core_score: false
-}
-
-budgets {
-  energy_per_inference_j_max: 200
-  carbon_per_1000_inferences_gco2e_max: 50
-  memory_peak_mb_max: 2048
 }
 ```
 
-## Green modes
+Offsets must not be subtracted from the core software carbon footprint. Market-based and location-based accounting values must remain separable.
 
-- `off`: parse manifests but skip Green AI validation.
-- `advisory`: warnings are emitted, but validation remains usable.
-- `strict`: mandatory evidence gaps fail validation.
+## Measurement quality and data quality
 
-Strict mode requires functional unit, success criteria, boundary, MQ/DQ classes, carbon accounting method, region, grid factor, offset policy, budgets, and deployment targets when models/deployments are declared.
+Measurement quality classes:
 
-## Functional units and boundaries
+- `MQ0`: unsupported claim; no credible measurement.
+- `MQ1`: transparent estimate using documented assumptions.
+- `MQ2`: telemetry-based measurement.
+- `MQ3`: instrumented or calibrated measurement with repeated runs and idle baseline.
+- `MQ4`: independently verified measurement.
 
-Functional units define useful work denominators such as `1000_inferences`, `1000_tokens`, `1_training_run`, `1_GB_processed`, `1_user_hour`, `1000_api_requests`, and `1_batch_job`. Boundaries declare included/excluded lifecycle components such as training, inference, data loading, model serving, storage, network, monitoring, preprocessing, and checkpointing.
+Data quality classes:
+
+- `DQ0`: unknown or unsupported input data.
+- `DQ1`: generic estimate.
+- `DQ2`: provider/runtime telemetry.
+- `DQ3`: system-specific measured data.
+- `DQ4`: independently verified or calibrated data.
 
 ## Carbon calculation
 
-The C++ tool calculates:
+The report generator uses:
 
 ```text
-operational_carbon_gco2e = energy_kwh * grid_factor_kgco2e_per_kwh * 1000.0
-carbon_per_functional_unit_gco2e = total_carbon_gco2e / functional_unit_count
+operational_carbon_gco2e = energy_kwh * grid_factor_kgco2e_per_kwh * 1000
+carbon_per_functional_unit_gco2e = total_operational_carbon_gco2e / functional_unit_count
 ```
 
-Operational energy components are summed from declared training, fine-tuning, evaluation, inference, idle, network, storage, client, CI/CD, update, and third-party API energy. Separately declared embodied, network, storage, and third-party API carbon can be added as component carbon. Offsets are reported separately and never subtracted from the core footprint. Accelerator energy must not be double-counted if it is already included in operational energy.
+Training, inference, idle, network, and storage energy are tracked separately and then added into total operational energy. Accelerator energy should not be double-counted when already included in measured operational energy.
 
-## MQ/DQ classes
+## Commands
 
-Measurement quality:
+Validate a manifest:
 
-- `MQ0`: unsupported claim
-- `MQ1`: transparent estimate
-- `MQ2`: telemetry-based measurement
-- `MQ3`: instrumented or calibrated measurement with repeated runs and idle baseline
-- `MQ4`: independently verified measurement
+```bash
+./tools/green_ai_tool.py validate examples/green_ai/image_classification.greenai --strict strict
+```
 
-Data quality:
+Generate an audit evidence report:
 
-- `DQ0`: unknown or unsupported input data
-- `DQ1`: generic estimate
-- `DQ2`: provider/runtime telemetry
-- `DQ3`: system-specific measured data
-- `DQ4`: independently verified or calibrated data
+```bash
+./scripts/green-report examples/green_ai/image_classification.greenai --output green-report.json --strict strict
+```
 
-Invalid classes fail. MQ0/DQ0 fail strict mode.
+Run an eco-regression check against a baseline report:
 
-## Budgets and eco-regression
+```bash
+./scripts/green-check examples/green_ai/image_classification.greenai --baseline green-baseline.json --threshold-percent 10
+```
 
-Budgets are emitted as structured results with `budget`, `limit`, `actual`, `unit`, and `status`. Supported statuses are `pass`, `fail`, `not_evaluated`, and `unknown`.
+The eco-check fails when supported metrics regress by more than the configured threshold, including energy per functional unit, carbon per functional unit, memory peak, network per task, tokens per task, p95 latency-energy, and model size.
 
-Eco-regression checks compare current evidence to a baseline for energy/carbon per functional unit, training/inference energy, memory/GPU memory, network, tokens, p95 latency, p95 latency-energy, model size, storage, and cross-region transfer. Regressions include remediation hints.
+## Examples
 
-## Certification-readiness mapping
+- `examples/green_ai/image_classification.greenai`: image inference, int8 model metadata, target hardware, inference budgets.
+- `examples/green_ai/llm_rag.greenai`: GenAI/RAG token budget, retrieval limit, model routing/cascade metadata.
+- `examples/green_ai/training_pipeline.greenai`: training energy, data movement/storage controls, checkpoint policy.
 
-| ShortHand / `.greenai` feature | Certification-readiness concept |
-| --- | --- |
-| `green.functional_unit` | useful-work denominator |
-| `green.boundary` | system boundary |
-| `carbon` | carbon accounting and grid-factor declaration |
-| `budgets` | benchmark guardrails |
-| `measurements` | energy/resource evidence inputs |
-| `model.green_model` | model proportionality and compression |
-| `train_model.green_train` | training lifecycle energy |
-| `infer_endpoint.green_infer` | inference energy and latency-energy |
-| `llm_task.green_llm` | token/prompt efficiency |
-| `rag_pipeline.green_rag` | retrieval and embedding-cache efficiency |
-| `model_route.green_route` | small-to-large routing |
-| `target.green_target` | hardware/runtime target |
-| `data_pipeline.green_data` | data movement and storage |
-| `green_ai_tool report` | audit evidence export |
-| `green_ai_tool check` | eco-regression testing |
+## Limitations and assumptions
 
-## Native AI libraries
-
-ShortHand keeps ONNX Runtime C++ as the primary inference direction and LibTorch C++ as the primary training direction. Optional future backends include OpenVINO, TensorRT, llama.cpp/GGML/GGUF, FAISS, OpenCV, Arrow/Parquet, oneDNN/DNNL, XNNPACK, Eigen, SentencePiece, and C++ tokenizer integrations. These SDKs are optional and must not be required to validate Green AI manifests.
-
-## Limitations
-
-- Real energy telemetry is not fabricated. User-supplied estimated watts should be classified as MQ1 unless independent telemetry is available.
-- The C++ manifest parser is intentionally dependency-free and conservative.
-- Native runtime power telemetry hooks such as RAPL/NVML are future enhancements.
-- Sidecar evidence is still useful for audit metadata even as `.short` remains the executable language.
+- The tool creates evidence for certification readiness; it does not certify the software.
+- If real power telemetry is unavailable, values should be declared as estimates and classified as `MQ1`/`DQ1` where appropriate.
+- The manifest parser is dependency-free and intentionally conservative; complex expressions should be precomputed by measurement systems before report generation.
+- Existing `.short` programs remain valid. Green manifests are opt-in unless a workflow explicitly runs strict validation.

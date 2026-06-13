@@ -3,18 +3,14 @@ green {
   green_mode: "strict"
   certification_profile: "C3-ECO-AI"
   functional_unit: "1000_tokens"
-  success_criteria: { answer_quality_min: 0.90 p95_latency_ms_max: 1200 error_rate_max: 0.02 }
   boundary: { include: ["inference", "retrieval", "reranking", "cache", "network", "storage"] exclude: [] embodied_hardware: "allocated" }
   measurement_quality: "MQ1"
   data_quality: "DQ2"
   audit_evidence: ["prompt_eval_summary.json"]
-  assumptions: ["Energy values are MQ1 estimates until provider telemetry is connected"]
 }
 
 budgets {
   energy_per_1000_tokens_wh_max: 1.5
-  token_budget_per_task_max: 2500
-  retrieval_top_k_max: 5
   carbon_per_1000_inferences_gco2e_max: 70
   memory_peak_mb_max: 4096
   network_mb_per_task_max: 2
@@ -24,8 +20,6 @@ carbon {
   accounting_method: "location_based"
   region: "US-WEST"
   grid_factor_kgco2e_per_kwh: 0.32
-  grid_factor_source: "declared_by_user"
-  factor_year: 2026
   report_market_based_separately: true
   offsets_allowed_in_core_score: false
 }
@@ -35,13 +29,7 @@ llm task answer_question {
   max_input_tokens: 2000
   max_output_tokens: 500
   rag: true
-  green_llm: { token_budget_per_task: 2500 prefer_small_model: true enable_model_routing: true cache_repeated_prompts: true report_wh_per_1000_tokens: true tool_call_limit: 5 agent_step_limit: 8 prompt_compression_enabled: true }
-}
-
-rag pipeline support_answering {
-  vector_store: "knowledge_base"
-  embedding_model: "small_embedder"
-  green_rag: { embedding_cache_enabled: true avoid_duplicate_embeddings: true retrieve_top_k_max: 5 rerank_top_k_max: 3 rerank_only_if_needed: true chunk_size_tokens: 512 chunk_overlap_tokens: 64 max_context_tokens: 2000 }
+  green_llm: { token_budget_per_task: 2500 prefer_small_model: true enable_model_routing: true cache_repeated_prompts: true retrieve_top_k_max: 5 rerank_only_if_needed: true report_wh_per_1000_tokens: true }
 }
 
 model_route support_router {
@@ -49,7 +37,7 @@ model_route support_router {
   default_model: "tiny_classifier"
   fallback_model: "large_transformer"
   fallback_condition: "confidence < 0.80"
-  green_route: { track_routing_rate: true target_small_model_handling_percent: 70 report_energy_saved: true quality_guardrail: "answer_quality >= 0.90" }
+  green_route: { track_routing_rate: true target_small_model_handling_percent: 70 report_energy_saved: true }
 }
 
 target cloud_endpoint {
@@ -69,9 +57,4 @@ measurements {
   tokens_per_task: 1800
   p95_latency_energy_j: 0.8
   model_size_mb: 950
-  retrieval_top_k: 5
-  input_tokens_per_task: 1300
-  output_tokens_per_task: 500
-  cache_hit_rate_percent: 35
-  small_model_routing_percent: 74
 }
