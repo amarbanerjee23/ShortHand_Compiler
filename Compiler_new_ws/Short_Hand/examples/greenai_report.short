@@ -1,0 +1,5 @@
+int inferences, watts, seconds;
+inferences = 1000;
+watts = 50;
+seconds = 10;
+greenai("edge_model_v1", inferences, watts, seconds);
