@@ -1,4 +1,37 @@
 #include "Interpreter.h"
+#include <iostream>
+#include <sstream>
+#include "../ai_runtime/AI_Runtime.h"
+
+static string unquoteShortString(const string &value)
+{
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+        return value.substr(1, value.size() - 2);
+    }
+    return value;
+}
+
+static vector<float> parseShortFloatCsv(const string &csv)
+{
+    vector<float> values;
+    stringstream ss(csv);
+    string token;
+    while (getline(ss, token, ',')) {
+        if (!token.empty()) values.push_back(stof(token));
+    }
+    return values;
+}
+
+static vector<int64_t> parseShortShapeCsv(const string &csv)
+{
+    vector<int64_t> values;
+    stringstream ss(csv);
+    string token;
+    while (getline(ss, token, ',')) {
+        if (!token.empty()) values.push_back(stoll(token));
+    }
+    return values;
+}
 
 // program
 int Interpreter::visit(AST_PROGRAM * program)
@@ -233,6 +266,52 @@ int Interpreter::visit(AST_PRINT_RULE * print_statement)
 int Interpreter::visit(AST_LABEL_RULE * label_statement)
 {
     //cout << "label_statement : " << label_statement->label << endl;
+    return 0;
+}
+
+int Interpreter::visit(AST_GREENAI_REPORT_RULE * greenai_report)
+{
+    int inferences = greenai_report->inferences->accept(*this);
+    int watts = greenai_report->watts->accept(*this);
+    int seconds = greenai_report->seconds->accept(*this);
+    int energy_joules = watts * seconds;
+    int inferences_per_joule = energy_joules == 0 ? 0 : inferences / energy_joules;
+
+    cout << "GreenAI workload " << greenai_report->workload_name.substr(1, greenai_report->workload_name.length() - 2)
+         << ": inferences=" << inferences
+         << " energy_j=" << energy_joules
+         << " inf_per_j=" << inferences_per_joule
+         << endl;
+    return 0;
+}
+
+int Interpreter::visit(AST_AI_INFER_RULE * ai_infer)
+{
+    string model_path = unquoteShortString(ai_infer->model_path);
+    string shape_csv = unquoteShortString(ai_infer->shape_csv);
+    string input_csv = unquoteShortString(ai_infer->input_csv);
+
+    TensorData tensor;
+    tensor.shape = parseShortShapeCsv(shape_csv);
+    tensor.data = parseShortFloatCsv(input_csv);
+
+    AI_Runtime runtime;
+    if (!runtime.loadModel(model_path)) {
+        cout << "AI inference error: " << runtime.getLastError() << endl;
+        return 1;
+    }
+
+    vector<float> output;
+    if (!runtime.run(tensor, output)) {
+        cout << "AI inference error: " << runtime.getLastError() << endl;
+        return 1;
+    }
+
+    cout << "AI inference output:";
+    for (float value : output) {
+        cout << " " << value;
+    }
+    cout << endl;
     return 0;
 }
 

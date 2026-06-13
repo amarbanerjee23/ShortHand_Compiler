@@ -38,6 +38,8 @@
 %type <read_statement> READ_VARIABLE_LIST_RULE
 %type <variable> VARIABLE_RULE
 %type <print_statement> PRINT_VARIABLE_LIST_RULE
+%type <greenai_report> GREENAI_REPORT_RULE
+%type <ai_infer> AI_INFER_RULE
 %type <expression> EXPRESSION_RULE
 %type <type> ShortType
 
@@ -228,6 +230,14 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
               {
                   $$ = $2;
               }
+         |    GREENAI_REPORT_RULE ';'
+              {
+                  $$ = $1;
+              }
+         |    AI_INFER_RULE ';'
+              {
+                  $$ = $1;
+              }
          |    IDENTIFIER ':'
               {
                   $$ = new AST_LABEL_RULE(string($1));
@@ -237,6 +247,26 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
                   $$ = new AST_EXPRESSION_STATEMENT_RULE(new AST_LITERAL(1));
               }
 
+;
+
+AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'
+              {
+                  if (string($1) != "ai_infer") {
+                      yyerror((char *)"expected ai_infer builtin");
+                      YYERROR;
+                  }
+                  $$ = new AST_AI_INFER_RULE(string($3), string($5), string($7));
+              }
+;
+
+GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')'
+              {
+                  if (string($1) != "greenai") {
+                      yyerror((char *)"expected greenai report builtin");
+                      YYERROR;
+                  }
+                  $$ = new AST_GREENAI_REPORT_RULE(string($3), $5, $7, $9);
+              }
 ;
 
 
@@ -363,5 +393,3 @@ void yyerror (char const *s)
         fprintf (stderr, "----------------ERROR----------------\n");
         fprintf (stderr, "%s\n", s);
 }
-
-

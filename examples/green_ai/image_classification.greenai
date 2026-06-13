@@ -1,0 +1,62 @@
+green {
+  product: "Green image classification inference"
+  green_mode: "strict"
+  certification_profile: "C3-ECO-AI"
+  functional_unit: "1000_inferences"
+  success_criteria: { accuracy_min: 0.92 p95_latency_ms_max: 250 error_rate_max: 0.01 }
+  boundary: { include: ["inference", "data_loading", "model_serving", "storage", "network", "monitoring"] exclude: [] embodied_hardware: "allocated" }
+  measurement_quality: "MQ2"
+  data_quality: "DQ2"
+  audit_evidence: ["onnxruntime_profile.json", "power_meter_run_42.csv"]
+}
+
+budgets {
+  energy_per_inference_j_max: 200
+  carbon_per_1000_inferences_gco2e_max: 50
+  memory_peak_mb_max: 2048
+  network_mb_per_task_max: 5
+}
+
+carbon {
+  accounting_method: "location_based"
+  region: "IN-WEST"
+  grid_factor_kgco2e_per_kwh: 0.475
+  grid_factor_source: "declared_by_user"
+  factor_year: 2026
+  report_market_based_separately: true
+  offsets_allowed_in_core_score: false
+}
+
+model image_classifier {
+  type: "cnn"
+  format: "onnx"
+  precision: "int8"
+  compression: { quantized: true pruned: false distilled: false }
+  green_model: { parameters_count: 3500000 model_size_mb: 12 accuracy_energy_frontier_required: true model_necessity_justification: "edge realtime classification" smaller_model_evaluated: true }
+}
+
+infer endpoint classify {
+  model: "image_classifier"
+  batch_size: 16
+  cache: "enabled"
+  green_infer: { measure_energy_per_inference: true measure_latency_energy: ["p50", "p95", "p99"] max_joules_per_inference: 0.25 max_gco2e_per_1000_inferences: 40 idle_baseline_subtraction: true warm_and_cold_measurement: true }
+}
+
+target edge_device {
+  hardware: "raspberry_pi_4"
+  accelerator: "none"
+  runtime: "onnxruntime"
+  language_backend: "cpp"
+  compiler_optimization: ["O3", "march_native"]
+  green_target: { measure_idle_watts: true support_low_resource_mode: true max_memory_mb: 1024 }
+}
+
+measurements {
+  functional_unit_count: 1000
+  inference_energy_kwh: 0.045
+  idle_energy_kwh: 0.002
+  memory_peak_mb: 768
+  network_mb_per_task: 0.5
+  p95_latency_energy_j: 0.18
+  model_size_mb: 12
+}

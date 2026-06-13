@@ -1,0 +1,6 @@
+ai_infer("model.onnx", "1,3", "0.1,0.2,0.3");
+int inferences, watts, seconds;
+inferences = 1000;
+watts = 50;
+seconds = 10;
+greenai("edge_model_v1", inferences, watts, seconds);

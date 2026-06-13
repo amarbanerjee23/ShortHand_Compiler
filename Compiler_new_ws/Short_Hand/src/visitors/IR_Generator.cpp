@@ -577,6 +577,46 @@ int IR_Generator::visit(AST_LABEL_RULE *label_statement) {
 	return 0;
 }
 
+int IR_Generator::visit(AST_GREENAI_REPORT_RULE *greenai_report) {
+	greenai_report->inferences->accept(*this);
+	Value *inferences = get_expression();
+	greenai_report->watts->accept(*this);
+	Value *watts = get_expression();
+	greenai_report->seconds->accept(*this);
+	Value *seconds = get_expression();
+	Value *energy = Builder.CreateMul(watts, seconds, "greenai_energy_j");
+	Value *zero = ConstantInt::get(Type::getInt32Ty(ShortGlobalContext), 0, true);
+	Value *safe_energy = Builder.CreateSelect(
+			Builder.CreateICmpEQ(energy, zero, "greenai_zero_energy"),
+			ConstantInt::get(Type::getInt32Ty(ShortGlobalContext), 1, true),
+			energy);
+	Value *efficiency = Builder.CreateSDiv(inferences, safe_energy, "greenai_inf_per_j");
+
+	std::string workload = greenai_report->workload_name.substr(1, greenai_report->workload_name.length() - 2);
+	vector<Value*> args;
+	args.push_back(Builder.CreateGlobalStringPtr("GreenAI workload %s: inferences=%d energy_j=%d inf_per_j=%d\\n"));
+	args.push_back(Builder.CreateGlobalStringPtr(workload));
+	args.push_back(inferences);
+	args.push_back(energy);
+	args.push_back(efficiency);
+	ret = Builder.CreateCall(CalleeF, args, "greenaiPrintfCall");
+	return 0;
+}
+
+int IR_Generator::visit(AST_AI_INFER_RULE *ai_infer) {
+	std::string model_path = ai_infer->model_path.substr(1, ai_infer->model_path.length() - 2);
+	std::string shape_csv = ai_infer->shape_csv.substr(1, ai_infer->shape_csv.length() - 2);
+	std::string input_csv = ai_infer->input_csv.substr(1, ai_infer->input_csv.length() - 2);
+
+	vector<Value*> args;
+	args.push_back(Builder.CreateGlobalStringPtr("AI inference request: model=%s shape=%s input=%s\\n"));
+	args.push_back(Builder.CreateGlobalStringPtr(model_path));
+	args.push_back(Builder.CreateGlobalStringPtr(shape_csv));
+	args.push_back(Builder.CreateGlobalStringPtr(input_csv));
+	ret = Builder.CreateCall(CalleeF, args, "aiInferPrintfCall");
+	return 0;
+}
+
 //
 // all expressions
 //

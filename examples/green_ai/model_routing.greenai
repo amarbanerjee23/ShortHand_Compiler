@@ -1,0 +1,68 @@
+green {
+  product: "Green model routing cascade"
+  green_mode: "strict"
+  certification_profile: "C3-ECO-AI"
+  functional_unit: "1000_api_requests"
+  success_criteria: { answer_quality_min: 0.90 fallback_error_rate_max: 0.03 }
+  boundary: { include: ["inference", "routing", "cache", "monitoring"] exclude: [] embodied_hardware: "allocated" }
+  measurement_quality: "MQ2"
+  data_quality: "DQ2"
+  audit_evidence: ["routing_metrics.json", "energy_sample.csv"]
+}
+
+budgets {
+  energy_per_1000_inferences_wh_max: 2.0
+  carbon_per_1000_inferences_gco2e_max: 20
+  model_size_mb_max: 1024
+  memory_peak_mb_max: 4096
+}
+
+carbon {
+  accounting_method: "location_based"
+  region: "US-WEST"
+  grid_factor_kgco2e_per_kwh: 0.32
+  grid_factor_source: "declared_by_user"
+  factor_year: 2026
+  report_market_based_separately: true
+  offsets_allowed_in_core_score: false
+}
+
+model tiny_classifier {
+  type: "classifier"
+  format: "onnx"
+  precision: "int8"
+  compression: { quantized: true pruned: true distilled: true }
+  green_model: { parameters_count: 1200000 model_size_mb: 4 accuracy_energy_frontier_required: true model_necessity_justification: "first-pass routing" smaller_model_evaluated: true }
+}
+
+model large_transformer {
+  type: "transformer"
+  format: "onnx"
+  precision: "fp16"
+  compression: { quantized: false pruned: false distilled: false }
+  green_model: { parameters_count: 150000000 model_size_mb: 900 accuracy_energy_frontier_required: true model_necessity_justification: "fallback for low-confidence requests" smaller_model_evaluated: true }
+}
+
+model_route support_router {
+  strategy: "small_to_large"
+  default_model: "tiny_classifier"
+  fallback_model: "large_transformer"
+  fallback_condition: "confidence < 0.80"
+  green_route: { track_routing_rate: true target_small_model_handling_percent: 70 report_energy_saved: true quality_guardrail: "answer_quality >= 0.90" }
+}
+
+target routing_endpoint {
+  hardware: "cpu_gpu_pool"
+  accelerator: "a10g"
+  runtime: "onnxruntime"
+  language_backend: "cpp"
+  green_target: { measure_idle_watts: true support_low_resource_mode: true max_memory_mb: 4096 }
+}
+
+measurements {
+  functional_unit_count: 1000
+  inference_energy_kwh: 0.0015
+  memory_peak_mb: 3000
+  model_size_mb: 900
+  small_model_routing_percent: 76
+}

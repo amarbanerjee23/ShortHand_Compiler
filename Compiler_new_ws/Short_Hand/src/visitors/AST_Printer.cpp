@@ -1,4 +1,5 @@
 #include "AST_Printer.h"
+#include <iostream>
 // program
 int AST_Printer::visit(AST_PROGRAM * program)
 {
@@ -155,6 +156,26 @@ int AST_Printer::visit(AST_PRINT_RULE * print_statement)
 int AST_Printer::visit(AST_LABEL_RULE * label_statement)
 {
     cout << "label_statement : " << label_statement->label << endl;
+    return 0;
+}
+
+int AST_Printer::visit(AST_GREENAI_REPORT_RULE * greenai_report)
+{
+    cout << "greenai_report : " << greenai_report->workload_name << endl;
+    cout << "inferences" << endl;
+    greenai_report->inferences->accept(*this);
+    cout << "watts" << endl;
+    greenai_report->watts->accept(*this);
+    cout << "seconds" << endl;
+    greenai_report->seconds->accept(*this);
+    return 0;
+}
+
+int AST_Printer::visit(AST_AI_INFER_RULE * ai_infer)
+{
+    cout << "ai_infer : model=" << ai_infer->model_path
+         << " shape=" << ai_infer->shape_csv
+         << " input=" << ai_infer->input_csv << endl;
     return 0;
 }
 

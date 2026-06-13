@@ -1,0 +1,63 @@
+green {
+  product: "Green training pipeline"
+  green_mode: "strict"
+  certification_profile: "C3-ECO-AI"
+  functional_unit: "1_training_run"
+  success_criteria: { validation_accuracy_min: 0.91 training_completion: true }
+  boundary: { include: ["training", "preprocessing", "evaluation", "checkpointing", "storage", "network"] exclude: [] embodied_hardware: "allocated" }
+  measurement_quality: "MQ2"
+  data_quality: "DQ3"
+  audit_evidence: ["trainer_energy_trace.csv", "dataset_manifest.json"]
+}
+
+budgets {
+  training_energy_kwh_max: 15
+  evaluation_energy_kwh_max: 1
+  storage_gb_month_max: 100
+  memory_peak_mb_max: 16384
+  network_mb_per_task_max: 5000
+}
+
+carbon {
+  accounting_method: "location_based"
+  region: "EU-NORTH"
+  grid_factor_kgco2e_per_kwh: 0.075
+  grid_factor_source: "declared_by_user"
+  factor_year: 2026
+  report_market_based_separately: true
+  offsets_allowed_in_core_score: false
+}
+
+data pipeline training_data {
+  source: "s3://bucket/data"
+  format: "parquet"
+  green_data: { compression_required: true dataset_size_gb: 25 max_gb_read_per_run: 50 max_cross_region_transfer_gb: 0 retention_days: 90 incremental_processing: true avoid_duplicate_embeddings: true }
+}
+
+train model classifier {
+  algorithm: "transformer"
+  dataset: "training_data"
+  epochs: 5
+  batch_size: 32
+  green_train: { measure_energy: true include_preprocessing: true include_evaluation: true include_failed_runs: true early_stopping_enabled: true checkpoint_policy: "efficient" max_training_energy_kwh: 10 }
+}
+
+target training_cluster {
+  hardware: "gpu_node"
+  accelerator: "a100"
+  runtime: "libtorch"
+  language_backend: "cpp"
+  green_target: { measure_idle_watts: true support_low_resource_mode: false max_memory_mb: 16384 }
+}
+
+measurements {
+  functional_unit_count: 1
+  training_energy_kwh: 9.5
+  storage_energy_kwh: 0.2
+  network_energy_kwh: 0.3
+  memory_peak_mb: 12000
+  network_mb_per_task: 4200
+  storage_gb_month: 25
+  evaluation_energy_kwh: 0.4
+  model_size_mb: 512
+}
