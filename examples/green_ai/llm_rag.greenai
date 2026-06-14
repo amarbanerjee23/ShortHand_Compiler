@@ -3,6 +3,7 @@ green {
   green_mode: "strict"
   certification_profile: "C3-ECO-AI"
   functional_unit: "1000_tokens"
+  success_criteria: { answer_quality_min: 0.90 p95_latency_ms_max: 2500 error_rate_max: 0.02 }
   boundary: { include: ["inference", "retrieval", "reranking", "cache", "network", "storage"] exclude: [] embodied_hardware: "allocated" }
   measurement_quality: "MQ1"
   data_quality: "DQ2"
@@ -11,9 +12,11 @@ green {
 
 budgets {
   energy_per_1000_tokens_wh_max: 1.5
-  carbon_per_1000_inferences_gco2e_max: 70
+  carbon_per_1000_tokens_gco2e_max: 70
   memory_peak_mb_max: 4096
   network_mb_per_task_max: 2
+  token_budget_per_task_max: 2500
+  retrieval_top_k_max: 5
 }
 
 carbon {
