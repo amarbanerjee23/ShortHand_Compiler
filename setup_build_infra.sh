@@ -1,36 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ShortHand one-shot build infrastructure setup.
-#
-# This script installs/builds the local development toolchain needed for the
-# ShortHand compiler and optional native C++ AI backends. It intentionally does
-# not vendor large third-party SDK archives into git. Instead, it downloads or
-# detects them under ./third_party and writes ./shorthand_env.sh.
-#
-# Core installed/detected components:
-#   - LLVM/Clang/llc/llvm-config
-#   - Flex/Bison/libfl
-#   - C++ compiler/build tools
-#   - ONNX Runtime C++ SDK, optional but downloaded by default
-#   - LibTorch C++ SDK, optional; downloaded when DOWNLOAD_LIBTORCH=1
-#   - TensorRT, optional; detected if already installed or configured
+# OS-aware setup for the ShortHand compiler and C++ GreenAI toolchain.
+# It installs or detects LLVM/Clang/Flex/Bison, downloads the correct ONNX
+# Runtime C++ SDK for the current OS/CPU, optionally downloads LibTorch, writes
+# shorthand_env.sh, builds the language, and runs verification.
 #
 # Usage:
 #   bash setup_build_infra.sh
 #   source ./shorthand_env.sh
 #   bash scripts/smoke_test.sh
 #
-# Useful environment switches:
+# Options:
 #   LLVM_VERSION=18 bash setup_build_infra.sh
 #   DOWNLOAD_ONNXRUNTIME=0 bash setup_build_infra.sh
+#   ONNXRUNTIME_VERSION=1.20.1 bash setup_build_infra.sh
 #   DOWNLOAD_LIBTORCH=1 bash setup_build_infra.sh
-#   LIBTORCH_URL=https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.1%2Bcpu.zip bash setup_build_infra.sh
+#   LIBTORCH_URL=<official-url> bash setup_build_infra.sh
 #   TENSORRT_ROOT=/path/to/TensorRT bash setup_build_infra.sh
+#   RUN_SMOKE_TEST=0 bash setup_build_infra.sh
+#   SKIP_SYSTEM_PACKAGES=1 bash setup_build_infra.sh
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
-BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
 THIRD_PARTY_DIR="${ROOT_DIR}/third_party"
 DOWNLOAD_DIR="${THIRD_PARTY_DIR}/downloads"
 ENV_FILE="${ROOT_DIR}/shorthand_env.sh"
@@ -42,296 +34,237 @@ ONNXRUNTIME_VERSION="${ONNXRUNTIME_VERSION:-latest}"
 LIBTORCH_URL="${LIBTORCH_URL:-}"
 TENSORRT_ROOT="${TENSORRT_ROOT:-}"
 RUN_SMOKE_TEST="${RUN_SMOKE_TEST:-1}"
+SKIP_SYSTEM_PACKAGES="${SKIP_SYSTEM_PACKAGES:-0}"
 
-mkdir -p "${THIRD_PARTY_DIR}" "${DOWNLOAD_DIR}" "${BUILD_DIR}"
+mkdir -p "${THIRD_PARTY_DIR}" "${DOWNLOAD_DIR}" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
 
-log() { printf '\n[setup] %s\n' "$*"; }
-warn() { printf '\n[setup][warning] %s\n' "$*" >&2; }
-fail() { printf '\n[setup][error] %s\n' "$*" >&2; exit 1; }
-have() { command -v "$1" >/dev/null 2>&1; }
+log(){ printf '\n[setup] %s\n' "$*"; }
+warn(){ printf '\n[setup][warning] %s\n' "$*" >&2; }
+fail(){ printf '\n[setup][error] %s\n' "$*" >&2; exit 1; }
+have(){ command -v "$1" >/dev/null 2>&1; }
 
-os_name="$(uname -s)"
-arch_name="$(uname -m)"
+KERNEL="$(uname -s)"
+ARCH_RAW="$(uname -m)"
+case "${ARCH_RAW}" in
+  x86_64|amd64) ARCH="x64" ;;
+  aarch64|arm64) ARCH="arm64" ;;
+  *) ARCH="${ARCH_RAW}" ;;
+esac
 
-need_sudo=""
-if [[ "${EUID:-$(id -u)}" -ne 0 ]] && have sudo; then
-  need_sudo="sudo"
+OS_FAMILY="unknown"
+case "${KERNEL}" in
+  Linux) OS_FAMILY="linux" ;;
+  Darwin) OS_FAMILY="macos" ;;
+  *) OS_FAMILY="unknown" ;;
+esac
+
+OS_ID="unknown"
+OS_VERSION_ID="unknown"
+if [[ -r /etc/os-release ]]; then
+  . /etc/os-release
+  OS_ID="${ID:-unknown}"
+  OS_VERSION_ID="${VERSION_ID:-unknown}"
 fi
 
-install_linux_deps() {
-  if have apt-get; then
-    log "Installing Ubuntu/Debian build dependencies"
-    ${need_sudo} apt-get update
-    if [[ -n "${LLVM_VERSION}" ]]; then
-      ${need_sudo} apt-get install -y \
-        build-essential cmake ninja-build curl ca-certificates unzip tar pkg-config \
-        flex bison libfl-dev \
-        "llvm-${LLVM_VERSION}" "llvm-${LLVM_VERSION}-dev" "clang-${LLVM_VERSION}"
-    else
-      ${need_sudo} apt-get install -y \
-        build-essential cmake ninja-build curl ca-certificates unzip tar pkg-config \
-        flex bison libfl-dev \
-        llvm llvm-dev clang
-    fi
+SUDO=""
+if [[ "${EUID:-$(id -u)}" -ne 0 ]] && have sudo; then SUDO="sudo"; fi
+
+log "Detected OS=${OS_FAMILY} distro=${OS_ID} version=${OS_VERSION_ID} arch=${ARCH}"
+
+install_packages(){
+  [[ "${SKIP_SYSTEM_PACKAGES}" == "1" ]] && { warn "Skipping system package installation"; return; }
+  if [[ "${OS_FAMILY}" == "macos" ]]; then
+    have brew || { warn "Homebrew not found. Install Homebrew or set SKIP_SYSTEM_PACKAGES=1 and LLVM_CONFIG manually."; return; }
+    log "Installing macOS dependencies with Homebrew"
+    brew install llvm flex bison cmake ninja curl git || true
+  elif have apt-get; then
+    log "Installing Debian/Ubuntu dependencies"
+    ${SUDO} apt-get update
+    local llvm_pkgs="llvm llvm-dev clang"
+    [[ -n "${LLVM_VERSION}" ]] && llvm_pkgs="llvm-${LLVM_VERSION} llvm-${LLVM_VERSION}-dev clang-${LLVM_VERSION}"
+    ${SUDO} apt-get install -y build-essential make cmake ninja-build curl ca-certificates unzip tar pkg-config git flex bison libfl-dev ${llvm_pkgs}
   elif have dnf; then
-    log "Installing Fedora/RHEL build dependencies"
-    ${need_sudo} dnf install -y gcc gcc-c++ make cmake ninja-build curl unzip tar pkgconfig flex bison llvm llvm-devel clang
+    log "Installing Fedora/RHEL dependencies with dnf"
+    ${SUDO} dnf install -y gcc gcc-c++ make cmake ninja-build curl unzip tar pkgconf-pkg-config git flex bison llvm llvm-devel clang
   elif have yum; then
-    log "Installing RHEL/CentOS build dependencies"
-    ${need_sudo} yum install -y gcc gcc-c++ make cmake ninja-build curl unzip tar pkgconfig flex bison llvm llvm-devel clang
+    log "Installing RHEL/CentOS dependencies with yum"
+    ${SUDO} yum install -y gcc gcc-c++ make cmake ninja-build curl unzip tar pkgconfig git flex bison llvm llvm-devel clang
+  elif have pacman; then
+    log "Installing Arch dependencies"
+    ${SUDO} pacman -Sy --needed --noconfirm base-devel cmake ninja curl unzip tar pkgconf git flex bison llvm clang
+  elif have zypper; then
+    log "Installing openSUSE dependencies"
+    ${SUDO} zypper --non-interactive install -y gcc gcc-c++ make cmake ninja curl unzip tar pkg-config git flex bison llvm llvm-devel clang
   else
-    warn "No supported Linux package manager found. Install LLVM, Clang, Flex, Bison, libfl, make, and g++ manually."
+    warn "No supported package manager found. Install LLVM/Clang/Flex/Bison/libfl manually."
   fi
 }
 
-install_macos_deps() {
-  if ! have brew; then
-    warn "Homebrew not found. Install LLVM, Flex, Bison, make, and g++ manually or install Homebrew first."
-    return
-  fi
-  log "Installing macOS build dependencies with Homebrew"
-  brew install llvm flex bison cmake ninja curl || true
+find_exec(){
+  local x
+  for x in "$@"; do
+    [[ -x "${x}" ]] && { echo "${x}"; return 0; }
+    have "${x}" && { command -v "${x}"; return 0; }
+  done
+  return 1
 }
 
-resolve_llvm_config() {
-  local candidate=""
-  if [[ -n "${LLVM_VERSION}" ]] && have "llvm-config-${LLVM_VERSION}"; then
-    candidate="$(command -v "llvm-config-${LLVM_VERSION}")"
-  elif have llvm-config; then
-    candidate="$(command -v llvm-config)"
-  elif [[ -x /opt/homebrew/opt/llvm/bin/llvm-config ]]; then
-    candidate="/opt/homebrew/opt/llvm/bin/llvm-config"
-  elif [[ -x /usr/local/opt/llvm/bin/llvm-config ]]; then
-    candidate="/usr/local/opt/llvm/bin/llvm-config"
-  fi
-
-  [[ -n "${candidate}" ]] || fail "llvm-config not found after dependency installation."
-  echo "${candidate}"
+resolve_llvm_config(){
+  [[ -n "${LLVM_CONFIG:-}" && -x "${LLVM_CONFIG}" ]] && { echo "${LLVM_CONFIG}"; return; }
+  local c=()
+  [[ -n "${LLVM_VERSION}" ]] && c+=("llvm-config-${LLVM_VERSION}" "/usr/lib/llvm-${LLVM_VERSION}/bin/llvm-config" "/opt/homebrew/opt/llvm@${LLVM_VERSION}/bin/llvm-config" "/usr/local/opt/llvm@${LLVM_VERSION}/bin/llvm-config")
+  c+=("llvm-config" "/usr/lib/llvm/bin/llvm-config" "/usr/lib/llvm-20/bin/llvm-config" "/usr/lib/llvm-19/bin/llvm-config" "/usr/lib/llvm-18/bin/llvm-config" "/usr/lib/llvm-17/bin/llvm-config" "/usr/lib/llvm-16/bin/llvm-config" "/usr/lib/llvm-15/bin/llvm-config" "/usr/lib/llvm-14/bin/llvm-config" "/opt/homebrew/opt/llvm/bin/llvm-config" "/usr/local/opt/llvm/bin/llvm-config")
+  find_exec "${c[@]}" || fail "llvm-config not found. Set LLVM_CONFIG=/path/to/llvm-config or install LLVM."
 }
 
-resolve_clang() {
-  if [[ -n "${LLVM_VERSION}" ]] && have "clang-${LLVM_VERSION}"; then
-    command -v "clang-${LLVM_VERSION}"
-  elif have clang; then
-    command -v clang
-  elif [[ -x /opt/homebrew/opt/llvm/bin/clang ]]; then
-    echo "/opt/homebrew/opt/llvm/bin/clang"
-  elif [[ -x /usr/local/opt/llvm/bin/clang ]]; then
-    echo "/usr/local/opt/llvm/bin/clang"
-  else
-    echo "clang"
-  fi
+resolve_tool_near_llvm(){
+  local tool="$1"
+  local llvm_bin="$2"
+  local c=()
+  [[ -n "${LLVM_VERSION}" ]] && c+=("${tool}-${LLVM_VERSION}")
+  c+=("${llvm_bin}/${tool}" "${tool}" "/opt/homebrew/opt/llvm/bin/${tool}" "/usr/local/opt/llvm/bin/${tool}")
+  find_exec "${c[@]}" || echo "${tool}"
 }
 
-resolve_llc() {
-  if [[ -n "${LLVM_VERSION}" ]] && have "llc-${LLVM_VERSION}"; then
-    command -v "llc-${LLVM_VERSION}"
-  elif have llc; then
-    command -v llc
-  elif [[ -x /opt/homebrew/opt/llvm/bin/llc ]]; then
-    echo "/opt/homebrew/opt/llvm/bin/llc"
-  elif [[ -x /usr/local/opt/llvm/bin/llc ]]; then
-    echo "/usr/local/opt/llvm/bin/llc"
-  else
-    echo "llc"
-  fi
+latest_ort_version(){
+  curl -fsSL "https://api.github.com/repos/microsoft/onnxruntime/releases/latest" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -n 1
 }
 
-latest_onnxruntime_version() {
-  local api="https://api.github.com/repos/microsoft/onnxruntime/releases/latest"
-  curl -fsSL "${api}" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -n 1
-}
-
-onnxruntime_asset_name() {
-  case "${os_name}-${arch_name}" in
-    Linux-x86_64) echo "onnxruntime-linux-x64" ;;
-    Linux-aarch64|Linux-arm64) echo "onnxruntime-linux-aarch64" ;;
-    Darwin-x86_64) echo "onnxruntime-osx-x86_64" ;;
-    Darwin-arm64) echo "onnxruntime-osx-arm64" ;;
+ort_asset_prefix(){
+  case "${OS_FAMILY}-${ARCH}" in
+    linux-x64) echo "onnxruntime-linux-x64" ;;
+    linux-arm64) echo "onnxruntime-linux-aarch64" ;;
+    macos-x64) echo "onnxruntime-osx-x86_64" ;;
+    macos-arm64) echo "onnxruntime-osx-arm64" ;;
     *) return 1 ;;
   esac
 }
 
-download_onnxruntime() {
-  [[ "${DOWNLOAD_ONNXRUNTIME}" == "1" ]] || return 0
-  have curl || fail "curl is required to download ONNX Runtime."
-  have tar || fail "tar is required to extract ONNX Runtime."
-
+download_onnxruntime(){
+  [[ "${DOWNLOAD_ONNXRUNTIME}" == "1" ]] || { warn "ONNX Runtime download disabled"; return; }
+  have curl || fail "curl is required"
+  have tar || fail "tar is required"
   local version="${ONNXRUNTIME_VERSION}"
-  if [[ "${version}" == "latest" ]]; then
-    log "Resolving latest ONNX Runtime release"
-    version="$(latest_onnxruntime_version)"
-  fi
-  [[ -n "${version}" ]] || fail "Could not resolve ONNX Runtime version. Set ONNXRUNTIME_VERSION manually."
-
-  local asset_prefix
-  asset_prefix="$(onnxruntime_asset_name)" || { warn "Unsupported ONNX Runtime platform ${os_name}-${arch_name}; skipping."; return 0; }
-
-  local archive="${asset_prefix}-${version}.tgz"
+  [[ "${version}" == "latest" ]] && version="$(latest_ort_version)"
+  [[ -n "${version}" ]] || fail "Could not resolve ONNX Runtime version"
+  local prefix; prefix="$(ort_asset_prefix)" || { warn "No ONNX Runtime asset for ${OS_FAMILY}-${ARCH}"; return; }
+  local archive="${prefix}-${version}.tgz"
   local url="https://github.com/microsoft/onnxruntime/releases/download/v${version}/${archive}"
   local dest="${DOWNLOAD_DIR}/${archive}"
-  local extract_dir="${THIRD_PARTY_DIR}/onnxruntime-${version}"
-
-  if [[ -d "${extract_dir}" ]]; then
-    log "ONNX Runtime already present at ${extract_dir}"
+  local out="${THIRD_PARTY_DIR}/onnxruntime-${version}-${prefix}"
+  if [[ ! -d "${out}" ]]; then
+    log "Downloading ONNX Runtime ${version} for ${OS_FAMILY}/${ARCH}"
+    curl -fL --retry 3 "${url}" -o "${dest}"
+    mkdir -p "${out}"
+    tar -xzf "${dest}" -C "${out}" --strip-components=1
   else
-    log "Downloading ONNX Runtime ${version}"
-    curl -fL "${url}" -o "${dest}"
-    rm -rf "${extract_dir}"
-    mkdir -p "${extract_dir}"
-    tar -xzf "${dest}" -C "${extract_dir}" --strip-components=1
+    log "ONNX Runtime already exists at ${out}"
   fi
-
-  ln -sfn "${extract_dir}" "${THIRD_PARTY_DIR}/onnxruntime"
+  ln -sfn "${out}" "${THIRD_PARTY_DIR}/onnxruntime"
 }
 
-download_libtorch() {
-  [[ "${DOWNLOAD_LIBTORCH}" == "1" ]] || return 0
-  have curl || fail "curl is required to download LibTorch."
-  have unzip || fail "unzip is required to extract LibTorch."
+default_libtorch_url(){
+  case "${OS_FAMILY}-${ARCH}" in
+    linux-x64) echo "https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.1%2Bcpu.zip" ;;
+    macos-arm64) echo "https://download.pytorch.org/libtorch/cpu/libtorch-macos-arm64-2.5.1.zip" ;;
+    macos-x64) echo "https://download.pytorch.org/libtorch/cpu/libtorch-macos-x86_64-2.5.1.zip" ;;
+    *) return 1 ;;
+  esac
+}
 
+download_libtorch(){
+  [[ "${DOWNLOAD_LIBTORCH}" == "1" ]] || { warn "LibTorch download disabled"; return; }
+  have curl || fail "curl is required"
+  have unzip || fail "unzip is required"
   local url="${LIBTORCH_URL}"
-  if [[ -z "${url}" ]]; then
-    url="https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.5.1%2Bcpu.zip"
-    warn "LIBTORCH_URL not set; using default CPU LibTorch URL: ${url}"
-  fi
-
-  local archive="${DOWNLOAD_DIR}/libtorch.zip"
-  local extract_dir="${THIRD_PARTY_DIR}/libtorch"
-  if [[ -d "${extract_dir}" ]]; then
-    log "LibTorch already present at ${extract_dir}"
-  else
-    log "Downloading LibTorch C++ SDK"
-    curl -fL "${url}" -o "${archive}"
-    rm -rf "${THIRD_PARTY_DIR}/libtorch" "${THIRD_PARTY_DIR}/libtorch_tmp"
+  [[ -z "${url}" ]] && url="$(default_libtorch_url)" || true
+  [[ -n "${url}" ]] || fail "No LibTorch URL for ${OS_FAMILY}-${ARCH}; set LIBTORCH_URL"
+  local archive="${DOWNLOAD_DIR}/libtorch-${OS_FAMILY}-${ARCH}.zip"
+  local out="${THIRD_PARTY_DIR}/libtorch"
+  if [[ ! -d "${out}" ]]; then
+    log "Downloading LibTorch for ${OS_FAMILY}/${ARCH}"
+    curl -fL --retry 3 "${url}" -o "${archive}"
+    rm -rf "${THIRD_PARTY_DIR}/libtorch_tmp"
     mkdir -p "${THIRD_PARTY_DIR}/libtorch_tmp"
     unzip -q "${archive}" -d "${THIRD_PARTY_DIR}/libtorch_tmp"
-    if [[ -d "${THIRD_PARTY_DIR}/libtorch_tmp/libtorch" ]]; then
-      mv "${THIRD_PARTY_DIR}/libtorch_tmp/libtorch" "${extract_dir}"
-    else
-      fail "LibTorch archive layout not recognized."
-    fi
+    [[ -d "${THIRD_PARTY_DIR}/libtorch_tmp/libtorch" ]] || fail "LibTorch archive layout not recognized"
+    mv "${THIRD_PARTY_DIR}/libtorch_tmp/libtorch" "${out}"
     rm -rf "${THIRD_PARTY_DIR}/libtorch_tmp"
+  else
+    log "LibTorch already exists at ${out}"
   fi
 }
 
-detect_tensorrt() {
-  if [[ -n "${TENSORRT_ROOT}" && -d "${TENSORRT_ROOT}" ]]; then
-    log "Using TensorRT from TENSORRT_ROOT=${TENSORRT_ROOT}"
-    return 0
-  fi
-
-  for d in /usr/local/TensorRT /usr/lib/x86_64-linux-gnu /usr/include/x86_64-linux-gnu /usr/src/tensorrt; do
-    if [[ -e "${d}" ]]; then
-      TENSORRT_ROOT="${d}"
-      log "Detected possible TensorRT location: ${TENSORRT_ROOT}"
-      return 0
-    fi
+detect_tensorrt(){
+  [[ -n "${TENSORRT_ROOT}" && -d "${TENSORRT_ROOT}" ]] && { log "Using TensorRT at ${TENSORRT_ROOT}"; return; }
+  for d in /usr/local/TensorRT /usr/src/tensorrt /opt/TensorRT /usr/lib/x86_64-linux-gnu; do
+    [[ -e "${d}" ]] && { TENSORRT_ROOT="${d}"; log "Detected possible TensorRT at ${TENSORRT_ROOT}"; return; }
   done
-
-  warn "TensorRT was not downloaded automatically. NVIDIA TensorRT normally requires platform-specific packages and license/account acceptance. Set TENSORRT_ROOT after installing it from NVIDIA if needed."
+  warn "TensorRT is not auto-downloaded because it is NVIDIA-license/platform-gated. Set TENSORRT_ROOT after installing it."
 }
 
-write_env_file() {
-  local llvm_config clang_bin llc_bin
+write_env(){
+  local llvm_config llvm_bin clang_bin llc_bin onnx_root libtorch_root
   llvm_config="$(resolve_llvm_config)"
-  clang_bin="$(resolve_clang)"
-  llc_bin="$(resolve_llc)"
-
-  local onnx_root=""
-  if [[ -d "${THIRD_PARTY_DIR}/onnxruntime" ]]; then
-    onnx_root="${THIRD_PARTY_DIR}/onnxruntime"
-  fi
-
-  local libtorch_root=""
-  if [[ -d "${THIRD_PARTY_DIR}/libtorch" ]]; then
-    libtorch_root="${THIRD_PARTY_DIR}/libtorch"
-  fi
-
-  cat > "${ENV_FILE}" <<EOF
-# Generated by setup_build_infra.sh. Source this file before building optional AI targets.
+  llvm_bin="$(dirname "${llvm_config}")"
+  clang_bin="$(resolve_tool_near_llvm clang "${llvm_bin}")"
+  llc_bin="$(resolve_tool_near_llvm llc "${llvm_bin}")"
+  onnx_root=""; [[ -d "${THIRD_PARTY_DIR}/onnxruntime" ]] && onnx_root="${THIRD_PARTY_DIR}/onnxruntime"
+  libtorch_root=""; [[ -d "${THIRD_PARTY_DIR}/libtorch" ]] && libtorch_root="${THIRD_PARTY_DIR}/libtorch"
+  cat > "${ENV_FILE}" <<EOF_ENV
+# Generated by setup_build_infra.sh
 export SHORT_HAND_ROOT="${ROOT_DIR}"
 export SHORT_HAND_THIRD_PARTY="${THIRD_PARTY_DIR}"
+export SHORT_HAND_OS_FAMILY="${OS_FAMILY}"
+export SHORT_HAND_ARCH="${ARCH}"
 export LLVM_CONFIG="${llvm_config}"
 export CLANG_BIN="${clang_bin}"
 export LLC_BIN="${llc_bin}"
 export ONNXRUNTIME_ROOT="${onnx_root}"
 export LIBTORCH_ROOT="${libtorch_root}"
 export TENSORRT_ROOT="${TENSORRT_ROOT}"
-export PATH="$(dirname "${clang_bin}"):$(dirname "${llc_bin}"):\${PATH}"
-EOF
+export PATH="${llvm_bin}:$(dirname "${clang_bin}"):$(dirname "${llc_bin}"):\${PATH}"
+EOF_ENV
   log "Wrote ${ENV_FILE}"
 }
 
-build_and_verify() {
+build_verify(){
   # shellcheck source=/dev/null
   source "${ENV_FILE}"
-
-  log "Toolchain summary"
-  echo "LLVM_CONFIG=${LLVM_CONFIG}"
-  "${LLVM_CONFIG}" --version
-  "${CLANG_BIN}" --version | head -n 1 || true
-  "${LLC_BIN}" --version | head -n 1 || true
-  echo "ONNXRUNTIME_ROOT=${ONNXRUNTIME_ROOT}"
-  echo "LIBTORCH_ROOT=${LIBTORCH_ROOT}"
-  echo "TENSORRT_ROOT=${TENSORRT_ROOT}"
-
-  log "Building GreenAI C++ tool"
+  log "LLVM version: $("${LLVM_CONFIG}" --version)"
+  log "Building C++ GreenAI tool"
   make -C "${SRC_DIR}" green_ai_tool
-
-  log "Running GreenAI tests"
+  log "Running C++ GreenAI tests"
   make -C "${SRC_DIR}" test-green
-
   log "Building ShortHand compiler"
   make -C "${SRC_DIR}" clean all LLVM_CONFIG="${LLVM_CONFIG}"
-
-  log "Building optional AI runtime binaries"
-  if [[ -n "${ONNXRUNTIME_ROOT}" ]]; then
-    make -C "${SRC_DIR}" ai_app ONNXRUNTIME_ROOT="${ONNXRUNTIME_ROOT}"
-  else
-    make -C "${SRC_DIR}" ai_app
-  fi
-
-  if [[ -n "${LIBTORCH_ROOT}" ]]; then
-    make -C "${SRC_DIR}" ai_train LIBTORCH_ROOT="${LIBTORCH_ROOT}"
-  else
-    make -C "${SRC_DIR}" ai_train
-  fi
-
-  if [[ "${RUN_SMOKE_TEST}" == "1" ]]; then
-    log "Running repository smoke test"
-    bash "${ROOT_DIR}/scripts/smoke_test.sh"
-  fi
-
-  log "Setup and verification completed"
+  log "Building AI inference binary"
+  if [[ -n "${ONNXRUNTIME_ROOT}" ]]; then make -C "${SRC_DIR}" ai_app ONNXRUNTIME_ROOT="${ONNXRUNTIME_ROOT}"; else make -C "${SRC_DIR}" ai_app; fi
+  log "Building AI training binary"
+  if [[ -n "${LIBTORCH_ROOT}" ]]; then make -C "${SRC_DIR}" ai_train LIBTORCH_ROOT="${LIBTORCH_ROOT}"; else make -C "${SRC_DIR}" ai_train; fi
+  if [[ "${RUN_SMOKE_TEST}" == "1" ]]; then bash "${ROOT_DIR}/scripts/smoke_test.sh"; else warn "RUN_SMOKE_TEST=0; smoke test skipped"; fi
 }
 
-case "${os_name}" in
-  Linux) install_linux_deps ;;
-  Darwin) install_macos_deps ;;
-  *) warn "Unsupported OS ${os_name}; dependency installation skipped." ;;
-esac
-
+install_packages
 download_onnxruntime
 download_libtorch
 detect_tensorrt
-write_env_file
-build_and_verify
+write_env
+build_verify
 
-cat <<EOF
+cat <<EOF_DONE
 
 ShortHand build infrastructure is ready.
+Detected: OS=${OS_FAMILY}, distro=${OS_ID}, version=${OS_VERSION_ID}, arch=${ARCH}
+Third-party SDKs are under: ${THIRD_PARTY_DIR}
 
 Next commands:
   source ./shorthand_env.sh
   bash scripts/smoke_test.sh
 
-Third-party SDK location:
-  ${THIRD_PARTY_DIR}
-
 Notes:
-  - LLVM/Clang are installed through the OS package manager.
-  - ONNX Runtime is downloaded under third_party/ by default.
-  - LibTorch is optional; run with DOWNLOAD_LIBTORCH=1 to download it.
-  - TensorRT is optional and NVIDIA-license/platform-gated; install it separately and set TENSORRT_ROOT.
-EOF
+  - LLVM/Clang are installed/detected based on the OS/package manager.
+  - ONNX Runtime is selected by OS and architecture.
+  - LibTorch is optional: DOWNLOAD_LIBTORCH=1 bash setup_build_infra.sh
+  - TensorRT is optional and must be installed separately; set TENSORRT_ROOT.
+EOF_DONE
