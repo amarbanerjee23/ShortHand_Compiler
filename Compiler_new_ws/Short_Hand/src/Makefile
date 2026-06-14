@@ -34,7 +34,18 @@ GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
 
 all: short_hand
 
-short_hand: $(SRC)
+patch-generated-parser:
+	@python_not_required=1; \
+	if grep -q 'extern "C" void yyerror(char \*s);' parser.tab.cc; then \
+		sed -i.bak 's/extern "C" void yyerror(char \*s);/extern "C" void yyerror(char const *s);/' parser.tab.cc; \
+		rm -f parser.tab.cc.bak; \
+	fi; \
+	if grep -q '^void yyerror (char const \*s)' parser.tab.cc; then \
+		sed -i.bak 's/^void yyerror (char const \*s)/extern "C" void yyerror (char const *s)/' parser.tab.cc; \
+		rm -f parser.tab.cc.bak; \
+	fi
+
+short_hand: patch-generated-parser $(SRC)
 	@mkdir -p ../build
 	@if [ -z "$(LLVM_CXXFLAGS)" ] || [ -z "$(LLVM_LDFLAGS)" ]; then \
 		echo "error: llvm-config not found or LLVM flags unavailable. Install LLVM with llvm-config in PATH."; \
@@ -61,6 +72,6 @@ regen:
 	bison --debug -v -d ./scanner_parser/parser.yy
 	flex ./scanner_parser/scanner.ll
 
-.PHONY: all short_hand ai_app ai_train green_ai_tool test-green regen clean
+.PHONY: all short_hand ai_app ai_train green_ai_tool test-green regen patch-generated-parser clean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool lex.yy.c parser.tab.cc parser.tab.hh parser.output
