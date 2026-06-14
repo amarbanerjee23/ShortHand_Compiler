@@ -3,7 +3,6 @@
 #include "../util/util.h"
 
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/NoFolder.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <cstdlib>
