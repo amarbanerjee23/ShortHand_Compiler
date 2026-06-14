@@ -10,7 +10,7 @@
 
   extern "C" int yylex();
   extern "C" int yyparse();
-  extern "C" void yyerror(char *s);
+  extern "C" void yyerror(char const *s);
   extern "C" int yywrap(void){return 1;}
   extern "C" int yylineno;
   extern "C" int yydebug;
@@ -117,7 +117,7 @@ ShortType: INT {$$=ShortType::Int;}
       | VOID {$$=ShortType::Void;}
       | BOOL{$$=ShortType::Boolean;}
       ;                      
-                       
+                        
 DECLARATION_STATEMENT_RULE:    ShortType DECLARATION_VARIABLE_LIST_RULE
                    {
                        //fprintf(bison_output, "DECLARATION_STATEMENT_RULE\n");
@@ -165,6 +165,7 @@ STATEMENT_BLOCK_RULE:    '{' STATEMENT_LIST_RULE '}'
                     }
 ;
 
+
 STATEMENT_LIST_RULE:    STATEMENT_LIST_RULE STATEMENT_RULE
                    {
                        $$->push_back($2);
@@ -184,7 +185,7 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
               {
                   $$ = new AST_ASSIGNMENT_RULE($1, $3);
               }
-         
+          
          |    IDENTIFIER'(' READ_VARIABLE_LIST_RULE ')' ';'
 	      {
 	       $$ = new AST_FUNCTION_CALL_RULE($1,$3);
@@ -385,7 +386,6 @@ PRINT_VARIABLE_LIST_RULE:    PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL
 
 
 %%
-
 
 
 void yyerror (char const *s)
