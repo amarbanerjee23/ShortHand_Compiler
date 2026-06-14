@@ -66,7 +66,7 @@ public:
     bool dumpNativeBinary();
     llvm::Value * get_expression();
     llvm::Value * get_condition();
-    void setModuleName(std::string mod_name){ this->module_name = mod_name; }
+    void setModuleName(std::string mod_name);
     std::string getModuleName(){ return this->module_name; }
     llvm::Type * parseType(ShortType type);
 
