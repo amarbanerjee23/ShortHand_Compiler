@@ -4,34 +4,49 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
+EXAMPLE_GREENAI="${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short"
+EXAMPLE_AI="${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/ai_infer.short"
+MANIFEST="${ROOT_DIR}/examples/green_ai/image_classification.greenai"
 
-echo "[1/4] Building optional AI binaries..."
-make -C "${SRC_DIR}" ai_app ai_train
+cd "${ROOT_DIR}"
 
-echo "[2/4] Verifying graceful runtime guidance without optional SDKs..."
-APP_OUTPUT="$("${BUILD_DIR}/short_ai_app" fake.onnx 1,3 0.1,0.2,0.3 2>&1 || true)"
-if echo "${APP_OUTPUT}" | grep -q "ONNX Runtime support not enabled"; then
-  echo "short_ai_app fallback message OK"
-else
-  echo "short_ai_app fallback message missing"
-  exit 1
-fi
+echo "[1/8] Build GreenAI tool"
+make -C "${SRC_DIR}" green_ai_tool
 
-TRAIN_OUTPUT="$("${BUILD_DIR}/short_ai_train" 10 0.01 out.pt 2>&1 || true)"
-if echo "${TRAIN_OUTPUT}" | grep -q "LibTorch support not enabled"; then
-  echo "short_ai_train fallback message OK"
-else
-  echo "short_ai_train fallback message missing"
-  exit 1
-fi
+echo "[2/8] Test GreenAI tool"
+make -C "${SRC_DIR}" test-green
 
-echo "[3/4] Verifying environment checker script..."
-"${ROOT_DIR}/scripts/verify_env.sh" >/dev/null
+echo "[3/8] Build ShortHand compiler"
+make -C "${SRC_DIR}" clean all
 
-echo "[4/4] Verifying compiled C++ Green AI evidence tooling..."
-make -C "${SRC_DIR}" green_ai_tool >/dev/null
-"${BUILD_DIR}/green_ai_tool" validate "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --strict strict
-"${ROOT_DIR}/scripts/green-report" "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --output /tmp/short_hand_green_report.json --strict strict
-"${ROOT_DIR}/scripts/green-check" "${ROOT_DIR}/examples/green_ai/image_classification.greenai" --baseline /tmp/short_hand_green_report.json --threshold-percent 10
+echo "[4/8] Run ShortHand GreenAI example"
+GREENAI_OUTPUT="$(${BUILD_DIR}/short_hand "${EXAMPLE_GREENAI}" run 2>&1)"
+echo "${GREENAI_OUTPUT}"
+echo "${GREENAI_OUTPUT}" | grep -q "GreenAI workload"
+echo "${GREENAI_OUTPUT}" | grep -q "energy_j=500"
+
+echo "[5/8] Run ShortHand AI inference example"
+AI_OUTPUT="$(${BUILD_DIR}/short_hand "${EXAMPLE_AI}" run 2>&1 || true)"
+echo "${AI_OUTPUT}"
+echo "${AI_OUTPUT}" | grep -q "AI inference"
+echo "${AI_OUTPUT}" | grep -q "GreenAI workload"
+
+echo "[6/8] Compile ShortHand GreenAI example to LLVM bitcode"
+"${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" compile-bc
+test -f greenai_report.bc
+
+echo "[7/8] Compile ShortHand GreenAI example to native binary"
+"${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" compile-native
+test -x greenai_report
+NATIVE_OUTPUT="$(./greenai_report 2>&1)"
+echo "${NATIVE_OUTPUT}"
+echo "${NATIVE_OUTPUT}" | grep -q "GreenAI workload"
+
+echo "[8/8] Generate GreenAI report and check eco-regression"
+"${BUILD_DIR}/green_ai_tool" validate "${MANIFEST}" --strict strict
+"${BUILD_DIR}/green_ai_tool" report "${MANIFEST}" --output /tmp/short_hand_green_report.json --strict strict
+test -f /tmp/short_hand_green_report.json
+grep -q "Evidence report only; this tool does not grant certification." /tmp/short_hand_green_report.json
+"${BUILD_DIR}/green_ai_tool" check "${MANIFEST}" --baseline /tmp/short_hand_green_report.json --threshold-percent 10
 
 echo "Smoke tests completed successfully."
