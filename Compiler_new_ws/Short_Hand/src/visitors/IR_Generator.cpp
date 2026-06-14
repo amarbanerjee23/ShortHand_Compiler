@@ -66,7 +66,7 @@ Value *ShowError(string str) {
 }
 
 IR_Generator::IR_Generator() {
-    module = new Module(this->getModuleName().c_str(), ShortGlobalContext);
+    module = new Module("short_hand_module", ShortGlobalContext);
     FunctionType *printfType = FunctionType::get(i32Ty(), {i8PtrTy()}, true);
     FunctionType *scanfType = FunctionType::get(i32Ty(), {i8PtrTy()}, true);
     CalleeF = module->getOrInsertFunction("printf", printfType);
@@ -81,6 +81,14 @@ IR_Generator::IR_Generator() {
 IR_Generator::~IR_Generator() {
     delete module;
     module = nullptr;
+}
+
+void IR_Generator::setModuleName(std::string mod_name) {
+    this->module_name = mod_name;
+    if (module) {
+        module->setModuleIdentifier(mod_name);
+        module->setSourceFileName(mod_name + ".short");
+    }
 }
 
 void IR_Generator::dump() {
