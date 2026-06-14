@@ -20,7 +20,9 @@ AI_CXXFLAGS += -DUSE_LIBTORCH -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/incl
 AI_LDLIBS += -L$(LIBTORCH_ROOT)/lib -ltorch -ltorch_cpu -lc10
 endif
 
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp ai_runtime/AI_Runtime.cpp
+# parser.tab.cc currently includes ast/AST.cpp through the committed generated parser.
+# Do not also compile ast/AST.cpp here, or the linker can see duplicate AST symbols.
+SRC := main.cpp parser.tab.cc lex.yy.c visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp ai_runtime/AI_Runtime.cpp
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
