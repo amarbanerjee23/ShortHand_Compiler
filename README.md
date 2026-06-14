@@ -6,7 +6,7 @@ Python is no longer required for the official Green AI path. Green AI parsing, v
 
 ## Compiler architecture
 
-The core compiler is implemented in C++14 with Flex/Bison-generated parser sources and LLVM IR/native-code backends.
+The core compiler is implemented in C++17 with Flex/Bison-generated parser sources and modern LLVM IR/native-code backends.
 
 - Grammar: `Compiler_new_ws/Short_Hand/src/scanner_parser/parser.yy`
 - Lexer: `Compiler_new_ws/Short_Hand/src/scanner_parser/scanner.ll`
@@ -30,7 +30,7 @@ make -C Compiler_new_ws/Short_Hand/src green_ai_tool
 make -C Compiler_new_ws/Short_Hand/src test-green
 ```
 
-Build requirements for the core compiler are `g++`, `llvm-config`, LLVM libraries, and the Flex runtime library. Normal builds use committed generated parser files, so Flex/Bison executables are only needed for `make regen`.
+Build requirements for the core compiler are `g++`, `llvm-config`, LLVM libraries, and the Flex runtime library. The Makefile uses `llvm-config --cxxflags` and links LLVM `core` and `bitwriter` to support newer LLVM releases with opaque-pointer-safe IRBuilder APIs. Normal builds use committed generated parser files, so Flex/Bison executables are only needed for `make regen`.
 
 ## Running ShortHand programs
 
