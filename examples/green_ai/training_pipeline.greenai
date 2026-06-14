@@ -3,6 +3,7 @@ green {
   green_mode: "strict"
   certification_profile: "C3-ECO-AI"
   functional_unit: "1_training_run"
+  success_criteria: { validation_accuracy_min: 0.88 training_error_rate_max: 0.02 reproducible_run: true }
   boundary: { include: ["training", "preprocessing", "evaluation", "checkpointing", "storage", "network"] exclude: [] embodied_hardware: "allocated" }
   measurement_quality: "MQ2"
   data_quality: "DQ3"
