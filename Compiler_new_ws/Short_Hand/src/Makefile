@@ -1,7 +1,8 @@
 CXX ?= g++
 LLVM_CONFIG ?= llvm-config
-LLVM_FLAGS := $(shell $(LLVM_CONFIG) --cppflags --ldflags --system-libs --libs core 2>/dev/null)
-CXXFLAGS ?= -O3 -flto -Wall -std=c++14 -g -w
+LLVM_CXXFLAGS := $(shell $(LLVM_CONFIG) --cxxflags 2>/dev/null)
+LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --system-libs --libs core bitwriter 2>/dev/null)
+CXXFLAGS ?= -O3 -flto -Wall -std=c++17 -g -w
 LDFLAGS ?=
 LDLIBS ?= -lfl
 ONNXRUNTIME_ROOT ?=
@@ -35,11 +36,11 @@ all: short_hand
 
 short_hand: $(SRC)
 	@mkdir -p ../build
-	@if [ -z "$(LLVM_FLAGS)" ]; then \
-		echo "error: llvm-config not found. Install LLVM (with llvm-config in PATH) to build the compiler."; \
+	@if [ -z "$(LLVM_CXXFLAGS)" ] || [ -z "$(LLVM_LDFLAGS)" ]; then \
+		echo "error: llvm-config not found or LLVM flags unavailable. Install LLVM with llvm-config in PATH."; \
 		exit 1; \
 	fi
-	$(CXX) $(CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(LLVM_FLAGS)
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(LLVM_LDFLAGS)
 
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build
