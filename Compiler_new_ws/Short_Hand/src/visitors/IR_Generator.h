@@ -7,23 +7,25 @@
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/IRPrintingPasses.h>
-#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Verifier.h>
-#include <llvm/Pass.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
-#include<llvm/Bitcode/BitcodeWriter.h>
-#include<llvm/Support/FileSystem.h>
+#include <llvm/Config/llvm-config.h>
+
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
-#include<iostream>
-#include <vector>
-#include <algorithm>
+#include <map>
+#include <string>
 #include <typeinfo>
-#include "../ast/AST.h"
+#include <vector>
 
+#include "../ast/AST.h"
 
 class IR_Generator;
 
@@ -38,8 +40,8 @@ private:
     int load_variable;
     int is_condition;
     int is_expression;
-    string str_;
-    map<string, llvm::BasicBlock*> goto_labels;
+    std::string str_;
+    std::map<std::string, llvm::BasicBlock*> goto_labels;
 
     static const int ERROR = 0;
     static const int PLUS = 1;
@@ -64,12 +66,8 @@ public:
     bool dumpNativeBinary();
     llvm::Value * get_expression();
     llvm::Value * get_condition();
-    void setModuleName(std::string mod_name){
-      this->module_name = mod_name;
-    };
-   std::string getModuleName(){
-         return this->module_name;
-       };
+    void setModuleName(std::string mod_name){ this->module_name = mod_name; }
+    std::string getModuleName(){ return this->module_name; }
     llvm::Type * parseType(ShortType type);
 
     int visit(AST_PROGRAM * program);
