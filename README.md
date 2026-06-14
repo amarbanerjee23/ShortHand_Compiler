@@ -1,6 +1,8 @@
 # ShortHand_Compiler
 
-ShortHand is a C++/LLVM-first compiled programming language and toolchain for binary-first AI applications and Green AI certification-readiness evidence. Python is no longer required for the official Green AI path: parsing, validation, carbon estimation, report generation, eco-regression checks, inference direction, and training direction are handled by compiled C++ binaries.
+ShortHand is a C++/LLVM-first compiled programming language and toolchain for binary-first AI applications and Green AI certification-readiness evidence.
+
+Python is no longer required for the official Green AI path. Green AI parsing, validation, carbon estimation, report generation, eco-regression checks, inference direction, and training direction are handled by compiled C++ binaries.
 
 ## Compiler architecture
 
@@ -42,9 +44,7 @@ Build requirements for the core compiler are `g++`, `llvm-config`, LLVM librarie
 
 ## In-language AI and Green AI primitives
 
-## GreenAI language primitive
-
-ShortHand now includes a first end-to-end GreenAI reporting primitive in the language itself:
+ShortHand includes a GreenAI reporting primitive in the language itself:
 
 ```short
 int inferences, watts, seconds;
@@ -54,36 +54,15 @@ seconds = 10;
 greenai("edge_model_v1", inferences, watts, seconds);
 ```
 
-`greenai(name, inferences, watts, seconds);` is available to the interpreter and LLVM IR backend. It reports total energy in joules (`watts * seconds`) and integer inference efficiency (`inferences / energy_j`). See `Compiler_new_ws/Short_Hand/examples/greenai_report.short` for a runnable example.
+`greenai(name, inferences, watts, seconds);` is available to the interpreter and LLVM IR backend. It reports total energy in joules (`watts * seconds`) and integer inference efficiency (`inferences / energy_j`). See `Compiler_new_ws/Short_Hand/examples/greenai_report.short`.
 
-ShortHand also exposes native model inference through `ai_infer(model_path, shape_csv, input_csv);`. The interpreter routes this statement through the C++ `AI_Runtime` abstraction, so ONNX Runtime-backed inference works when the compiler is built with `ONNXRUNTIME_ROOT`; otherwise it emits the same clear fallback guidance as the standalone `short_ai_app`. See `Compiler_new_ws/Short_Hand/examples/ai_infer.short` for an end-to-end AI + GreenAI program.
-
-## Green AI evidence and eco-regression tooling
-
-ShortHand now includes a dependency-free Green AI manifest workflow for C3-ECO-style evidence generation. Green manifests are sidecar `.greenai` DSL files that declare functional units, system boundaries, carbon factors, energy/carbon budgets, MQ/DQ classes, model metadata, routing/cascade controls, hardware targets, data movement controls, and measured or estimated resource use. Existing `.short` programs remain backward-compatible; green validation is opt-in and controlled by `green_mode: "off" | "advisory" | "strict"`.
-
-```bash
-./tools/green_ai_tool.py validate examples/green_ai/image_classification.greenai --strict strict
-./scripts/green-report examples/green_ai/image_classification.greenai --output green-report.json --strict strict
-./scripts/green-check examples/green_ai/image_classification.greenai --baseline green-baseline.json --threshold-percent 10
-python3 tests/test_green_ai_tool.py
-```
-
-See `docs/green_ai_certification.md` and the examples in `examples/green_ai/` for image inference, LLM/RAG inference, and training pipeline manifests.
-
-## State-of-the-art AI runtime integration
+ShortHand also exposes native model inference through:
 
 ```short
-int inferences, watts, seconds;
-inferences = 1000;
-watts = 50;
-seconds = 10;
 ai_infer("models/demo.onnx", "1,3", "0.1,0.2,0.3");
-greenai("edge_model_v1", inferences, watts, seconds);
 ```
 
-- `ai_infer(model_path, shape_csv, input_csv);` routes through the native C++ `AI_Runtime` abstraction. It uses ONNX Runtime C++ when built with `ONNXRUNTIME_ROOT`; otherwise it prints a clear fallback message.
-- `greenai(name, inferences, watts, seconds);` computes `energy_j = watts * seconds` and integer `inf_per_j = inferences / energy_j` in interpreter mode and LLVM IR output.
+`ai_infer(model_path, shape_csv, input_csv);` routes through the native C++ `AI_Runtime` abstraction. It uses ONNX Runtime C++ when built with `ONNXRUNTIME_ROOT`; otherwise it prints a clear fallback message.
 
 Examples:
 
@@ -124,7 +103,7 @@ Wrapper scripts are preserved and call the compiled C++ binary:
 ./scripts/green-check examples/green_ai/image_classification.greenai --baseline green-baseline.json --threshold-percent 10
 ```
 
-`.greenai` sidecar manifests remain useful for audit metadata that should not be hard-coded into executable logic: functional units, boundaries, carbon factors, model necessity, MQ/DQ classes, measurement assumptions, and regression thresholds. They are now parsed and validated by C++.
+`.greenai` sidecar manifests remain useful for audit metadata that should not be hard-coded into executable logic: functional units, boundaries, carbon factors, model necessity, MQ/DQ classes, measurement assumptions, and regression thresholds. They are parsed and validated by C++.
 
 ## Report safeguards
 
