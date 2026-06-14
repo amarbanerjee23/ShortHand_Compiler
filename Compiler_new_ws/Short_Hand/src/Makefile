@@ -66,12 +66,15 @@ green_ai_tool: $(GREEN_AI_TOOL_SRC)
 	$(CXX) $(CXXFLAGS) -o $(GREEN_AI_TOOL_BIN) $(GREEN_AI_TOOL_SRC)
 
 test-green: green_ai_tool
-	../../../tests/green_ai/test_green_ai_tool.sh
+	bash ../../../tests/green_ai/test_green_ai_tool.sh
 
 regen:
 	bison --debug -v -d ./scanner_parser/parser.yy
 	flex ./scanner_parser/scanner.ll
 
-.PHONY: all short_hand ai_app ai_train green_ai_tool test-green regen patch-generated-parser clean
+.PHONY: all short_hand ai_app ai_train green_ai_tool test-green regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool lex.yy.c parser.tab.cc parser.tab.hh parser.output
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool *.bc *.ir *.o
+
+distclean: clean
+	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
