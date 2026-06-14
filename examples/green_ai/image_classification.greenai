@@ -30,7 +30,7 @@ model image_classifier {
   format: "onnx"
   precision: "int8"
   compression: { quantized: true pruned: false distilled: false }
-  green_model: { parameters_count: 3500000 model_size_mb: 12 accuracy_energy_frontier_required: true necessity: "edge realtime classification" }
+  green_model: { parameters_count: 3500000 model_size_mb: 12 accuracy_energy_frontier_required: true model_necessity_justification: "edge realtime classification" smaller_model_evaluated: true }
 }
 
 infer endpoint classify {
@@ -51,8 +51,8 @@ target edge_device {
 
 measurements {
   functional_unit_count: 1000
-  inference_energy_kwh: 0.045
-  idle_energy_kwh: 0.002
+  inference_energy_kwh: 0.000045
+  idle_energy_kwh: 0.000002
   memory_peak_mb: 768
   network_mb_per_task: 0.5
   p95_latency_energy_j: 0.18
