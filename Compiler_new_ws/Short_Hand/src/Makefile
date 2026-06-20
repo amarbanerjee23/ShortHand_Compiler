@@ -4,7 +4,8 @@ LLVM_CXXFLAGS := $(shell $(LLVM_CONFIG) --cxxflags 2>/dev/null)
 LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --system-libs --libs core bitwriter 2>/dev/null)
 CXXFLAGS ?= -O2 -Wall -Wextra -Wpedantic -std=c++17 -g
 LDFLAGS ?=
-LDLIBS ?= -lfl
+FLEX_LDLIB := $(shell printf 'int main(){return 0;}\n' | $(CXX) -x c++ - -lfl -o /tmp/shorthand_check_flex_lib >/dev/null 2>&1 && echo -lfl; rm -f /tmp/shorthand_check_flex_lib)
+LDLIBS ?= $(FLEX_LDLIB)
 ONNXRUNTIME_ROOT ?=
 LIBTORCH_ROOT ?=
 
@@ -45,6 +46,12 @@ patch-generated-parser:
 		rm -f parser.tab.cc.bak; \
 	fi
 
+parser.tab.cc parser.tab.hh: scanner_parser/parser.yy ast/AST.h
+	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
+
+lex.yy.c: scanner_parser/scanner.ll parser.tab.hh
+	flex -o lex.yy.c scanner_parser/scanner.ll
+
 short_hand: patch-generated-parser $(SRC)
 	@mkdir -p ../build
 	@if [ -z "$(LLVM_CXXFLAGS)" ] || [ -z "$(LLVM_LDFLAGS)" ]; then \
@@ -69,8 +76,8 @@ test-green: green_ai_tool
 	bash ../../../tests/green_ai/test_green_ai_tool.sh
 
 regen:
-	bison --debug -v -d ./scanner_parser/parser.yy
-	flex ./scanner_parser/scanner.ll
+	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
+	flex -o lex.yy.c scanner_parser/scanner.ll
 
 .PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai sanitize format-check regen patch-generated-parser clean distclean
 clean:

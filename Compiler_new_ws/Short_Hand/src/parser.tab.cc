@@ -67,7 +67,7 @@
 
 
 /* First part of user prologue.  */
-#line 1 "./scanner_parser/parser.yy"
+#line 1 "scanner_parser/parser.yy"
 
 
 #include <iostream>
@@ -88,7 +88,7 @@
 
 
 
-#line 93 "parser.tab.cc"
+#line 92 "parser.tab.cc"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -567,13 +567,13 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    73,    73,    82,    87,    93,    98,   104,   112,   113,
-     114,   115,   116,   119,   127,   132,   137,   142,   147,   151,
-     159,   167,   171,   178,   182,   187,   191,   195,   199,   203,
-     207,   211,   215,   219,   223,   227,   228,   232,   236,   240,
-     244,   251,   261,   272,   276,   280,   284,   288,   292,   296,
-     300,   304,   308,   312,   316,   320,   324,   328,   332,   336,
-     343,   347,   353,   357,   365,   369,   373,   378
+       0,    72,    72,    81,    86,    92,    97,   103,   111,   112,
+     113,   114,   115,   118,   126,   131,   136,   141,   146,   150,
+     158,   166,   170,   177,   181,   186,   190,   194,   198,   202,
+     206,   210,   214,   218,   222,   226,   227,   231,   235,   239,
+     243,   250,   260,   271,   275,   279,   283,   287,   291,   295,
+     299,   303,   307,   311,   315,   319,   323,   327,   331,   335,
+     342,   346,   352,   356,   364,   368,   372,   377
 };
 #endif
 
@@ -1283,329 +1283,329 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK  */
-#line 74 "./scanner_parser/parser.yy"
+#line 73 "scanner_parser/parser.yy"
             {
                 //fprintf(bison_output, "program\n");
                 (yyval.program) = new AST_PROGRAM((yyvsp[-2].decl_block),(yyvsp[-1].functions),(yyvsp[0].code_block));
                 main_program = (yyval.program);
             }
-#line 1294 "parser.tab.cc"
+#line 1293 "parser.tab.cc"
     break;
 
   case 3: /* FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'  */
-#line 83 "./scanner_parser/parser.yy"
+#line 82 "scanner_parser/parser.yy"
                     {
                         (yyval.functions) = (yyvsp[-2].functions);
                         (yyval.functions)->push_back((yyvsp[-1].function));
                     }
-#line 1303 "parser.tab.cc"
+#line 1302 "parser.tab.cc"
     break;
 
   case 4: /* FUNCTION_LIST_RULE: %empty  */
-#line 88 "./scanner_parser/parser.yy"
+#line 87 "scanner_parser/parser.yy"
                     {
                         (yyval.functions) = new AST_FUNCTION_LIST_RULE();
                     }
-#line 1311 "parser.tab.cc"
+#line 1310 "parser.tab.cc"
     break;
 
   case 5: /* FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE  */
-#line 94 "./scanner_parser/parser.yy"
+#line 93 "scanner_parser/parser.yy"
                         {
 	        	(yyval.function) = new AST_FUNCTION_RULE((yyvsp[-5].type),(yyvsp[-4].string_val),(yyvsp[-2].decl_block),(yyvsp[0].block_statement));
 	      		}
-#line 1319 "parser.tab.cc"
+#line 1318 "parser.tab.cc"
     break;
 
   case 6: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';'  */
-#line 99 "./scanner_parser/parser.yy"
+#line 98 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-2].decl_block);
                            (yyval.decl_block)->push_back((yyvsp[-1].decl_block));
                        }
-#line 1328 "parser.tab.cc"
+#line 1327 "parser.tab.cc"
     break;
 
   case 7: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_RULE ';'  */
-#line 105 "./scanner_parser/parser.yy"
+#line 104 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-1].decl_block);
                        }
-#line 1336 "parser.tab.cc"
+#line 1335 "parser.tab.cc"
     break;
 
   case 8: /* ShortType: INT  */
-#line 112 "./scanner_parser/parser.yy"
+#line 111 "scanner_parser/parser.yy"
                {(yyval.type)=ShortType::Int;}
-#line 1342 "parser.tab.cc"
+#line 1341 "parser.tab.cc"
     break;
 
   case 9: /* ShortType: FLOAT  */
-#line 113 "./scanner_parser/parser.yy"
+#line 112 "scanner_parser/parser.yy"
               {(yyval.type)=ShortType::Float;}
-#line 1348 "parser.tab.cc"
+#line 1347 "parser.tab.cc"
     break;
 
   case 10: /* ShortType: STRING  */
-#line 114 "./scanner_parser/parser.yy"
+#line 113 "scanner_parser/parser.yy"
                {(yyval.type)=ShortType::String;}
-#line 1354 "parser.tab.cc"
+#line 1353 "parser.tab.cc"
     break;
 
   case 11: /* ShortType: VOID  */
-#line 115 "./scanner_parser/parser.yy"
+#line 114 "scanner_parser/parser.yy"
              {(yyval.type)=ShortType::Void;}
-#line 1360 "parser.tab.cc"
+#line 1359 "parser.tab.cc"
     break;
 
   case 12: /* ShortType: BOOL  */
-#line 116 "./scanner_parser/parser.yy"
+#line 115 "scanner_parser/parser.yy"
             {(yyval.type)=ShortType::Boolean;}
-#line 1366 "parser.tab.cc"
+#line 1365 "parser.tab.cc"
     break;
 
   case 13: /* DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE  */
-#line 120 "./scanner_parser/parser.yy"
+#line 119 "scanner_parser/parser.yy"
                    {
                        //fprintf(bison_output, "DECLARATION_STATEMENT_RULE\n");
                        (yyval.decl_block) = (yyvsp[0].decl_block);
                    }
-#line 1375 "parser.tab.cc"
+#line 1374 "parser.tab.cc"
     break;
 
   case 14: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER  */
-#line 128 "./scanner_parser/parser.yy"
+#line 127 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-2].decl_block);
                            (yyval.decl_block)->push_back(string((yyvsp[0].string_val)));
                        }
-#line 1384 "parser.tab.cc"
+#line 1383 "parser.tab.cc"
     break;
 
   case 15: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'  */
-#line 133 "./scanner_parser/parser.yy"
+#line 132 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-5].decl_block);
                            (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)), (yyvsp[-1].int_val));
                        }
-#line 1393 "parser.tab.cc"
+#line 1392 "parser.tab.cc"
     break;
 
   case 16: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER  */
-#line 138 "./scanner_parser/parser.yy"
+#line 137 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = new AST_DATA_DECLARATION_BLOCK();
                            (yyval.decl_block)->push_back(string((yyvsp[0].string_val)));
                        }
-#line 1402 "parser.tab.cc"
+#line 1401 "parser.tab.cc"
     break;
 
   case 17: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL ']'  */
-#line 143 "./scanner_parser/parser.yy"
+#line 142 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = new AST_DATA_DECLARATION_BLOCK();
                            (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)), (yyvsp[-1].int_val));
                        }
-#line 1411 "parser.tab.cc"
+#line 1410 "parser.tab.cc"
     break;
 
   case 18: /* DECLARATION_VARIABLE_LIST_RULE: %empty  */
-#line 147 "./scanner_parser/parser.yy"
+#line 146 "scanner_parser/parser.yy"
                            {(yyval.decl_block) = new AST_DATA_DECLARATION_BLOCK();}
-#line 1417 "parser.tab.cc"
+#line 1416 "parser.tab.cc"
     break;
 
   case 19: /* LOGIC_BLOCK: STATEMENT_LIST_RULE  */
-#line 152 "./scanner_parser/parser.yy"
+#line 151 "scanner_parser/parser.yy"
                {
                    //fprintf(bison_output, "LOGIC_BLOCK\n");
                    (yyval.code_block) = new AST_LOGIC_BLOCK((yyvsp[0].block_statement));
                }
-#line 1426 "parser.tab.cc"
+#line 1425 "parser.tab.cc"
     break;
 
   case 20: /* STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'  */
-#line 160 "./scanner_parser/parser.yy"
+#line 159 "scanner_parser/parser.yy"
                     {
                         //fprintf(bison_output, "STATEMENT_BLOCK_RULE\n");
                         (yyval.block_statement) = (yyvsp[-1].block_statement);
                     }
-#line 1435 "parser.tab.cc"
+#line 1434 "parser.tab.cc"
     break;
 
   case 21: /* STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE  */
-#line 168 "./scanner_parser/parser.yy"
+#line 167 "scanner_parser/parser.yy"
                    {
                        (yyval.block_statement)->push_back((yyvsp[0].statement));
                    }
-#line 1443 "parser.tab.cc"
+#line 1442 "parser.tab.cc"
     break;
 
   case 22: /* STATEMENT_LIST_RULE: STATEMENT_RULE  */
-#line 172 "./scanner_parser/parser.yy"
+#line 171 "scanner_parser/parser.yy"
                    {
                        (yyval.block_statement) = new AST_STATEMENTS_BLOCK();
                        (yyval.block_statement)->push_back((yyvsp[0].statement));
                    }
-#line 1452 "parser.tab.cc"
+#line 1451 "parser.tab.cc"
     break;
 
   case 23: /* STATEMENT_RULE: EXPRESSION_RULE ';'  */
-#line 179 "./scanner_parser/parser.yy"
+#line 178 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_EXPRESSION_STATEMENT_RULE((yyvsp[-1].expression));
               }
-#line 1460 "parser.tab.cc"
+#line 1459 "parser.tab.cc"
     break;
 
   case 24: /* STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE ';'  */
-#line 183 "./scanner_parser/parser.yy"
+#line 182 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_ASSIGNMENT_RULE((yyvsp[-3].variable), (yyvsp[-1].expression));
               }
-#line 1468 "parser.tab.cc"
+#line 1467 "parser.tab.cc"
     break;
 
   case 25: /* STATEMENT_RULE: IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';'  */
-#line 188 "./scanner_parser/parser.yy"
+#line 187 "scanner_parser/parser.yy"
               {
 	       (yyval.statement) = new AST_FUNCTION_CALL_RULE((yyvsp[-4].string_val),(yyvsp[-2].read_statement));
 	      }
-#line 1476 "parser.tab.cc"
+#line 1475 "parser.tab.cc"
     break;
 
   case 26: /* STATEMENT_RULE: STATEMENT_BLOCK_RULE  */
-#line 192 "./scanner_parser/parser.yy"
+#line 191 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[0].block_statement);
               }
-#line 1484 "parser.tab.cc"
+#line 1483 "parser.tab.cc"
     break;
 
   case 27: /* STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 196 "./scanner_parser/parser.yy"
+#line 195 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_IF_STATEMENT((yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1492 "parser.tab.cc"
+#line 1491 "parser.tab.cc"
     break;
 
   case 28: /* STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE  */
-#line 200 "./scanner_parser/parser.yy"
+#line 199 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_IF_ELSE_STATEMENT((yyvsp[-3].expression), (yyvsp[-2].block_statement), (yyvsp[0].block_statement));
               }
-#line 1500 "parser.tab.cc"
+#line 1499 "parser.tab.cc"
     break;
 
   case 29: /* STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 204 "./scanner_parser/parser.yy"
+#line 203 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-5].variable), (yyvsp[-3].expression), (yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1508 "parser.tab.cc"
+#line 1507 "parser.tab.cc"
     break;
 
   case 30: /* STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 208 "./scanner_parser/parser.yy"
+#line 207 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-7].variable), (yyvsp[-5].expression), (yyvsp[-3].expression), (yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1516 "parser.tab.cc"
+#line 1515 "parser.tab.cc"
     break;
 
   case 31: /* STATEMENT_RULE: LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 212 "./scanner_parser/parser.yy"
+#line 211 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_WHILE_LOOP_STATEMENT_RULE((yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1524 "parser.tab.cc"
+#line 1523 "parser.tab.cc"
     break;
 
   case 32: /* STATEMENT_RULE: GOTO IDENTIFIER ';'  */
-#line 216 "./scanner_parser/parser.yy"
+#line 215 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_GOTO_STATEMENT_RULE(string((yyvsp[-1].string_val)));
               }
-#line 1532 "parser.tab.cc"
+#line 1531 "parser.tab.cc"
     break;
 
   case 33: /* STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE ';'  */
-#line 220 "./scanner_parser/parser.yy"
+#line 219 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_GOTO_STATEMENT_RULE((yyvsp[-1].expression), string((yyvsp[-3].string_val)));
               }
-#line 1540 "parser.tab.cc"
+#line 1539 "parser.tab.cc"
     break;
 
   case 34: /* STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE ';'  */
-#line 224 "./scanner_parser/parser.yy"
+#line 223 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].read_statement);
               }
-#line 1548 "parser.tab.cc"
+#line 1547 "parser.tab.cc"
     break;
 
   case 35: /* STATEMENT_RULE: BREAK  */
-#line 227 "./scanner_parser/parser.yy"
+#line 226 "scanner_parser/parser.yy"
                  {(yyval.statement) = new AST_BREAK();}
-#line 1554 "parser.tab.cc"
+#line 1553 "parser.tab.cc"
     break;
 
   case 36: /* STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE ';'  */
-#line 229 "./scanner_parser/parser.yy"
+#line 228 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].print_statement);
               }
-#line 1562 "parser.tab.cc"
+#line 1561 "parser.tab.cc"
     break;
 
   case 37: /* STATEMENT_RULE: GREENAI_REPORT_RULE ';'  */
-#line 233 "./scanner_parser/parser.yy"
+#line 232 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].greenai_report);
               }
-#line 1570 "parser.tab.cc"
+#line 1569 "parser.tab.cc"
     break;
 
   case 38: /* STATEMENT_RULE: AI_INFER_RULE ';'  */
-#line 237 "./scanner_parser/parser.yy"
+#line 236 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].ai_infer);
               }
-#line 1578 "parser.tab.cc"
+#line 1577 "parser.tab.cc"
     break;
 
   case 39: /* STATEMENT_RULE: IDENTIFIER ':'  */
-#line 241 "./scanner_parser/parser.yy"
+#line 240 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_LABEL_RULE(string((yyvsp[-1].string_val)));
               }
-#line 1586 "parser.tab.cc"
+#line 1585 "parser.tab.cc"
     break;
 
   case 40: /* STATEMENT_RULE: ';'  */
-#line 245 "./scanner_parser/parser.yy"
+#line 244 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_EXPRESSION_STATEMENT_RULE(new AST_LITERAL(1));
               }
-#line 1594 "parser.tab.cc"
+#line 1593 "parser.tab.cc"
     break;
 
   case 41: /* AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'  */
-#line 252 "./scanner_parser/parser.yy"
+#line 251 "scanner_parser/parser.yy"
               {
-                  if (string((yyvsp[-7].string_val)) != "ai_infer") {
+                  if ((string((yyvsp[-7].string_val)) != "ai_infer" && string((yyvsp[-7].string_val)) != "aiinfer")) {
                       yyerror((char *)"expected ai_infer builtin");
                       YYERROR;
                   }
                   (yyval.ai_infer) = new AST_AI_INFER_RULE(string((yyvsp[-5].string_val)), string((yyvsp[-3].string_val)), string((yyvsp[-1].string_val)));
               }
-#line 1606 "parser.tab.cc"
+#line 1605 "parser.tab.cc"
     break;
 
   case 42: /* GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')'  */
-#line 262 "./scanner_parser/parser.yy"
+#line 261 "scanner_parser/parser.yy"
               {
                   if (string((yyvsp[-9].string_val)) != "greenai") {
                       yyerror((char *)"expected greenai report builtin");
@@ -1613,214 +1613,214 @@ yyreduce:
                   }
                   (yyval.greenai_report) = new AST_GREENAI_REPORT_RULE(string((yyvsp[-7].string_val)), (yyvsp[-5].expression), (yyvsp[-3].expression), (yyvsp[-1].expression));
               }
-#line 1618 "parser.tab.cc"
+#line 1617 "parser.tab.cc"
     break;
 
   case 43: /* EXPRESSION_RULE: EXPRESSION_RULE '+' EXPRESSION_RULE  */
-#line 273 "./scanner_parser/parser.yy"
+#line 272 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "+");
                }
-#line 1626 "parser.tab.cc"
+#line 1625 "parser.tab.cc"
     break;
 
   case 44: /* EXPRESSION_RULE: EXPRESSION_RULE '-' EXPRESSION_RULE  */
-#line 277 "./scanner_parser/parser.yy"
+#line 276 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "-");
                }
-#line 1634 "parser.tab.cc"
+#line 1633 "parser.tab.cc"
     break;
 
   case 45: /* EXPRESSION_RULE: EXPRESSION_RULE '*' EXPRESSION_RULE  */
-#line 281 "./scanner_parser/parser.yy"
+#line 280 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "*");
                }
-#line 1642 "parser.tab.cc"
+#line 1641 "parser.tab.cc"
     break;
 
   case 46: /* EXPRESSION_RULE: EXPRESSION_RULE '/' EXPRESSION_RULE  */
-#line 285 "./scanner_parser/parser.yy"
+#line 284 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "/");
                }
-#line 1650 "parser.tab.cc"
+#line 1649 "parser.tab.cc"
     break;
 
   case 47: /* EXPRESSION_RULE: EXPRESSION_RULE '%' EXPRESSION_RULE  */
-#line 289 "./scanner_parser/parser.yy"
+#line 288 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "%");
                }
-#line 1658 "parser.tab.cc"
+#line 1657 "parser.tab.cc"
     break;
 
   case 48: /* EXPRESSION_RULE: EXPRESSION_RULE LESS EXPRESSION_RULE  */
-#line 293 "./scanner_parser/parser.yy"
+#line 292 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "<");
                }
-#line 1666 "parser.tab.cc"
+#line 1665 "parser.tab.cc"
     break;
 
   case 49: /* EXPRESSION_RULE: EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE  */
-#line 297 "./scanner_parser/parser.yy"
+#line 296 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "<=");
                }
-#line 1674 "parser.tab.cc"
+#line 1673 "parser.tab.cc"
     break;
 
   case 50: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER EXPRESSION_RULE  */
-#line 301 "./scanner_parser/parser.yy"
+#line 300 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), ">");
                }
-#line 1682 "parser.tab.cc"
+#line 1681 "parser.tab.cc"
     break;
 
   case 51: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE  */
-#line 305 "./scanner_parser/parser.yy"
+#line 304 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), ">=");
                }
-#line 1690 "parser.tab.cc"
+#line 1689 "parser.tab.cc"
     break;
 
   case 52: /* EXPRESSION_RULE: EXPRESSION_RULE EQUAL EXPRESSION_RULE  */
-#line 309 "./scanner_parser/parser.yy"
+#line 308 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "==");
                }
-#line 1698 "parser.tab.cc"
+#line 1697 "parser.tab.cc"
     break;
 
   case 53: /* EXPRESSION_RULE: EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE  */
-#line 313 "./scanner_parser/parser.yy"
+#line 312 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "!=");
                }
-#line 1706 "parser.tab.cc"
+#line 1705 "parser.tab.cc"
     break;
 
   case 54: /* EXPRESSION_RULE: EXPRESSION_RULE OR EXPRESSION_RULE  */
-#line 317 "./scanner_parser/parser.yy"
+#line 316 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "||");
                }
-#line 1714 "parser.tab.cc"
+#line 1713 "parser.tab.cc"
     break;
 
   case 55: /* EXPRESSION_RULE: EXPRESSION_RULE AND EXPRESSION_RULE  */
-#line 321 "./scanner_parser/parser.yy"
+#line 320 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "&&");
                }
-#line 1722 "parser.tab.cc"
+#line 1721 "parser.tab.cc"
     break;
 
   case 56: /* EXPRESSION_RULE: '-' EXPRESSION_RULE  */
-#line 325 "./scanner_parser/parser.yy"
+#line 324 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_UNARY_EXPRESSION_RULE((yyvsp[0].expression), "-");
                }
-#line 1730 "parser.tab.cc"
+#line 1729 "parser.tab.cc"
     break;
 
   case 57: /* EXPRESSION_RULE: '(' EXPRESSION_RULE ')'  */
-#line 329 "./scanner_parser/parser.yy"
+#line 328 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = (yyvsp[-1].expression);
                }
-#line 1738 "parser.tab.cc"
+#line 1737 "parser.tab.cc"
     break;
 
   case 58: /* EXPRESSION_RULE: VARIABLE_RULE  */
-#line 333 "./scanner_parser/parser.yy"
+#line 332 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = (yyvsp[0].variable);
                }
-#line 1746 "parser.tab.cc"
+#line 1745 "parser.tab.cc"
     break;
 
   case 59: /* EXPRESSION_RULE: INT_LITERAL  */
-#line 337 "./scanner_parser/parser.yy"
+#line 336 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_LITERAL((yyvsp[0].int_val));
                }
-#line 1754 "parser.tab.cc"
+#line 1753 "parser.tab.cc"
     break;
 
   case 60: /* VARIABLE_RULE: IDENTIFIER  */
-#line 344 "./scanner_parser/parser.yy"
+#line 343 "scanner_parser/parser.yy"
              {
                  (yyval.variable) = new AST_SIMPLE_VARIABLE(string((yyvsp[0].string_val)));
              }
-#line 1762 "parser.tab.cc"
+#line 1761 "parser.tab.cc"
     break;
 
   case 61: /* VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE ']'  */
-#line 348 "./scanner_parser/parser.yy"
+#line 347 "scanner_parser/parser.yy"
              {
                  (yyval.variable) = new AST_ARRAY_VARIABLE(string((yyvsp[-3].string_val)), (yyvsp[-1].expression));
              }
-#line 1770 "parser.tab.cc"
+#line 1769 "parser.tab.cc"
     break;
 
   case 62: /* READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE  */
-#line 354 "./scanner_parser/parser.yy"
+#line 353 "scanner_parser/parser.yy"
                        {
                            (yyval.read_statement)->push_back((yyvsp[0].variable));
                        }
-#line 1778 "parser.tab.cc"
+#line 1777 "parser.tab.cc"
     break;
 
   case 63: /* READ_VARIABLE_LIST_RULE: VARIABLE_RULE  */
-#line 358 "./scanner_parser/parser.yy"
+#line 357 "scanner_parser/parser.yy"
                        {
                            (yyval.read_statement) = new AST_READ_RULE();
                            (yyval.read_statement)->push_back((yyvsp[0].variable));
                        }
-#line 1787 "parser.tab.cc"
+#line 1786 "parser.tab.cc"
     break;
 
   case 64: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL  */
-#line 366 "./scanner_parser/parser.yy"
+#line 365 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement)->push_back(new AST_STRING_LITERAL(string((yyvsp[0].string_val))));
                    }
-#line 1795 "parser.tab.cc"
+#line 1794 "parser.tab.cc"
     break;
 
   case 65: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE  */
-#line 370 "./scanner_parser/parser.yy"
+#line 369 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement)->push_back((yyvsp[0].expression));
                    }
-#line 1803 "parser.tab.cc"
+#line 1802 "parser.tab.cc"
     break;
 
   case 66: /* PRINT_VARIABLE_LIST_RULE: STRING_LITERAL  */
-#line 374 "./scanner_parser/parser.yy"
+#line 373 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement) = new AST_PRINT_RULE();
                        (yyval.print_statement)->push_back(new AST_STRING_LITERAL(string((yyvsp[0].string_val))));
                    }
-#line 1812 "parser.tab.cc"
+#line 1811 "parser.tab.cc"
     break;
 
   case 67: /* PRINT_VARIABLE_LIST_RULE: EXPRESSION_RULE  */
-#line 379 "./scanner_parser/parser.yy"
+#line 378 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement) = new AST_PRINT_RULE();
                        (yyval.print_statement)->push_back((yyvsp[0].expression));
                    }
-#line 1821 "parser.tab.cc"
+#line 1820 "parser.tab.cc"
     break;
 
 
-#line 1825 "parser.tab.cc"
+#line 1824 "parser.tab.cc"
 
       default: break;
     }
@@ -2013,11 +2013,11 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 386 "./scanner_parser/parser.yy"
+#line 385 "scanner_parser/parser.yy"
 
 
 
-extern "C" void yyerror (char const *s)
+void yyerror (char const *s)
 {
         fprintf (stderr, "----------------ERROR----------------\n");
         fprintf (stderr, "%s\n", s);

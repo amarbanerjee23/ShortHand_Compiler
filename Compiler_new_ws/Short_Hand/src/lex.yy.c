@@ -505,9 +505,22 @@ char *yytext;
 #line 2 "./scanner_parser/scanner.ll"
 #include "./ast/AST.h"
 #include "parser.tab.hh"
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 #define YY_DECL extern "C" int yylex()
 extern FILE * flex_output;
 extern union _NODE_ yylval;
+static std::vector<char *> shorthand_scanner_strings;
+static char *shorthand_strdup_token(const char *text) {
+    char *copy = strdup(text);
+    if (copy) shorthand_scanner_strings.push_back(copy);
+    return copy;
+}
+extern "C" void shorthand_release_scanner_strings() {
+    for (char *value : shorthand_scanner_strings) free(value);
+    shorthand_scanner_strings.clear();
+}
 
 #line 513 "lex.yy.c"
 #line 514 "lex.yy.c"
@@ -989,7 +1002,7 @@ case 39:
 YY_RULE_SETUP
 #line 72 "./scanner_parser/scanner.ll"
 {
-                            yylval.string_val = strdup(yytext);
+                            yylval.string_val = shorthand_strdup_token(yytext);
                             fprintf(flex_output, "identifier: %s\n", yytext);
                             return IDENTIFIER;
                         }
@@ -999,7 +1012,7 @@ case 40:
 YY_RULE_SETUP
 #line 79 "./scanner_parser/scanner.ll"
 {
-                       yylval.string_val = strdup(yytext);
+                       yylval.string_val = shorthand_strdup_token(yytext);
                        fprintf(flex_output, "string literal: %s\n", yytext);
                        return STRING_LITERAL;
                    }
