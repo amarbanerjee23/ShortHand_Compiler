@@ -29,7 +29,7 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Compiler_new_ws/Short_Hand/src)
 set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(PARSER_SRC ${GENERATED_DIR}/parser.tab.cc)
 set(PARSER_HDR ${GENERATED_DIR}/parser.tab.hh)
-set(SCANNER_SRC ${GENERATED_DIR}/lex.yy.c)
+set(SCANNER_SRC ${GENERATED_DIR}/lex.yy.cpp)
 
 add_custom_command(
   OUTPUT ${PARSER_SRC} ${PARSER_HDR}
@@ -50,6 +50,17 @@ add_custom_command(
   VERBATIM
 )
 
+set_source_files_properties(
+  ${PARSER_SRC}
+  ${SCANNER_SRC}
+  PROPERTIES GENERATED TRUE
+)
+
+set_source_files_properties(
+  ${SCANNER_SRC}
+  PROPERTIES LANGUAGE CXX
+)
+
 add_executable(short_hand
   ${SRC_DIR}/main.cpp
   ${PARSER_SRC}
@@ -62,7 +73,14 @@ add_executable(short_hand
 )
 target_include_directories(short_hand PRIVATE ${SRC_DIR} ${GENERATED_DIR})
 target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
-target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS} ${FLEX_LIBRARIES})
+target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS})
+
+find_library(FL_LIBRARY fl)
+if(FLEX_LIBRARIES)
+  target_link_libraries(short_hand PRIVATE ${FLEX_LIBRARIES})
+elseif(FL_LIBRARY)
+  target_link_libraries(short_hand PRIVATE ${FL_LIBRARY})
+endif()
 
 add_executable(green_ai_tool ${SRC_DIR}/green_ai/GreenAITool.cpp)
 
