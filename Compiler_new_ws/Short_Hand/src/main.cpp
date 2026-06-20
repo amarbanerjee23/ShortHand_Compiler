@@ -12,6 +12,7 @@ FILE * bison_output;
 
 extern "C" FILE *yyin;
 extern "C" int yyparse();
+extern "C" void shorthand_release_scanner_strings();
 AST_PROGRAM * main_program;
 int main(int argc, char *argv[])
 {
@@ -40,6 +41,10 @@ int main(int argc, char *argv[])
 	int return_val = yyparse();
     if(return_val)
     {
+        shorthand_release_scanner_strings();
+        fclose(flex_output);
+        fclose(bison_output);
+        if (yyin) fclose(yyin);
         exit(1);
     }
     //fprintf(bison_output, "\nRETURN VALUE : %d\n", return_val);
@@ -86,6 +91,10 @@ int main(int argc, char *argv[])
         if (!c.dumpNativeBinary())
         {
             fprintf(stderr, "Native build failed. Install llc/clang and retry.\n");
+            shorthand_release_scanner_strings();
+            fclose(flex_output);
+            fclose(bison_output);
+            if (yyin) fclose(yyin);
             exit(1);
         }
     }
@@ -93,9 +102,15 @@ int main(int argc, char *argv[])
     {
         fprintf (stderr, "----------------ERROR----------------\n");
         fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
+        shorthand_release_scanner_strings();
+        fclose(flex_output);
+        fclose(bison_output);
+        if (yyin) fclose(yyin);
         exit(1);
     }
+    shorthand_release_scanner_strings();
     fclose(flex_output);
     fclose(bison_output);
+    if (yyin) fclose(yyin);
     return 0;
 }
