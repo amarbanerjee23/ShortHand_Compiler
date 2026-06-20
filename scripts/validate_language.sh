@@ -1,63 +1,69 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+STRICT=0
+if [[ "${1:-}" == "--strict" ]]; then STRICT=1; fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
+EXAMPLE_GREENAI="${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short"
 
-printf '[1/5] Checking parser grammar with bison when available...\n'
-if command -v bison >/dev/null 2>&1; then
-  bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d "${SRC_DIR}/scanner_parser/parser.yy" -o /tmp/short_hand_parser_validate.cc
-else
-  printf 'Skipping bison grammar check: bison is not installed.\n'
-fi
-
-printf '[2/5] Applying generated parser compatibility patch...\n'
-make -C "${SRC_DIR}" patch-generated-parser >/dev/null
-
-printf '[3/5] Running syntax-only C++ validation for non-LLVM and LLVM components...\n'
-if command -v llvm-config >/dev/null 2>&1; then
-  LLVM_CXXFLAGS="$(llvm-config --cxxflags)"
-else
-  printf 'Skipping LLVM syntax-only validation: llvm-config is not installed.\n'
-  LLVM_CXXFLAGS=""
-fi
-
-g++ -std=c++17 -fsyntax-only \
-  ${LLVM_CXXFLAGS} \
-  "${SRC_DIR}/visitors/Interpreter.cpp" \
-  "${SRC_DIR}/visitors/AST_Printer.cpp" \
-  "${SRC_DIR}/ai_runtime/AI_Runtime.cpp" \
-  "${SRC_DIR}/green_ai/GreenAITool.cpp" \
-  "${SRC_DIR}/parser.tab.cc" \
-  "${SRC_DIR}/lex.yy.c" \
-  -I"${SRC_DIR}"
-
-if command -v llvm-config >/dev/null 2>&1; then
-  g++ -std=c++17 -fsyntax-only \
-    ${LLVM_CXXFLAGS} \
-    "${SRC_DIR}/visitors/IR_Generator.cpp" \
-    -I"${SRC_DIR}"
-fi
-
-printf '[4/5] Attempting full compiler build when LLVM is available...\n'
-if command -v llvm-config >/dev/null 2>&1; then
-  make -C "${SRC_DIR}"
-else
-  printf 'Skipping full build: llvm-config is not installed.\n'
-fi
-
-printf '[5/5] Running language examples when short_hand exists...\n'
-if [[ -x "${BUILD_DIR}/short_hand" ]]; then
-  if ! "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" run; then
-    printf 'Skipping runtime examples: short_hand could not execute in this environment. Run scripts/smoke_test.sh in a full LLVM runtime before public release.\n'
-  else
-    "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/ai_infer.short" run || true
-    "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" compile-bc
-    "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" compile-native || true
+require() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    if [[ "${STRICT}" -eq 1 ]]; then
+      printf 'error: required tool %s missing\n' "$1" >&2
+      exit 1
+    fi
+    printf 'warning: %s missing; related validation environment-limited\n' "$1"
+    return 1
   fi
-else
-  printf 'Skipping examples: %s is not available.\n' "${BUILD_DIR}/short_hand"
+}
+
+printf '[1/7] Checking parser grammar with Bison conflicts as errors...\n'
+if require bison; then
+  bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d "${SRC_DIR}/scanner_parser/parser.yy" -o /tmp/short_hand_parser_validate.cc
 fi
 
-printf 'Language validation completed.\n'
+printf '[2/7] Checking Flex availability...\n'
+if ! require flex; then :; fi
+
+printf '[3/7] Checking LLVM native toolchain availability...\n'
+if ! require llvm-config; then :; fi
+if ! require llc; then :; fi
+if ! require clang; then :; fi
+
+printf '[4/7] Building compiler and Green AI tool...\n'
+if command -v llvm-config >/dev/null 2>&1; then
+  make -C "${SRC_DIR}" compiler green_ai_tool
+else
+  [[ "${STRICT}" -eq 0 ]] || exit 1
+  make -C "${SRC_DIR}" green_ai_tool
+fi
+
+printf '[5/7] Running interpreter GreenAI example...\n'
+if [[ -x "${BUILD_DIR}/short_hand" ]]; then
+  "${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" run >/tmp/shorthand_validate_run.out
+  grep -q "GreenAI workload" /tmp/shorthand_validate_run.out
+else
+  [[ "${STRICT}" -eq 0 ]] || { printf 'error: short_hand missing after build\n' >&2; exit 1; }
+  printf 'warning: short_hand unavailable; compiler examples environment-limited\n'
+fi
+
+printf '[6/7] Validating bitcode and native compilation...\n'
+if [[ -x "${BUILD_DIR}/short_hand" ]]; then
+  (cd "${ROOT_DIR}" && "${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" compile-bc >/tmp/shorthand_validate_bc.out 2>&1)
+  test -f "${ROOT_DIR}/greenai_report.bc"
+  if command -v llc >/dev/null 2>&1 && command -v clang >/dev/null 2>&1; then
+    (cd "${ROOT_DIR}" && "${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" compile-native >/tmp/shorthand_validate_native.out 2>&1)
+    test -x "${ROOT_DIR}/greenai_report"
+  elif [[ "${STRICT}" -eq 1 ]]; then
+    printf 'error: llc/clang unavailable for strict native validation\n' >&2
+    exit 1
+  else
+    printf 'warning: llc/clang unavailable; native validation environment-limited\n'
+  fi
+fi
+
+printf '[7/7] Running Green AI regression tests...\n'
+bash "${ROOT_DIR}/tests/green_ai/test_green_ai_tool.sh"
+printf 'Language validation completed. Strict=%d\n' "${STRICT}"

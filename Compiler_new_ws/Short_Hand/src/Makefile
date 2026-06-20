@@ -2,9 +2,10 @@ CXX ?= g++
 LLVM_CONFIG ?= llvm-config
 LLVM_CXXFLAGS := $(shell $(LLVM_CONFIG) --cxxflags 2>/dev/null)
 LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --system-libs --libs core bitwriter 2>/dev/null)
-CXXFLAGS ?= -O3 -flto -Wall -std=c++17 -g -w
+CXXFLAGS ?= -O2 -Wall -Wextra -Wpedantic -std=c++17 -g
 LDFLAGS ?=
-LDLIBS ?= -lfl
+FLEX_LDLIB := $(shell printf 'int main(){return 0;}\n' | $(CXX) -x c++ - -lfl -o /tmp/shorthand_check_flex_lib >/dev/null 2>&1 && echo -lfl; rm -f /tmp/shorthand_check_flex_lib)
+LDLIBS ?= $(FLEX_LDLIB)
 ONNXRUNTIME_ROOT ?=
 LIBTORCH_ROOT ?=
 
@@ -21,9 +22,7 @@ AI_CXXFLAGS += -DUSE_LIBTORCH -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/incl
 AI_LDLIBS += -L$(LIBTORCH_ROOT)/lib -ltorch -ltorch_cpu -lc10
 endif
 
-# parser.tab.cc currently includes ast/AST.cpp through the committed generated parser.
-# Do not also compile ast/AST.cpp here, or the linker can see duplicate AST symbols.
-SRC := main.cpp parser.tab.cc lex.yy.c visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp ai_runtime/AI_Runtime.cpp
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp ai_runtime/AI_Runtime.cpp
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
@@ -32,7 +31,9 @@ AI_TRAIN_BIN := ../build/short_ai_train
 GREEN_AI_TOOL_BIN := ../build/green_ai_tool
 GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
 
-all: short_hand
+all: compiler
+
+compiler: short_hand
 
 patch-generated-parser:
 	@python_not_required=1; \
@@ -44,6 +45,12 @@ patch-generated-parser:
 		sed -i.bak 's/^void yyerror (char const \*s)/extern "C" void yyerror (char const *s)/' parser.tab.cc; \
 		rm -f parser.tab.cc.bak; \
 	fi
+
+parser.tab.cc parser.tab.hh: scanner_parser/parser.yy ast/AST.h
+	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
+
+lex.yy.c: scanner_parser/scanner.ll parser.tab.hh
+	flex -o lex.yy.c scanner_parser/scanner.ll
 
 short_hand: patch-generated-parser $(SRC)
 	@mkdir -p ../build
@@ -69,12 +76,46 @@ test-green: green_ai_tool
 	bash ../../../tests/green_ai/test_green_ai_tool.sh
 
 regen:
-	bison --debug -v -d ./scanner_parser/parser.yy
-	flex ./scanner_parser/scanner.ll
+	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
+	flex -o lex.yy.c scanner_parser/scanner.ll
 
-.PHONY: all short_hand ai_app ai_train green_ai_tool test-green regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
+
+test: test-unit test-integration test-green test-compiler test-negative test-llvm test-ai
+
+test-unit: green_ai_tool
+	bash ../../../tests/run_language_tests.sh unit
+
+test-integration: short_hand
+	bash ../../../scripts/smoke_test.sh
+
+test-compiler: short_hand
+	bash ../../../tests/run_language_tests.sh compiler
+
+test-negative: short_hand
+	bash ../../../tests/run_language_tests.sh negative
+
+test-llvm: short_hand
+	bash ../../../tests/run_language_tests.sh llvm
+
+test-ai: ai_app
+	bash ../../../tests/run_language_tests.sh ai
+
+sanitize:
+	$(MAKE) clean
+	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool
+	ASAN_OPTIONS=detect_leaks=0 bash ../../../tests/run_language_tests.sh sanitize
+
+format-check:
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+	  echo "warning: clang-format is not installed; format check is environment-limited"; \
+	elif [ "$${CLANG_FORMAT_STRICT:-0}" = "1" ]; then \
+	  clang-format --dry-run --Werror main.cpp ast/*.h ast/*.cpp visitors/*.h visitors/*.cpp ai_runtime/*.h ai_runtime/*.cpp green_ai/*.cpp; \
+	else \
+	  echo "clang-format available; set CLANG_FORMAT_STRICT=1 to enforce full legacy formatting"; \
+	fi

@@ -1,9 +1,22 @@
 %{
 #include "./ast/AST.h"
 #include "parser.tab.hh"
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 #define YY_DECL extern "C" int yylex()
 extern FILE * flex_output;
 extern union _NODE_ yylval;
+static std::vector<char *> shorthand_scanner_strings;
+static char *shorthand_strdup_token(const char *text) {
+    char *copy = strdup(text);
+    if (copy) shorthand_scanner_strings.push_back(copy);
+    return copy;
+}
+extern "C" void shorthand_release_scanner_strings() {
+    for (char *value : shorthand_scanner_strings) free(value);
+    shorthand_scanner_strings.clear();
+}
 
 %}
 
@@ -69,15 +82,15 @@ extern union _NODE_ yylval;
                }
 
 
-[a-zA-Z][a-zA-Z0-9]*    {
-                            yylval.string_val = strdup(yytext);
+[a-zA-Z_][a-zA-Z0-9_]*    {
+                            yylval.string_val = shorthand_strdup_token(yytext);
                             fprintf(flex_output, "identifier: %s\n", yytext);
                             return IDENTIFIER;
                         }
 
 
 \"(\.|[^\"])*\"    {
-                       yylval.string_val = strdup(yytext);
+                       yylval.string_val = shorthand_strdup_token(yytext);
                        fprintf(flex_output, "string literal: %s\n", yytext);
                        return STRING_LITERAL;
                    }

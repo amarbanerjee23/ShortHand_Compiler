@@ -128,7 +128,7 @@ bool IR_Generator::dumpNativeBinary() {
     if (!dumpBitcode()) return false;
     std::string base = this->getModuleName();
     std::string cmd_obj = "llc -filetype=obj " + base + ".bc -o " + base + ".o";
-    std::string cmd_bin = "clang " + base + ".o -o " + base;
+    std::string cmd_bin = "clang -no-pie " + base + ".o -o " + base;
     if (std::system(cmd_obj.c_str()) != 0) {
         cerr << "Failed to run llc. Ensure LLVM tools are installed and in PATH.\n";
         return false;
