@@ -249,7 +249,7 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
 
 AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'
               {
-                  if (string($1) != "ai_infer") {
+                  if ((string($1) != "ai_infer" && string($1) != "aiinfer")) {
                       yyerror((char *)"expected ai_infer builtin");
                       YYERROR;
                   }

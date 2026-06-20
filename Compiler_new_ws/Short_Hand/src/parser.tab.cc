@@ -1595,7 +1595,7 @@ yyreduce:
   case 41: /* AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'  */
 #line 252 "./scanner_parser/parser.yy"
               {
-                  if (string((yyvsp[-7].string_val)) != "ai_infer") {
+                  if ((string((yyvsp[-7].string_val)) != "ai_infer" && string((yyvsp[-7].string_val)) != "aiinfer")) {
                       yyerror((char *)"expected ai_infer builtin");
                       YYERROR;
                   }

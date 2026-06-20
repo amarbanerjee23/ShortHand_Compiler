@@ -69,7 +69,7 @@ extern union _NODE_ yylval;
                }
 
 
-[a-zA-Z][a-zA-Z0-9]*    {
+[a-zA-Z_][a-zA-Z0-9_]*    {
                             yylval.string_val = strdup(yytext);
                             fprintf(flex_output, "identifier: %s\n", yytext);
                             return IDENTIFIER;

@@ -17,7 +17,7 @@ echo "[2/8] Test GreenAI tool"
 make -C "${SRC_DIR}" test-green
 
 echo "[3/8] Build ShortHand compiler"
-make -C "${SRC_DIR}" clean all
+make -C "${SRC_DIR}" clean all green_ai_tool
 
 echo "[4/8] Run ShortHand GreenAI example"
 GREENAI_OUTPUT="$(${BUILD_DIR}/short_hand "${EXAMPLE_GREENAI}" run 2>&1)"
