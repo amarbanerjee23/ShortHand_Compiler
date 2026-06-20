@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "./ast/AST.h"
-#include "./ast/AST.cpp"
 
   using namespace std;
 
