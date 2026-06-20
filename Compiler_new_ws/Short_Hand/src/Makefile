@@ -109,7 +109,7 @@ test-ai: ai_app
 sanitize:
 	$(MAKE) clean
 	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool
-	ASAN_OPTIONS=detect_leaks=0 bash ../../../tests/run_language_tests.sh sanitize
+	bash ../../../tests/run_language_tests.sh sanitize
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \
