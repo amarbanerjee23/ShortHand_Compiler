@@ -26,7 +26,11 @@ echo "${GREENAI_OUTPUT}" | grep -q "GreenAI workload"
 echo "${GREENAI_OUTPUT}" | grep -q "energy_j=500"
 
 echo "[5/8] Run ShortHand AI inference example"
-AI_OUTPUT="$(${BUILD_DIR}/short_hand "${EXAMPLE_AI}" run 2>&1 || true)"
+set +e
+AI_OUTPUT="$(${BUILD_DIR}/short_hand "${EXAMPLE_AI}" run 2>&1)"
+AI_STATUS=$?
+set -e
+if [[ "$AI_STATUS" -ne 0 ]]; then echo "AI example returned $AI_STATUS with fallback diagnostics"; fi
 echo "${AI_OUTPUT}"
 echo "${AI_OUTPUT}" | grep -q "AI inference"
 echo "${AI_OUTPUT}" | grep -q "GreenAI workload"
