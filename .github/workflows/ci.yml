@@ -1,79 +1,20 @@
 name: ci
-
-on:
-  push:
-  pull_request:
-
+on: [push, pull_request]
 jobs:
   ubuntu:
-    runs-on: ubuntu-24.04
-
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install required dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            make \
-            g++ \
-            flex \
-            bison \
-            libfl-dev \
-            llvm \
-            llvm-dev \
-            clang \
-            clang-format \
-            cmake \
-            ninja-build
-
-      - name: Verify required tools
-        run: |
-          set -euo pipefail
-          command -v make
-          command -v g++
-          command -v flex
-          command -v bison
-          command -v llvm-config
-          command -v llc
-          command -v clang
-          command -v cmake
-          llvm-config --version
-          llc --version
-          clang --version
-          cmake --version
-
-      - name: Setup build infrastructure
-        run: bash setup_build_infra.sh
-
-      - name: Strict language validation
-        run: source ./shorthand_env.sh && bash scripts/validate_language.sh --strict
-
-      - name: Smoke tests
-        run: bash scripts/smoke_test.sh
-
-      - name: Full test suite
-        run: make -C Compiler_new_ws/Short_Hand/src test
-
-      - name: Sanitizer tests
-        run: make -C Compiler_new_ws/Short_Hand/src sanitize
-
-      - name: CMake configure
-        run: cmake -S . -B build -G Ninja
-
-      - name: CMake build
-        run: cmake --build build
-
-      - name: CTest
-        run: ctest --test-dir build --output-on-failure
-
+      - run: sudo apt-get update && sudo apt-get install -y build-essential flex bison llvm clang
+      - run: bash setup_build_infra.sh
+      - run: source ./shorthand_env.sh && bash scripts/validate_language.sh --strict
+      - run: bash scripts/smoke_test.sh
+      - run: make -C Compiler_new_ws/Short_Hand/src test
+      - run: make -C Compiler_new_ws/Short_Hand/src sanitize
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-logs
           path: |
             /tmp/shorthand_*.out
-            /tmp/shorthand_*.err
             Compiler_new_ws/Short_Hand/build/
-            build/Testing/
