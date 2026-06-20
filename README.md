@@ -22,7 +22,7 @@ source ./shorthand_env.sh
 short_hand Compiler_new_ws/Short_Hand/examples/greenai_report.short run
 ```
 
-Required tools are a C++17 compiler, `make`, `g++`, Flex, Bison, the Flex runtime development library (`libfl-dev` on Ubuntu), LLVM with `llvm-config`, `llc`, `clang`, and `clang-format` for validation.
+Required tools are a C++17 compiler, `make`, Flex, Bison, LLVM with `llvm-config`, `llc`, and `clang` for native output.
 
 ## Build and test
 
