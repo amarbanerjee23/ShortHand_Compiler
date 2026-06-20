@@ -80,17 +80,15 @@ PROGRAMME_RULE:    DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOC
 
 
 FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'
-									{
-									$$ = $1;
-									$$->push_back($2);
-									}
-                    |
-                    FUNCTION_RULE ';'
                     {
-                    $$ = new AST_FUNCTION_LIST_RULE();
-                    $$->push_back($1);
-                    };
-                    | %empty { $$ = new AST_FUNCTION_LIST_RULE();}
+                        $$ = $1;
+                        $$->push_back($2);
+                    }
+                    | %empty
+                    {
+                        $$ = new AST_FUNCTION_LIST_RULE();
+                    }
+;
                     
 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
 	      		{

@@ -7,7 +7,7 @@ BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
 
 printf '[1/5] Checking parser grammar with bison when available...\n'
 if command -v bison >/dev/null 2>&1; then
-  bison --debug -v -d "${SRC_DIR}/scanner_parser/parser.yy" -o /tmp/short_hand_parser_validate.cc
+  bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d "${SRC_DIR}/scanner_parser/parser.yy" -o /tmp/short_hand_parser_validate.cc
 else
   printf 'Skipping bison grammar check: bison is not installed.\n'
 fi
@@ -50,7 +50,7 @@ fi
 printf '[5/5] Running language examples when short_hand exists...\n'
 if [[ -x "${BUILD_DIR}/short_hand" ]]; then
   if ! "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" run; then
-    printf 'Skipping runtime examples: short_hand could not execute in this environment.\n'
+    printf 'Skipping runtime examples: short_hand could not execute in this environment. Run scripts/smoke_test.sh in a full LLVM runtime before public release.\n'
   else
     "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/ai_infer.short" run || true
     "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" compile-bc
