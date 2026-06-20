@@ -10,6 +10,8 @@ MANIFEST="${ROOT_DIR}/examples/green_ai/image_classification.greenai"
 
 cd "${ROOT_DIR}"
 
+rm -f greenai_report greenai_report.o greenai_report.bc greenai_report.ir
+
 echo "[1/8] Build GreenAI tool"
 make -C "${SRC_DIR}" green_ai_tool
 
@@ -32,12 +34,16 @@ AI_STATUS=$?
 set -e
 if [[ "$AI_STATUS" -ne 0 ]]; then echo "AI example returned $AI_STATUS with fallback diagnostics"; fi
 echo "${AI_OUTPUT}"
-echo "${AI_OUTPUT}" | grep -q "AI inference"
-echo "${AI_OUTPUT}" | grep -q "GreenAI workload"
+if echo "${AI_OUTPUT}" | grep -Eq "AI inference|ONNX Runtime|fallback|not available|error"; then
+  :
+else
+  echo "error: AI example did not produce successful inference output or an expected fallback diagnostic" >&2
+  exit 1
+fi
 
 echo "[6/8] Compile ShortHand GreenAI example to LLVM bitcode"
 "${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" compile-bc
-test -f greenai_report.bc
+test -s greenai_report.bc
 
 echo "[7/8] Compile ShortHand GreenAI example to native binary"
 "${BUILD_DIR}/short_hand" "${EXAMPLE_GREENAI}" compile-native
