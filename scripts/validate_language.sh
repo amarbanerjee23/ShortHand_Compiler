@@ -1,63 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
+STRICT=0
+if [[ "${1:-}" == "--strict" ]]; then STRICT=1; fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
-
-printf '[1/5] Checking parser grammar with bison when available...\n'
-if command -v bison >/dev/null 2>&1; then
-  bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d "${SRC_DIR}/scanner_parser/parser.yy" -o /tmp/short_hand_parser_validate.cc
-else
-  printf 'Skipping bison grammar check: bison is not installed.\n'
-fi
-
-printf '[2/5] Applying generated parser compatibility patch...\n'
-make -C "${SRC_DIR}" patch-generated-parser >/dev/null
-
-printf '[3/5] Running syntax-only C++ validation for non-LLVM and LLVM components...\n'
-if command -v llvm-config >/dev/null 2>&1; then
-  LLVM_CXXFLAGS="$(llvm-config --cxxflags)"
-else
-  printf 'Skipping LLVM syntax-only validation: llvm-config is not installed.\n'
-  LLVM_CXXFLAGS=""
-fi
-
-g++ -std=c++17 -fsyntax-only \
-  ${LLVM_CXXFLAGS} \
-  "${SRC_DIR}/visitors/Interpreter.cpp" \
-  "${SRC_DIR}/visitors/AST_Printer.cpp" \
-  "${SRC_DIR}/ai_runtime/AI_Runtime.cpp" \
-  "${SRC_DIR}/green_ai/GreenAITool.cpp" \
-  "${SRC_DIR}/parser.tab.cc" \
-  "${SRC_DIR}/lex.yy.c" \
-  -I"${SRC_DIR}"
-
-if command -v llvm-config >/dev/null 2>&1; then
-  g++ -std=c++17 -fsyntax-only \
-    ${LLVM_CXXFLAGS} \
-    "${SRC_DIR}/visitors/IR_Generator.cpp" \
-    -I"${SRC_DIR}"
-fi
-
-printf '[4/5] Attempting full compiler build when LLVM is available...\n'
-if command -v llvm-config >/dev/null 2>&1; then
-  make -C "${SRC_DIR}"
-else
-  printf 'Skipping full build: llvm-config is not installed.\n'
-fi
-
-printf '[5/5] Running language examples when short_hand exists...\n'
+require(){ if ! command -v "$1" >/dev/null 2>&1; then if [[ "$STRICT" -eq 1 ]]; then echo "error: required tool '$1' missing" >&2; exit 1; else echo "warning: '$1' missing; related validation environment-limited"; return 1; fi; fi; }
+printf '[1/6] Checking parser grammar with Bison conflicts as errors...\n'
+if require bison; then bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d "${SRC_DIR}/scanner_parser/parser.yy" -o /tmp/short_hand_parser_validate.cc; fi
+printf '[2/6] Checking Flex availability...\n'
+if ! require flex; then :; fi
+printf '[3/6] Checking LLVM availability...\n'
+if ! require llvm-config; then :; fi
+printf '[4/6] Building mandatory targets...\n'
+if command -v llvm-config >/dev/null 2>&1; then make -C "${SRC_DIR}" compiler green_ai_tool; else [[ "$STRICT" -eq 0 ]] || exit 1; make -C "${SRC_DIR}" green_ai_tool; fi
+printf '[5/6] Running compiler-backed validation...\n'
 if [[ -x "${BUILD_DIR}/short_hand" ]]; then
-  if ! "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" run; then
-    printf 'Skipping runtime examples: short_hand could not execute in this environment. Run scripts/smoke_test.sh in a full LLVM runtime before public release.\n'
-  else
-    "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/ai_infer.short" run || true
-    "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" compile-bc
-    "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" compile-native || true
-  fi
+  "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" run >/tmp/shorthand_validate_run.out
+  "${BUILD_DIR}/short_hand" "${ROOT_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short" compile-bc >/tmp/shorthand_validate_bc.out 2>&1
 else
-  printf 'Skipping examples: %s is not available.\n' "${BUILD_DIR}/short_hand"
+  [[ "$STRICT" -eq 0 ]] || { echo "error: short_hand missing after build" >&2; exit 1; }
+  echo "warning: short_hand unavailable; compiler examples environment-limited"
 fi
-
-printf 'Language validation completed.\n'
+printf '[6/6] Running Green AI regression tests...\n'
+bash "${ROOT_DIR}/tests/green_ai/test_green_ai_tool.sh"
+printf 'Language validation completed. Strict=%d\n' "$STRICT"

@@ -1,0 +1,3 @@
+# Evaluation Plan
+
+Benchmarks cover arithmetic, loops, arrays, function calls, Green AI reporting, and optional ONNX inference. Baselines include equivalent C++ and optional Python only for research comparison, never for official build/test workflows. Metrics are compile time, runtime, binary size, output correctness, energy when measured, carbon estimates, and diagnostic quality. Energy hooks use RAPL, NVML, or external meters when available; unavailable tools are reported as unavailable and values are not fabricated. Reports must include raw data, hardware, OS, LLVM version, repetitions, variance, and threats to validity.

@@ -1,8 +1,66 @@
-third_party/
-Compiler_new_ws/Short_Hand/build/short_ai_app
-Compiler_new_ws/Short_Hand/build/short_ai_train
-Compiler_new_ws/Short_Hand/build/short_hand
+# Build outputs
+build/
+**/build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+CTestTestfile.cmake
+cmake_install.cmake
+
+# Native/compiler artifacts
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
 *.bc
 *.ir
-*.o
-*.pt
+*.ll.tmp
+*.s
+Compiler_new_ws/Short_Hand/src/short_hand
+Compiler_new_ws/Short_Hand/build/*
+!Compiler_new_ws/Short_Hand/build/.gitkeep
+
+# Flex/Bison generated files (canonical sources are scanner_parser/*.ll and *.yy)
+Compiler_new_ws/Short_Hand/src/lex.yy.c
+Compiler_new_ws/Short_Hand/src/parser.tab.cc
+Compiler_new_ws/Short_Hand/src/parser.tab.hh
+Compiler_new_ws/Short_Hand/src/parser.output
+*.yy.cc
+*.tab.cc
+*.tab.hh
+
+# Logs/reports/coverage/sanitizers
+*.log
+*.trace
+*.profraw
+*.profdata
+coverage/
+htmlcov/
+*.gcda
+*.gcno
+asan.*
+ubsan.*
+lsan.*
+
+# IDE/workspace metadata
+.metadata/
+**/.metadata/
+.history/
+**/.history/
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Downloaded third-party SDKs
+third_party/downloads/
+
+# Generated reports (examples may be committed under examples/)
+reports/generated/
+results/raw/

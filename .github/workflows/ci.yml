@@ -1,0 +1,20 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y build-essential flex bison llvm clang
+      - run: bash setup_build_infra.sh
+      - run: source ./shorthand_env.sh && bash scripts/validate_language.sh --strict
+      - run: bash scripts/smoke_test.sh
+      - run: make -C Compiler_new_ws/Short_Hand/src test
+      - run: make -C Compiler_new_ws/Short_Hand/src sanitize
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-logs
+          path: |
+            /tmp/shorthand_*.out
+            Compiler_new_ws/Short_Hand/build/
