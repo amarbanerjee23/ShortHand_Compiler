@@ -1,137 +1,92 @@
-# ShortHand_Compiler
+# ShortHand Compiler
 
-ShortHand is a C++/LLVM-first compiled programming language and toolchain for binary-first AI applications and Green AI certification-readiness evidence.
+ShortHand is a C++/LLVM-first programming-language research artifact with a legacy interpreter, LLVM IR/bitcode/native back end, optional C++ AI runtime integration, and a standalone C++ Green AI evidence tool.
 
-Python is no longer required for the official Green AI path. Green AI parsing, validation, carbon estimation, report generation, eco-regression checks, inference direction, and training direction are handled by compiled C++ binaries.
+## What this repository is
 
-## Compiler architecture
+* A compiled-language artifact centered on C++, Flex/Bison, and LLVM.
+* A research platform for language implementation, AI-runtime integration, and Green AI evidence reporting.
+* A work-in-progress artifact with explicit validation gates and known limitations.
 
-The core compiler is implemented in C++17 with Flex/Bison-generated parser sources and modern LLVM IR/native-code backends.
+## What this repository is not
 
-- Grammar: `Compiler_new_ws/Short_Hand/src/scanner_parser/parser.yy`
-- Lexer: `Compiler_new_ws/Short_Hand/src/scanner_parser/scanner.ll`
-- Generated parser/scanner: `Compiler_new_ws/Short_Hand/src/parser.tab.*`, `Compiler_new_ws/Short_Hand/src/lex.yy.c`
-- AST: `Compiler_new_ws/Short_Hand/src/ast/`
-- Visitors: `Compiler_new_ws/Short_Hand/src/visitors/`
-- CLI: `Compiler_new_ws/Short_Hand/src/main.cpp`
-- Optional AI runtimes: `Compiler_new_ws/Short_Hand/src/ai_runtime/`
-- Compiled C++ Green AI tool: `Compiler_new_ws/Short_Hand/src/green_ai/GreenAITool.cpp`
+* It is not a production-ready compiler.
+* It does not claim literal “0 bugs.” The target release claim is **no known bugs under full validation** after every mandatory validation command passes.
+* Python is not required for official compiler, runtime, Green AI, validation, report-generation, or test workflows. Deprecated Python helpers remain under `deprecated/` only for historical context.
 
-## Build
+## Quickstart
 
 ```bash
-# Core compiler; requires LLVM development tools.
-make -C Compiler_new_ws/Short_Hand/src
-
-# Compiled C++ Green AI evidence tool; does not require LLVM, Python, ONNX Runtime, or LibTorch.
-make -C Compiler_new_ws/Short_Hand/src green_ai_tool
-
-# C++ Green AI tests; no Python required.
-make -C Compiler_new_ws/Short_Hand/src test-green
+bash setup_build_infra.sh
+source ./shorthand_env.sh
+short_hand Compiler_new_ws/Short_Hand/examples/greenai_report.short run
 ```
 
-Build requirements for the core compiler are `g++`, `llvm-config`, LLVM libraries, and the Flex runtime library. The Makefile uses `llvm-config --cxxflags` and links LLVM `core` and `bitwriter` to support newer LLVM releases with opaque-pointer-safe IRBuilder APIs. Normal builds use committed generated parser files, so Flex/Bison executables are only needed for `make regen`.
+Required tools are a C++17 compiler, `make`, `g++`, Flex, Bison, the Flex runtime development library (`libfl-dev` on Ubuntu), LLVM with `llvm-config`, `llc`, `clang`, and `clang-format` for validation.
 
-## Running ShortHand programs
+## Build and test
 
 ```bash
-./Compiler_new_ws/Short_Hand/build/short_hand <file.short> run
-./Compiler_new_ws/Short_Hand/build/short_hand <file.short> print
-./Compiler_new_ws/Short_Hand/build/short_hand <file.short> compile
-./Compiler_new_ws/Short_Hand/build/short_hand <file.short> compile-bc
-./Compiler_new_ws/Short_Hand/build/short_hand <file.short> compile-native
+make -C Compiler_new_ws/Short_Hand/src compiler green_ai_tool
+bash scripts/validate_language.sh --strict
+bash scripts/smoke_test.sh
+make -C Compiler_new_ws/Short_Hand/src test
+make -C Compiler_new_ws/Short_Hand/src sanitize
 ```
 
-## In-language AI and Green AI primitives
-
-ShortHand includes a GreenAI reporting primitive in the language itself:
-
-```short
-int inferences, watts, seconds;
-inferences = 1000;
-watts = 50;
-seconds = 10;
-greenai("edge_model_v1", inferences, watts, seconds);
-```
-
-`greenai(name, inferences, watts, seconds);` is available to the interpreter and LLVM IR backend. It reports total energy in joules (`watts * seconds`) and integer inference efficiency (`inferences / energy_j`). See `Compiler_new_ws/Short_Hand/examples/greenai_report.short`.
-
-ShortHand also exposes native model inference through:
-
-```short
-ai_infer("models/demo.onnx", "1,3", "0.1,0.2,0.3");
-```
-
-`ai_infer(model_path, shape_csv, input_csv);` routes through the native C++ `AI_Runtime` abstraction. It uses ONNX Runtime C++ when built with `ONNXRUNTIME_ROOT`; otherwise it prints a clear fallback message.
-
-Examples:
-
-- `Compiler_new_ws/Short_Hand/examples/ai_infer.short`
-- `Compiler_new_ws/Short_Hand/examples/greenai_report.short`
-- `Compiler_new_ws/Short_Hand/examples/green_ai_compiled_pipeline.short`
-- `Compiler_new_ws/Short_Hand/examples/ai_train.short`
-
-## Native AI runtime builds
+CMake is also available as a modern entry point:
 
 ```bash
-# ONNX Runtime C++ inference binary.
-make -C Compiler_new_ws/Short_Hand/src ai_app ONNXRUNTIME_ROOT=$ONNXRUNTIME_ROOT
-./Compiler_new_ws/Short_Hand/build/short_ai_app model.onnx 1,3 0.1,0.2,0.3
-
-# LibTorch C++ training binary.
-make -C Compiler_new_ws/Short_Hand/src ai_train LIBTORCH_ROOT=$LIBTORCH_ROOT
-./Compiler_new_ws/Short_Hand/build/short_ai_train 200 0.01 trained_model.pt
+cmake -S . -B build
+cmake --build build
 ```
 
-Optional future backend extension points include OpenVINO, TensorRT, llama.cpp/GGML/GGUF, FAISS, OpenCV, Apache Arrow/Parquet, oneDNN/DNNL, XNNPACK, Eigen, SentencePiece, and C++ tokenizers. These remain optional: the core compiler and Green AI tool build without these SDKs.
+## Optional AI runtimes
 
-## Compiled C++ Green AI evidence workflow
+ONNX Runtime and LibTorch are optional. They are enabled only when roots are supplied:
 
-The official Green AI workflow is now a compiled native binary:
+```bash
+export ONNXRUNTIME_ROOT=/path/to/onnxruntime
+export LIBTORCH_ROOT=/path/to/libtorch
+make -C Compiler_new_ws/Short_Hand/src ai_app ai_train
+```
+
+Without ONNX Runtime, `ai_infer` paths must report clear fallback diagnostics. Without LibTorch, training remains a runtime demo and not a complete ShortHand language feature.
+
+## Green AI workflow
 
 ```bash
 make -C Compiler_new_ws/Short_Hand/src green_ai_tool
-./Compiler_new_ws/Short_Hand/build/green_ai_tool validate examples/green_ai/image_classification.greenai --strict strict
-./Compiler_new_ws/Short_Hand/build/green_ai_tool report examples/green_ai/image_classification.greenai --output green-report.json --strict strict
-./Compiler_new_ws/Short_Hand/build/green_ai_tool check examples/green_ai/image_classification.greenai --baseline green-baseline.json --threshold-percent 10
+Compiler_new_ws/Short_Hand/build/green_ai_tool validate examples/green_ai/image_classification.greenai --strict strict
+Compiler_new_ws/Short_Hand/build/green_ai_tool report examples/green_ai/image_classification.greenai --output /tmp/short_hand_green_report.json --strict strict
+Compiler_new_ws/Short_Hand/build/green_ai_tool check examples/green_ai/image_classification.greenai --baseline /tmp/short_hand_green_report.json --threshold-percent 10
 ```
 
-Wrapper scripts are preserved and call the compiled C++ binary:
+Reports are evidence reports only; they do not grant certification.
+
+## Documentation map
+
+* `docs/architecture.md` — artifact map and source layout.
+* `docs/language_spec.md` — language syntax and required semantics.
+* `docs/semantics.md` — operational semantics and safety policy.
+* `docs/compiler_pipeline.md` — compiler phases and runtime integration.
+* `docs/green_ai_certification.md` — Green AI evidence workflow.
+* `docs/reproducibility.md` — clean-checkout reproduction commands.
+* `docs/evaluation_plan.md` — benchmark and measurement plan.
+* `docs/known_limitations.md` — current limitations and non-overclaims.
+* `docs/public_release_readiness.md` — mandatory release gate.
+
+## Benchmarks
+
+Benchmark scaffolding is under `benchmarks/`. Run:
 
 ```bash
-./scripts/green-report examples/green_ai/image_classification.greenai --output green-report.json --strict strict
-./scripts/green-check examples/green_ai/image_classification.greenai --baseline green-baseline.json --threshold-percent 10
+bash scripts/run_benchmarks.sh
+bash scripts/collect_energy.sh
 ```
 
-`.greenai` sidecar manifests remain useful for audit metadata that should not be hard-coded into executable logic: functional units, boundaries, carbon factors, model necessity, MQ/DQ classes, measurement assumptions, and regression thresholds. They are parsed and validated by C++.
+Energy scripts report unavailable measurement tools honestly and never fabricate values.
 
-## Report safeguards
+## Current status
 
-The C++ report generator implements:
-
-- operational carbon: `energy_kwh * grid_factor_kgco2e_per_kwh * 1000.0`
-- additive component carbon for separately declared embodied, network, storage, and third-party AI API carbon
-- per-functional-unit carbon and energy
-- structured budget results: `pass`, `fail`, `not_evaluated`, `unknown`
-- strict/advisory/off validation modes
-- MQ/DQ validation
-- offset separation: offsets are never subtracted from core software carbon footprint
-- no fake measurements: missing telemetry is reported as unknown or as user-declared assumptions
-- no certification claim: reports state, “Evidence report only; this tool does not grant certification.”
-
-## Why compiled C++ for Green AI?
-
-Compiled C++/LLVM aligns with Green AI because it avoids a Python interpreter dependency, lowers runtime overhead, supports native binaries for edge and embedded deployment, enables LLVM optimization, integrates directly with ONNX Runtime C++ inference and LibTorch C++ training, and provides a software-stack-aware path for measuring and reporting AI energy/carbon behavior.
-
-## Validation quickstart
-
-```bash
-make -C Compiler_new_ws/Short_Hand/src green_ai_tool
-make -C Compiler_new_ws/Short_Hand/src test-green
-./scripts/validate_language.sh
-./scripts/smoke_test.sh
-```
-
-## Documentation
-
-See `docs/green_ai_certification.md` for the Green AI manifest syntax, report schema, validation rules, eco-regression checks, MQ/DQ classes, certification-readiness mapping, and no-greenwashing safeguards.
+Ready for internal engineering review only. See `docs/known_limitations.md` before making external publication or release claims.
