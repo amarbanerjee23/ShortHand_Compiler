@@ -74,3 +74,13 @@ bool AI_Runtime::run(const TensorData &input_tensor, std::vector<float> &output)
 std::string AI_Runtime::getLastError() const {
     return this->last_error_;
 }
+
+extern "C" int short_ai_infer(const char* model_name, const char* model_path, const char* backend_policy, const char* input_shape, const char* input_values) {
+    (void)model_name; (void)model_path; (void)backend_policy; (void)input_shape; (void)input_values;
+    return 2; /* deterministic fallback: backend unavailable, inference not executed */
+}
+
+extern "C" int short_greenai_emit_event(const char* workload, const char* event_json) {
+    (void)workload; (void)event_json;
+    return 0;
+}

@@ -394,3 +394,13 @@ int Interpreter::visit(AST_STRING_LITERAL * string_literal)
     str = string_literal->string_literal;
     return 0;
 }
+int Interpreter::visit(AST_MODEL_DECLARATION * n){ cout << "Registered model " << n->data.name << " (fallback-capable)" << endl; return 0; }
+int Interpreter::visit(AST_TENSOR_DECLARATION *){ return 0; }
+int Interpreter::visit(AST_GREENAI_CONTRACT * n){ cout << "GreenAI contract " << n->data.name << " evidence_only" << endl; return 0; }
+int Interpreter::visit(AST_GREENAI_MEASUREMENT * n){ cout << "GreenAI workload " << n->data.workload << " measurement_status=declared_budget_only" << endl; return 0; }
+int Interpreter::visit(AST_INFER_STATEMENT * n){ cout << "AI inference fallback: model=" << n->model_name << " runtime_backend=fallback inference_status=not_executed reason=backend_not_available" << endl; return 0; }
+int Interpreter::visit(AST_CONTINUE *){ return 0; }
+int Interpreter::visit(AST_RETURN_STATEMENT * n){ if(n->expression) n->expression->accept(*this); return 0; }
+int Interpreter::visit(AST_BOOL_LITERAL * n){ num = n->value ? 1 : 0; return num; }
+int Interpreter::visit(AST_FLOAT_LITERAL * n){ num = (int)n->value; return num; }
+int Interpreter::visit(AST_FUNCTION_CALL_EXPRESSION *){ return 0; }
