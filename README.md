@@ -24,6 +24,8 @@ short_hand Compiler_new_ws/Short_Hand/examples/greenai_report.short run
 
 Required tools are a C++17 compiler, `make`, Flex, Bison, LLVM with `llvm-config`, `llc`, and `clang` for native output.
 
+ShortHand does not commit Flex/LLVM/`llc` binaries into the repository. See `docs/toolchain_policy.md` for the toolchain installation and CI caching policy.
+
 ## Build and test
 
 ```bash
@@ -90,3 +92,9 @@ Energy scripts report unavailable measurement tools honestly and never fabricate
 ## Current status
 
 Ready for internal engineering review only. See `docs/known_limitations.md` before making external publication or release claims.
+
+## GreenAI compiled language core
+
+ShortHand now includes first-class model, tensor, inference, GreenAI contract, GreenAI measurement, semantic validation, deterministic fallback runtime, and C3-ECO-aligned evidence constructs. The official implementation path is C++/LLVM-first and does not require Python. Optional AI SDKs (ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, OpenBLAS) are selected through build roots/options and are not vendored. When they are absent, fallback evidence reports `runtime_backend: fallback`, `inference_status: not_executed`, and `reason: backend_not_available`.
+
+Evidence artifacts are developer evidence reports only and include: `Evidence report only; this tool does not grant certification.`

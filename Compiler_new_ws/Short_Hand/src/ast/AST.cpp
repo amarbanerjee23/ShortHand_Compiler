@@ -375,3 +375,23 @@ int AST_STRING_LITERAL::accept(Visitor & v)
 {
     return v.visit(this);
 }
+
+int AST_CONTINUE::accept(Visitor & v){ return v.visit(this); }
+AST_RETURN_STATEMENT::AST_RETURN_STATEMENT(AST_EXPRESSION_RULE * expression){ this->expression = expression; }
+int AST_RETURN_STATEMENT::accept(Visitor & v){ return v.visit(this); }
+AST_MODEL_DECLARATION::AST_MODEL_DECLARATION(const ModelDeclarationData &data){ this->data = data; }
+int AST_MODEL_DECLARATION::accept(Visitor & v){ return v.visit(this); }
+AST_TENSOR_DECLARATION::AST_TENSOR_DECLARATION(const TensorDeclarationData &data){ this->data = data; }
+int AST_TENSOR_DECLARATION::accept(Visitor & v){ return v.visit(this); }
+AST_GREENAI_CONTRACT::AST_GREENAI_CONTRACT(const GreenAIContractData &data){ this->data = data; }
+int AST_GREENAI_CONTRACT::accept(Visitor & v){ return v.visit(this); }
+AST_GREENAI_MEASUREMENT::AST_GREENAI_MEASUREMENT(const GreenAIMeasurementData &data){ this->data = data; }
+int AST_GREENAI_MEASUREMENT::accept(Visitor & v){ return v.visit(this); }
+AST_INFER_STATEMENT::AST_INFER_STATEMENT(string m,string i,string o){ model_name=m; input_name=i; output_name=o; }
+int AST_INFER_STATEMENT::accept(Visitor & v){ return v.visit(this); }
+AST_BOOL_LITERAL::AST_BOOL_LITERAL(bool value){ this->value = value; }
+int AST_BOOL_LITERAL::accept(Visitor & v){ return v.visit(this); }
+AST_FLOAT_LITERAL::AST_FLOAT_LITERAL(double value){ this->value = value; }
+int AST_FLOAT_LITERAL::accept(Visitor & v){ return v.visit(this); }
+AST_FUNCTION_CALL_EXPRESSION::AST_FUNCTION_CALL_EXPRESSION(string name, vector<AST_EXPRESSION_RULE*> args){ function_name=name; arguments=args; }
+int AST_FUNCTION_CALL_EXPRESSION::accept(Visitor & v){ return v.visit(this); }

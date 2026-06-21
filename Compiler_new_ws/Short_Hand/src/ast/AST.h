@@ -44,6 +44,7 @@ class AST_LABEL_RULE;
 class AST_BREAK;
 class AST_GREENAI_REPORT_RULE;
 class AST_AI_INFER_RULE;
+class AST_MODEL_DECLARATION; class AST_TENSOR_DECLARATION; class AST_GREENAI_CONTRACT; class AST_GREENAI_MEASUREMENT; class AST_INFER_STATEMENT; class AST_CONTINUE; class AST_RETURN_STATEMENT; class AST_BOOL_LITERAL; class AST_FLOAT_LITERAL; class AST_FUNCTION_CALL_EXPRESSION;
 
 
 // expression node and derived expressions nodes
@@ -70,6 +71,7 @@ enum class ShortType {
 union _NODE_
 {
     int int_val;
+    double float_val;
     char * string_val;
     //AST_node * node;
     AST_PROGRAM * program;
@@ -99,6 +101,7 @@ union _NODE_
     AST_LABEL_RULE * label_statement;
     AST_GREENAI_REPORT_RULE * greenai_report;
     AST_AI_INFER_RULE * ai_infer;
+    AST_MODEL_DECLARATION * model_decl; AST_TENSOR_DECLARATION * tensor_decl; AST_GREENAI_CONTRACT * greenai_contract; AST_GREENAI_MEASUREMENT * greenai_measure; AST_INFER_STATEMENT * infer_statement; AST_RETURN_STATEMENT * return_statement;
 
     AST_EXPRESSION_RULE * expression;
     AST_BINARY_EXPRESSION_RULE * binary_operator_expression;
@@ -109,6 +112,7 @@ union _NODE_
     AST_ARRAY_VARIABLE * variable_array_int;
     AST_LITERAL * int_literal;
     AST_STRING_LITERAL * string_literal;
+    AST_BOOL_LITERAL * bool_literal; AST_FLOAT_LITERAL * float_literal;
 
     ShortType type;
 };
@@ -142,6 +146,13 @@ public:
     virtual int visit(AST_LABEL_RULE *) = 0;
     virtual int visit(AST_GREENAI_REPORT_RULE *) = 0;
     virtual int visit(AST_AI_INFER_RULE *) = 0;
+    virtual int visit(AST_MODEL_DECLARATION *) = 0;
+    virtual int visit(AST_TENSOR_DECLARATION *) = 0;
+    virtual int visit(AST_GREENAI_CONTRACT *) = 0;
+    virtual int visit(AST_GREENAI_MEASUREMENT *) = 0;
+    virtual int visit(AST_INFER_STATEMENT *) = 0;
+    virtual int visit(AST_CONTINUE *) = 0;
+    virtual int visit(AST_RETURN_STATEMENT *) = 0;
 
     virtual int visit(AST_BINARY_EXPRESSION_RULE *) = 0;
     virtual int visit(AST_UNARY_EXPRESSION_RULE *) = 0;
@@ -150,6 +161,9 @@ public:
     virtual int visit(AST_ARRAY_VARIABLE *) = 0;
     virtual int visit(AST_LITERAL *) = 0;
     virtual int visit(AST_STRING_LITERAL *) = 0;
+    virtual int visit(AST_BOOL_LITERAL *) = 0;
+    virtual int visit(AST_FLOAT_LITERAL *) = 0;
+    virtual int visit(AST_FUNCTION_CALL_EXPRESSION *) = 0;
 };
 
 
@@ -167,7 +181,7 @@ class AST_PROGRAM : public AST_NODE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     char * program_name;
     AST_DATA_DECLARATION_BLOCK * decl_block;
     AST_LOGIC_BLOCK * code_block;
@@ -184,7 +198,7 @@ class AST_DATA_DECLARATION_BLOCK : public AST_NODE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     vector<string> single_ints;
     vector<pair<string, int> > array_ints;
 public:
@@ -199,7 +213,7 @@ public:
 class AST_FUNCTION_LIST_RULE: public AST_NODE{
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
 
     vector<AST_FUNCTION_RULE *> functions;
 public:
@@ -213,7 +227,7 @@ public:
 class AST_FUNCTION_RULE{
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     char * function_name;
     ShortType type;
     AST_DATA_DECLARATION_BLOCK * parameters;
@@ -231,7 +245,7 @@ class AST_LOGIC_BLOCK : public AST_NODE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_STATEMENTS_BLOCK * block_statement;
 public:
     AST_LOGIC_BLOCK(AST_STATEMENTS_BLOCK * block_statement = NULL);
@@ -253,7 +267,7 @@ class AST_EXPRESSION_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * expression;
 public:
     AST_EXPRESSION_STATEMENT_RULE(AST_EXPRESSION_RULE * expression);
@@ -264,7 +278,7 @@ public:
 class AST_FUNCTION_CALL_RULE: public AST_STATEMENT_RULE{
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     char * function_name;
     AST_READ_RULE * parameters;
 
@@ -273,17 +287,16 @@ public:
     int accept(Visitor &);
 };
 
-class AST_BREAK: public AST_STATEMENT_RULE{
-public:
-	int accept(Visitor &);
-};
+class AST_BREAK: public AST_STATEMENT_RULE{ public: int accept(Visitor &); };
+class AST_CONTINUE: public AST_STATEMENT_RULE{ public: int accept(Visitor &); };
+class AST_RETURN_STATEMENT: public AST_STATEMENT_RULE{ private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticAnalyzer; AST_EXPRESSION_RULE * expression; public: AST_RETURN_STATEMENT(AST_EXPRESSION_RULE * expression=nullptr); int accept(Visitor &); };
 
 
 class AST_ASSIGNMENT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_VARIABLE_RULE * variable;
     AST_EXPRESSION_RULE * expression;
 public:
@@ -295,7 +308,7 @@ class AST_STATEMENTS_BLOCK : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     vector<AST_STATEMENT_RULE*> statements;
 public:
     void push_back(AST_STATEMENT_RULE * statement);
@@ -306,7 +319,7 @@ class AST_IF_STATEMENT : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * condition;
     AST_STATEMENTS_BLOCK * if_block;
 public:
@@ -318,7 +331,7 @@ class AST_IF_ELSE_STATEMENT : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * condition;
     AST_STATEMENTS_BLOCK * if_block;
     AST_STATEMENTS_BLOCK * else_block;
@@ -332,7 +345,7 @@ class AST_FOR_LOOP_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_VARIABLE_RULE * variable;
     AST_EXPRESSION_RULE * from;
     AST_EXPRESSION_RULE * step;
@@ -348,7 +361,7 @@ class AST_WHILE_LOOP_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * condition;
     AST_STATEMENTS_BLOCK * while_block;
 public:
@@ -360,7 +373,7 @@ class AST_GOTO_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * condition;
     string label;
 public:
@@ -373,7 +386,7 @@ class AST_READ_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     vector<AST_VARIABLE_RULE*> variables;
 public:
     void push_back(AST_VARIABLE_RULE * variable);
@@ -384,13 +397,14 @@ public:
 struct AST_PRINTABLE_ITEM
 {
     AST_STRING_LITERAL * string_literal;
+    AST_BOOL_LITERAL * bool_literal; AST_FLOAT_LITERAL * float_literal;
     AST_EXPRESSION_RULE * expression;
 };
 class AST_PRINT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     vector<AST_PRINTABLE_ITEM> printables;
 public:
     void push_back(AST_STRING_LITERAL * string_literal);
@@ -403,18 +417,31 @@ class AST_LABEL_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     string label;
 public:
     AST_LABEL_RULE(string label);
     int accept(Visitor &);
 };
 
+
+struct QualityGuardrail { std::string metric; std::string op; double threshold; };
+struct ModelDeclarationData { std::string name, format, path, task, precision, input_shape, output_shape; std::vector<std::string> backend_preference; bool compact=false; bool has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
+struct TensorDeclarationData { std::string name, element_type, shape_csv; bool dynamic=false; int rank=0; long long total_elements=0; };
+struct GreenAIContractData { std::string name, functional_unit, success_criteria, measurement_quality, data_quality, carbon_factor_scope, evidence_retention, claims_mode; std::vector<std::string> boundary; double carbon_factor=0, energy_budget_j=0, carbon_budget_gco2e=0; bool has_functional_unit=false, has_success_criteria=false, has_boundary=false, has_mq=false, has_dq=false, has_carbon_factor=false, has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
+struct GreenAIMeasurementData { std::string workload, backend; int inferences=0; double watts=0, seconds=0; };
+
+class AST_MODEL_DECLARATION : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; ModelDeclarationData data; public: AST_MODEL_DECLARATION(const ModelDeclarationData &data); int accept(Visitor &); };
+class AST_TENSOR_DECLARATION : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; TensorDeclarationData data; public: AST_TENSOR_DECLARATION(const TensorDeclarationData &data); int accept(Visitor &); };
+class AST_GREENAI_CONTRACT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; GreenAIContractData data; public: AST_GREENAI_CONTRACT(const GreenAIContractData &data); int accept(Visitor &); };
+class AST_GREENAI_MEASUREMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; GreenAIMeasurementData data; public: AST_GREENAI_MEASUREMENT(const GreenAIMeasurementData &data); int accept(Visitor &); };
+class AST_INFER_STATEMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; std::string model_name,input_name,output_name; public: AST_INFER_STATEMENT(std::string m,std::string i,std::string o); int accept(Visitor &); };
+
 class AST_GREENAI_REPORT_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     string workload_name;
     AST_EXPRESSION_RULE * inferences;
     AST_EXPRESSION_RULE * watts;
@@ -428,7 +455,7 @@ class AST_AI_INFER_RULE : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     string model_path;
     string shape_csv;
     string input_csv;
@@ -466,7 +493,7 @@ public:
 
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * left;
     AST_EXPRESSION_RULE * right;
     int op;
@@ -483,7 +510,7 @@ public:
     static const int UMINUS = 1;
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     AST_EXPRESSION_RULE * expression;
     int op;
 public:
@@ -507,7 +534,7 @@ class AST_SIMPLE_VARIABLE : public AST_VARIABLE_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     string variable_name;
 public:
     AST_SIMPLE_VARIABLE(string variable_name);
@@ -518,7 +545,7 @@ class AST_ARRAY_VARIABLE : public AST_VARIABLE_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     string array_name;
     AST_EXPRESSION_RULE* index;
 public:
@@ -530,18 +557,21 @@ class AST_LITERAL : public AST_EXPRESSION_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     int int_literal;
 public:
     AST_LITERAL(int int_literal);
     int accept(Visitor &);
 };
 
+class AST_BOOL_LITERAL : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; bool value; public: AST_BOOL_LITERAL(bool value); int accept(Visitor &); };
+class AST_FLOAT_LITERAL : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; double value; public: AST_FLOAT_LITERAL(double value); int accept(Visitor &); };
+class AST_FUNCTION_CALL_EXPRESSION : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; std::string function_name; std::vector<AST_EXPRESSION_RULE*> arguments; public: AST_FUNCTION_CALL_EXPRESSION(std::string name, std::vector<AST_EXPRESSION_RULE*> args); int accept(Visitor &); };
 class AST_STRING_LITERAL : public AST_NODE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
-    friend class AST_Printer;
+    friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     string string_literal;
 public:
     AST_STRING_LITERAL(string string_literal);

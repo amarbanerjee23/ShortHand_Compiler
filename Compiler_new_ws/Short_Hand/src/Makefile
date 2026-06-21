@@ -8,6 +8,12 @@ FLEX_LDLIB := $(shell printf 'int main(){return 0;}\n' | $(CXX) -x c++ - -lfl -o
 LDLIBS ?= $(FLEX_LDLIB)
 ONNXRUNTIME_ROOT ?=
 LIBTORCH_ROOT ?=
+TENSORRT_ROOT ?=
+CUDA_ROOT ?=
+OPENVINO_ROOT ?=
+LLAMACPP_ROOT ?=
+EIGEN_ROOT ?=
+OPENBLAS_ROOT ?=
 
 AI_CXXFLAGS :=
 AI_LDLIBS :=
@@ -22,7 +28,7 @@ AI_CXXFLAGS += -DUSE_LIBTORCH -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/incl
 AI_LDLIBS += -L$(LIBTORCH_ROOT)/lib -ltorch -ltorch_cpu -lc10
 endif
 
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp ai_runtime/AI_Runtime.cpp
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp ai_runtime/AI_Runtime.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
@@ -50,7 +56,7 @@ parser.tab.cc parser.tab.hh: scanner_parser/parser.yy ast/AST.h
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 
 lex.yy.c: scanner_parser/scanner.ll parser.tab.hh
-	flex -o lex.yy.c scanner_parser/scanner.ll
+	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
 short_hand: patch-generated-parser $(SRC)
 	@mkdir -p ../build
@@ -77,7 +83,7 @@ test-green: green_ai_tool
 
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
-	flex -o lex.yy.c scanner_parser/scanner.ll
+	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
 .PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai sanitize format-check regen patch-generated-parser clean distclean
 clean:

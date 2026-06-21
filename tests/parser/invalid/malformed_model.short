@@ -1,0 +1,3 @@
+int i;
+model bad { format onnx path "missing"; };
+print "bad";

@@ -23,6 +23,7 @@ for tool in make g++ bison flex llvm-config llc clang; do
 done
 if [[ "${missing}" -ne 0 ]]; then
   echo "Ubuntu install hint: ${INSTALL_HINT}" >&2
+  echo "Toolchain policy: this repo does not vendor Flex/LLVM/llc binaries; install them with your OS package manager, pinned container image, or external CI cache. See docs/toolchain_policy.md." >&2
   exit 1
 fi
 

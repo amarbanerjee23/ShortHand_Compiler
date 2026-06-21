@@ -563,3 +563,13 @@ llvm::Type* IR_Generator::parseType(ShortType type) {
     }
     return i32Ty();
 }
+int IR_Generator::visit(AST_MODEL_DECLARATION *){ return 0; }
+int IR_Generator::visit(AST_TENSOR_DECLARATION *){ return 0; }
+int IR_Generator::visit(AST_GREENAI_CONTRACT *){ return 0; }
+int IR_Generator::visit(AST_GREENAI_MEASUREMENT *){ return 0; }
+int IR_Generator::visit(AST_INFER_STATEMENT *){ return 0; }
+int IR_Generator::visit(AST_CONTINUE *){ return 0; }
+int IR_Generator::visit(AST_RETURN_STATEMENT * n){ if(n->expression) n->expression->accept(*this); return 0; }
+int IR_Generator::visit(AST_BOOL_LITERAL * n){ return n->value ? 1 : 0; }
+int IR_Generator::visit(AST_FLOAT_LITERAL * n){ return (int)n->value; }
+int IR_Generator::visit(AST_FUNCTION_CALL_EXPRESSION *){ return 0; }

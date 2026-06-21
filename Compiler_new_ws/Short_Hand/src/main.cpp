@@ -6,6 +6,9 @@
 #include "./visitors/AST_Printer.h"
 #include "./visitors/Interpreter.h"
 #include "./visitors/IR_Generator.h"
+#include "./visitors/SemanticAnalyzer.h"
+#include "./evidence/EvidenceEmitter.h"
+#include <fstream>
 
 FILE * flex_output;
 FILE * bison_output;
@@ -18,19 +21,19 @@ int main(int argc, char *argv[])
 {
 
 	if (argc < 3) {
-			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
+			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence]\n");
 			exit(1);
 		}
 
 	if (argc > 3) {
 		fprintf(stderr, "Passing more arguments than necessary.\n");
-			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
+			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence]\n");
 	        exit(1);
 		}
 
 
-    flex_output = fopen("flex_output.txt", "w");
-    bison_output = fopen("bison_output.txt", "w");
+    flex_output = fopen("/dev/null", "w");
+    bison_output = fopen("/dev/null", "w");
 
     std::string path(argv[1]);
     std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
@@ -49,9 +52,28 @@ int main(int argc, char *argv[])
     }
     //fprintf(bison_output, "\nRETURN VALUE : %d\n", return_val);
 
+    SemanticAnalyzer semantic;
+    main_program->accept(semantic);
+    if (semantic.diagnostics.hasErrors()) {
+        semantic.diagnostics.print();
+        shorthand_release_scanner_strings();
+        fclose(flex_output);
+        fclose(bison_output);
+        if (yyin) fclose(yyin);
+        exit(1);
+    }
 
-
-    if(!strcmp(argv[2], "run"))
+    if(!strcmp(argv[2], "evidence"))
+    {
+        EvidenceEmitter emitter(argv[1]);
+        if (argc == 5 && !strcmp(argv[3], "--output")) {
+            std::ofstream out(argv[4]);
+            emitter.write(main_program, out);
+        } else {
+            emitter.write(main_program, std::cout);
+        }
+    }
+    else if(!strcmp(argv[2], "run"))
     {
         //cout << "interpreting" << endl;
         Interpreter v;
@@ -101,7 +123,7 @@ int main(int argc, char *argv[])
     else
     {
         fprintf (stderr, "----------------ERROR----------------\n");
-        fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native]\n");
+        fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence]\n");
         shorthand_release_scanner_strings();
         fclose(flex_output);
         fclose(bison_output);

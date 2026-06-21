@@ -229,3 +229,13 @@ int AST_Printer::visit(AST_STRING_LITERAL * string_literal)
     cout << "string_literal : " << string_literal->string_literal << endl;
     return 0;
 }
+int AST_Printer::visit(AST_MODEL_DECLARATION * n){ cout << "model " << n->data.name << " format=" << n->data.format << " precision=" << n->data.precision << endl; return 0; }
+int AST_Printer::visit(AST_TENSOR_DECLARATION * n){ cout << "tensor " << n->data.name << " " << n->data.element_type << "[" << n->data.shape_csv << "]" << endl; return 0; }
+int AST_Printer::visit(AST_GREENAI_CONTRACT * n){ cout << "greenai_contract " << n->data.name << " functional_unit=" << n->data.functional_unit << endl; return 0; }
+int AST_Printer::visit(AST_GREENAI_MEASUREMENT * n){ cout << "greenai_measure " << n->data.workload << endl; return 0; }
+int AST_Printer::visit(AST_INFER_STATEMENT * n){ cout << "infer " << n->model_name << endl; return 0; }
+int AST_Printer::visit(AST_CONTINUE *){ cout << "continue" << endl; return 0; }
+int AST_Printer::visit(AST_RETURN_STATEMENT * n){ cout << "return" << endl; if(n->expression) n->expression->accept(*this); return 0; }
+int AST_Printer::visit(AST_BOOL_LITERAL * n){ cout << "bool_literal : " << (n->value?"true":"false") << endl; return 0; }
+int AST_Printer::visit(AST_FLOAT_LITERAL * n){ cout << "float_literal : " << n->value << endl; return 0; }
+int AST_Printer::visit(AST_FUNCTION_CALL_EXPRESSION * n){ cout << "function_call_expression : " << n->function_name << endl; return 0; }

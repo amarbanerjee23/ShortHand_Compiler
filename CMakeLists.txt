@@ -6,12 +6,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+option(SHORTHAND_ENABLE_ONNXRUNTIME "Enable ONNX Runtime backend" OFF)
+option(SHORTHAND_ENABLE_TENSORRT "Enable TensorRT backend" OFF)
+option(SHORTHAND_ENABLE_OPENVINO "Enable OpenVINO backend" OFF)
+option(SHORTHAND_ENABLE_LIBTORCH "Enable LibTorch backend" OFF)
+option(SHORTHAND_ENABLE_LLAMACPP "Enable llama.cpp backend" OFF)
+option(SHORTHAND_ENABLE_OPENBLAS "Enable OpenBLAS backend" OFF)
 
 find_package(BISON REQUIRED)
-find_package(FLEX REQUIRED)
-find_program(LLVM_CONFIG llvm-config REQUIRED)
+find_package(FLEX QUIET)
+find_program(LLVM_CONFIG llvm-config)
 find_program(BASH_EXECUTABLE bash REQUIRED)
 
+if(LLVM_CONFIG)
 execute_process(
   COMMAND ${LLVM_CONFIG} --cxxflags
   OUTPUT_VARIABLE LLVM_CXXFLAGS
@@ -22,6 +29,11 @@ execute_process(
   OUTPUT_VARIABLE LLVM_LDFLAGS
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+else()
+  message(WARNING "llvm-config not found; short_hand target may require LLVM in full builds")
+  set(LLVM_CXXFLAGS "")
+  set(LLVM_LDFLAGS "")
+endif()
 separate_arguments(LLVM_CXXFLAGS NATIVE_COMMAND "${LLVM_CXXFLAGS}")
 separate_arguments(LLVM_LDFLAGS NATIVE_COMMAND "${LLVM_LDFLAGS}")
 
@@ -42,6 +54,7 @@ add_custom_command(
   VERBATIM
 )
 
+if(FLEX_EXECUTABLE)
 add_custom_command(
   OUTPUT ${SCANNER_SRC}
   COMMAND ${FLEX_EXECUTABLE} -o ${SCANNER_SRC} ${SRC_DIR}/scanner_parser/scanner.ll
@@ -49,6 +62,10 @@ add_custom_command(
   COMMENT "Generating ShortHand scanner"
   VERBATIM
 )
+else()
+  set(SCANNER_SRC ${SRC_DIR}/lex.yy.c)
+  message(WARNING "flex not found; using checked-in lex.yy.c")
+endif()
 
 set_source_files_properties(
   ${PARSER_SRC}
@@ -69,10 +86,21 @@ add_executable(short_hand
   ${SRC_DIR}/visitors/AST_Printer.cpp
   ${SRC_DIR}/visitors/Interpreter.cpp
   ${SRC_DIR}/visitors/IR_Generator.cpp
+  ${SRC_DIR}/visitors/SemanticAnalyzer.cpp
+  ${SRC_DIR}/visitors/Diagnostics.cpp
+  ${SRC_DIR}/evidence/EvidenceEmitter.cpp
   ${SRC_DIR}/ai_runtime/AI_Runtime.cpp
+  ${SRC_DIR}/ai_runtime/AI_Backend.cpp
+  ${SRC_DIR}/ai_runtime/backends/FallbackBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/OnnxRuntimeBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/TensorRTBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/OpenVINOBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/LibTorchBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp
 )
 target_include_directories(short_hand PRIVATE ${SRC_DIR} ${GENERATED_DIR})
 target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
+target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_ONNXRUNTIME=0 SHORTHAND_HAS_TENSORRT=0 SHORTHAND_HAS_OPENVINO=0 SHORTHAND_HAS_LIBTORCH=0 SHORTHAND_HAS_LLAMACPP=0 SHORTHAND_HAS_OPENBLAS=0 SHORTHAND_HAS_EIGEN=0)
 target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS})
 
 find_library(FL_LIBRARY fl)
