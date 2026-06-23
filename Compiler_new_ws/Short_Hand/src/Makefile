@@ -3,6 +3,7 @@ LLVM_CONFIG ?= llvm-config
 LLVM_CXXFLAGS := $(shell $(LLVM_CONFIG) --cxxflags 2>/dev/null)
 LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --system-libs --libs core bitwriter 2>/dev/null)
 CXXFLAGS ?= -O2 -Wall -Wextra -Wpedantic -std=c++17 -g
+OPTIONAL_BACKEND_DEFS := -DSHORTHAND_HAS_ONNXRUNTIME=0 -DSHORTHAND_HAS_TENSORRT=0 -DSHORTHAND_HAS_OPENVINO=0 -DSHORTHAND_HAS_LIBTORCH=0 -DSHORTHAND_HAS_LLAMACPP=0 -DSHORTHAND_HAS_OPENBLAS=0 -DSHORTHAND_HAS_EIGEN=0
 LDFLAGS ?=
 FLEX_LDLIB := $(shell printf 'int main(){return 0;}\n' | $(CXX) -x c++ - -lfl -o /tmp/shorthand_check_flex_lib >/dev/null 2>&1 && echo -lfl; rm -f /tmp/shorthand_check_flex_lib)
 LDLIBS ?= $(FLEX_LDLIB)
@@ -15,7 +16,7 @@ LLAMACPP_ROOT ?=
 EIGEN_ROOT ?=
 OPENBLAS_ROOT ?=
 
-AI_CXXFLAGS :=
+AI_CXXFLAGS := -DSHORTHAND_HAS_ONNXRUNTIME=0 -DSHORTHAND_HAS_TENSORRT=0 -DSHORTHAND_HAS_OPENVINO=0 -DSHORTHAND_HAS_LIBTORCH=0 -DSHORTHAND_HAS_LLAMACPP=0 -DSHORTHAND_HAS_OPENBLAS=0 -DSHORTHAND_HAS_EIGEN=0
 AI_LDLIBS :=
 
 ifneq ($(ONNXRUNTIME_ROOT),)
@@ -28,7 +29,7 @@ AI_CXXFLAGS += -DUSE_LIBTORCH -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/incl
 AI_LDLIBS += -L$(LIBTORCH_ROOT)/lib -ltorch -ltorch_cpu -lc10
 endif
 
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp ai_runtime/AI_Runtime.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
@@ -64,7 +65,7 @@ short_hand: patch-generated-parser $(SRC)
 		echo "error: llvm-config not found or LLVM flags unavailable. Install LLVM with llvm-config in PATH."; \
 		exit 1; \
 	fi
-	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(LLVM_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(OPTIONAL_BACKEND_DEFS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(LLVM_LDFLAGS)
 
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build

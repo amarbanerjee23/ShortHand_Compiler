@@ -37,3 +37,7 @@ Use a CI image that already contains Flex, Bison, LLVM development headers/tools
 ## Offline or restricted environments
 
 For restricted environments, mirror distribution packages or prebuilt LLVM/Flex archives in an organization-controlled artifact store, then install them into the build image or runner workspace before running `setup_build_infra.sh`. Keep those artifacts outside this Git repository.
+
+## Optional AI SDK backends
+
+ShortHand does not vendor ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, CUDA, OpenBLAS, or Eigen. Optional SDKs are disabled by default and must be supplied through local roots such as `ONNXRUNTIME_ROOT`, `TENSORRT_ROOT`, `CUDA_ROOT`, `OPENVINO_ROOT`, `LIBTORCH_ROOT`, `LLAMACPP_ROOT`, `OPENBLAS_ROOT`, or `EIGEN_ROOT`. If strict optional backend mode is off, missing roots produce unavailable backend capabilities and the deterministic fallback remains buildable. If strict mode is on, configuration fails clearly when a requested SDK root is absent.

@@ -12,6 +12,39 @@ option(SHORTHAND_ENABLE_OPENVINO "Enable OpenVINO backend" OFF)
 option(SHORTHAND_ENABLE_LIBTORCH "Enable LibTorch backend" OFF)
 option(SHORTHAND_ENABLE_LLAMACPP "Enable llama.cpp backend" OFF)
 option(SHORTHAND_ENABLE_OPENBLAS "Enable OpenBLAS backend" OFF)
+option(SHORTHAND_STRICT_OPTIONAL_BACKENDS "Fail when an enabled optional backend root is missing" OFF)
+set(ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime root")
+set(TENSORRT_ROOT "" CACHE PATH "TensorRT root")
+set(CUDA_ROOT "" CACHE PATH "CUDA root")
+set(OPENVINO_ROOT "" CACHE PATH "OpenVINO root")
+set(LIBTORCH_ROOT "" CACHE PATH "LibTorch root")
+set(LLAMACPP_ROOT "" CACHE PATH "llama.cpp root")
+set(OPENBLAS_ROOT "" CACHE PATH "OpenBLAS root")
+set(EIGEN_ROOT "" CACHE PATH "Eigen root")
+function(shorthand_optional name enabled root outvar)
+  if(${enabled} AND NOT ${root} STREQUAL "")
+    set(${outvar} 1 PARENT_SCOPE)
+  elseif(${enabled})
+    if(SHORTHAND_STRICT_OPTIONAL_BACKENDS)
+      message(FATAL_ERROR "${name} enabled but root is missing")
+    else()
+      message(WARNING "${name} enabled but root is missing; building unavailable stub")
+      set(${outvar} 0 PARENT_SCOPE)
+    endif()
+  else()
+    set(${outvar} 0 PARENT_SCOPE)
+  endif()
+endfunction()
+shorthand_optional("ONNX Runtime" SHORTHAND_ENABLE_ONNXRUNTIME "${ONNXRUNTIME_ROOT}" SHORTHAND_HAS_ONNXRUNTIME)
+shorthand_optional("TensorRT" SHORTHAND_ENABLE_TENSORRT "${TENSORRT_ROOT}" SHORTHAND_HAS_TENSORRT)
+shorthand_optional("OpenVINO" SHORTHAND_ENABLE_OPENVINO "${OPENVINO_ROOT}" SHORTHAND_HAS_OPENVINO)
+shorthand_optional("LibTorch" SHORTHAND_ENABLE_LIBTORCH "${LIBTORCH_ROOT}" SHORTHAND_HAS_LIBTORCH)
+shorthand_optional("llama.cpp" SHORTHAND_ENABLE_LLAMACPP "${LLAMACPP_ROOT}" SHORTHAND_HAS_LLAMACPP)
+shorthand_optional("OpenBLAS" SHORTHAND_ENABLE_OPENBLAS "${OPENBLAS_ROOT}" SHORTHAND_HAS_OPENBLAS)
+set(SHORTHAND_HAS_EIGEN 0)
+if(NOT EIGEN_ROOT STREQUAL "")
+  set(SHORTHAND_HAS_EIGEN 1)
+endif()
 
 find_package(BISON REQUIRED)
 find_package(FLEX QUIET)
@@ -90,6 +123,7 @@ add_executable(short_hand
   ${SRC_DIR}/visitors/Diagnostics.cpp
   ${SRC_DIR}/evidence/EvidenceEmitter.cpp
   ${SRC_DIR}/ai_runtime/AI_Runtime.cpp
+  ${SRC_DIR}/ai_runtime/AI_Types.cpp
   ${SRC_DIR}/ai_runtime/AI_Backend.cpp
   ${SRC_DIR}/ai_runtime/backends/FallbackBackend.cpp
   ${SRC_DIR}/ai_runtime/backends/OnnxRuntimeBackend.cpp
@@ -100,7 +134,7 @@ add_executable(short_hand
 )
 target_include_directories(short_hand PRIVATE ${SRC_DIR} ${GENERATED_DIR})
 target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
-target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_ONNXRUNTIME=0 SHORTHAND_HAS_TENSORRT=0 SHORTHAND_HAS_OPENVINO=0 SHORTHAND_HAS_LIBTORCH=0 SHORTHAND_HAS_LLAMACPP=0 SHORTHAND_HAS_OPENBLAS=0 SHORTHAND_HAS_EIGEN=0)
+target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_ONNXRUNTIME=${SHORTHAND_HAS_ONNXRUNTIME} SHORTHAND_HAS_TENSORRT=${SHORTHAND_HAS_TENSORRT} SHORTHAND_HAS_OPENVINO=${SHORTHAND_HAS_OPENVINO} SHORTHAND_HAS_LIBTORCH=${SHORTHAND_HAS_LIBTORCH} SHORTHAND_HAS_LLAMACPP=${SHORTHAND_HAS_LLAMACPP} SHORTHAND_HAS_OPENBLAS=${SHORTHAND_HAS_OPENBLAS} SHORTHAND_HAS_EIGEN=${SHORTHAND_HAS_EIGEN})
 target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS})
 
 find_library(FL_LIBRARY fl)

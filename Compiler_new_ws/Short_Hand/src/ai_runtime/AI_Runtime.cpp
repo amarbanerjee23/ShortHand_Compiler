@@ -1,86 +1,19 @@
 #include "AI_Runtime.h"
+#include "backends/FallbackBackend.h"
+#include "backends/LibTorchBackend.h"
+#include "backends/LlamaCppBackend.h"
+#include "backends/OnnxRuntimeBackend.h"
+#include "backends/OpenVINOBackend.h"
+#include "backends/TensorRTBackend.h"
 
-#ifdef USE_ONNXRUNTIME
-#include <onnxruntime_cxx_api.h>
-#endif
-
-bool AI_Runtime::loadModel(const std::string &model_path) {
-    this->model_path_ = model_path;
-#ifndef USE_ONNXRUNTIME
-    this->last_error_ = "ONNX Runtime support not enabled. Rebuild with ONNXRUNTIME_ROOT set.";
-    return false;
-#else
-    this->last_error_.clear();
-    return true;
-#endif
+namespace shorthand::ai {
+AIRuntime::AIRuntime(){ registry.registerBackend(std::make_unique<TensorRTBackend>()); registry.registerBackend(std::make_unique<OnnxRuntimeBackend>()); registry.registerBackend(std::make_unique<OpenVINOBackend>()); registry.registerBackend(std::make_unique<LibTorchBackend>()); registry.registerBackend(std::make_unique<LlamaCppBackend>()); registry.registerBackend(std::make_unique<FallbackBackend>()); }
+std::vector<BackendCapabilities> AIRuntime::capabilities() const { return registry.capabilities(); }
+InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input){ if(!validateInputMatchesShape(input)){ InferenceResult r; r.status=InferenceStatus::InvalidInput; r.reason="input_shape_mismatch"; return r; } auto *b=registry.select(model); if(!b){ InferenceResult r; r.status=InferenceStatus::BackendUnavailable; r.reason="no_compatible_backend"; return r; } auto r=b->infer(model,input); if(b->kind()==BackendKind::Fallback){ r.status=InferenceStatus::NotExecuted; r.backend=BackendKind::Fallback; r.backend_name="fallback"; r.provider_name="none"; r.reason="backend_not_available"; r.output_f32.clear(); } return r; }
 }
 
-bool AI_Runtime::run(const TensorData &input_tensor, std::vector<float> &output) {
-#ifndef USE_ONNXRUNTIME
-    (void)input_tensor;
-    (void)output;
-    this->last_error_ = "ONNX Runtime support not enabled. Rebuild with ONNXRUNTIME_ROOT set.";
-    return false;
-#else
-    try {
-        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "short_ai_runtime");
-        Ort::SessionOptions options;
-        options.SetIntraOpNumThreads(1);
-        options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-
-        Ort::Session session(env, this->model_path_.c_str(), options);
-        Ort::AllocatorWithDefaultOptions allocator;
-
-        const char *input_name = session.GetInputName(0, allocator);
-        const char *output_name = session.GetOutputName(0, allocator);
-
-        std::vector<int64_t> dims = input_tensor.shape;
-        std::vector<float> input_values = input_tensor.data;
-        auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-        Ort::Value input = Ort::Value::CreateTensor<float>(
-            memory_info,
-            input_values.data(),
-            input_values.size(),
-            dims.data(),
-            dims.size());
-
-        std::vector<const char*> input_names{input_name};
-        std::vector<const char*> output_names{output_name};
-
-        auto outputs = session.Run(
-            Ort::RunOptions{nullptr},
-            input_names.data(),
-            &input,
-            1,
-            output_names.data(),
-            1);
-
-        float *out = outputs[0].GetTensorMutableData<float>();
-        auto type_info = outputs[0].GetTensorTypeAndShapeInfo();
-        size_t out_count = type_info.GetElementCount();
-
-        output.assign(out, out + out_count);
-        allocator.Free((void*)input_name);
-        allocator.Free((void*)output_name);
-        this->last_error_.clear();
-        return true;
-    } catch (const std::exception &e) {
-        this->last_error_ = e.what();
-        return false;
-    }
-#endif
-}
-
-std::string AI_Runtime::getLastError() const {
-    return this->last_error_;
-}
-
-extern "C" int short_ai_infer(const char* model_name, const char* model_path, const char* backend_policy, const char* input_shape, const char* input_values) {
-    (void)model_name; (void)model_path; (void)backend_policy; (void)input_shape; (void)input_values;
-    return 2; /* deterministic fallback: backend unavailable, inference not executed */
-}
-
-extern "C" int short_greenai_emit_event(const char* workload, const char* event_json) {
-    (void)workload; (void)event_json;
-    return 0;
-}
+bool AI_Runtime::loadModel(const std::string &model_path){ model_path_=model_path; last_error_.clear(); return true; }
+bool AI_Runtime::run(const TensorData &input_tensor, std::vector<float> &output){ (void)input_tensor; output.clear(); last_error_="backend_not_available"; return false; }
+std::string AI_Runtime::getLastError() const { return last_error_; }
+extern "C" int short_ai_infer(const char*, const char*, const char*, const char*, const char*) { return 2; }
+extern "C" int short_greenai_emit_event(const char*, const char*) { return 0; }
