@@ -1,6 +1,7 @@
 #ifndef _astInterpretVisitor_H
 #define _astInterpretVisitor_H
 #include "../ast/AST.h"
+#include "../ai_runtime/AI_Types.h"
 #include<map>
 
 class Interpreter;
@@ -10,6 +11,8 @@ class Interpreter : public Visitor
 private:
     map<string, int> ST_single_int;
     map<string, vector<int> > ST_array_int;
+    map<string, shorthand::ai::ModelSpec> AI_models;
+    map<string, shorthand::ai::TensorBuffer> AI_tensors;
     string str;
     int num;
 
@@ -35,6 +38,7 @@ public:
     int visit(AST_LABEL_RULE * label_statement);
     int visit(AST_GREENAI_REPORT_RULE * greenai_report);
     int visit(AST_AI_INFER_RULE * ai_infer);
+    int visit(AST_MODEL_DECLARATION *); int visit(AST_TENSOR_DECLARATION *); int visit(AST_GREENAI_CONTRACT *); int visit(AST_GREENAI_MEASUREMENT *); int visit(AST_INFER_STATEMENT *); int visit(AST_CONTINUE *); int visit(AST_RETURN_STATEMENT *);
 
     int visit(AST_BINARY_EXPRESSION_RULE * binary_operator_expression);
     int visit(AST_UNARY_EXPRESSION_RULE * unary_operator_expression);
@@ -43,5 +47,6 @@ public:
     int visit(AST_ARRAY_VARIABLE * variable_array_int);
     int visit(AST_LITERAL * int_literal);
     int visit(AST_STRING_LITERAL * string_literal);
+    int visit(AST_BOOL_LITERAL *); int visit(AST_FLOAT_LITERAL *); int visit(AST_FUNCTION_CALL_EXPRESSION *);
 };
 #endif

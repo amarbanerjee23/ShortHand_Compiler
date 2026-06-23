@@ -74,6 +74,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "./ast/AST.h"
+#include <vector>
+#include <string>
+static ModelDeclarationData current_model;
+static GreenAIContractData current_contract;
+static GreenAIMeasurementData current_measure;
 
   using namespace std;
 
@@ -88,7 +93,7 @@
 
 
 
-#line 92 "parser.tab.cc"
+#line 97 "parser.tab.cc"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -138,47 +143,135 @@ enum yysymbol_kind_t
   YYSYMBOL_STRING_LITERAL = 19,            /* STRING_LITERAL  */
   YYSYMBOL_IDENTIFIER = 20,                /* IDENTIFIER  */
   YYSYMBOL_INT_LITERAL = 21,               /* INT_LITERAL  */
-  YYSYMBOL_READ = 22,                      /* READ  */
-  YYSYMBOL_PRINT = 23,                     /* PRINT  */
-  YYSYMBOL_GOTO = 24,                      /* GOTO  */
-  YYSYMBOL_BREAK = 25,                     /* BREAK  */
-  YYSYMBOL_WHILE = 26,                     /* WHILE  */
-  YYSYMBOL_LOOP = 27,                      /* LOOP  */
-  YYSYMBOL_ELSE = 28,                      /* ELSE  */
-  YYSYMBOL_IF = 29,                        /* IF  */
-  YYSYMBOL_DEF = 30,                       /* DEF  */
-  YYSYMBOL_INT = 31,                       /* INT  */
-  YYSYMBOL_FLOAT = 32,                     /* FLOAT  */
-  YYSYMBOL_STRING = 33,                    /* STRING  */
-  YYSYMBOL_VOID = 34,                      /* VOID  */
-  YYSYMBOL_BOOL = 35,                      /* BOOL  */
-  YYSYMBOL_36_ = 36,                       /* ';'  */
-  YYSYMBOL_37_ = 37,                       /* '('  */
-  YYSYMBOL_38_ = 38,                       /* ')'  */
-  YYSYMBOL_39_ = 39,                       /* ','  */
-  YYSYMBOL_40_ = 40,                       /* '['  */
-  YYSYMBOL_41_ = 41,                       /* ']'  */
-  YYSYMBOL_42_ = 42,                       /* '{'  */
-  YYSYMBOL_43_ = 43,                       /* '}'  */
-  YYSYMBOL_44_ = 44,                       /* ':'  */
-  YYSYMBOL_YYACCEPT = 45,                  /* $accept  */
-  YYSYMBOL_PROGRAMME_RULE = 46,            /* PROGRAMME_RULE  */
-  YYSYMBOL_FUNCTION_LIST_RULE = 47,        /* FUNCTION_LIST_RULE  */
-  YYSYMBOL_FUNCTION_RULE = 48,             /* FUNCTION_RULE  */
-  YYSYMBOL_DECLARATION_STATEMENT_LIST_RULE = 49, /* DECLARATION_STATEMENT_LIST_RULE  */
-  YYSYMBOL_ShortType = 50,                 /* ShortType  */
-  YYSYMBOL_DECLARATION_STATEMENT_RULE = 51, /* DECLARATION_STATEMENT_RULE  */
-  YYSYMBOL_DECLARATION_VARIABLE_LIST_RULE = 52, /* DECLARATION_VARIABLE_LIST_RULE  */
-  YYSYMBOL_LOGIC_BLOCK = 53,               /* LOGIC_BLOCK  */
-  YYSYMBOL_STATEMENT_BLOCK_RULE = 54,      /* STATEMENT_BLOCK_RULE  */
-  YYSYMBOL_STATEMENT_LIST_RULE = 55,       /* STATEMENT_LIST_RULE  */
-  YYSYMBOL_STATEMENT_RULE = 56,            /* STATEMENT_RULE  */
-  YYSYMBOL_AI_INFER_RULE = 57,             /* AI_INFER_RULE  */
-  YYSYMBOL_GREENAI_REPORT_RULE = 58,       /* GREENAI_REPORT_RULE  */
-  YYSYMBOL_EXPRESSION_RULE = 59,           /* EXPRESSION_RULE  */
-  YYSYMBOL_VARIABLE_RULE = 60,             /* VARIABLE_RULE  */
-  YYSYMBOL_READ_VARIABLE_LIST_RULE = 61,   /* READ_VARIABLE_LIST_RULE  */
-  YYSYMBOL_PRINT_VARIABLE_LIST_RULE = 62   /* PRINT_VARIABLE_LIST_RULE  */
+  YYSYMBOL_FLOAT_LITERAL = 22,             /* FLOAT_LITERAL  */
+  YYSYMBOL_READ = 23,                      /* READ  */
+  YYSYMBOL_PRINT = 24,                     /* PRINT  */
+  YYSYMBOL_GOTO = 25,                      /* GOTO  */
+  YYSYMBOL_BREAK = 26,                     /* BREAK  */
+  YYSYMBOL_WHILE = 27,                     /* WHILE  */
+  YYSYMBOL_LOOP = 28,                      /* LOOP  */
+  YYSYMBOL_ELSE = 29,                      /* ELSE  */
+  YYSYMBOL_IF = 30,                        /* IF  */
+  YYSYMBOL_DEF = 31,                       /* DEF  */
+  YYSYMBOL_INT = 32,                       /* INT  */
+  YYSYMBOL_FLOAT = 33,                     /* FLOAT  */
+  YYSYMBOL_STRING = 34,                    /* STRING  */
+  YYSYMBOL_VOID = 35,                      /* VOID  */
+  YYSYMBOL_BOOL = 36,                      /* BOOL  */
+  YYSYMBOL_DOUBLE = 37,                    /* DOUBLE  */
+  YYSYMBOL_RETURN = 38,                    /* RETURN  */
+  YYSYMBOL_CONTINUE = 39,                  /* CONTINUE  */
+  YYSYMBOL_TRUE = 40,                      /* TRUE  */
+  YYSYMBOL_FALSE = 41,                     /* FALSE  */
+  YYSYMBOL_MODEL = 42,                     /* MODEL  */
+  YYSYMBOL_FORMAT = 43,                    /* FORMAT  */
+  YYSYMBOL_PATH = 44,                      /* PATH  */
+  YYSYMBOL_TASK = 45,                      /* TASK  */
+  YYSYMBOL_PRECISION = 46,                 /* PRECISION  */
+  YYSYMBOL_INPUT_SHAPE = 47,               /* INPUT_SHAPE  */
+  YYSYMBOL_OUTPUT_SHAPE = 48,              /* OUTPUT_SHAPE  */
+  YYSYMBOL_BACKEND_PREFERENCE = 49,        /* BACKEND_PREFERENCE  */
+  YYSYMBOL_COMPACT = 50,                   /* COMPACT  */
+  YYSYMBOL_QUALITY_GUARDRAIL = 51,         /* QUALITY_GUARDRAIL  */
+  YYSYMBOL_GREENAI_CONTRACT_T = 52,        /* GREENAI_CONTRACT_T  */
+  YYSYMBOL_FUNCTIONAL_UNIT = 53,           /* FUNCTIONAL_UNIT  */
+  YYSYMBOL_SUCCESS_CRITERIA = 54,          /* SUCCESS_CRITERIA  */
+  YYSYMBOL_BOUNDARY = 55,                  /* BOUNDARY  */
+  YYSYMBOL_MEASUREMENT_QUALITY = 56,       /* MEASUREMENT_QUALITY  */
+  YYSYMBOL_DATA_QUALITY = 57,              /* DATA_QUALITY  */
+  YYSYMBOL_CARBON_FACTOR = 58,             /* CARBON_FACTOR  */
+  YYSYMBOL_ENERGY_BUDGET_J = 59,           /* ENERGY_BUDGET_J  */
+  YYSYMBOL_CARBON_BUDGET_GCO2E = 60,       /* CARBON_BUDGET_GCO2E  */
+  YYSYMBOL_EVIDENCE_RETENTION = 61,        /* EVIDENCE_RETENTION  */
+  YYSYMBOL_CLAIMS_MODE = 62,               /* CLAIMS_MODE  */
+  YYSYMBOL_EVIDENCE_ONLY = 63,             /* EVIDENCE_ONLY  */
+  YYSYMBOL_GREENAI_MEASURE = 64,           /* GREENAI_MEASURE  */
+  YYSYMBOL_INFER = 65,                     /* INFER  */
+  YYSYMBOL_TENSOR = 66,                    /* TENSOR  */
+  YYSYMBOL_INT8 = 67,                      /* INT8  */
+  YYSYMBOL_FP16 = 68,                      /* FP16  */
+  YYSYMBOL_FP32 = 69,                      /* FP32  */
+  YYSYMBOL_BF16 = 70,                      /* BF16  */
+  YYSYMBOL_INT4 = 71,                      /* INT4  */
+  YYSYMBOL_FP64 = 72,                      /* FP64  */
+  YYSYMBOL_ONNX = 73,                      /* ONNX  */
+  YYSYMBOL_ENGINE = 74,                    /* ENGINE  */
+  YYSYMBOL_TORCHSCRIPT = 75,               /* TORCHSCRIPT  */
+  YYSYMBOL_OPENVINO_IR = 76,               /* OPENVINO_IR  */
+  YYSYMBOL_GGUF = 77,                      /* GGUF  */
+  YYSYMBOL_TENSORRT = 78,                  /* TENSORRT  */
+  YYSYMBOL_ONNXRUNTIME_TENSORRT = 79,      /* ONNXRUNTIME_TENSORRT  */
+  YYSYMBOL_ONNXRUNTIME_CUDA = 80,          /* ONNXRUNTIME_CUDA  */
+  YYSYMBOL_ONNXRUNTIME_CPU = 81,           /* ONNXRUNTIME_CPU  */
+  YYSYMBOL_OPENVINO = 82,                  /* OPENVINO  */
+  YYSYMBOL_LIBTORCH = 83,                  /* LIBTORCH  */
+  YYSYMBOL_LLAMACPP = 84,                  /* LLAMACPP  */
+  YYSYMBOL_FALLBACK = 85,                  /* FALLBACK  */
+  YYSYMBOL_MQ1 = 86,                       /* MQ1  */
+  YYSYMBOL_MQ2 = 87,                       /* MQ2  */
+  YYSYMBOL_MQ3 = 88,                       /* MQ3  */
+  YYSYMBOL_MQ4 = 89,                       /* MQ4  */
+  YYSYMBOL_DQ1 = 90,                       /* DQ1  */
+  YYSYMBOL_DQ2 = 91,                       /* DQ2  */
+  YYSYMBOL_DQ3 = 92,                       /* DQ3  */
+  YYSYMBOL_DQ4 = 93,                       /* DQ4  */
+  YYSYMBOL_LOCATION = 94,                  /* LOCATION  */
+  YYSYMBOL_CI_CD = 95,                     /* CI_CD  */
+  YYSYMBOL_THIRDPARTY = 96,                /* THIRDPARTY  */
+  YYSYMBOL_ACCELERATOR = 97,               /* ACCELERATOR  */
+  YYSYMBOL_COMPUTE = 98,                   /* COMPUTE  */
+  YYSYMBOL_STORAGE = 99,                   /* STORAGE  */
+  YYSYMBOL_NETWORK = 100,                  /* NETWORK  */
+  YYSYMBOL_101_ = 101,                     /* ';'  */
+  YYSYMBOL_102_ = 102,                     /* '('  */
+  YYSYMBOL_103_ = 103,                     /* ')'  */
+  YYSYMBOL_104_ = 104,                     /* ','  */
+  YYSYMBOL_105_ = 105,                     /* '['  */
+  YYSYMBOL_106_ = 106,                     /* ']'  */
+  YYSYMBOL_107_ = 107,                     /* '{'  */
+  YYSYMBOL_108_ = 108,                     /* '}'  */
+  YYSYMBOL_109_ = 109,                     /* ':'  */
+  YYSYMBOL_YYACCEPT = 110,                 /* $accept  */
+  YYSYMBOL_PROGRAMME_RULE = 111,           /* PROGRAMME_RULE  */
+  YYSYMBOL_FUNCTION_LIST_RULE = 112,       /* FUNCTION_LIST_RULE  */
+  YYSYMBOL_FUNCTION_RULE = 113,            /* FUNCTION_RULE  */
+  YYSYMBOL_DECLARATION_STATEMENT_LIST_RULE = 114, /* DECLARATION_STATEMENT_LIST_RULE  */
+  YYSYMBOL_ShortType = 115,                /* ShortType  */
+  YYSYMBOL_DECLARATION_STATEMENT_RULE = 116, /* DECLARATION_STATEMENT_RULE  */
+  YYSYMBOL_DECLARATION_VARIABLE_LIST_RULE = 117, /* DECLARATION_VARIABLE_LIST_RULE  */
+  YYSYMBOL_LOGIC_BLOCK = 118,              /* LOGIC_BLOCK  */
+  YYSYMBOL_STATEMENT_BLOCK_RULE = 119,     /* STATEMENT_BLOCK_RULE  */
+  YYSYMBOL_STATEMENT_LIST_RULE = 120,      /* STATEMENT_LIST_RULE  */
+  YYSYMBOL_STATEMENT_RULE = 121,           /* STATEMENT_RULE  */
+  YYSYMBOL_RETURN_STATEMENT = 122,         /* RETURN_STATEMENT  */
+  YYSYMBOL_INFER_STATEMENT = 123,          /* INFER_STATEMENT  */
+  YYSYMBOL_TENSOR_DECLARATION = 124,       /* TENSOR_DECLARATION  */
+  YYSYMBOL_MODEL_DECLARATION = 125,        /* MODEL_DECLARATION  */
+  YYSYMBOL_126_1 = 126,                    /* $@1  */
+  YYSYMBOL_MODEL_FIELD_LIST = 127,         /* MODEL_FIELD_LIST  */
+  YYSYMBOL_MODEL_FIELD = 128,              /* MODEL_FIELD  */
+  YYSYMBOL_BACKEND_LIST = 129,             /* BACKEND_LIST  */
+  YYSYMBOL_GREENAI_CONTRACT = 130,         /* GREENAI_CONTRACT  */
+  YYSYMBOL_131_2 = 131,                    /* $@2  */
+  YYSYMBOL_CONTRACT_FIELD_LIST = 132,      /* CONTRACT_FIELD_LIST  */
+  YYSYMBOL_CONTRACT_FIELD = 133,           /* CONTRACT_FIELD  */
+  YYSYMBOL_BOUNDARY_LIST = 134,            /* BOUNDARY_LIST  */
+  YYSYMBOL_GREENAI_MEASUREMENT = 135,      /* GREENAI_MEASUREMENT  */
+  YYSYMBOL_136_3 = 136,                    /* $@3  */
+  YYSYMBOL_MEASURE_FIELD_LIST = 137,       /* MEASURE_FIELD_LIST  */
+  YYSYMBOL_MEASURE_FIELD = 138,            /* MEASURE_FIELD  */
+  YYSYMBOL_FORMAT_NAME = 139,              /* FORMAT_NAME  */
+  YYSYMBOL_PRECISION_NAME = 140,           /* PRECISION_NAME  */
+  YYSYMBOL_BACKEND_NAME = 141,             /* BACKEND_NAME  */
+  YYSYMBOL_MQ_NAME = 142,                  /* MQ_NAME  */
+  YYSYMBOL_DQ_NAME = 143,                  /* DQ_NAME  */
+  YYSYMBOL_BOUNDARY_NAME = 144,            /* BOUNDARY_NAME  */
+  YYSYMBOL_AI_INFER_RULE = 145,            /* AI_INFER_RULE  */
+  YYSYMBOL_GREENAI_REPORT_RULE = 146,      /* GREENAI_REPORT_RULE  */
+  YYSYMBOL_EXPRESSION_RULE = 147,          /* EXPRESSION_RULE  */
+  YYSYMBOL_VARIABLE_RULE = 148,            /* VARIABLE_RULE  */
+  YYSYMBOL_READ_VARIABLE_LIST_RULE = 149,  /* READ_VARIABLE_LIST_RULE  */
+  YYSYMBOL_PRINT_VARIABLE_LIST_RULE = 150  /* PRINT_VARIABLE_LIST_RULE  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -295,7 +388,7 @@ typedef int yytype_uint16;
 
 
 /* Stored state numbers (used for stacks). */
-typedef yytype_uint8 yy_state_t;
+typedef yytype_int16 yy_state_t;
 
 /* State numbers in computations.  */
 typedef int yy_state_fast_t;
@@ -504,21 +597,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  10
+#define YYFINAL  11
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   434
+#define YYLAST   605
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  45
+#define YYNTOKENS  110
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  18
+#define YYNNTS  41
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  67
+#define YYNRULES  156
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  146
+#define YYNSTATES  316
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   284
+#define YYMAXUTOK   349
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -536,15 +629,15 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,    17,     2,     2,
-      37,    38,    15,    13,    39,    14,     2,    16,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    44,    36,
+     102,   103,    15,    13,   104,    14,     2,    16,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,   109,   101,
        2,     4,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    40,     2,    41,     2,     2,     2,     2,     2,     2,
+       2,   105,     2,   106,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    42,     2,    43,     2,     2,     2,     2,
+       2,     2,     2,   107,     2,   108,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -560,20 +653,35 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     5,
        6,     7,     8,     9,    10,    11,    12,    18,    19,    20,
       21,    22,    23,    24,    25,    26,    27,    28,    29,    30,
-      31,    32,    33,    34,    35
+      31,    32,    33,    34,    35,    36,    37,    38,    39,    40,
+      41,    42,    43,    44,    45,    46,    47,    48,    49,    50,
+      51,    52,    53,    54,    55,    56,    57,    58,    59,    60,
+      61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
+      71,    72,    73,    74,    75,    76,    77,    78,    79,    80,
+      81,    82,    83,    84,    85,    86,    87,    88,    89,    90,
+      91,    92,    93,    94,    95,    96,    97,    98,    99,   100
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,    72,    72,    81,    86,    92,    97,   103,   111,   112,
-     113,   114,   115,   118,   126,   131,   136,   141,   146,   150,
-     158,   166,   170,   177,   181,   186,   190,   194,   198,   202,
-     206,   210,   214,   218,   222,   226,   227,   231,   235,   239,
-     243,   250,   260,   271,   275,   279,   283,   287,   291,   295,
-     299,   303,   307,   311,   315,   319,   323,   327,   331,   335,
-     342,   346,   352,   356,   364,   368,   372,   377
+       0,    85,    85,    94,    99,   105,   110,   116,   124,   125,
+     125,   126,   127,   128,   131,   139,   144,   149,   154,   159,
+     163,   171,   179,   183,   190,   191,   192,   193,   194,   195,
+     196,   197,   201,   206,   210,   214,   218,   222,   226,   230,
+     234,   238,   242,   246,   247,   251,   255,   259,   263,   270,
+     270,   272,   273,   275,   277,   277,   278,   278,   279,   279,
+     279,   279,   279,   279,   279,   279,   279,   279,   280,   280,
+     282,   282,   283,   283,   284,   284,   284,   284,   284,   284,
+     284,   284,   284,   284,   284,   285,   285,   287,   287,   288,
+     288,   289,   289,   291,   291,   291,   291,   291,   292,   292,
+     292,   292,   292,   292,   292,   293,   293,   293,   293,   293,
+     293,   293,   293,   294,   294,   294,   294,   295,   295,   295,
+     295,   296,   296,   296,   296,   296,   296,   298,   308,   319,
+     323,   327,   331,   335,   339,   343,   347,   351,   355,   359,
+     363,   367,   371,   375,   379,   383,   384,   385,   386,   390,
+     394,   400,   404,   412,   416,   420,   425
 };
 #endif
 
@@ -592,14 +700,32 @@ static const char *const yytname[] =
   "\"end of file\"", "error", "\"invalid token\"", "ETOK", "'='", "OR",
   "AND", "EQUAL", "NOT_EQUAL", "LESS", "LESS_OR_EQUAL", "GREATER",
   "GREATER_OR_EQUAL", "'+'", "'-'", "'*'", "'/'", "'%'", "UMINUS",
-  "STRING_LITERAL", "IDENTIFIER", "INT_LITERAL", "READ", "PRINT", "GOTO",
-  "BREAK", "WHILE", "LOOP", "ELSE", "IF", "DEF", "INT", "FLOAT", "STRING",
-  "VOID", "BOOL", "';'", "'('", "')'", "','", "'['", "']'", "'{'", "'}'",
-  "':'", "$accept", "PROGRAMME_RULE", "FUNCTION_LIST_RULE",
-  "FUNCTION_RULE", "DECLARATION_STATEMENT_LIST_RULE", "ShortType",
-  "DECLARATION_STATEMENT_RULE", "DECLARATION_VARIABLE_LIST_RULE",
-  "LOGIC_BLOCK", "STATEMENT_BLOCK_RULE", "STATEMENT_LIST_RULE",
-  "STATEMENT_RULE", "AI_INFER_RULE", "GREENAI_REPORT_RULE",
+  "STRING_LITERAL", "IDENTIFIER", "INT_LITERAL", "FLOAT_LITERAL", "READ",
+  "PRINT", "GOTO", "BREAK", "WHILE", "LOOP", "ELSE", "IF", "DEF", "INT",
+  "FLOAT", "STRING", "VOID", "BOOL", "DOUBLE", "RETURN", "CONTINUE",
+  "TRUE", "FALSE", "MODEL", "FORMAT", "PATH", "TASK", "PRECISION",
+  "INPUT_SHAPE", "OUTPUT_SHAPE", "BACKEND_PREFERENCE", "COMPACT",
+  "QUALITY_GUARDRAIL", "GREENAI_CONTRACT_T", "FUNCTIONAL_UNIT",
+  "SUCCESS_CRITERIA", "BOUNDARY", "MEASUREMENT_QUALITY", "DATA_QUALITY",
+  "CARBON_FACTOR", "ENERGY_BUDGET_J", "CARBON_BUDGET_GCO2E",
+  "EVIDENCE_RETENTION", "CLAIMS_MODE", "EVIDENCE_ONLY", "GREENAI_MEASURE",
+  "INFER", "TENSOR", "INT8", "FP16", "FP32", "BF16", "INT4", "FP64",
+  "ONNX", "ENGINE", "TORCHSCRIPT", "OPENVINO_IR", "GGUF", "TENSORRT",
+  "ONNXRUNTIME_TENSORRT", "ONNXRUNTIME_CUDA", "ONNXRUNTIME_CPU",
+  "OPENVINO", "LIBTORCH", "LLAMACPP", "FALLBACK", "MQ1", "MQ2", "MQ3",
+  "MQ4", "DQ1", "DQ2", "DQ3", "DQ4", "LOCATION", "CI_CD", "THIRDPARTY",
+  "ACCELERATOR", "COMPUTE", "STORAGE", "NETWORK", "';'", "'('", "')'",
+  "','", "'['", "']'", "'{'", "'}'", "':'", "$accept", "PROGRAMME_RULE",
+  "FUNCTION_LIST_RULE", "FUNCTION_RULE", "DECLARATION_STATEMENT_LIST_RULE",
+  "ShortType", "DECLARATION_STATEMENT_RULE",
+  "DECLARATION_VARIABLE_LIST_RULE", "LOGIC_BLOCK", "STATEMENT_BLOCK_RULE",
+  "STATEMENT_LIST_RULE", "STATEMENT_RULE", "RETURN_STATEMENT",
+  "INFER_STATEMENT", "TENSOR_DECLARATION", "MODEL_DECLARATION", "$@1",
+  "MODEL_FIELD_LIST", "MODEL_FIELD", "BACKEND_LIST", "GREENAI_CONTRACT",
+  "$@2", "CONTRACT_FIELD_LIST", "CONTRACT_FIELD", "BOUNDARY_LIST",
+  "GREENAI_MEASUREMENT", "$@3", "MEASURE_FIELD_LIST", "MEASURE_FIELD",
+  "FORMAT_NAME", "PRECISION_NAME", "BACKEND_NAME", "MQ_NAME", "DQ_NAME",
+  "BOUNDARY_NAME", "AI_INFER_RULE", "GREENAI_REPORT_RULE",
   "EXPRESSION_RULE", "VARIABLE_RULE", "READ_VARIABLE_LIST_RULE",
   "PRINT_VARIABLE_LIST_RULE", YY_NULLPTR
 };
@@ -611,7 +737,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-51)
+#define YYPACT_NINF (-71)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -625,201 +751,310 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     180,   -51,   -51,   -51,   -51,   -51,    10,   180,   -14,   -24,
-     -51,   336,   -22,    -1,   -12,   -51,    52,    -4,   -51,    23,
-     356,    25,   -51,    52,    52,   180,   -51,    52,   360,    29,
-     -51,   -51,   360,   -51,    49,    51,   287,    84,   -51,    69,
-      71,    53,   -51,   -51,    48,    52,   -51,   -51,   -13,   -51,
-     417,     5,     6,   129,    90,   129,    89,   240,    -5,   -51,
-     -51,   -51,   -51,    52,    52,    52,    52,    52,    52,    52,
-      52,    52,    52,    52,    52,    52,   -51,    52,    72,    70,
-      73,    42,   142,   -51,    23,   -51,   380,    52,   -51,   -51,
-      52,    86,    78,   -51,   -51,   213,   153,   163,   163,   245,
-     245,   245,   245,    47,    47,   -51,   -51,   -51,   319,   -51,
-      96,   384,    82,   -51,   -51,   -51,   417,   332,   179,    77,
-     180,   -51,    79,    83,   192,   -51,   -51,    52,   -51,    44,
-     -51,   105,    52,    91,    77,    88,   227,    52,   -51,   -51,
-     -51,    52,   129,   274,   -51,   -51
+     218,   -71,   -71,   -71,   -71,   -71,   -71,    20,   218,    67,
+     -66,   -71,   426,   -12,     5,    11,   -71,   503,     9,   -71,
+     -71,    73,    -4,   127,   120,   503,   503,   218,   208,   126,
+     -71,   -71,   211,   212,   237,   238,   249,   -71,   503,   474,
+     169,   -71,   -71,   474,   -71,   -71,   -71,   -71,   -71,   -71,
+     -71,   171,   172,   276,   271,   -71,   255,   257,   174,   -71,
+     -71,   -13,   503,   -71,   -71,    -7,   -71,   540,    15,   -11,
+     -71,    41,   290,    41,   275,   -71,   341,   -71,   201,   204,
+     209,   215,    58,   203,   379,   -71,   -71,   -71,   -71,   503,
+     503,   503,   503,   503,   503,   503,   503,   503,   503,   503,
+     503,   503,   -71,   503,   224,   226,   231,    19,    54,   -71,
+      73,   -71,   293,   503,   -71,   -71,   503,   307,   236,   -71,
+     -71,   -71,   -71,   317,   -71,   -71,   -71,   -71,   -71,   -71,
+     -71,   320,   -71,   -71,   552,   585,   288,   288,   136,   136,
+     136,   136,    -3,    -3,   -71,   -71,   -71,   354,   -71,   319,
+     489,   240,   -71,   -71,   -71,   540,   373,   129,   265,   218,
+     -71,   -71,   -71,   239,   242,   -71,   268,   269,   163,   -71,
+     -71,   503,   -71,     6,    57,   267,   -16,   106,   -71,   -71,
+     325,   503,    17,   265,    82,   357,   372,    58,   375,   377,
+     121,    91,   378,   291,   -71,   386,   389,   391,   166,   108,
+     133,   303,   390,   392,   393,   351,   314,   -71,   141,   315,
+     -71,   402,   412,   321,   176,   503,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   324,   326,   327,   328,   329,   331,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,    62,   -71,   332,
+     333,   414,   -71,   423,   335,   336,   -71,   -71,   -71,   -71,
+     -71,   -71,   167,   -71,   -71,   -71,   -71,   -71,   337,   -71,
+     -71,   -71,   -71,   338,   420,   352,   358,   359,   360,   -71,
+     361,   362,   -71,   368,   438,   -71,   503,    41,   -71,   -71,
+     -71,   -71,   -71,   -71,   -71,   121,   -71,   -71,   449,   450,
+     -71,   -71,   -71,   166,   -71,   -71,   371,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,   374,   229,   -71,   -71,   376,   381,
+     -71,   -71,   -71,   -71,   -71,   -71
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
    Performed when YYTABLE does not specify something else to do.  Zero
    means the default is an error.  */
-static const yytype_int8 yydefact[] =
+static const yytype_uint8 yydefact[] =
 {
-       0,     8,     9,    10,    11,    12,     0,     4,    18,     0,
-       1,     0,     0,    16,    13,     7,     0,    60,    59,     0,
-       0,     0,    35,     0,     0,     0,    40,     0,     0,     0,
-       2,    26,    19,    22,     0,     0,     0,    58,     6,     0,
-       0,    60,    56,    58,     0,     0,    39,    63,     0,    66,
-      67,     0,     0,     0,    58,     0,     0,     0,     0,     3,
-      21,    38,    37,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    23,     0,     0,    14,
-       0,     0,     0,    34,     0,    36,     0,     0,    32,    31,
-       0,    27,     0,    57,    20,    54,    55,    52,    53,    48,
-      49,    50,    51,    43,    44,    45,    46,    47,     0,    17,
-       0,     0,     0,    61,    62,    64,    65,     0,     0,     0,
-       0,    24,     0,     0,     0,    25,    33,     0,    28,     0,
-      15,     0,     0,     0,     0,     0,     0,     0,    29,     5,
-      41,     0,     0,     0,    30,    42
+       0,     8,     9,    11,    12,    13,    10,     0,     4,    19,
+       0,     1,     0,     0,    17,    14,     7,     0,   149,   145,
+     146,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+     147,   148,     0,     0,     0,     0,     0,    48,     0,     0,
+       0,     2,    34,    20,    23,    29,    28,    25,    24,    26,
+      27,     0,     0,     0,   144,     6,     0,     0,   149,   142,
+     144,     0,     0,    47,   152,     0,   155,   156,     0,     0,
+      43,     0,   144,     0,     0,    50,     0,    30,     0,     0,
+       0,     0,     0,     0,     0,     3,    22,    46,    45,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,    31,     0,     0,    15,     0,     0,     0,    42,
+       0,    44,     0,     0,    40,    39,     0,    35,     0,    49,
+      54,    70,    87,     0,   104,    98,   100,   101,   102,    99,
+     103,     0,   143,    21,   140,   141,   138,   139,   134,   135,
+     136,   137,   129,   130,   131,   132,   133,     0,    18,     0,
+       0,     0,   150,   151,   153,   154,     0,     0,     0,     0,
+      57,    73,    90,     0,     0,    32,     0,     0,     0,    33,
+      41,     0,    36,     0,     0,     0,     0,     0,    53,    16,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,    56,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    72,     0,     0,
+      89,     0,     0,     0,     0,     0,    37,     5,    93,    94,
+      95,    96,    97,     0,     0,     0,     0,     0,     0,   105,
+     106,   107,   108,   109,   110,   111,   112,     0,    69,     0,
+       0,     0,    55,     0,     0,     0,   125,   126,   122,   121,
+     123,   124,     0,    86,   113,   114,   115,   116,     0,   117,
+     118,   119,   120,     0,     0,     0,     0,     0,     0,    71,
+       0,     0,    88,     0,     0,   127,     0,     0,    58,    59,
+      60,    61,    62,    63,    64,     0,    65,    66,     0,     0,
+      74,    75,    76,     0,    77,    78,     0,    80,    81,    83,
+      84,    92,    91,    51,     0,     0,    38,    68,     0,     0,
+      85,    79,    52,   128,    67,    82
 };
 
 /* YYPGOTO[NTERM-NUM].  */
-static const yytype_int8 yypgoto[] =
+static const yytype_int16 yypgoto[] =
 {
-     -51,   -51,   -51,   -51,     7,   103,    -6,   -51,   -51,   -50,
-     101,   -30,   -51,   -51,   -16,     2,    87,   -51
+     -71,   -71,   -71,   -71,   330,   446,    -6,   -71,   -71,   -70,
+     437,     1,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     292,   198,   -71,   -71,   191,   -71,   -71,   -17,   235,   424,
+     -71
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
-static const yytype_int8 yydefgoto[] =
+static const yytype_int16 yydefgoto[] =
 {
-       0,     6,    11,    29,     7,     8,     9,    14,    30,    31,
-      32,    33,    34,    35,    36,    43,    48,    51
+       0,     7,    12,    40,     8,     9,    10,    15,    41,    42,
+      43,    44,    45,    46,    47,    48,   160,   174,   194,   237,
+      49,   161,   175,   207,   252,    50,   162,   176,   210,   223,
+     131,   238,   258,   263,   253,    51,    52,    53,    60,    65,
+      68
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule whose
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
-static const yytype_uint8 yytable[] =
+static const yytype_int16 yytable[] =
 {
-      42,    12,    60,    89,    50,    91,    13,    53,    55,    16,
-      10,    57,    15,    37,    38,    17,    18,    19,    20,    21,
-      22,    47,    23,    83,    24,    54,    84,    40,    60,    82,
-      37,    26,    27,    44,    37,    87,    45,    28,    94,    39,
-      46,    85,    88,    41,    86,    52,    47,    95,    96,    97,
-      98,    99,   100,   101,   102,   103,   104,   105,   106,   107,
-      37,   108,    73,    74,    75,    59,    16,    80,    41,   128,
-     116,   117,    41,    18,   118,     1,     2,     3,     4,     5,
-     112,    84,   134,   138,   139,    61,   114,    62,    77,    27,
-      78,    79,   144,    45,    90,   124,    63,    64,    65,    66,
-      67,    68,    69,    70,    71,    72,    73,    74,    75,    92,
-     110,   133,   111,   109,   119,   120,   136,   122,   125,    28,
-     130,   142,   131,    12,   135,   143,   140,   129,    56,    58,
-     137,    81,     0,    28,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,    72,    73,    74,    75,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    73,    74,    75,
-      65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
-      75,    28,    67,    68,    69,    70,    71,    72,    73,    74,
-      75,     0,     0,   113,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,    72,    73,    74,    75,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    73,    74,    75,
-       0,     1,     2,     3,     4,     5,     0,     0,   127,    64,
-      65,    66,    67,    68,    69,    70,    71,    72,    73,    74,
-      75,   132,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,    73,    74,    75,    63,    64,    65,    66,    67,
-      68,    69,    70,    71,    72,    73,    74,    75,    71,    72,
-      73,    74,    75,     0,     0,     0,   141,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,    93,    63,
-      64,    65,    66,    67,    68,    69,    70,    71,    72,    73,
-      74,    75,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,    73,    74,    75,     0,     0,     0,     0,     0,
-       0,     0,   145,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    76,    63,    64,    65,    66,    67,    68,
-      69,    70,    71,    72,    73,    74,    75,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    73,    74,    75,
-      16,     0,     0,     0,     0,   121,    17,    18,    19,    20,
-      21,    22,     0,    23,     0,    24,    25,     0,   126,     0,
-      16,     0,    26,    27,    16,    49,    41,    18,    28,     0,
-      17,    18,    19,    20,    21,    22,     0,    23,     0,    24,
-       0,     0,     0,    27,    16,     0,    26,    27,    16,   115,
-      41,    18,    28,   123,    41,    18,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,    27,     0,     0,
-       0,    27,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,    73,    74,    75
+      59,   115,    13,   117,   208,    67,   106,    58,    71,    73,
+      17,    76,    99,   100,   101,    66,    58,    19,    20,   113,
+      11,    83,    89,    90,    91,    92,    93,    94,    95,    96,
+      97,    98,    99,   100,   101,    16,    30,    31,     1,     2,
+       3,     4,     5,     6,    86,   108,    89,    90,    91,    92,
+      93,    94,    95,    96,    97,    98,    99,   100,   101,    89,
+      90,    91,    92,    93,    94,    95,    96,    97,    98,    99,
+     100,   101,   134,   135,   136,   137,   138,   139,   140,   141,
+     142,   143,   144,   145,   146,    86,   147,    14,   172,    55,
+     114,   124,   209,    58,   109,   155,   156,   110,    38,   157,
+     184,   185,   186,   187,   188,   189,   190,   191,   192,   183,
+      56,    61,   216,   217,    62,    57,   111,   211,    63,   112,
+     212,   215,   151,   110,    39,   125,   126,   127,   128,   129,
+     130,   239,   240,   168,    89,    90,    91,    92,    93,    94,
+      95,    96,    97,    98,    99,   100,   101,    69,    39,    97,
+      98,    99,   100,   101,   182,   218,   219,   220,   221,   222,
+     152,   270,   271,   284,   214,   193,   285,    13,    89,    90,
+      91,    92,    93,    94,    95,    96,    97,    98,    99,   100,
+     101,    89,    90,    91,    92,    93,    94,    95,    96,    97,
+      98,    99,   100,   101,   254,   255,   256,   257,   277,   229,
+     230,   231,   232,   233,   234,   235,   236,   306,    89,    90,
+      91,    92,    93,    94,    95,    96,    97,    98,    99,   100,
+     101,    70,    17,   259,   260,   261,   262,    77,    58,    19,
+      20,    78,    79,   171,    89,    90,    91,    92,    93,    94,
+      95,    96,    97,    98,    99,   100,   101,    54,    30,    31,
+       1,     2,     3,     4,     5,     6,    64,    80,    81,   305,
+      72,   246,   247,   248,   249,   250,   251,   181,   292,    82,
+      85,   293,    87,    88,    54,   103,   104,   105,    54,    62,
+     276,    89,    90,    91,    92,    93,    94,    95,    96,    97,
+      98,    99,   100,   101,   116,   118,    64,    93,    94,    95,
+      96,    97,    98,    99,   100,   101,   132,    17,   120,    75,
+      38,   121,   154,    58,    19,    20,   122,   123,   195,    54,
+     196,   197,   198,   199,   200,   201,   202,   203,   204,   205,
+     148,   149,   313,    30,    31,   150,   158,   163,   159,   164,
+     166,   169,   177,   178,   213,   153,    89,    90,    91,    92,
+      93,    94,    95,    96,    97,    98,    99,   100,   101,    89,
+      90,    91,    92,    93,    94,    95,    96,    97,    98,    99,
+     100,   101,    39,   180,   179,   206,   224,   102,    89,    90,
+      91,    92,    93,    94,    95,    96,    97,    98,    99,   100,
+     101,   225,   242,    17,   227,    38,   228,   264,   241,    18,
+      19,    20,    21,    22,    23,    24,   243,    25,   244,    26,
+     245,   265,   267,   266,   268,   269,   272,    28,    29,    30,
+      31,    32,   273,   274,   275,   278,   288,   279,   280,   281,
+     282,    33,   283,   286,   287,   289,   290,   291,   294,   295,
+      17,   296,   119,    34,    35,    36,    18,    19,    20,    21,
+      22,    23,    24,   297,    25,   165,    26,    27,   304,   298,
+     299,   300,   301,   302,    28,    29,    30,    31,    32,   303,
+     308,   309,   311,    74,   170,   312,    84,   314,    33,   226,
+      37,    38,   315,   307,   310,   107,    39,   133,    17,   173,
+      34,    35,    36,     0,    18,    19,    20,    21,    22,    23,
+      24,     0,    25,    17,    26,     0,     0,     0,   167,    58,
+      19,    20,    28,    29,    30,    31,    32,    17,     0,     0,
+       0,     0,     0,    58,    19,    20,    33,    37,    38,    30,
+      31,     0,     0,    39,     0,     0,     0,     0,    34,    35,
+      36,     0,     0,    30,    31,    89,    90,    91,    92,    93,
+      94,    95,    96,    97,    98,    99,   100,   101,    90,    91,
+      92,    93,    94,    95,    96,    97,    98,    99,   100,   101,
+       0,     0,     0,     0,     0,    37,    38,     0,     0,     0,
+       0,    39,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,    38,    91,    92,    93,    94,    95,    96,    97,    98,
+      99,   100,   101,     0,     0,    38
 };
 
 static const yytype_int16 yycheck[] =
 {
-      16,     7,    32,    53,    20,    55,    20,    23,    24,    14,
-       0,    27,    36,    11,    36,    20,    21,    22,    23,    24,
-      25,    19,    27,    36,    29,    23,    39,    39,    58,    45,
-      28,    36,    37,    37,    32,    29,    40,    42,    43,    40,
-      44,    36,    36,    20,    39,    20,    44,    63,    64,    65,
-      66,    67,    68,    69,    70,    71,    72,    73,    74,    75,
-      58,    77,    15,    16,    17,    36,    14,    19,    20,   119,
-      86,    87,    20,    21,    90,    31,    32,    33,    34,    35,
-      38,    39,    38,   133,   134,    36,    84,    36,     4,    37,
-      21,    20,   142,    40,     4,   111,     5,     6,     7,     8,
-       9,    10,    11,    12,    13,    14,    15,    16,    17,    20,
-      40,   127,    39,    41,    28,    37,   132,    21,    36,    42,
-      41,   137,    39,   129,    19,   141,    38,   120,    25,    28,
-      39,    44,    -1,    42,     5,     6,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,     5,     6,     7,
-       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    42,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    -1,    -1,    41,     5,     6,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,     5,     6,     7,
-       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-      -1,    31,    32,    33,    34,    35,    -1,    -1,    39,     6,
-       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-      17,    39,     5,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,     5,     6,     7,     8,     9,
-      10,    11,    12,    13,    14,    15,    16,    17,    13,    14,
-      15,    16,    17,    -1,    -1,    -1,    39,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    38,     5,
+      17,    71,     8,    73,    20,    22,    19,    20,    25,    26,
+      14,    28,    15,    16,    17,    19,    20,    21,    22,    30,
+       0,    38,     5,     6,     7,     8,     9,    10,    11,    12,
+      13,    14,    15,    16,    17,   101,    40,    41,    32,    33,
+      34,    35,    36,    37,    43,    62,     5,     6,     7,     8,
+       9,    10,    11,    12,    13,    14,    15,    16,    17,     5,
        6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
-      16,    17,     5,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    38,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    36,     5,     6,     7,     8,     9,    10,
-      11,    12,    13,    14,    15,    16,    17,     5,     6,     7,
+      16,    17,    89,    90,    91,    92,    93,    94,    95,    96,
+      97,    98,    99,   100,   101,    84,   103,    20,   158,   101,
+     101,    33,   108,    20,   101,   112,   113,   104,   102,   116,
+      43,    44,    45,    46,    47,    48,    49,    50,    51,   103,
+     105,   102,   182,   183,   105,   104,   101,    11,   109,   104,
+      14,   104,   103,   104,   107,    67,    68,    69,    70,    71,
+      72,    40,    41,   150,     5,     6,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    20,   107,    13,
+      14,    15,    16,    17,   171,    73,    74,    75,    76,    77,
+     106,    20,    21,   101,   181,   108,   104,   173,     5,     6,
+       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+      17,     5,     6,     7,     8,     9,    10,    11,    12,    13,
+      14,    15,    16,    17,    86,    87,    88,    89,   215,    78,
+      79,    80,    81,    82,    83,    84,    85,   277,     5,     6,
+       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+      17,   101,    14,    90,    91,    92,    93,   101,    20,    21,
+      22,    20,    20,   104,     5,     6,     7,     8,     9,    10,
+      11,    12,    13,    14,    15,    16,    17,    12,    40,    41,
+      32,    33,    34,    35,    36,    37,    21,    20,    20,   276,
+      25,    95,    96,    97,    98,    99,   100,   104,   101,    20,
+     101,   104,   101,   101,    39,     4,    21,    20,    43,   105,
+     104,     5,     6,     7,     8,     9,    10,    11,    12,    13,
+      14,    15,    16,    17,     4,    20,    61,     9,    10,    11,
+      12,    13,    14,    15,    16,    17,   103,    14,   107,   101,
+     102,   107,    19,    20,    21,    22,   107,   102,    51,    84,
+      53,    54,    55,    56,    57,    58,    59,    60,    61,    62,
+     106,   105,   103,    40,    41,   104,    29,    20,   102,    19,
+      21,   101,   103,   101,    19,   110,     5,     6,     7,     8,
+       9,    10,    11,    12,    13,    14,    15,    16,    17,     5,
+       6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
+      16,    17,   107,   104,   106,   108,    19,   101,     5,     6,
+       7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+      17,    19,   101,    14,    19,   102,    19,    94,    20,    20,
+      21,    22,    23,    24,    25,    26,    20,    28,    19,    30,
+      19,    21,    19,    21,    63,   101,   101,    38,    39,    40,
+      41,    42,    20,    11,   103,   101,    12,   101,   101,   101,
+     101,    52,   101,   101,   101,    12,   101,   101,   101,   101,
+      14,    21,   101,    64,    65,    66,    20,    21,    22,    23,
+      24,    25,    26,   101,    28,   101,    30,    31,    20,   101,
+     101,   101,   101,   101,    38,    39,    40,    41,    42,   101,
+      21,    21,   101,    27,   101,   101,    39,   101,    52,   187,
+     101,   102,   101,   285,   293,    61,   107,   108,    14,   159,
+      64,    65,    66,    -1,    20,    21,    22,    23,    24,    25,
+      26,    -1,    28,    14,    30,    -1,    -1,    -1,    19,    20,
+      21,    22,    38,    39,    40,    41,    42,    14,    -1,    -1,
+      -1,    -1,    -1,    20,    21,    22,    52,   101,   102,    40,
+      41,    -1,    -1,   107,    -1,    -1,    -1,    -1,    64,    65,
+      66,    -1,    -1,    40,    41,     5,     6,     7,     8,     9,
+      10,    11,    12,    13,    14,    15,    16,    17,     6,     7,
        8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-      14,    -1,    -1,    -1,    -1,    36,    20,    21,    22,    23,
-      24,    25,    -1,    27,    -1,    29,    30,    -1,    36,    -1,
-      14,    -1,    36,    37,    14,    19,    20,    21,    42,    -1,
-      20,    21,    22,    23,    24,    25,    -1,    27,    -1,    29,
-      -1,    -1,    -1,    37,    14,    -1,    36,    37,    14,    19,
-      20,    21,    42,    19,    20,    21,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    37,    -1,    -1,
-      -1,    37,     5,     6,     7,     8,     9,    10,    11,    12,
-      13,    14,    15,    16,    17
+      -1,    -1,    -1,    -1,    -1,   101,   102,    -1,    -1,    -1,
+      -1,   107,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,   102,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    -1,    -1,   102
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
-static const yytype_int8 yystos[] =
+static const yytype_uint8 yystos[] =
 {
-       0,    31,    32,    33,    34,    35,    46,    49,    50,    51,
-       0,    47,    51,    20,    52,    36,    14,    20,    21,    22,
-      23,    24,    25,    27,    29,    30,    36,    37,    42,    48,
-      53,    54,    55,    56,    57,    58,    59,    60,    36,    40,
-      39,    20,    59,    60,    37,    40,    44,    60,    61,    19,
-      59,    62,    20,    59,    60,    59,    50,    59,    55,    36,
-      56,    36,    36,     5,     6,     7,     8,     9,    10,    11,
-      12,    13,    14,    15,    16,    17,    36,     4,    21,    20,
-      19,    61,    59,    36,    39,    36,    39,    29,    36,    54,
-       4,    54,    20,    38,    43,    59,    59,    59,    59,    59,
-      59,    59,    59,    59,    59,    59,    59,    59,    59,    41,
-      40,    39,    38,    41,    60,    19,    59,    59,    59,    28,
-      37,    36,    21,    19,    59,    36,    36,    39,    54,    49,
-      41,    39,    39,    59,    38,    19,    59,    39,    54,    54,
-      38,    39,    59,    59,    54,    38
+       0,    32,    33,    34,    35,    36,    37,   111,   114,   115,
+     116,     0,   112,   116,    20,   117,   101,    14,    20,    21,
+      22,    23,    24,    25,    26,    28,    30,    31,    38,    39,
+      40,    41,    42,    52,    64,    65,    66,   101,   102,   107,
+     113,   118,   119,   120,   121,   122,   123,   124,   125,   130,
+     135,   145,   146,   147,   148,   101,   105,   104,    20,   147,
+     148,   102,   105,   109,   148,   149,    19,   147,   150,    20,
+     101,   147,   148,   147,   115,   101,   147,   101,    20,    20,
+      20,    20,    20,   147,   120,   101,   121,   101,   101,     5,
+       6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
+      16,    17,   101,     4,    21,    20,    19,   149,   147,   101,
+     104,   101,   104,    30,   101,   119,     4,   119,    20,   101,
+     107,   107,   107,   102,    33,    67,    68,    69,    70,    71,
+      72,   140,   103,   108,   147,   147,   147,   147,   147,   147,
+     147,   147,   147,   147,   147,   147,   147,   147,   106,   105,
+     104,   103,   106,   148,    19,   147,   147,   147,    29,   102,
+     126,   131,   136,    20,    19,   101,    21,    19,   147,   101,
+     101,   104,   119,   114,   127,   132,   137,   103,   101,   106,
+     104,   104,   147,   103,    43,    44,    45,    46,    47,    48,
+      49,    50,    51,   108,   128,    51,    53,    54,    55,    56,
+      57,    58,    59,    60,    61,    62,   108,   133,    20,   108,
+     138,    11,    14,    19,   147,   104,   119,   119,    73,    74,
+      75,    76,    77,   139,    19,    19,   140,    19,    19,    78,
+      79,    80,    81,    82,    83,    84,    85,   129,   141,    40,
+      41,    20,   101,    20,    19,    19,    95,    96,    97,    98,
+      99,   100,   134,   144,    86,    87,    88,    89,   142,    90,
+      91,    92,    93,   143,    94,    21,    21,    19,    63,   101,
+      20,    21,   101,    20,    11,   103,   104,   147,   101,   101,
+     101,   101,   101,   101,   101,   104,   101,   101,    12,    12,
+     101,   101,   101,   104,   101,   101,    21,   101,   101,   101,
+     101,   101,   101,   101,    20,   147,   119,   141,    21,    21,
+     144,   101,   101,   103,   101,   101
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
-static const yytype_int8 yyr1[] =
+static const yytype_uint8 yyr1[] =
 {
-       0,    45,    46,    47,    47,    48,    49,    49,    50,    50,
-      50,    50,    50,    51,    52,    52,    52,    52,    52,    53,
-      54,    55,    55,    56,    56,    56,    56,    56,    56,    56,
-      56,    56,    56,    56,    56,    56,    56,    56,    56,    56,
-      56,    57,    58,    59,    59,    59,    59,    59,    59,    59,
-      59,    59,    59,    59,    59,    59,    59,    59,    59,    59,
-      60,    60,    61,    61,    62,    62,    62,    62
+       0,   110,   111,   112,   112,   113,   114,   114,   115,   115,
+     115,   115,   115,   115,   116,   117,   117,   117,   117,   117,
+     118,   119,   120,   120,   121,   121,   121,   121,   121,   121,
+     121,   121,   121,   121,   121,   121,   121,   121,   121,   121,
+     121,   121,   121,   121,   121,   121,   121,   121,   121,   122,
+     122,   123,   123,   124,   126,   125,   127,   127,   128,   128,
+     128,   128,   128,   128,   128,   128,   128,   128,   129,   129,
+     131,   130,   132,   132,   133,   133,   133,   133,   133,   133,
+     133,   133,   133,   133,   133,   134,   134,   136,   135,   137,
+     137,   138,   138,   139,   139,   139,   139,   139,   140,   140,
+     140,   140,   140,   140,   140,   141,   141,   141,   141,   141,
+     141,   141,   141,   142,   142,   142,   142,   143,   143,   143,
+     143,   144,   144,   144,   144,   144,   144,   145,   146,   147,
+     147,   147,   147,   147,   147,   147,   147,   147,   147,   147,
+     147,   147,   147,   147,   147,   147,   147,   147,   147,   148,
+     148,   149,   149,   150,   150,   150,   150
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
        0,     2,     3,     3,     0,     7,     3,     2,     1,     1,
-       1,     1,     1,     2,     3,     6,     1,     4,     0,     1,
-       3,     2,     1,     2,     4,     5,     1,     3,     5,     7,
-       9,     3,     3,     5,     3,     1,     3,     2,     2,     2,
-       1,     8,    10,     3,     3,     3,     3,     3,     3,     3,
-       3,     3,     3,     3,     3,     3,     2,     3,     1,     1,
-       1,     4,     3,     1,     3,     3,     1,     1
+       1,     1,     1,     1,     2,     3,     6,     1,     4,     0,
+       1,     3,     2,     1,     1,     1,     1,     1,     1,     1,
+       2,     2,     4,     5,     1,     3,     5,     7,     9,     3,
+       3,     5,     3,     2,     3,     2,     2,     2,     1,     3,
+       2,     8,     9,     5,     0,     7,     2,     0,     3,     3,
+       3,     3,     3,     3,     3,     3,     3,     5,     3,     1,
+       0,     7,     2,     0,     3,     3,     3,     3,     3,     4,
+       3,     3,     5,     3,     3,     3,     1,     0,     7,     2,
+       0,     3,     3,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     1,     1,     1,
+       1,     1,     1,     1,     1,     1,     1,     8,    10,     3,
+       3,     3,     3,     3,     3,     3,     3,     3,     3,     3,
+       3,     3,     2,     3,     1,     1,     1,     1,     1,     1,
+       4,     3,     1,     3,     3,     1,     1
 };
 
 
@@ -1283,317 +1518,791 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK  */
-#line 73 "scanner_parser/parser.yy"
+#line 86 "scanner_parser/parser.yy"
             {
                 //fprintf(bison_output, "program\n");
                 (yyval.program) = new AST_PROGRAM((yyvsp[-2].decl_block),(yyvsp[-1].functions),(yyvsp[0].code_block));
                 main_program = (yyval.program);
             }
-#line 1293 "parser.tab.cc"
+#line 1528 "parser.tab.cc"
     break;
 
   case 3: /* FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'  */
-#line 82 "scanner_parser/parser.yy"
+#line 95 "scanner_parser/parser.yy"
                     {
                         (yyval.functions) = (yyvsp[-2].functions);
                         (yyval.functions)->push_back((yyvsp[-1].function));
                     }
-#line 1302 "parser.tab.cc"
+#line 1537 "parser.tab.cc"
     break;
 
   case 4: /* FUNCTION_LIST_RULE: %empty  */
-#line 87 "scanner_parser/parser.yy"
+#line 100 "scanner_parser/parser.yy"
                     {
                         (yyval.functions) = new AST_FUNCTION_LIST_RULE();
                     }
-#line 1310 "parser.tab.cc"
+#line 1545 "parser.tab.cc"
     break;
 
   case 5: /* FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE  */
-#line 93 "scanner_parser/parser.yy"
+#line 106 "scanner_parser/parser.yy"
                         {
 	        	(yyval.function) = new AST_FUNCTION_RULE((yyvsp[-5].type),(yyvsp[-4].string_val),(yyvsp[-2].decl_block),(yyvsp[0].block_statement));
 	      		}
-#line 1318 "parser.tab.cc"
+#line 1553 "parser.tab.cc"
     break;
 
   case 6: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';'  */
-#line 98 "scanner_parser/parser.yy"
+#line 111 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-2].decl_block);
                            (yyval.decl_block)->push_back((yyvsp[-1].decl_block));
                        }
-#line 1327 "parser.tab.cc"
+#line 1562 "parser.tab.cc"
     break;
 
   case 7: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_RULE ';'  */
-#line 104 "scanner_parser/parser.yy"
+#line 117 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-1].decl_block);
                        }
-#line 1335 "parser.tab.cc"
+#line 1570 "parser.tab.cc"
     break;
 
   case 8: /* ShortType: INT  */
-#line 111 "scanner_parser/parser.yy"
+#line 124 "scanner_parser/parser.yy"
                {(yyval.type)=ShortType::Int;}
-#line 1341 "parser.tab.cc"
+#line 1576 "parser.tab.cc"
     break;
 
   case 9: /* ShortType: FLOAT  */
-#line 112 "scanner_parser/parser.yy"
+#line 125 "scanner_parser/parser.yy"
               {(yyval.type)=ShortType::Float;}
-#line 1347 "parser.tab.cc"
+#line 1582 "parser.tab.cc"
     break;
 
-  case 10: /* ShortType: STRING  */
-#line 113 "scanner_parser/parser.yy"
+  case 10: /* ShortType: DOUBLE  */
+#line 125 "scanner_parser/parser.yy"
+                                              {(yyval.type)=ShortType::Float;}
+#line 1588 "parser.tab.cc"
+    break;
+
+  case 11: /* ShortType: STRING  */
+#line 126 "scanner_parser/parser.yy"
                {(yyval.type)=ShortType::String;}
-#line 1353 "parser.tab.cc"
+#line 1594 "parser.tab.cc"
     break;
 
-  case 11: /* ShortType: VOID  */
-#line 114 "scanner_parser/parser.yy"
+  case 12: /* ShortType: VOID  */
+#line 127 "scanner_parser/parser.yy"
              {(yyval.type)=ShortType::Void;}
-#line 1359 "parser.tab.cc"
+#line 1600 "parser.tab.cc"
     break;
 
-  case 12: /* ShortType: BOOL  */
-#line 115 "scanner_parser/parser.yy"
+  case 13: /* ShortType: BOOL  */
+#line 128 "scanner_parser/parser.yy"
             {(yyval.type)=ShortType::Boolean;}
-#line 1365 "parser.tab.cc"
+#line 1606 "parser.tab.cc"
     break;
 
-  case 13: /* DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE  */
-#line 119 "scanner_parser/parser.yy"
+  case 14: /* DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE  */
+#line 132 "scanner_parser/parser.yy"
                    {
                        //fprintf(bison_output, "DECLARATION_STATEMENT_RULE\n");
                        (yyval.decl_block) = (yyvsp[0].decl_block);
                    }
-#line 1374 "parser.tab.cc"
+#line 1615 "parser.tab.cc"
     break;
 
-  case 14: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER  */
-#line 127 "scanner_parser/parser.yy"
+  case 15: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER  */
+#line 140 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-2].decl_block);
                            (yyval.decl_block)->push_back(string((yyvsp[0].string_val)));
                        }
-#line 1383 "parser.tab.cc"
+#line 1624 "parser.tab.cc"
     break;
 
-  case 15: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'  */
-#line 132 "scanner_parser/parser.yy"
+  case 16: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'  */
+#line 145 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = (yyvsp[-5].decl_block);
                            (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)), (yyvsp[-1].int_val));
                        }
-#line 1392 "parser.tab.cc"
+#line 1633 "parser.tab.cc"
     break;
 
-  case 16: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER  */
-#line 137 "scanner_parser/parser.yy"
+  case 17: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER  */
+#line 150 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = new AST_DATA_DECLARATION_BLOCK();
                            (yyval.decl_block)->push_back(string((yyvsp[0].string_val)));
                        }
-#line 1401 "parser.tab.cc"
+#line 1642 "parser.tab.cc"
     break;
 
-  case 17: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL ']'  */
-#line 142 "scanner_parser/parser.yy"
+  case 18: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL ']'  */
+#line 155 "scanner_parser/parser.yy"
                        {
                            (yyval.decl_block) = new AST_DATA_DECLARATION_BLOCK();
                            (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)), (yyvsp[-1].int_val));
                        }
-#line 1410 "parser.tab.cc"
+#line 1651 "parser.tab.cc"
     break;
 
-  case 18: /* DECLARATION_VARIABLE_LIST_RULE: %empty  */
-#line 146 "scanner_parser/parser.yy"
+  case 19: /* DECLARATION_VARIABLE_LIST_RULE: %empty  */
+#line 159 "scanner_parser/parser.yy"
                            {(yyval.decl_block) = new AST_DATA_DECLARATION_BLOCK();}
-#line 1416 "parser.tab.cc"
+#line 1657 "parser.tab.cc"
     break;
 
-  case 19: /* LOGIC_BLOCK: STATEMENT_LIST_RULE  */
-#line 151 "scanner_parser/parser.yy"
+  case 20: /* LOGIC_BLOCK: STATEMENT_LIST_RULE  */
+#line 164 "scanner_parser/parser.yy"
                {
                    //fprintf(bison_output, "LOGIC_BLOCK\n");
                    (yyval.code_block) = new AST_LOGIC_BLOCK((yyvsp[0].block_statement));
                }
-#line 1425 "parser.tab.cc"
+#line 1666 "parser.tab.cc"
     break;
 
-  case 20: /* STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'  */
-#line 159 "scanner_parser/parser.yy"
+  case 21: /* STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'  */
+#line 172 "scanner_parser/parser.yy"
                     {
                         //fprintf(bison_output, "STATEMENT_BLOCK_RULE\n");
                         (yyval.block_statement) = (yyvsp[-1].block_statement);
                     }
-#line 1434 "parser.tab.cc"
+#line 1675 "parser.tab.cc"
     break;
 
-  case 21: /* STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE  */
-#line 167 "scanner_parser/parser.yy"
+  case 22: /* STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE  */
+#line 180 "scanner_parser/parser.yy"
                    {
                        (yyval.block_statement)->push_back((yyvsp[0].statement));
                    }
-#line 1442 "parser.tab.cc"
+#line 1683 "parser.tab.cc"
     break;
 
-  case 22: /* STATEMENT_LIST_RULE: STATEMENT_RULE  */
-#line 171 "scanner_parser/parser.yy"
+  case 23: /* STATEMENT_LIST_RULE: STATEMENT_RULE  */
+#line 184 "scanner_parser/parser.yy"
                    {
                        (yyval.block_statement) = new AST_STATEMENTS_BLOCK();
                        (yyval.block_statement)->push_back((yyvsp[0].statement));
                    }
-#line 1451 "parser.tab.cc"
+#line 1692 "parser.tab.cc"
     break;
 
-  case 23: /* STATEMENT_RULE: EXPRESSION_RULE ';'  */
-#line 178 "scanner_parser/parser.yy"
+  case 24: /* STATEMENT_RULE: MODEL_DECLARATION  */
+#line 190 "scanner_parser/parser.yy"
+                                     { (yyval.statement) = (yyvsp[0].model_decl); }
+#line 1698 "parser.tab.cc"
+    break;
+
+  case 25: /* STATEMENT_RULE: TENSOR_DECLARATION  */
+#line 191 "scanner_parser/parser.yy"
+                              { (yyval.statement) = (yyvsp[0].tensor_decl); }
+#line 1704 "parser.tab.cc"
+    break;
+
+  case 26: /* STATEMENT_RULE: GREENAI_CONTRACT  */
+#line 192 "scanner_parser/parser.yy"
+                            { (yyval.statement) = (yyvsp[0].greenai_contract); }
+#line 1710 "parser.tab.cc"
+    break;
+
+  case 27: /* STATEMENT_RULE: GREENAI_MEASUREMENT  */
+#line 193 "scanner_parser/parser.yy"
+                               { (yyval.statement) = (yyvsp[0].greenai_measure); }
+#line 1716 "parser.tab.cc"
+    break;
+
+  case 28: /* STATEMENT_RULE: INFER_STATEMENT  */
+#line 194 "scanner_parser/parser.yy"
+                           { (yyval.statement) = (yyvsp[0].infer_statement); }
+#line 1722 "parser.tab.cc"
+    break;
+
+  case 29: /* STATEMENT_RULE: RETURN_STATEMENT  */
+#line 195 "scanner_parser/parser.yy"
+                            { (yyval.statement) = (yyvsp[0].return_statement); }
+#line 1728 "parser.tab.cc"
+    break;
+
+  case 30: /* STATEMENT_RULE: CONTINUE ';'  */
+#line 196 "scanner_parser/parser.yy"
+                        { (yyval.statement) = new AST_CONTINUE(); }
+#line 1734 "parser.tab.cc"
+    break;
+
+  case 31: /* STATEMENT_RULE: EXPRESSION_RULE ';'  */
+#line 198 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_EXPRESSION_STATEMENT_RULE((yyvsp[-1].expression));
               }
-#line 1459 "parser.tab.cc"
+#line 1742 "parser.tab.cc"
     break;
 
-  case 24: /* STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE ';'  */
-#line 182 "scanner_parser/parser.yy"
+  case 32: /* STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE ';'  */
+#line 202 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_ASSIGNMENT_RULE((yyvsp[-3].variable), (yyvsp[-1].expression));
               }
-#line 1467 "parser.tab.cc"
+#line 1750 "parser.tab.cc"
     break;
 
-  case 25: /* STATEMENT_RULE: IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';'  */
-#line 187 "scanner_parser/parser.yy"
+  case 33: /* STATEMENT_RULE: IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';'  */
+#line 207 "scanner_parser/parser.yy"
               {
 	       (yyval.statement) = new AST_FUNCTION_CALL_RULE((yyvsp[-4].string_val),(yyvsp[-2].read_statement));
 	      }
-#line 1475 "parser.tab.cc"
+#line 1758 "parser.tab.cc"
     break;
 
-  case 26: /* STATEMENT_RULE: STATEMENT_BLOCK_RULE  */
-#line 191 "scanner_parser/parser.yy"
+  case 34: /* STATEMENT_RULE: STATEMENT_BLOCK_RULE  */
+#line 211 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[0].block_statement);
               }
-#line 1483 "parser.tab.cc"
+#line 1766 "parser.tab.cc"
     break;
 
-  case 27: /* STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 195 "scanner_parser/parser.yy"
+  case 35: /* STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 215 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_IF_STATEMENT((yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1491 "parser.tab.cc"
+#line 1774 "parser.tab.cc"
     break;
 
-  case 28: /* STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE  */
-#line 199 "scanner_parser/parser.yy"
+  case 36: /* STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE  */
+#line 219 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_IF_ELSE_STATEMENT((yyvsp[-3].expression), (yyvsp[-2].block_statement), (yyvsp[0].block_statement));
               }
-#line 1499 "parser.tab.cc"
+#line 1782 "parser.tab.cc"
     break;
 
-  case 29: /* STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 203 "scanner_parser/parser.yy"
+  case 37: /* STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 223 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-5].variable), (yyvsp[-3].expression), (yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1507 "parser.tab.cc"
+#line 1790 "parser.tab.cc"
     break;
 
-  case 30: /* STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 207 "scanner_parser/parser.yy"
+  case 38: /* STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 227 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-7].variable), (yyvsp[-5].expression), (yyvsp[-3].expression), (yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1515 "parser.tab.cc"
+#line 1798 "parser.tab.cc"
     break;
 
-  case 31: /* STATEMENT_RULE: LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 211 "scanner_parser/parser.yy"
+  case 39: /* STATEMENT_RULE: LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 231 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_WHILE_LOOP_STATEMENT_RULE((yyvsp[-1].expression), (yyvsp[0].block_statement));
               }
-#line 1523 "parser.tab.cc"
+#line 1806 "parser.tab.cc"
     break;
 
-  case 32: /* STATEMENT_RULE: GOTO IDENTIFIER ';'  */
-#line 215 "scanner_parser/parser.yy"
+  case 40: /* STATEMENT_RULE: GOTO IDENTIFIER ';'  */
+#line 235 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_GOTO_STATEMENT_RULE(string((yyvsp[-1].string_val)));
               }
-#line 1531 "parser.tab.cc"
+#line 1814 "parser.tab.cc"
     break;
 
-  case 33: /* STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE ';'  */
-#line 219 "scanner_parser/parser.yy"
+  case 41: /* STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE ';'  */
+#line 239 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_GOTO_STATEMENT_RULE((yyvsp[-1].expression), string((yyvsp[-3].string_val)));
               }
-#line 1539 "parser.tab.cc"
+#line 1822 "parser.tab.cc"
     break;
 
-  case 34: /* STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE ';'  */
-#line 223 "scanner_parser/parser.yy"
+  case 42: /* STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE ';'  */
+#line 243 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].read_statement);
               }
-#line 1547 "parser.tab.cc"
+#line 1830 "parser.tab.cc"
     break;
 
-  case 35: /* STATEMENT_RULE: BREAK  */
-#line 226 "scanner_parser/parser.yy"
-                 {(yyval.statement) = new AST_BREAK();}
-#line 1553 "parser.tab.cc"
+  case 43: /* STATEMENT_RULE: BREAK ';'  */
+#line 246 "scanner_parser/parser.yy"
+                     {(yyval.statement) = new AST_BREAK();}
+#line 1836 "parser.tab.cc"
     break;
 
-  case 36: /* STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE ';'  */
-#line 228 "scanner_parser/parser.yy"
+  case 44: /* STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE ';'  */
+#line 248 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].print_statement);
               }
-#line 1561 "parser.tab.cc"
+#line 1844 "parser.tab.cc"
     break;
 
-  case 37: /* STATEMENT_RULE: GREENAI_REPORT_RULE ';'  */
-#line 232 "scanner_parser/parser.yy"
+  case 45: /* STATEMENT_RULE: GREENAI_REPORT_RULE ';'  */
+#line 252 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].greenai_report);
               }
-#line 1569 "parser.tab.cc"
+#line 1852 "parser.tab.cc"
     break;
 
-  case 38: /* STATEMENT_RULE: AI_INFER_RULE ';'  */
-#line 236 "scanner_parser/parser.yy"
+  case 46: /* STATEMENT_RULE: AI_INFER_RULE ';'  */
+#line 256 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = (yyvsp[-1].ai_infer);
               }
-#line 1577 "parser.tab.cc"
+#line 1860 "parser.tab.cc"
     break;
 
-  case 39: /* STATEMENT_RULE: IDENTIFIER ':'  */
-#line 240 "scanner_parser/parser.yy"
+  case 47: /* STATEMENT_RULE: IDENTIFIER ':'  */
+#line 260 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_LABEL_RULE(string((yyvsp[-1].string_val)));
               }
-#line 1585 "parser.tab.cc"
+#line 1868 "parser.tab.cc"
     break;
 
-  case 40: /* STATEMENT_RULE: ';'  */
-#line 244 "scanner_parser/parser.yy"
+  case 48: /* STATEMENT_RULE: ';'  */
+#line 264 "scanner_parser/parser.yy"
               {
                   (yyval.statement) = new AST_EXPRESSION_STATEMENT_RULE(new AST_LITERAL(1));
               }
-#line 1593 "parser.tab.cc"
+#line 1876 "parser.tab.cc"
     break;
 
-  case 41: /* AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'  */
-#line 251 "scanner_parser/parser.yy"
+  case 49: /* RETURN_STATEMENT: RETURN EXPRESSION_RULE ';'  */
+#line 270 "scanner_parser/parser.yy"
+                                             { (yyval.return_statement) = new AST_RETURN_STATEMENT((yyvsp[-1].expression)); }
+#line 1882 "parser.tab.cc"
+    break;
+
+  case 50: /* RETURN_STATEMENT: RETURN ';'  */
+#line 270 "scanner_parser/parser.yy"
+                                                                                                 { (yyval.return_statement) = new AST_RETURN_STATEMENT(); }
+#line 1888 "parser.tab.cc"
+    break;
+
+  case 51: /* INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';'  */
+#line 272 "scanner_parser/parser.yy"
+                                                                            { (yyval.infer_statement) = new AST_INFER_STATEMENT(string((yyvsp[-6].string_val)), string((yyvsp[-4].string_val)), string((yyvsp[-1].string_val))); }
+#line 1894 "parser.tab.cc"
+    break;
+
+  case 52: /* INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' '-' GREATER IDENTIFIER ';'  */
+#line 273 "scanner_parser/parser.yy"
+                                                                                { (yyval.infer_statement) = new AST_INFER_STATEMENT(string((yyvsp[-7].string_val)), string((yyvsp[-5].string_val)), string((yyvsp[-1].string_val))); }
+#line 1900 "parser.tab.cc"
+    break;
+
+  case 53: /* TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL ';'  */
+#line 275 "scanner_parser/parser.yy"
+                                                                        { TensorDeclarationData d; d.name=(yyvsp[-3].string_val); d.element_type=(yyvsp[-2].string_val); d.shape_csv=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); d.dynamic=(d.shape_csv=="dynamic"); d.rank= d.dynamic?0:1; long long total=1; if(!d.dynamic){ d.rank=0; size_t start=0; while(start<d.shape_csv.size()){ size_t pos=d.shape_csv.find(',',start); string part=d.shape_csv.substr(start,pos==string::npos?string::npos:pos-start); total*= atoll(part.c_str()); d.rank++; if(pos==string::npos) break; start=pos+1; }} d.total_elements=total; (yyval.tensor_decl)=new AST_TENSOR_DECLARATION(d); }
+#line 1906 "parser.tab.cc"
+    break;
+
+  case 54: /* $@1: %empty  */
+#line 277 "scanner_parser/parser.yy"
+                                        { current_model=ModelDeclarationData(); current_model.name=(yyvsp[-1].string_val); }
+#line 1912 "parser.tab.cc"
+    break;
+
+  case 55: /* MODEL_DECLARATION: MODEL IDENTIFIER '{' $@1 MODEL_FIELD_LIST '}' ';'  */
+#line 277 "scanner_parser/parser.yy"
+                                                                                                                                  { (yyval.model_decl) = new AST_MODEL_DECLARATION(current_model); }
+#line 1918 "parser.tab.cc"
+    break;
+
+  case 58: /* MODEL_FIELD: FORMAT FORMAT_NAME ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                    { current_model.format=(yyvsp[-1].string_val); }
+#line 1924 "parser.tab.cc"
+    break;
+
+  case 59: /* MODEL_FIELD: PATH STRING_LITERAL ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                           { current_model.path=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+#line 1930 "parser.tab.cc"
+    break;
+
+  case 60: /* MODEL_FIELD: TASK STRING_LITERAL ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                      { current_model.task=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+#line 1936 "parser.tab.cc"
+    break;
+
+  case 61: /* MODEL_FIELD: PRECISION PRECISION_NAME ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                      { current_model.precision=(yyvsp[-1].string_val); }
+#line 1942 "parser.tab.cc"
+    break;
+
+  case 62: /* MODEL_FIELD: INPUT_SHAPE STRING_LITERAL ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                       { current_model.input_shape=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+#line 1948 "parser.tab.cc"
+    break;
+
+  case 63: /* MODEL_FIELD: OUTPUT_SHAPE STRING_LITERAL ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                 { current_model.output_shape=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+#line 1954 "parser.tab.cc"
+    break;
+
+  case 65: /* MODEL_FIELD: COMPACT TRUE ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   { current_model.compact=true; }
+#line 1960 "parser.tab.cc"
+    break;
+
+  case 66: /* MODEL_FIELD: COMPACT FALSE ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       { current_model.compact=false; }
+#line 1966 "parser.tab.cc"
+    break;
+
+  case 67: /* MODEL_FIELD: QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';'  */
+#line 279 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        { current_model.has_quality_guardrail=true; current_model.quality_guardrail={string((yyvsp[-3].string_val)),">=",(double)(yyvsp[-1].int_val)}; }
+#line 1972 "parser.tab.cc"
+    break;
+
+  case 68: /* BACKEND_LIST: BACKEND_LIST ',' BACKEND_NAME  */
+#line 280 "scanner_parser/parser.yy"
+                                            { current_model.backend_preference.push_back((yyvsp[0].string_val)); }
+#line 1978 "parser.tab.cc"
+    break;
+
+  case 69: /* BACKEND_LIST: BACKEND_NAME  */
+#line 280 "scanner_parser/parser.yy"
+                                                                                                               { current_model.backend_preference.push_back((yyvsp[0].string_val)); }
+#line 1984 "parser.tab.cc"
+    break;
+
+  case 70: /* $@2: %empty  */
+#line 282 "scanner_parser/parser.yy"
+                                                    { current_contract=GreenAIContractData(); current_contract.name=(yyvsp[-1].string_val); }
+#line 1990 "parser.tab.cc"
+    break;
+
+  case 71: /* GREENAI_CONTRACT: GREENAI_CONTRACT_T IDENTIFIER '{' $@2 CONTRACT_FIELD_LIST '}' ';'  */
+#line 282 "scanner_parser/parser.yy"
+                                                                                                                                                      { (yyval.greenai_contract) = new AST_GREENAI_CONTRACT(current_contract); }
+#line 1996 "parser.tab.cc"
+    break;
+
+  case 74: /* CONTRACT_FIELD: FUNCTIONAL_UNIT STRING_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                   { current_contract.functional_unit=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); current_contract.has_functional_unit=true; }
+#line 2002 "parser.tab.cc"
+    break;
+
+  case 75: /* CONTRACT_FIELD: SUCCESS_CRITERIA STRING_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                   { current_contract.success_criteria=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); current_contract.has_success_criteria=true; }
+#line 2008 "parser.tab.cc"
+    break;
+
+  case 76: /* CONTRACT_FIELD: BOUNDARY BOUNDARY_LIST ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                            { current_contract.has_boundary=true; }
+#line 2014 "parser.tab.cc"
+    break;
+
+  case 77: /* CONTRACT_FIELD: MEASUREMENT_QUALITY MQ_NAME ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                      { current_contract.measurement_quality=(yyvsp[-1].string_val); current_contract.has_mq=true; }
+#line 2020 "parser.tab.cc"
+    break;
+
+  case 78: /* CONTRACT_FIELD: DATA_QUALITY DQ_NAME ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            { current_contract.data_quality=(yyvsp[-1].string_val); current_contract.has_dq=true; }
+#line 2026 "parser.tab.cc"
+    break;
+
+  case 79: /* CONTRACT_FIELD: CARBON_FACTOR LOCATION INT_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         { current_contract.carbon_factor_scope="location"; current_contract.carbon_factor=(yyvsp[-1].int_val); current_contract.has_carbon_factor=true; }
+#line 2032 "parser.tab.cc"
+    break;
+
+  case 80: /* CONTRACT_FIELD: ENERGY_BUDGET_J INT_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            { current_contract.energy_budget_j=(yyvsp[-1].int_val); }
+#line 2038 "parser.tab.cc"
+    break;
+
+  case 81: /* CONTRACT_FIELD: CARBON_BUDGET_GCO2E INT_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           { current_contract.carbon_budget_gco2e=(yyvsp[-1].int_val); }
+#line 2044 "parser.tab.cc"
+    break;
+
+  case 82: /* CONTRACT_FIELD: QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        { current_contract.has_quality_guardrail=true; current_contract.quality_guardrail={string((yyvsp[-3].string_val)),">=",(double)(yyvsp[-1].int_val)}; }
+#line 2050 "parser.tab.cc"
+    break;
+
+  case 83: /* CONTRACT_FIELD: EVIDENCE_RETENTION STRING_LITERAL ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  { current_contract.evidence_retention=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+#line 2056 "parser.tab.cc"
+    break;
+
+  case 84: /* CONTRACT_FIELD: CLAIMS_MODE EVIDENCE_ONLY ';'  */
+#line 284 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    { current_contract.claims_mode="evidence_only"; }
+#line 2062 "parser.tab.cc"
+    break;
+
+  case 85: /* BOUNDARY_LIST: BOUNDARY_LIST ',' BOUNDARY_NAME  */
+#line 285 "scanner_parser/parser.yy"
+                                               { current_contract.boundary.push_back((yyvsp[0].string_val)); }
+#line 2068 "parser.tab.cc"
+    break;
+
+  case 86: /* BOUNDARY_LIST: BOUNDARY_NAME  */
+#line 285 "scanner_parser/parser.yy"
+                                                                                                            { current_contract.boundary.push_back((yyvsp[0].string_val)); }
+#line 2074 "parser.tab.cc"
+    break;
+
+  case 87: /* $@3: %empty  */
+#line 287 "scanner_parser/parser.yy"
+                                                    { current_measure=GreenAIMeasurementData(); current_measure.workload=(yyvsp[-1].string_val); }
+#line 2080 "parser.tab.cc"
+    break;
+
+  case 88: /* GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER '{' $@3 MEASURE_FIELD_LIST '}' ';'  */
+#line 287 "scanner_parser/parser.yy"
+                                                                                                                                                          { (yyval.greenai_measure) = new AST_GREENAI_MEASUREMENT(current_measure); }
+#line 2086 "parser.tab.cc"
+    break;
+
+  case 91: /* MEASURE_FIELD: IDENTIFIER INT_LITERAL ';'  */
+#line 289 "scanner_parser/parser.yy"
+                                          { string n=(yyvsp[-2].string_val); if(n=="inferences") current_measure.inferences=(yyvsp[-1].int_val); else if(n=="watts") current_measure.watts=(yyvsp[-1].int_val); else if(n=="seconds") current_measure.seconds=(yyvsp[-1].int_val); }
+#line 2092 "parser.tab.cc"
+    break;
+
+  case 92: /* MEASURE_FIELD: IDENTIFIER IDENTIFIER ';'  */
+#line 289 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                          { if(string((yyvsp[-2].string_val))=="backend") current_measure.backend=(yyvsp[-1].string_val); }
+#line 2098 "parser.tab.cc"
+    break;
+
+  case 93: /* FORMAT_NAME: ONNX  */
+#line 291 "scanner_parser/parser.yy"
+                  {(yyval.string_val)=(char*)"onnx";}
+#line 2104 "parser.tab.cc"
+    break;
+
+  case 94: /* FORMAT_NAME: ENGINE  */
+#line 291 "scanner_parser/parser.yy"
+                                               {(yyval.string_val)=(char*)"engine";}
+#line 2110 "parser.tab.cc"
+    break;
+
+  case 95: /* FORMAT_NAME: TORCHSCRIPT  */
+#line 291 "scanner_parser/parser.yy"
+                                                                                   {(yyval.string_val)=(char*)"torchscript";}
+#line 2116 "parser.tab.cc"
+    break;
+
+  case 96: /* FORMAT_NAME: OPENVINO_IR  */
+#line 291 "scanner_parser/parser.yy"
+                                                                                                                            {(yyval.string_val)=(char*)"openvino_ir";}
+#line 2122 "parser.tab.cc"
+    break;
+
+  case 97: /* FORMAT_NAME: GGUF  */
+#line 291 "scanner_parser/parser.yy"
+                                                                                                                                                              {(yyval.string_val)=(char*)"gguf";}
+#line 2128 "parser.tab.cc"
+    break;
+
+  case 98: /* PRECISION_NAME: INT8  */
+#line 292 "scanner_parser/parser.yy"
+                     {(yyval.string_val)=(char*)"int8";}
+#line 2134 "parser.tab.cc"
+    break;
+
+  case 99: /* PRECISION_NAME: INT4  */
+#line 292 "scanner_parser/parser.yy"
+                                                {(yyval.string_val)=(char*)"int4";}
+#line 2140 "parser.tab.cc"
+    break;
+
+  case 100: /* PRECISION_NAME: FP16  */
+#line 292 "scanner_parser/parser.yy"
+                                                                           {(yyval.string_val)=(char*)"fp16";}
+#line 2146 "parser.tab.cc"
+    break;
+
+  case 101: /* PRECISION_NAME: FP32  */
+#line 292 "scanner_parser/parser.yy"
+                                                                                                      {(yyval.string_val)=(char*)"fp32";}
+#line 2152 "parser.tab.cc"
+    break;
+
+  case 102: /* PRECISION_NAME: BF16  */
+#line 292 "scanner_parser/parser.yy"
+                                                                                                                                 {(yyval.string_val)=(char*)"bf16";}
+#line 2158 "parser.tab.cc"
+    break;
+
+  case 103: /* PRECISION_NAME: FP64  */
+#line 292 "scanner_parser/parser.yy"
+                                                                                                                                                            {(yyval.string_val)=(char*)"fp64";}
+#line 2164 "parser.tab.cc"
+    break;
+
+  case 104: /* PRECISION_NAME: FLOAT  */
+#line 292 "scanner_parser/parser.yy"
+                                                                                                                                                                                        {(yyval.string_val)=(char*)"float";}
+#line 2170 "parser.tab.cc"
+    break;
+
+  case 105: /* BACKEND_NAME: TENSORRT  */
+#line 293 "scanner_parser/parser.yy"
+                       {(yyval.string_val)=(char*)"tensorrt";}
+#line 2176 "parser.tab.cc"
+    break;
+
+  case 106: /* BACKEND_NAME: ONNXRUNTIME_TENSORRT  */
+#line 293 "scanner_parser/parser.yy"
+                                                                      {(yyval.string_val)=(char*)"onnxruntime_tensorrt";}
+#line 2182 "parser.tab.cc"
+    break;
+
+  case 107: /* BACKEND_NAME: ONNXRUNTIME_CUDA  */
+#line 293 "scanner_parser/parser.yy"
+                                                                                                                             {(yyval.string_val)=(char*)"onnxruntime_cuda";}
+#line 2188 "parser.tab.cc"
+    break;
+
+  case 108: /* BACKEND_NAME: ONNXRUNTIME_CPU  */
+#line 293 "scanner_parser/parser.yy"
+                                                                                                                                                                               {(yyval.string_val)=(char*)"onnxruntime_cpu";}
+#line 2194 "parser.tab.cc"
+    break;
+
+  case 109: /* BACKEND_NAME: OPENVINO  */
+#line 293 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                         {(yyval.string_val)=(char*)"openvino";}
+#line 2200 "parser.tab.cc"
+    break;
+
+  case 110: /* BACKEND_NAME: LIBTORCH  */
+#line 293 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                            {(yyval.string_val)=(char*)"libtorch";}
+#line 2206 "parser.tab.cc"
+    break;
+
+  case 111: /* BACKEND_NAME: LLAMACPP  */
+#line 293 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                               {(yyval.string_val)=(char*)"llamacpp";}
+#line 2212 "parser.tab.cc"
+    break;
+
+  case 112: /* BACKEND_NAME: FALLBACK  */
+#line 293 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                  {(yyval.string_val)=(char*)"fallback";}
+#line 2218 "parser.tab.cc"
+    break;
+
+  case 113: /* MQ_NAME: MQ1  */
+#line 294 "scanner_parser/parser.yy"
+             {(yyval.string_val)=(char*)"MQ1";}
+#line 2224 "parser.tab.cc"
+    break;
+
+  case 114: /* MQ_NAME: MQ2  */
+#line 294 "scanner_parser/parser.yy"
+                                      {(yyval.string_val)=(char*)"MQ2";}
+#line 2230 "parser.tab.cc"
+    break;
+
+  case 115: /* MQ_NAME: MQ3  */
+#line 294 "scanner_parser/parser.yy"
+                                                               {(yyval.string_val)=(char*)"MQ3";}
+#line 2236 "parser.tab.cc"
+    break;
+
+  case 116: /* MQ_NAME: MQ4  */
+#line 294 "scanner_parser/parser.yy"
+                                                                                        {(yyval.string_val)=(char*)"MQ4";}
+#line 2242 "parser.tab.cc"
+    break;
+
+  case 117: /* DQ_NAME: DQ1  */
+#line 295 "scanner_parser/parser.yy"
+             {(yyval.string_val)=(char*)"DQ1";}
+#line 2248 "parser.tab.cc"
+    break;
+
+  case 118: /* DQ_NAME: DQ2  */
+#line 295 "scanner_parser/parser.yy"
+                                      {(yyval.string_val)=(char*)"DQ2";}
+#line 2254 "parser.tab.cc"
+    break;
+
+  case 119: /* DQ_NAME: DQ3  */
+#line 295 "scanner_parser/parser.yy"
+                                                               {(yyval.string_val)=(char*)"DQ3";}
+#line 2260 "parser.tab.cc"
+    break;
+
+  case 120: /* DQ_NAME: DQ4  */
+#line 295 "scanner_parser/parser.yy"
+                                                                                        {(yyval.string_val)=(char*)"DQ4";}
+#line 2266 "parser.tab.cc"
+    break;
+
+  case 121: /* BOUNDARY_NAME: COMPUTE  */
+#line 296 "scanner_parser/parser.yy"
+                       {(yyval.string_val)=(char*)"compute";}
+#line 2272 "parser.tab.cc"
+    break;
+
+  case 122: /* BOUNDARY_NAME: ACCELERATOR  */
+#line 296 "scanner_parser/parser.yy"
+                                                            {(yyval.string_val)=(char*)"accelerator";}
+#line 2278 "parser.tab.cc"
+    break;
+
+  case 123: /* BOUNDARY_NAME: STORAGE  */
+#line 296 "scanner_parser/parser.yy"
+                                                                                                 {(yyval.string_val)=(char*)"storage";}
+#line 2284 "parser.tab.cc"
+    break;
+
+  case 124: /* BOUNDARY_NAME: NETWORK  */
+#line 296 "scanner_parser/parser.yy"
+                                                                                                                                  {(yyval.string_val)=(char*)"network";}
+#line 2290 "parser.tab.cc"
+    break;
+
+  case 125: /* BOUNDARY_NAME: CI_CD  */
+#line 296 "scanner_parser/parser.yy"
+                                                                                                                                                                 {(yyval.string_val)=(char*)"ci_cd";}
+#line 2296 "parser.tab.cc"
+    break;
+
+  case 126: /* BOUNDARY_NAME: THIRDPARTY  */
+#line 296 "scanner_parser/parser.yy"
+                                                                                                                                                                                                   {(yyval.string_val)=(char*)"thirdparty";}
+#line 2302 "parser.tab.cc"
+    break;
+
+  case 127: /* AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'  */
+#line 299 "scanner_parser/parser.yy"
               {
                   if ((string((yyvsp[-7].string_val)) != "ai_infer" && string((yyvsp[-7].string_val)) != "aiinfer")) {
                       yyerror((char *)"expected ai_infer builtin");
@@ -1601,11 +2310,11 @@ yyreduce:
                   }
                   (yyval.ai_infer) = new AST_AI_INFER_RULE(string((yyvsp[-5].string_val)), string((yyvsp[-3].string_val)), string((yyvsp[-1].string_val)));
               }
-#line 1605 "parser.tab.cc"
+#line 2314 "parser.tab.cc"
     break;
 
-  case 42: /* GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')'  */
-#line 261 "scanner_parser/parser.yy"
+  case 128: /* GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')'  */
+#line 309 "scanner_parser/parser.yy"
               {
                   if (string((yyvsp[-9].string_val)) != "greenai") {
                       yyerror((char *)"expected greenai report builtin");
@@ -1613,214 +2322,230 @@ yyreduce:
                   }
                   (yyval.greenai_report) = new AST_GREENAI_REPORT_RULE(string((yyvsp[-7].string_val)), (yyvsp[-5].expression), (yyvsp[-3].expression), (yyvsp[-1].expression));
               }
-#line 1617 "parser.tab.cc"
+#line 2326 "parser.tab.cc"
     break;
 
-  case 43: /* EXPRESSION_RULE: EXPRESSION_RULE '+' EXPRESSION_RULE  */
-#line 272 "scanner_parser/parser.yy"
+  case 129: /* EXPRESSION_RULE: EXPRESSION_RULE '+' EXPRESSION_RULE  */
+#line 320 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "+");
                }
-#line 1625 "parser.tab.cc"
+#line 2334 "parser.tab.cc"
     break;
 
-  case 44: /* EXPRESSION_RULE: EXPRESSION_RULE '-' EXPRESSION_RULE  */
-#line 276 "scanner_parser/parser.yy"
+  case 130: /* EXPRESSION_RULE: EXPRESSION_RULE '-' EXPRESSION_RULE  */
+#line 324 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "-");
                }
-#line 1633 "parser.tab.cc"
+#line 2342 "parser.tab.cc"
     break;
 
-  case 45: /* EXPRESSION_RULE: EXPRESSION_RULE '*' EXPRESSION_RULE  */
-#line 280 "scanner_parser/parser.yy"
+  case 131: /* EXPRESSION_RULE: EXPRESSION_RULE '*' EXPRESSION_RULE  */
+#line 328 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "*");
                }
-#line 1641 "parser.tab.cc"
+#line 2350 "parser.tab.cc"
     break;
 
-  case 46: /* EXPRESSION_RULE: EXPRESSION_RULE '/' EXPRESSION_RULE  */
-#line 284 "scanner_parser/parser.yy"
+  case 132: /* EXPRESSION_RULE: EXPRESSION_RULE '/' EXPRESSION_RULE  */
+#line 332 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "/");
                }
-#line 1649 "parser.tab.cc"
+#line 2358 "parser.tab.cc"
     break;
 
-  case 47: /* EXPRESSION_RULE: EXPRESSION_RULE '%' EXPRESSION_RULE  */
-#line 288 "scanner_parser/parser.yy"
+  case 133: /* EXPRESSION_RULE: EXPRESSION_RULE '%' EXPRESSION_RULE  */
+#line 336 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "%");
                }
-#line 1657 "parser.tab.cc"
+#line 2366 "parser.tab.cc"
     break;
 
-  case 48: /* EXPRESSION_RULE: EXPRESSION_RULE LESS EXPRESSION_RULE  */
-#line 292 "scanner_parser/parser.yy"
+  case 134: /* EXPRESSION_RULE: EXPRESSION_RULE LESS EXPRESSION_RULE  */
+#line 340 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "<");
                }
-#line 1665 "parser.tab.cc"
+#line 2374 "parser.tab.cc"
     break;
 
-  case 49: /* EXPRESSION_RULE: EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE  */
-#line 296 "scanner_parser/parser.yy"
+  case 135: /* EXPRESSION_RULE: EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE  */
+#line 344 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "<=");
                }
-#line 1673 "parser.tab.cc"
+#line 2382 "parser.tab.cc"
     break;
 
-  case 50: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER EXPRESSION_RULE  */
-#line 300 "scanner_parser/parser.yy"
+  case 136: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER EXPRESSION_RULE  */
+#line 348 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), ">");
                }
-#line 1681 "parser.tab.cc"
+#line 2390 "parser.tab.cc"
     break;
 
-  case 51: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE  */
-#line 304 "scanner_parser/parser.yy"
+  case 137: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE  */
+#line 352 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), ">=");
                }
-#line 1689 "parser.tab.cc"
+#line 2398 "parser.tab.cc"
     break;
 
-  case 52: /* EXPRESSION_RULE: EXPRESSION_RULE EQUAL EXPRESSION_RULE  */
-#line 308 "scanner_parser/parser.yy"
+  case 138: /* EXPRESSION_RULE: EXPRESSION_RULE EQUAL EXPRESSION_RULE  */
+#line 356 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "==");
                }
-#line 1697 "parser.tab.cc"
+#line 2406 "parser.tab.cc"
     break;
 
-  case 53: /* EXPRESSION_RULE: EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE  */
-#line 312 "scanner_parser/parser.yy"
+  case 139: /* EXPRESSION_RULE: EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE  */
+#line 360 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "!=");
                }
-#line 1705 "parser.tab.cc"
+#line 2414 "parser.tab.cc"
     break;
 
-  case 54: /* EXPRESSION_RULE: EXPRESSION_RULE OR EXPRESSION_RULE  */
-#line 316 "scanner_parser/parser.yy"
+  case 140: /* EXPRESSION_RULE: EXPRESSION_RULE OR EXPRESSION_RULE  */
+#line 364 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "||");
                }
-#line 1713 "parser.tab.cc"
+#line 2422 "parser.tab.cc"
     break;
 
-  case 55: /* EXPRESSION_RULE: EXPRESSION_RULE AND EXPRESSION_RULE  */
-#line 320 "scanner_parser/parser.yy"
+  case 141: /* EXPRESSION_RULE: EXPRESSION_RULE AND EXPRESSION_RULE  */
+#line 368 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression), (yyvsp[0].expression), "&&");
                }
-#line 1721 "parser.tab.cc"
+#line 2430 "parser.tab.cc"
     break;
 
-  case 56: /* EXPRESSION_RULE: '-' EXPRESSION_RULE  */
-#line 324 "scanner_parser/parser.yy"
+  case 142: /* EXPRESSION_RULE: '-' EXPRESSION_RULE  */
+#line 372 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = new AST_UNARY_EXPRESSION_RULE((yyvsp[0].expression), "-");
                }
-#line 1729 "parser.tab.cc"
+#line 2438 "parser.tab.cc"
     break;
 
-  case 57: /* EXPRESSION_RULE: '(' EXPRESSION_RULE ')'  */
-#line 328 "scanner_parser/parser.yy"
+  case 143: /* EXPRESSION_RULE: '(' EXPRESSION_RULE ')'  */
+#line 376 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = (yyvsp[-1].expression);
                }
-#line 1737 "parser.tab.cc"
+#line 2446 "parser.tab.cc"
     break;
 
-  case 58: /* EXPRESSION_RULE: VARIABLE_RULE  */
-#line 332 "scanner_parser/parser.yy"
+  case 144: /* EXPRESSION_RULE: VARIABLE_RULE  */
+#line 380 "scanner_parser/parser.yy"
                {
                    (yyval.expression) = (yyvsp[0].variable);
                }
-#line 1745 "parser.tab.cc"
+#line 2454 "parser.tab.cc"
     break;
 
-  case 59: /* EXPRESSION_RULE: INT_LITERAL  */
-#line 336 "scanner_parser/parser.yy"
-               {
-                   (yyval.expression) = new AST_LITERAL((yyvsp[0].int_val));
-               }
-#line 1753 "parser.tab.cc"
+  case 145: /* EXPRESSION_RULE: INT_LITERAL  */
+#line 383 "scanner_parser/parser.yy"
+                           { (yyval.expression) = new AST_LITERAL((yyvsp[0].int_val)); }
+#line 2460 "parser.tab.cc"
     break;
 
-  case 60: /* VARIABLE_RULE: IDENTIFIER  */
-#line 343 "scanner_parser/parser.yy"
+  case 146: /* EXPRESSION_RULE: FLOAT_LITERAL  */
+#line 384 "scanner_parser/parser.yy"
+                             { (yyval.expression) = new AST_FLOAT_LITERAL((yyvsp[0].float_val)); }
+#line 2466 "parser.tab.cc"
+    break;
+
+  case 147: /* EXPRESSION_RULE: TRUE  */
+#line 385 "scanner_parser/parser.yy"
+                    { (yyval.expression) = new AST_BOOL_LITERAL(true); }
+#line 2472 "parser.tab.cc"
+    break;
+
+  case 148: /* EXPRESSION_RULE: FALSE  */
+#line 386 "scanner_parser/parser.yy"
+                     { (yyval.expression) = new AST_BOOL_LITERAL(false); }
+#line 2478 "parser.tab.cc"
+    break;
+
+  case 149: /* VARIABLE_RULE: IDENTIFIER  */
+#line 391 "scanner_parser/parser.yy"
              {
                  (yyval.variable) = new AST_SIMPLE_VARIABLE(string((yyvsp[0].string_val)));
              }
-#line 1761 "parser.tab.cc"
+#line 2486 "parser.tab.cc"
     break;
 
-  case 61: /* VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE ']'  */
-#line 347 "scanner_parser/parser.yy"
+  case 150: /* VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE ']'  */
+#line 395 "scanner_parser/parser.yy"
              {
                  (yyval.variable) = new AST_ARRAY_VARIABLE(string((yyvsp[-3].string_val)), (yyvsp[-1].expression));
              }
-#line 1769 "parser.tab.cc"
+#line 2494 "parser.tab.cc"
     break;
 
-  case 62: /* READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE  */
-#line 353 "scanner_parser/parser.yy"
+  case 151: /* READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE  */
+#line 401 "scanner_parser/parser.yy"
                        {
                            (yyval.read_statement)->push_back((yyvsp[0].variable));
                        }
-#line 1777 "parser.tab.cc"
+#line 2502 "parser.tab.cc"
     break;
 
-  case 63: /* READ_VARIABLE_LIST_RULE: VARIABLE_RULE  */
-#line 357 "scanner_parser/parser.yy"
+  case 152: /* READ_VARIABLE_LIST_RULE: VARIABLE_RULE  */
+#line 405 "scanner_parser/parser.yy"
                        {
                            (yyval.read_statement) = new AST_READ_RULE();
                            (yyval.read_statement)->push_back((yyvsp[0].variable));
                        }
-#line 1786 "parser.tab.cc"
+#line 2511 "parser.tab.cc"
     break;
 
-  case 64: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL  */
-#line 365 "scanner_parser/parser.yy"
+  case 153: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL  */
+#line 413 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement)->push_back(new AST_STRING_LITERAL(string((yyvsp[0].string_val))));
                    }
-#line 1794 "parser.tab.cc"
+#line 2519 "parser.tab.cc"
     break;
 
-  case 65: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE  */
-#line 369 "scanner_parser/parser.yy"
+  case 154: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE  */
+#line 417 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement)->push_back((yyvsp[0].expression));
                    }
-#line 1802 "parser.tab.cc"
+#line 2527 "parser.tab.cc"
     break;
 
-  case 66: /* PRINT_VARIABLE_LIST_RULE: STRING_LITERAL  */
-#line 373 "scanner_parser/parser.yy"
+  case 155: /* PRINT_VARIABLE_LIST_RULE: STRING_LITERAL  */
+#line 421 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement) = new AST_PRINT_RULE();
                        (yyval.print_statement)->push_back(new AST_STRING_LITERAL(string((yyvsp[0].string_val))));
                    }
-#line 1811 "parser.tab.cc"
+#line 2536 "parser.tab.cc"
     break;
 
-  case 67: /* PRINT_VARIABLE_LIST_RULE: EXPRESSION_RULE  */
-#line 378 "scanner_parser/parser.yy"
+  case 156: /* PRINT_VARIABLE_LIST_RULE: EXPRESSION_RULE  */
+#line 426 "scanner_parser/parser.yy"
                    {
                        (yyval.print_statement) = new AST_PRINT_RULE();
                        (yyval.print_statement)->push_back((yyvsp[0].expression));
                    }
-#line 1820 "parser.tab.cc"
+#line 2545 "parser.tab.cc"
     break;
 
 
-#line 1824 "parser.tab.cc"
+#line 2549 "parser.tab.cc"
 
       default: break;
     }
@@ -2013,11 +2738,11 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 385 "scanner_parser/parser.yy"
+#line 433 "scanner_parser/parser.yy"
 
 
 
-void yyerror (char const *s)
+extern "C" void yyerror (char const *s)
 {
         fprintf (stderr, "----------------ERROR----------------\n");
         fprintf (stderr, "%s\n", s);

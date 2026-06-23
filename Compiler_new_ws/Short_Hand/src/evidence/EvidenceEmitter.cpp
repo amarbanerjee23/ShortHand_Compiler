@@ -1,0 +1,71 @@
+#include "EvidenceEmitter.h"
+
+#include <ostream>
+
+static std::string esc(const std::string& s) {
+    std::string o;
+    for (char c : s) {
+        if (c == '"' || c == '\\') {
+            o += '\\';
+            o += c;
+        } else {
+            o += c;
+        }
+    }
+    return o;
+}
+
+EvidenceEmitter::EvidenceEmitter(const std::string& s) : source(s) {}
+
+void EvidenceEmitter::write(AST_PROGRAM* p, std::ostream& out) {
+    p->accept(*this);
+    auto c = contracts.empty() ? GreenAIContractData() : contracts.front();
+    out << "{\n"
+        << "  \"schema\": \"shorthand.c3eco.evidence.v1\",\n"
+        << "  \"source_file\": \"" << esc(source) << "\",\n"
+        << "  \"compiler_version\": \"shorthand-greenai-core\",\n"
+        << "  \"workload\": \"" << esc(c.name) << "\",\n"
+        << "  \"functional_unit\": \"" << esc(c.functional_unit) << "\",\n"
+        << "  \"success_criteria\": \"" << esc(c.success_criteria) << "\",\n"
+        << "  \"measurement_quality\": \"" << esc(c.measurement_quality) << "\",\n"
+        << "  \"data_quality\": \"" << esc(c.data_quality) << "\",\n"
+        << "  \"carbon_factor_gco2e_per_kwh\": " << c.carbon_factor << ",\n"
+        << "  \"energy_budget_j\": " << c.energy_budget_j << ",\n"
+        << "  \"carbon_budget_gco2e\": " << c.carbon_budget_gco2e << ",\n"
+        << "  \"measurement_status\": \"declared_budget_only\",\n"
+        << "  \"runtime_backend\": \"fallback\",\n"
+        << "  \"inference_status\": \"not_executed\",\n"
+        << "  \"reason\": \"backend_not_available\",\n"
+        << "  \"offsets_gco2e\": 0,\n"
+        << "  \"avoided_impact_gco2e\": 0,\n"
+        << "  \"base_footprint_not_reduced_by_offsets\": true,\n"
+        << "  \"models\": [";
+    for (size_t i = 0; i < models.size(); ++i) {
+        if (i) out << ",";
+        out << "{\"name\":\"" << esc(models[i].name)
+            << "\",\"format\":\"" << esc(models[i].format)
+            << "\",\"precision\":\"" << esc(models[i].precision)
+            << "\",\"input_shape\":\"" << esc(models[i].input_shape)
+            << "\",\"output_shape\":\"" << esc(models[i].output_shape)
+            << "\",\"backend_preference\":[";
+        for (size_t j = 0; j < models[i].backend_preference.size(); ++j) {
+            if (j) out << ",";
+            out << "\"" << esc(models[i].backend_preference[j]) << "\"";
+        }
+        out << "]}";
+    }
+    out << "],\n"
+        << "  \"assumptions\": [\"missing telemetry is reported as unavailable or declared_budget_only, never fabricated\"],\n"
+        << "  \"warnings\": [\"optional SDKs absent use deterministic fallback\"],\n"
+        << "  \"disclaimer\": \"Evidence report only; this tool does not grant certification.\"\n"
+        << "}\n";
+}
+
+int EvidenceEmitter::visit(AST_PROGRAM* p) { if (p->code_block) p->code_block->accept(*this); return 0; }
+int EvidenceEmitter::visit(AST_LOGIC_BLOCK* b) { if (b->block_statement) b->block_statement->accept(*this); return 0; }
+int EvidenceEmitter::visit(AST_STATEMENTS_BLOCK* b) { for (auto s : b->statements) s->accept(*this); return 0; }
+int EvidenceEmitter::visit(AST_MODEL_DECLARATION* n) { models.push_back(n->data); return 0; }
+int EvidenceEmitter::visit(AST_GREENAI_CONTRACT* n) { contracts.push_back(n->data); return 0; }
+int EvidenceEmitter::visit(AST_GREENAI_MEASUREMENT* n) { measures.push_back(n->data); return 0; }
+#define ESTUB(T) int EvidenceEmitter::visit(T*){ return 0; }
+ESTUB(AST_DATA_DECLARATION_BLOCK) ESTUB(AST_FUNCTION_LIST_RULE) ESTUB(AST_EXPRESSION_STATEMENT_RULE) ESTUB(AST_FUNCTION_RULE) ESTUB(AST_FUNCTION_CALL_RULE) ESTUB(AST_ASSIGNMENT_RULE) ESTUB(AST_IF_STATEMENT) ESTUB(AST_BREAK) ESTUB(AST_IF_ELSE_STATEMENT) ESTUB(AST_FOR_LOOP_STATEMENT_RULE) ESTUB(AST_WHILE_LOOP_STATEMENT_RULE) ESTUB(AST_GOTO_STATEMENT_RULE) ESTUB(AST_READ_RULE) ESTUB(AST_PRINT_RULE) ESTUB(AST_LABEL_RULE) ESTUB(AST_GREENAI_REPORT_RULE) ESTUB(AST_AI_INFER_RULE) ESTUB(AST_TENSOR_DECLARATION) ESTUB(AST_INFER_STATEMENT) ESTUB(AST_CONTINUE) ESTUB(AST_RETURN_STATEMENT) ESTUB(AST_BINARY_EXPRESSION_RULE) ESTUB(AST_UNARY_EXPRESSION_RULE) ESTUB(AST_SIMPLE_VARIABLE) ESTUB(AST_ARRAY_VARIABLE) ESTUB(AST_LITERAL) ESTUB(AST_STRING_LITERAL) ESTUB(AST_BOOL_LITERAL) ESTUB(AST_FLOAT_LITERAL) ESTUB(AST_FUNCTION_CALL_EXPRESSION)

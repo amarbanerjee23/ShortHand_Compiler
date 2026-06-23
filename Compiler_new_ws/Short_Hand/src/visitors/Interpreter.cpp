@@ -11,26 +11,48 @@ static string unquoteShortString(const string &value)
     return value;
 }
 
-static vector<float> parseShortFloatCsv(const string &csv)
+static shorthand::ai::TensorSpec tensorSpecFromDeclaration(const TensorDeclarationData& data)
 {
-    vector<float> values;
-    stringstream ss(csv);
-    string token;
-    while (getline(ss, token, ',')) {
-        if (!token.empty()) values.push_back(stof(token));
-    }
-    return values;
+    shorthand::ai::TensorSpec spec;
+    spec.name = data.name;
+    spec.element_type = shorthand::ai::parseElementType(data.element_type);
+    bool dynamic = false;
+    spec.shape = shorthand::ai::parseShapeCsv(data.shape_csv, &dynamic);
+    spec.dynamic = dynamic;
+    spec.element_count = shorthand::ai::productOfShape(spec.shape);
+    return spec;
 }
 
-static vector<int64_t> parseShortShapeCsv(const string &csv)
+static shorthand::ai::ModelSpec modelSpecFromDeclaration(const ModelDeclarationData& data)
 {
-    vector<int64_t> values;
-    stringstream ss(csv);
-    string token;
-    while (getline(ss, token, ',')) {
-        if (!token.empty()) values.push_back(stoll(token));
+    shorthand::ai::ModelSpec spec;
+    spec.name = data.name;
+    spec.path = data.path;
+    spec.format = shorthand::ai::parseModelFormat(data.format);
+    spec.task = data.task;
+    spec.precision = data.precision;
+    spec.input.name = data.name + "_input";
+    spec.input.element_type = shorthand::ai::parseElementType(data.precision);
+    bool input_dynamic = false;
+    spec.input.shape = shorthand::ai::parseShapeCsv(data.input_shape, &input_dynamic);
+    spec.input.dynamic = input_dynamic;
+    spec.input.element_count = shorthand::ai::productOfShape(spec.input.shape);
+    spec.output.name = data.name + "_output";
+    spec.output.element_type = shorthand::ai::parseElementType(data.precision);
+    bool output_dynamic = false;
+    spec.output.shape = shorthand::ai::parseShapeCsv(data.output_shape, &output_dynamic);
+    spec.output.dynamic = output_dynamic;
+    spec.output.element_count = shorthand::ai::productOfShape(spec.output.shape);
+    for (const auto& backend : data.backend_preference) spec.backend_preference.push_back(shorthand::ai::parseBackendKind(backend));
+    if (spec.backend_preference.empty()) spec.backend_preference.push_back(shorthand::ai::BackendKind::Fallback);
+    spec.compact = data.compact;
+    spec.allow_fallback = true;
+    if (data.has_quality_guardrail) {
+        spec.quality_metric = data.quality_guardrail.metric;
+        spec.quality_op = data.quality_guardrail.op;
+        spec.quality_threshold = data.quality_guardrail.threshold;
     }
-    return values;
+    return spec;
 }
 
 // program
@@ -292,8 +314,9 @@ int Interpreter::visit(AST_AI_INFER_RULE * ai_infer)
     string input_csv = unquoteShortString(ai_infer->input_csv);
 
     TensorData tensor;
-    tensor.shape = parseShortShapeCsv(shape_csv);
-    tensor.data = parseShortFloatCsv(input_csv);
+    bool dynamic_shape = false;
+    tensor.shape = shorthand::ai::parseShapeCsv(shape_csv, &dynamic_shape);
+    tensor.data = shorthand::ai::parseFloatCsv(input_csv);
 
     AI_Runtime runtime;
     if (!runtime.loadModel(model_path)) {
@@ -394,3 +417,71 @@ int Interpreter::visit(AST_STRING_LITERAL * string_literal)
     str = string_literal->string_literal;
     return 0;
 }
+int Interpreter::visit(AST_MODEL_DECLARATION * n)
+{
+    AI_models[n->data.name] = modelSpecFromDeclaration(n->data);
+    cout << "Registered model " << n->data.name << " (runtime-managed)" << endl;
+    return 0;
+}
+
+int Interpreter::visit(AST_TENSOR_DECLARATION * n)
+{
+    shorthand::ai::TensorBuffer buffer;
+    buffer.spec = tensorSpecFromDeclaration(n->data);
+    if (!buffer.spec.dynamic && buffer.spec.element_count > 0) buffer.f32_data.assign(buffer.spec.element_count, 0.0f);
+    AI_tensors[n->data.name] = buffer;
+    return 0;
+}
+
+int Interpreter::visit(AST_GREENAI_CONTRACT * n){ cout << "GreenAI contract " << n->data.name << " evidence_only" << endl; return 0; }
+int Interpreter::visit(AST_GREENAI_MEASUREMENT * n){ cout << "GreenAI workload " << n->data.workload << " measurement_status=declared_budget_only" << endl; return 0; }
+
+int Interpreter::visit(AST_INFER_STATEMENT * n)
+{
+    auto model_it = AI_models.find(n->model_name);
+    auto tensor_it = AI_tensors.find(n->input_name);
+    if (model_it == AI_models.end()) {
+        cout << "AI inference error: model=" << n->model_name << " reason=unknown_model" << endl;
+        return 1;
+    }
+    if (tensor_it == AI_tensors.end()) {
+        cout << "AI inference error: model=" << n->model_name << " reason=unknown_tensor" << endl;
+        return 1;
+    }
+
+    shorthand::ai::ModelSpec model = model_it->second;
+    shorthand::ai::TensorBuffer input = tensor_it->second;
+    model.input.name = input.spec.name;
+    model.input.shape = input.spec.shape;
+    model.input.dynamic = input.spec.dynamic;
+    model.input.element_count = input.spec.element_count;
+
+    shorthand::ai::AIRuntime runtime;
+    const shorthand::ai::InferenceResult result = runtime.infer(model, input);
+    if (result.status == shorthand::ai::InferenceStatus::Success) {
+        shorthand::ai::TensorBuffer output;
+        output.spec = model.output;
+        output.spec.name = n->output_name;
+        output.f32_data = result.output_f32;
+        AI_tensors[n->output_name] = output;
+        cout << "AI inference success: model=" << n->model_name
+             << " runtime_backend=" << result.backend_name
+             << " provider=" << result.provider_name
+             << " outputs=" << result.output_f32.size() << endl;
+    } else if (result.backend == shorthand::ai::BackendKind::Fallback ||
+               result.status == shorthand::ai::InferenceStatus::NotExecuted ||
+               result.status == shorthand::ai::InferenceStatus::BackendUnavailable) {
+        cout << "AI inference fallback: model=" << n->model_name
+             << " runtime_backend=fallback inference_status=not_executed reason=backend_not_available" << endl;
+    } else {
+        cout << "AI inference error: model=" << n->model_name
+             << " runtime_backend=" << result.backend_name
+             << " reason=" << result.reason << endl;
+    }
+    return 0;
+}
+int Interpreter::visit(AST_CONTINUE *){ return 0; }
+int Interpreter::visit(AST_RETURN_STATEMENT * n){ if(n->expression) n->expression->accept(*this); return 0; }
+int Interpreter::visit(AST_BOOL_LITERAL * n){ num = n->value ? 1 : 0; return num; }
+int Interpreter::visit(AST_FLOAT_LITERAL * n){ num = (int)n->value; return num; }
+int Interpreter::visit(AST_FUNCTION_CALL_EXPRESSION *){ return 0; }

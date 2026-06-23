@@ -8,23 +8,56 @@ FLEX_LDLIB := $(shell printf 'int main(){return 0;}\n' | $(CXX) -x c++ - -lfl -o
 LDLIBS ?= $(FLEX_LDLIB)
 ONNXRUNTIME_ROOT ?=
 LIBTORCH_ROOT ?=
+TENSORRT_ROOT ?=
+CUDA_ROOT ?=
+OPENVINO_ROOT ?=
+LLAMACPP_ROOT ?=
+EIGEN_ROOT ?=
+OPENBLAS_ROOT ?=
+SHORTHAND_STRICT_OPTIONAL_BACKENDS ?= 0
 
-AI_CXXFLAGS :=
+AI_CXXFLAGS := -DSHORTHAND_HAS_ONNXRUNTIME=0 -DSHORTHAND_HAS_TENSORRT=0 -DSHORTHAND_HAS_OPENVINO=0 -DSHORTHAND_HAS_LIBTORCH=0 -DSHORTHAND_HAS_LLAMACPP=0 -DSHORTHAND_HAS_OPENBLAS=0 -DSHORTHAND_HAS_EIGEN=0
 AI_LDLIBS :=
 
 ifneq ($(ONNXRUNTIME_ROOT),)
-AI_CXXFLAGS += -DUSE_ONNXRUNTIME -I$(ONNXRUNTIME_ROOT)/include
+AI_CXXFLAGS += -DSHORTHAND_HAS_ONNXRUNTIME=1 -I$(ONNXRUNTIME_ROOT)/include
 AI_LDLIBS += -L$(ONNXRUNTIME_ROOT)/lib -lonnxruntime
 endif
 
 ifneq ($(LIBTORCH_ROOT),)
-AI_CXXFLAGS += -DUSE_LIBTORCH -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
+AI_CXXFLAGS += -DSHORTHAND_HAS_LIBTORCH=1 -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
 AI_LDLIBS += -L$(LIBTORCH_ROOT)/lib -ltorch -ltorch_cpu -lc10
 endif
 
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp ai_runtime/AI_Runtime.cpp
+ifneq ($(TENSORRT_ROOT),)
+ifneq ($(CUDA_ROOT),)
+AI_CXXFLAGS += -DSHORTHAND_HAS_TENSORRT=1 -I$(TENSORRT_ROOT)/include -I$(CUDA_ROOT)/include
+AI_LDLIBS += -L$(TENSORRT_ROOT)/lib
+endif
+endif
+
+ifneq ($(OPENVINO_ROOT),)
+AI_CXXFLAGS += -DSHORTHAND_HAS_OPENVINO=1 -I$(OPENVINO_ROOT)/include
+AI_LDLIBS += -L$(OPENVINO_ROOT)/lib
+endif
+
+ifneq ($(LLAMACPP_ROOT),)
+AI_CXXFLAGS += -DSHORTHAND_HAS_LLAMACPP=1 -I$(LLAMACPP_ROOT)/include
+AI_LDLIBS += -L$(LLAMACPP_ROOT)/lib
+endif
+
+ifneq ($(OPENBLAS_ROOT),)
+AI_CXXFLAGS += -DSHORTHAND_HAS_OPENBLAS=1 -I$(OPENBLAS_ROOT)/include
+AI_LDLIBS += -L$(OPENBLAS_ROOT)/lib -lopenblas
+endif
+
+ifneq ($(EIGEN_ROOT),)
+AI_CXXFLAGS += -DSHORTHAND_HAS_EIGEN=1 -I$(EIGEN_ROOT)
+endif
+
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp ai_runtime/AI_Runtime.cpp ai_runtime/AI_Backend.cpp ai_runtime/AI_Types.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
 BIN := ../build/short_hand
-AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
+AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Backend.cpp ai_runtime/AI_Types.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
 AI_APP_BIN := ../build/short_ai_app
 AI_TRAIN_BIN := ../build/short_ai_train
@@ -50,7 +83,7 @@ parser.tab.cc parser.tab.hh: scanner_parser/parser.yy ast/AST.h
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 
 lex.yy.c: scanner_parser/scanner.ll parser.tab.hh
-	flex -o lex.yy.c scanner_parser/scanner.ll
+	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
 short_hand: patch-generated-parser $(SRC)
 	@mkdir -p ../build
@@ -58,7 +91,7 @@ short_hand: patch-generated-parser $(SRC)
 		echo "error: llvm-config not found or LLVM flags unavailable. Install LLVM with llvm-config in PATH."; \
 		exit 1; \
 	fi
-	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(LLVM_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(AI_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)
 
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build
@@ -77,7 +110,7 @@ test-green: green_ai_tool
 
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
-	flex -o lex.yy.c scanner_parser/scanner.ll
+	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
 .PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai sanitize format-check regen patch-generated-parser clean distclean
 clean:

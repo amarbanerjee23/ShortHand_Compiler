@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "./ast/AST.h"
+#include <vector>
+#include <string>
+static ModelDeclarationData current_model;
+static GreenAIContractData current_contract;
+static GreenAIMeasurementData current_measure;
 
   using namespace std;
 
@@ -39,6 +44,13 @@
 %type <print_statement> PRINT_VARIABLE_LIST_RULE
 %type <greenai_report> GREENAI_REPORT_RULE
 %type <ai_infer> AI_INFER_RULE
+%type <model_decl> MODEL_DECLARATION
+%type <tensor_decl> TENSOR_DECLARATION
+%type <greenai_contract> GREENAI_CONTRACT
+%type <greenai_measure> GREENAI_MEASUREMENT
+%type <infer_statement> INFER_STATEMENT
+%type <return_statement> RETURN_STATEMENT
+%type <string_val> BACKEND_NAME FORMAT_NAME PRECISION_NAME MQ_NAME DQ_NAME BOUNDARY_NAME
 %type <expression> EXPRESSION_RULE
 %type <type> ShortType
 
@@ -57,6 +69,7 @@
 %token <string_val> STRING_LITERAL
 %token <string_val> IDENTIFIER
 %token <int_val> INT_LITERAL
+%token <float_val> FLOAT_LITERAL
 %token READ
 %token PRINT
 %token GOTO BREAK
@@ -64,12 +77,12 @@
 %token LOOP
 %token ELSE
 %token IF DEF
-%token INT FLOAT STRING VOID BOOL
+%token INT FLOAT STRING VOID BOOL DOUBLE RETURN CONTINUE TRUE FALSE MODEL FORMAT PATH TASK PRECISION INPUT_SHAPE OUTPUT_SHAPE BACKEND_PREFERENCE COMPACT QUALITY_GUARDRAIL GREENAI_CONTRACT_T FUNCTIONAL_UNIT SUCCESS_CRITERIA BOUNDARY MEASUREMENT_QUALITY DATA_QUALITY CARBON_FACTOR ENERGY_BUDGET_J CARBON_BUDGET_GCO2E EVIDENCE_RETENTION CLAIMS_MODE EVIDENCE_ONLY GREENAI_MEASURE INFER TENSOR INT8 FP16 FP32 BF16 INT4 FP64 ONNX ENGINE TORCHSCRIPT OPENVINO_IR GGUF TENSORRT ONNXRUNTIME_TENSORRT ONNXRUNTIME_CUDA ONNXRUNTIME_CPU OPENVINO LIBTORCH LLAMACPP FALLBACK MQ1 MQ2 MQ3 MQ4 DQ1 DQ2 DQ3 DQ4 LOCATION CI_CD THIRDPARTY ACCELERATOR COMPUTE STORAGE NETWORK
 
 %%
 
 
-PROGRAMME_RULE:    DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK 
+PROGRAMME_RULE:    DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK
             {
                 //fprintf(bison_output, "program\n");
                 $$ = new AST_PROGRAM($1,$2,$3);
@@ -88,7 +101,7 @@ FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'
                         $$ = new AST_FUNCTION_LIST_RULE();
                     }
 ;
-                    
+
 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
 	      		{
 	        	$$ = new AST_FUNCTION_RULE($2,$3,$5,$7);
@@ -99,22 +112,22 @@ DECLARATION_STATEMENT_LIST_RULE:   DECLARATION_STATEMENT_LIST_RULE DECLARATION_S
                            $$ = $1;
                            $$->push_back($2);
                        }
-		       
+
                        |   DECLARATION_STATEMENT_RULE ';'
                        {
                            $$ = $1;
                        }
-                     
+
 ;
 
 
 ShortType: INT {$$=ShortType::Int;}
-      | FLOAT {$$=ShortType::Float;} 
+      | FLOAT {$$=ShortType::Float;} | DOUBLE {$$=ShortType::Float;}
       | STRING {$$=ShortType::String;}
       | VOID {$$=ShortType::Void;}
       | BOOL{$$=ShortType::Boolean;}
-      ;                      
-                        
+      ;
+
 DECLARATION_STATEMENT_RULE:    ShortType DECLARATION_VARIABLE_LIST_RULE
                    {
                        //fprintf(bison_output, "DECLARATION_STATEMENT_RULE\n");
@@ -174,7 +187,14 @@ STATEMENT_LIST_RULE:    STATEMENT_LIST_RULE STATEMENT_RULE
                    }
 ;
 
-STATEMENT_RULE:    EXPRESSION_RULE ';'
+STATEMENT_RULE:    MODEL_DECLARATION { $$ = $1; }
+         | TENSOR_DECLARATION { $$ = $1; }
+         | GREENAI_CONTRACT { $$ = $1; }
+         | GREENAI_MEASUREMENT { $$ = $1; }
+         | INFER_STATEMENT { $$ = $1; }
+         | RETURN_STATEMENT { $$ = $1; }
+         | CONTINUE ';' { $$ = new AST_CONTINUE(); }
+         | EXPRESSION_RULE ';'
               {
                   $$ = new AST_EXPRESSION_STATEMENT_RULE($1);
               }
@@ -182,7 +202,7 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
               {
                   $$ = new AST_ASSIGNMENT_RULE($1, $3);
               }
-          
+
          |    IDENTIFIER'(' READ_VARIABLE_LIST_RULE ')' ';'
 	      {
 	       $$ = new AST_FUNCTION_CALL_RULE($1,$3);
@@ -223,7 +243,7 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
               {
                   $$ = $2;
               }
-         | BREAK {$$ = new AST_BREAK();}
+         | BREAK ';' {$$ = new AST_BREAK();}
          |    PRINT PRINT_VARIABLE_LIST_RULE ';'
               {
                   $$ = $2;
@@ -246,6 +266,34 @@ STATEMENT_RULE:    EXPRESSION_RULE ';'
               }
 
 ;
+
+RETURN_STATEMENT: RETURN EXPRESSION_RULE ';' { $$ = new AST_RETURN_STATEMENT($2); } | RETURN ';' { $$ = new AST_RETURN_STATEMENT(); };
+
+INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';' { $$ = new AST_INFER_STATEMENT(string($2), string($4), string($7)); }
+               | INFER IDENTIFIER '(' IDENTIFIER ')' '-' GREATER IDENTIFIER ';' { $$ = new AST_INFER_STATEMENT(string($2), string($4), string($8)); };
+
+TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL ';' { TensorDeclarationData d; d.name=$2; d.element_type=$3; d.shape_csv=string($4).substr(1,string($4).size()-2); d.dynamic=(d.shape_csv=="dynamic"); d.rank= d.dynamic?0:1; long long total=1; if(!d.dynamic){ d.rank=0; size_t start=0; while(start<d.shape_csv.size()){ size_t pos=d.shape_csv.find(',',start); string part=d.shape_csv.substr(start,pos==string::npos?string::npos:pos-start); total*= atoll(part.c_str()); d.rank++; if(pos==string::npos) break; start=pos+1; }} d.total_elements=total; $$=new AST_TENSOR_DECLARATION(d); };
+
+MODEL_DECLARATION: MODEL IDENTIFIER '{' { current_model=ModelDeclarationData(); current_model.name=$2; } MODEL_FIELD_LIST '}' ';' { $$ = new AST_MODEL_DECLARATION(current_model); };
+MODEL_FIELD_LIST: MODEL_FIELD_LIST MODEL_FIELD | %empty;
+MODEL_FIELD: FORMAT FORMAT_NAME ';' { current_model.format=$2; } | PATH STRING_LITERAL ';' { current_model.path=string($2).substr(1,string($2).size()-2); } | TASK STRING_LITERAL ';' { current_model.task=string($2).substr(1,string($2).size()-2); } | PRECISION PRECISION_NAME ';' { current_model.precision=$2; } | INPUT_SHAPE STRING_LITERAL ';' { current_model.input_shape=string($2).substr(1,string($2).size()-2); } | OUTPUT_SHAPE STRING_LITERAL ';' { current_model.output_shape=string($2).substr(1,string($2).size()-2); } | BACKEND_PREFERENCE BACKEND_LIST ';' | COMPACT TRUE ';' { current_model.compact=true; } | COMPACT FALSE ';' { current_model.compact=false; } | QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';' { current_model.has_quality_guardrail=true; current_model.quality_guardrail={string($2),">=",(double)$4}; };
+BACKEND_LIST: BACKEND_LIST ',' BACKEND_NAME { current_model.backend_preference.push_back($3); } | BACKEND_NAME { current_model.backend_preference.push_back($1); };
+
+GREENAI_CONTRACT: GREENAI_CONTRACT_T IDENTIFIER '{' { current_contract=GreenAIContractData(); current_contract.name=$2; } CONTRACT_FIELD_LIST '}' ';' { $$ = new AST_GREENAI_CONTRACT(current_contract); };
+CONTRACT_FIELD_LIST: CONTRACT_FIELD_LIST CONTRACT_FIELD | %empty;
+CONTRACT_FIELD: FUNCTIONAL_UNIT STRING_LITERAL ';' { current_contract.functional_unit=string($2).substr(1,string($2).size()-2); current_contract.has_functional_unit=true; } | SUCCESS_CRITERIA STRING_LITERAL ';' { current_contract.success_criteria=string($2).substr(1,string($2).size()-2); current_contract.has_success_criteria=true; } | BOUNDARY BOUNDARY_LIST ';' { current_contract.has_boundary=true; } | MEASUREMENT_QUALITY MQ_NAME ';' { current_contract.measurement_quality=$2; current_contract.has_mq=true; } | DATA_QUALITY DQ_NAME ';' { current_contract.data_quality=$2; current_contract.has_dq=true; } | CARBON_FACTOR LOCATION INT_LITERAL ';' { current_contract.carbon_factor_scope="location"; current_contract.carbon_factor=$3; current_contract.has_carbon_factor=true; } | ENERGY_BUDGET_J INT_LITERAL ';' { current_contract.energy_budget_j=$2; } | CARBON_BUDGET_GCO2E INT_LITERAL ';' { current_contract.carbon_budget_gco2e=$2; } | QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';' { current_contract.has_quality_guardrail=true; current_contract.quality_guardrail={string($2),">=",(double)$4}; } | EVIDENCE_RETENTION STRING_LITERAL ';' { current_contract.evidence_retention=string($2).substr(1,string($2).size()-2); } | CLAIMS_MODE EVIDENCE_ONLY ';' { current_contract.claims_mode="evidence_only"; };
+BOUNDARY_LIST: BOUNDARY_LIST ',' BOUNDARY_NAME { current_contract.boundary.push_back($3); } | BOUNDARY_NAME { current_contract.boundary.push_back($1); };
+
+GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER '{' { current_measure=GreenAIMeasurementData(); current_measure.workload=$2; } MEASURE_FIELD_LIST '}' ';' { $$ = new AST_GREENAI_MEASUREMENT(current_measure); };
+MEASURE_FIELD_LIST: MEASURE_FIELD_LIST MEASURE_FIELD | %empty;
+MEASURE_FIELD: IDENTIFIER INT_LITERAL ';' { string n=$1; if(n=="inferences") current_measure.inferences=$2; else if(n=="watts") current_measure.watts=$2; else if(n=="seconds") current_measure.seconds=$2; } | IDENTIFIER IDENTIFIER ';' { if(string($1)=="backend") current_measure.backend=$2; };
+
+FORMAT_NAME: ONNX {$$=(char*)"onnx";} | ENGINE {$$=(char*)"engine";} | TORCHSCRIPT {$$=(char*)"torchscript";} | OPENVINO_IR {$$=(char*)"openvino_ir";} | GGUF {$$=(char*)"gguf";};
+PRECISION_NAME: INT8 {$$=(char*)"int8";} | INT4 {$$=(char*)"int4";} | FP16 {$$=(char*)"fp16";} | FP32 {$$=(char*)"fp32";} | BF16 {$$=(char*)"bf16";} | FP64 {$$=(char*)"fp64";} | FLOAT {$$=(char*)"float";} ;
+BACKEND_NAME: TENSORRT {$$=(char*)"tensorrt";} | ONNXRUNTIME_TENSORRT {$$=(char*)"onnxruntime_tensorrt";} | ONNXRUNTIME_CUDA {$$=(char*)"onnxruntime_cuda";} | ONNXRUNTIME_CPU {$$=(char*)"onnxruntime_cpu";} | OPENVINO {$$=(char*)"openvino";} | LIBTORCH {$$=(char*)"libtorch";} | LLAMACPP {$$=(char*)"llamacpp";} | FALLBACK {$$=(char*)"fallback";};
+MQ_NAME: MQ1 {$$=(char*)"MQ1";} | MQ2 {$$=(char*)"MQ2";} | MQ3 {$$=(char*)"MQ3";} | MQ4 {$$=(char*)"MQ4";};
+DQ_NAME: DQ1 {$$=(char*)"DQ1";} | DQ2 {$$=(char*)"DQ2";} | DQ3 {$$=(char*)"DQ3";} | DQ4 {$$=(char*)"DQ4";};
+BOUNDARY_NAME: COMPUTE {$$=(char*)"compute";} | ACCELERATOR {$$=(char*)"accelerator";} | STORAGE {$$=(char*)"storage";} | NETWORK {$$=(char*)"network";} | CI_CD {$$=(char*)"ci_cd";} | THIRDPARTY {$$=(char*)"thirdparty";};
 
 AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'
               {
@@ -332,10 +380,10 @@ EXPRESSION_RULE:    EXPRESSION_RULE '+' EXPRESSION_RULE
                {
                    $$ = $1;
                }
-          |    INT_LITERAL
-               {
-                   $$ = new AST_LITERAL($1);
-               }
+          |    INT_LITERAL { $$ = new AST_LITERAL($1); }
+          |    FLOAT_LITERAL { $$ = new AST_FLOAT_LITERAL($1); }
+          |    TRUE { $$ = new AST_BOOL_LITERAL(true); }
+          |    FALSE { $$ = new AST_BOOL_LITERAL(false); }
 ;
 
 
