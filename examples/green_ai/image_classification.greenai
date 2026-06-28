@@ -1,13 +1,27 @@
 green {
   product: "Green image classification inference"
+  product_version: "1.0.0"
+  owner: "ShortHand Compiler Project"
+  release_date: "2026-06-28"
+  software_class: "S6-AI-ML-GenAI"
+  deployment_mode: "edge_inference"
+  certification_scope: "candidate-evidence-for-image-classification-inference-only"
   green_mode: "strict"
   certification_profile: "C3-ECO-AI"
   functional_unit: "1000_inferences"
-  success_criteria: { accuracy_min: 0.92 p95_latency_ms_max: 250 error_rate_max: 0.01 }
-  boundary: { include: ["inference", "data_loading", "model_serving", "storage", "network", "monitoring"] exclude: [] embodied_hardware: "allocated" }
+  success_criteria: { accuracy_min: 0.92 p95_latency_ms_max: 250 error_rate_max: 0.01 security_tests_passed: true accessibility_tests_passed: true privacy_tests_passed: true }
+  boundary: { include: ["inference", "data_loading", "model_serving", "storage", "network", "monitoring", "runtime", "edge_device"] exclude: [] embodied_hardware: "allocated" third_party_services: [] }
   measurement_quality: "MQ2"
   data_quality: "DQ2"
-  audit_evidence: ["onnxruntime_profile.json", "power_meter_run_42.csv"]
+  audit_evidence: ["onnxruntime_profile.json", "power_meter_run_42.csv", "workload_script_image_classification.sh", "quality_guardrail_report.json"]
+  security_floor: { critical_vulnerabilities_open: 0 sbom_available: true security_scan_passed: true }
+  accessibility_safety_floor: { accessibility_regression: false safety_regression: false privacy_regression: false reliability_regression: false }
+  no_quality_degradation: { quality_guardrails_passed: true accuracy_preserved: true latency_slo_preserved: true functionality_reduced_for_efficiency: false }
+  materiality: { individual_material_components_threshold_percent: 1 cumulative_omissions_percent_max: 5 unmeasured_material_components: [] conservative_estimates_used: true }
+  evidence_retention_months: 24
+  recertification_acceptance: true
+  claims: { claim_text: "C3-ECO AI candidate evidence report only" public_certification_claim: false offsets_or_recs_used_for_core_score: false }
+  assumptions: ["Representative edge inference workload", "No offset subtraction", "Fallback or SDK execution state must be reported honestly"]
 }
 
 budgets {
@@ -15,6 +29,8 @@ budgets {
   carbon_per_1000_inferences_gco2e_max: 50
   memory_peak_mb_max: 2048
   network_mb_per_task_max: 5
+  p95_latency_ms_max: 250
+  model_size_mb_max: 16
 }
 
 carbon {
@@ -22,22 +38,26 @@ carbon {
   region: "IN-WEST"
   grid_factor_kgco2e_per_kwh: 0.475
   report_market_based_separately: true
+  market_based_carbon_gco2e: 0
   offsets_allowed_in_core_score: false
+  offsets_reported_separately: true
+  offsets_gco2e: 0
 }
 
 model image_classifier {
   type: "cnn"
   format: "onnx"
   precision: "int8"
+  model_role: "application_deployer"
   compression: { quantized: true pruned: false distilled: false }
-  green_model: { parameters_count: 3500000 model_size_mb: 12 accuracy_energy_frontier_required: true model_necessity_justification: "edge realtime classification" smaller_model_evaluated: true }
+  green_model: { parameters_count: 3500000 model_size_mb: 12 accuracy_energy_frontier_required: true model_necessity_justification: "edge realtime classification requires ML because rule-based baseline failed target accuracy" smaller_model_evaluated: true provider_boundary: "model weights supplied locally" deployer_boundary: "runtime, batching, precision, cache, workload, and evidence reporting" }
 }
 
 infer endpoint classify {
   model: "image_classifier"
   batch_size: 16
   cache: "enabled"
-  green_infer: { measure_energy_per_inference: true measure_latency_energy: ["p50", "p95", "p99"] max_joules_per_inference: 0.25 max_gco2e_per_1000_inferences: 40 idle_baseline_subtraction: true }
+  green_infer: { measure_energy_per_inference: true measure_latency_energy: ["p50", "p95", "p99"] max_joules_per_inference: 0.25 max_gco2e_per_1000_inferences: 40 idle_baseline_subtraction: true failed_runs_included: true }
 }
 
 target edge_device {
@@ -46,7 +66,7 @@ target edge_device {
   runtime: "onnxruntime"
   language_backend: "cpp"
   compiler_optimization: ["O3", "march_native"]
-  green_target: { measure_idle_watts: true support_low_resource_mode: true max_memory_mb: 1024 }
+  green_target: { measure_idle_watts: true support_low_resource_mode: true max_memory_mb: 1024 carbon_aware_region: "IN-WEST" }
 }
 
 measurements {
@@ -55,6 +75,8 @@ measurements {
   idle_energy_kwh: 0.000002
   memory_peak_mb: 768
   network_mb_per_task: 0.5
+  p95_latency_ms: 180
   p95_latency_energy_j: 0.18
   model_size_mb: 12
+  failed_units_included: true
 }
