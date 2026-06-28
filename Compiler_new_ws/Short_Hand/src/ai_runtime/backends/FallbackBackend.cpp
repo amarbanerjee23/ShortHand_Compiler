@@ -1,2 +1,2 @@
 #include "FallbackBackend.h"
-namespace shorthand::ai { InferenceResult FallbackBackend::infer(const ModelSpec&){ return {}; } }
+namespace shorthand::ai { BackendKind FallbackBackend::kind() const { return BackendKind::Fallback; } std::string FallbackBackend::name() const { return "fallback"; } BackendCapabilities FallbackBackend::capabilities() const { BackendCapabilities c; c.kind=kind(); c.name=name(); c.available=true; c.supports_onnx=true; c.supports_engine=true; c.supports_torchscript=true; c.supports_openvino_ir=true; c.supports_gguf=true; return c; } bool FallbackBackend::canLoad(const ModelSpec &model) const { return model.allow_fallback; } InferenceResult FallbackBackend::infer(const ModelSpec&, const TensorBuffer&) { return {}; } }

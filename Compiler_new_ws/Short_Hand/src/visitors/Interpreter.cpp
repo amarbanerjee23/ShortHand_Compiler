@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include "../ai_runtime/AI_Runtime.h"
+#include <map>
 
 static string unquoteShortString(const string &value)
 {
@@ -24,13 +25,29 @@ static vector<float> parseShortFloatCsv(const string &csv)
 
 static vector<int64_t> parseShortShapeCsv(const string &csv)
 {
-    vector<int64_t> values;
-    stringstream ss(csv);
-    string token;
-    while (getline(ss, token, ',')) {
-        if (!token.empty()) values.push_back(stoll(token));
-    }
-    return values;
+    return shorthand::ai::parseShapeCsv(csv);
+}
+
+static std::map<std::string, ModelDeclarationData> aiModels;
+static std::map<std::string, TensorDeclarationData> aiTensors;
+
+static shorthand::ai::ModelSpec toModelSpec(const ModelDeclarationData &d)
+{
+    shorthand::ai::ModelSpec spec;
+    spec.name = d.name;
+    spec.path = d.path;
+    spec.format = shorthand::ai::parseModelFormat(d.format);
+    spec.task = d.task;
+    spec.precision = d.precision;
+    spec.input = {"input", shorthand::ai::parseElementType(d.precision), shorthand::ai::parseShapeCsv(d.input_shape)};
+    spec.input.element_count = shorthand::ai::productOfShape(spec.input.shape);
+    spec.output = {"output", shorthand::ai::parseElementType(d.precision), shorthand::ai::parseShapeCsv(d.output_shape)};
+    spec.output.element_count = shorthand::ai::productOfShape(spec.output.shape);
+    for (const auto &backend : d.backend_preference) spec.backend_preference.push_back(shorthand::ai::parseBackendKind(backend));
+    spec.compact = d.compact;
+    spec.allow_fallback = true;
+    if (d.has_quality_guardrail) { spec.quality_metric=d.quality_guardrail.metric; spec.quality_op=d.quality_guardrail.op; spec.quality_threshold=d.quality_guardrail.threshold; }
+    return spec;
 }
 
 // program
@@ -394,11 +411,33 @@ int Interpreter::visit(AST_STRING_LITERAL * string_literal)
     str = string_literal->string_literal;
     return 0;
 }
-int Interpreter::visit(AST_MODEL_DECLARATION * n){ cout << "Registered model " << n->data.name << " (fallback-capable)" << endl; return 0; }
-int Interpreter::visit(AST_TENSOR_DECLARATION *){ return 0; }
+int Interpreter::visit(AST_MODEL_DECLARATION * n){ aiModels[n->data.name]=n->data; cout << "Registered model " << n->data.name << " (fallback-capable)" << endl; return 0; }
+int Interpreter::visit(AST_TENSOR_DECLARATION * n){ aiTensors[n->data.name]=n->data; return 0; }
 int Interpreter::visit(AST_GREENAI_CONTRACT * n){ cout << "GreenAI contract " << n->data.name << " evidence_only" << endl; return 0; }
 int Interpreter::visit(AST_GREENAI_MEASUREMENT * n){ cout << "GreenAI workload " << n->data.workload << " measurement_status=declared_budget_only" << endl; return 0; }
-int Interpreter::visit(AST_INFER_STATEMENT * n){ cout << "AI inference fallback: model=" << n->model_name << " runtime_backend=fallback inference_status=not_executed reason=backend_not_available" << endl; return 0; }
+int Interpreter::visit(AST_INFER_STATEMENT * n){
+    auto modelIt = aiModels.find(n->model_name);
+    auto tensorIt = aiTensors.find(n->input_name);
+    if (modelIt == aiModels.end()) { cout << "AI inference error: model=" << n->model_name << " runtime_backend=fallback reason=unknown_model" << endl; return 1; }
+    if (tensorIt == aiTensors.end()) { cout << "AI inference error: model=" << n->model_name << " runtime_backend=fallback reason=unknown_tensor" << endl; return 1; }
+    auto model = toModelSpec(modelIt->second);
+    shorthand::ai::TensorBuffer input;
+    input.spec.name = tensorIt->second.name;
+    input.spec.element_type = shorthand::ai::parseElementType(tensorIt->second.element_type);
+    input.spec.shape = shorthand::ai::parseShapeCsv(tensorIt->second.shape_csv);
+    input.spec.element_count = shorthand::ai::productOfShape(input.spec.shape);
+    input.f32_data.assign(input.spec.element_count, 0.0f);
+    shorthand::ai::AIRuntime runtime;
+    auto result = runtime.infer(model, input);
+    if (result.status == shorthand::ai::InferenceStatus::Success) {
+        cout << "AI inference success: model=" << n->model_name << " runtime_backend=" << result.backend_name << " provider=" << result.provider_name << " outputs=" << result.output_f32.size() << endl;
+    } else if (result.backend == shorthand::ai::BackendKind::Fallback || result.status == shorthand::ai::InferenceStatus::NotExecuted) {
+        cout << "AI inference fallback: model=" << n->model_name << " runtime_backend=fallback inference_status=" << shorthand::ai::inferenceStatusToString(result.status) << " reason=" << result.reason << endl;
+    } else {
+        cout << "AI inference error: model=" << n->model_name << " runtime_backend=" << result.backend_name << " reason=" << result.reason << endl;
+    }
+    return 0;
+}
 int Interpreter::visit(AST_CONTINUE *){ return 0; }
 int Interpreter::visit(AST_RETURN_STATEMENT * n){ if(n->expression) n->expression->accept(*this); return 0; }
 int Interpreter::visit(AST_BOOL_LITERAL * n){ num = n->value ? 1 : 0; return num; }

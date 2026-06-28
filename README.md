@@ -98,3 +98,7 @@ Ready for internal engineering review only. See `docs/known_limitations.md` befo
 ShortHand now includes first-class model, tensor, inference, GreenAI contract, GreenAI measurement, semantic validation, deterministic fallback runtime, and C3-ECO-aligned evidence constructs. The official implementation path is C++/LLVM-first and does not require Python. Optional AI SDKs (ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, OpenBLAS) are selected through build roots/options and are not vendored. When they are absent, fallback evidence reports `runtime_backend: fallback`, `inference_status: not_executed`, and `reason: backend_not_available`.
 
 Evidence artifacts are developer evidence reports only and include: `Evidence report only; this tool does not grant certification.`
+
+### AI runtime backend abstraction
+
+ShortHand supports simple `model`, `tensor`, and `infer model(input) -> output;` declarations for AI workloads. Backend preferences hide optional ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, and fallback details behind one runtime abstraction. Optional SDKs are disabled by default and are not vendored; configure local roots to experiment with real SDK execution. The fallback backend is always buildable, deterministic, and reports `not_executed` rather than a false inference success.
