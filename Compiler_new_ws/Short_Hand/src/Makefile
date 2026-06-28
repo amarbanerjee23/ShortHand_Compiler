@@ -3,7 +3,6 @@ LLVM_CONFIG ?= llvm-config
 LLVM_CXXFLAGS := $(shell $(LLVM_CONFIG) --cxxflags 2>/dev/null)
 LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --system-libs --libs core bitwriter 2>/dev/null)
 CXXFLAGS ?= -O2 -Wall -Wextra -Wpedantic -std=c++17 -g
-OPTIONAL_BACKEND_DEFS := -DSHORTHAND_HAS_ONNXRUNTIME=0 -DSHORTHAND_HAS_TENSORRT=0 -DSHORTHAND_HAS_OPENVINO=0 -DSHORTHAND_HAS_LIBTORCH=0 -DSHORTHAND_HAS_LLAMACPP=0 -DSHORTHAND_HAS_OPENBLAS=0 -DSHORTHAND_HAS_EIGEN=0
 LDFLAGS ?=
 FLEX_LDLIB := $(shell printf 'int main(){return 0;}\n' | $(CXX) -x c++ - -lfl -o /tmp/shorthand_check_flex_lib >/dev/null 2>&1 && echo -lfl; rm -f /tmp/shorthand_check_flex_lib)
 LDLIBS ?= $(FLEX_LDLIB)
@@ -16,22 +15,52 @@ LLAMACPP_ROOT ?=
 EIGEN_ROOT ?=
 OPENBLAS_ROOT ?=
 
-AI_CXXFLAGS := -DSHORTHAND_HAS_ONNXRUNTIME=0 -DSHORTHAND_HAS_TENSORRT=0 -DSHORTHAND_HAS_OPENVINO=0 -DSHORTHAND_HAS_LIBTORCH=0 -DSHORTHAND_HAS_LLAMACPP=0 -DSHORTHAND_HAS_OPENBLAS=0 -DSHORTHAND_HAS_EIGEN=0
+SHORTHAND_HAS_ONNXRUNTIME := 0
+SHORTHAND_HAS_TENSORRT := 0
+SHORTHAND_HAS_OPENVINO := 0
+SHORTHAND_HAS_LIBTORCH := 0
+SHORTHAND_HAS_LLAMACPP := 0
+SHORTHAND_HAS_OPENBLAS := 0
+SHORTHAND_HAS_EIGEN := 0
 AI_LDLIBS :=
 
 ifneq ($(ONNXRUNTIME_ROOT),)
-AI_CXXFLAGS += -DUSE_ONNXRUNTIME -I$(ONNXRUNTIME_ROOT)/include
+SHORTHAND_HAS_ONNXRUNTIME := 1
 AI_LDLIBS += -L$(ONNXRUNTIME_ROOT)/lib -lonnxruntime
 endif
-
+ifneq ($(TENSORRT_ROOT),)
+SHORTHAND_HAS_TENSORRT := 1
+endif
+ifneq ($(OPENVINO_ROOT),)
+SHORTHAND_HAS_OPENVINO := 1
+endif
 ifneq ($(LIBTORCH_ROOT),)
-AI_CXXFLAGS += -DUSE_LIBTORCH -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
+SHORTHAND_HAS_LIBTORCH := 1
 AI_LDLIBS += -L$(LIBTORCH_ROOT)/lib -ltorch -ltorch_cpu -lc10
 endif
+ifneq ($(LLAMACPP_ROOT),)
+SHORTHAND_HAS_LLAMACPP := 1
+endif
+ifneq ($(OPENBLAS_ROOT),)
+SHORTHAND_HAS_OPENBLAS := 1
+endif
+ifneq ($(EIGEN_ROOT),)
+SHORTHAND_HAS_EIGEN := 1
+endif
 
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
+OPTIONAL_BACKEND_DEFS := -DSHORTHAND_HAS_ONNXRUNTIME=$(SHORTHAND_HAS_ONNXRUNTIME) -DSHORTHAND_HAS_TENSORRT=$(SHORTHAND_HAS_TENSORRT) -DSHORTHAND_HAS_OPENVINO=$(SHORTHAND_HAS_OPENVINO) -DSHORTHAND_HAS_LIBTORCH=$(SHORTHAND_HAS_LIBTORCH) -DSHORTHAND_HAS_LLAMACPP=$(SHORTHAND_HAS_LLAMACPP) -DSHORTHAND_HAS_OPENBLAS=$(SHORTHAND_HAS_OPENBLAS) -DSHORTHAND_HAS_EIGEN=$(SHORTHAND_HAS_EIGEN)
+AI_CXXFLAGS := $(OPTIONAL_BACKEND_DEFS)
+ifneq ($(ONNXRUNTIME_ROOT),)
+AI_CXXFLAGS += -I$(ONNXRUNTIME_ROOT)/include
+endif
+ifneq ($(LIBTORCH_ROOT),)
+AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
+endif
+
+AI_RUNTIME_CORE_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
 BIN := ../build/short_hand
-AI_RUNTIME_SRC := ai_runtime/AI_Runtime.cpp
+AI_RUNTIME_SRC := $(AI_RUNTIME_CORE_SRC)
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
 AI_APP_BIN := ../build/short_ai_app
 AI_TRAIN_BIN := ../build/short_ai_train
@@ -69,7 +98,7 @@ short_hand: patch-generated-parser $(SRC)
 
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build
-	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) -o $(AI_APP_BIN) ai_app.cpp $(AI_RUNTIME_SRC) $(LDFLAGS) $(AI_LDLIBS)
+	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) -o $(AI_APP_BIN) ai_app.cpp $(AI_RUNTIME_CORE_SRC) $(LDFLAGS) $(AI_LDLIBS)
 
 ai_train: ai_train.cpp $(AI_TRAIN_SRC)
 	@mkdir -p ../build
@@ -86,7 +115,7 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool *.bc *.ir *.o
 
@@ -110,8 +139,11 @@ test-negative: short_hand
 test-llvm: short_hand
 	bash ../../../tests/run_language_tests.sh llvm
 
-test-ai: ai_app
+test-ai: short_hand
 	bash ../../../tests/run_language_tests.sh ai
+
+test-ai-app: ai_app
+	bash ../../../tests/run_language_tests.sh ai_app
 
 sanitize:
 	$(MAKE) clean
