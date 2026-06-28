@@ -127,7 +127,7 @@ extern "C" void shorthand_release_scanner_strings() {
 "="    return '=';
 "["    return '[';
 "]"    return ']';
-"->"   { return GREATER; }
+"->"   { return ARROW; }
 "("    return '(';
 ")"    return ')';
 

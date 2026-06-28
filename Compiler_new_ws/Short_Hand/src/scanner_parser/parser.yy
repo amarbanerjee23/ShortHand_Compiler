@@ -62,6 +62,7 @@ static GreenAIMeasurementData current_measure;
 %left AND
 %left EQUAL NOT_EQUAL
 %left LESS LESS_OR_EQUAL GREATER GREATER_OR_EQUAL
+%token ARROW
 %left '+' '-'
 %left '*' '/' '%'
 %right UMINUS
@@ -269,7 +270,8 @@ STATEMENT_RULE:    MODEL_DECLARATION { $$ = $1; }
 
 RETURN_STATEMENT: RETURN EXPRESSION_RULE ';' { $$ = new AST_RETURN_STATEMENT($2); } | RETURN ';' { $$ = new AST_RETURN_STATEMENT(); };
 
-INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';' { $$ = new AST_INFER_STATEMENT(string($2), string($4), string($7)); };
+INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' ARROW IDENTIFIER ';' { $$ = new AST_INFER_STATEMENT(string($2), string($4), string($7)); }
+               | INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';' { $$ = new AST_INFER_STATEMENT(string($2), string($4), string($7)); };
 
 TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL ';' { TensorDeclarationData d; d.name=$2; d.element_type=$3; d.shape_csv=string($4).substr(1,string($4).size()-2); d.dynamic=(d.shape_csv=="dynamic"); d.rank= d.dynamic?0:1; long long total=1; if(!d.dynamic){ d.rank=0; size_t start=0; while(start<d.shape_csv.size()){ size_t pos=d.shape_csv.find(',',start); string part=d.shape_csv.substr(start,pos==string::npos?string::npos:pos-start); total*= atoll(part.c_str()); d.rank++; if(pos==string::npos) break; start=pos+1; }} d.total_elements=total; $$=new AST_TENSOR_DECLARATION(d); };
 
