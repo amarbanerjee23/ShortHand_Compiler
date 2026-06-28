@@ -51,8 +51,8 @@ export LLVM_CONFIG="$(command -v llvm-config)"
 export PATH="${BUILD_DIR}:\$PATH"
 ENV
 
-echo "[setup 1/3] Building mandatory targets"
-make -C "${SRC_DIR}" compiler green_ai_tool
+echo "[setup 1/4] Building mandatory targets"
+make -C "${SRC_DIR}" compiler green_ai_tool c3eco_gate
 
 if [[ -n "${ONNXRUNTIME_ROOT:-}" ]]; then
   echo "ONNX Runtime enabled from ${ONNXRUNTIME_ROOT}; building optional ai_app."
@@ -68,9 +68,11 @@ else
   echo "Optional ai_train build skipped: LIBTORCH_ROOT is not set."
 fi
 
-echo "[setup 2/3] Running strict validation"
+echo "[setup 2/4] Running strict validation"
 bash "${ROOT_DIR}/scripts/validate_language.sh" --strict
-echo "[setup 3/3] Running smoke tests"
+echo "[setup 3/4] Running smoke tests"
 bash "${ROOT_DIR}/scripts/smoke_test.sh"
+echo "[setup 4/4] Running C3-ECO production-readiness gate"
+bash "${ROOT_DIR}/scripts/production_readiness_gate.sh"
 
 echo "Setup completed. Run: source ./shorthand_env.sh"
