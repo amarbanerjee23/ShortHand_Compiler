@@ -1,0 +1,102 @@
+green {
+  product: "ShortHand RAG assistant inference candidate"
+  product_version: "1.0.0"
+  owner: "ShortHand Compiler Project"
+  release_date: "2026-06-28"
+  software_class: "S6-AI-ML-GenAI"
+  deployment_mode: "cloud_native_inference"
+  certification_scope: "candidate-evidence-for-rag-inference-orchestration-not-external-model-provider-training"
+  green_mode: "strict"
+  certification_profile: "C3-ECO-AI"
+  functional_unit: "1000_generated_answers"
+  success_criteria: { grounded_answer_rate_min: 0.90 hallucination_rate_max: 0.02 p95_latency_ms_max: 1500 error_rate_max: 0.01 security_tests_passed: true accessibility_tests_passed: true privacy_tests_passed: true }
+  boundary: { include: ["prompt_orchestration", "retrieval", "embedding_cache", "reranking", "model_inference", "api_gateway", "observability", "storage", "network"] exclude: ["third_party_foundation_model_training"] embodied_hardware: "provider_allocated_where_available" third_party_services: ["external_llm_api"] }
+  measurement_quality: "MQ2"
+  data_quality: "DQ2"
+  audit_evidence: ["rag_workload_script.sh", "token_usage_export.csv", "vector_db_query_log.json", "api_usage_report.json", "quality_guardrail_eval.json"]
+  security_floor: { critical_vulnerabilities_open: 0 sbom_available: true security_scan_passed: true prompt_injection_tests_passed: true }
+  accessibility_safety_floor: { accessibility_regression: false safety_regression: false privacy_regression: false reliability_regression: false }
+  no_quality_degradation: { quality_guardrails_passed: true answer_quality_preserved: true safety_filter_preserved: true functionality_reduced_for_efficiency: false }
+  materiality: { individual_material_components_threshold_percent: 1 cumulative_omissions_percent_max: 5 unmeasured_material_components: [] conservative_estimates_used: true }
+  evidence_retention_months: 24
+  recertification_acceptance: true
+  claims: { claim_text: "C3-ECO AI candidate evidence report only" public_certification_claim: false offsets_or_recs_used_for_core_score: false avoided_impact_subtracted: false }
+  assumptions: ["Third-party model training is outside scope and disclosed", "Token accounting covers successful, failed, and retried requests", "No offset or renewable certificate is subtracted from core score"]
+}
+
+budgets {
+  energy_per_1000_tokens_wh_max: 4
+  carbon_per_1000_tokens_gco2e_max: 3
+  token_budget_per_task_max: 900
+  retrieval_top_k_max: 5
+  p95_latency_ms_max: 1500
+  memory_peak_mb_max: 4096
+  network_mb_per_task_max: 2
+}
+
+carbon {
+  accounting_method: "location_based"
+  region: "IN-WEST"
+  grid_factor_kgco2e_per_kwh: 0.475
+  report_market_based_separately: true
+  market_based_carbon_gco2e: 0
+  offsets_allowed_in_core_score: false
+  offsets_reported_separately: true
+  offsets_gco2e: 0
+}
+
+model rag_answer_model {
+  type: "llm"
+  format: "external_api"
+  precision: "provider_disclosed_or_unknown"
+  model_role: "application_deployer"
+  compression: { quantized: false pruned: false distilled: false provider_managed: true }
+  green_model: { parameters_count: 0 model_size_mb: 0 accuracy_energy_frontier_required: true model_necessity_justification: "RAG synthesis requires language generation; smaller routing option is tried first" smaller_model_evaluated: true provider_boundary: "third-party model API training and hardware details disclosed as external boundary" deployer_boundary: "prompt templates, RAG retrieval, routing, cache, token budgets, quality guardrails, and usage accounting" }
+}
+
+llm_task answer_question {
+  model: "rag_answer_model"
+  max_input_tokens: 700
+  max_output_tokens: 200
+  green_llm: { token_budget_per_task: 900 prompt_cache_enabled: true max_context_chunks: 5 output_length_guardrail: true }
+}
+
+rag_pipeline support_kb_retrieval {
+  vector_store: "local_pgvector"
+  embedding_model: "small_embedding_model"
+  reranker: "lightweight_cross_encoder"
+  green_rag: { retrieve_top_k_max: 5 embedding_cache_enabled: true chunk_reuse_enabled: true rerank_only_top_k: 5 vector_query_budget_ms: 80 }
+}
+
+infer endpoint answer {
+  model: "rag_answer_model"
+  batch_size: 1
+  cache: "enabled"
+  green_infer: { measure_energy_per_inference: true measure_latency_energy: ["p50", "p95", "p99"] measure_tokens: true measure_cache_hit_rate: true failed_runs_included: true }
+}
+
+target cloud_runtime {
+  hardware: "cloud_cpu_gpu_allocated"
+  accelerator: "provider_api_or_gpu"
+  runtime: "cpp_orchestration_with_external_ai_api"
+  language_backend: "cpp"
+  compiler_optimization: ["O2", "lto_when_available"]
+  green_target: { measure_idle_watts: false support_low_resource_mode: true max_memory_mb: 4096 carbon_aware_region: "IN-WEST" autoscaling_enabled: true }
+}
+
+measurements {
+  functional_unit_count: 1000
+  inference_energy_kwh: 0.006
+  third_party_ai_api_energy_kwh: 0.002
+  network_energy_kwh: 0.0004
+  storage_energy_kwh: 0.0002
+  memory_peak_mb: 2048
+  network_mb_per_task: 0.8
+  tokens_per_task: 650
+  input_tokens_per_task: 480
+  output_tokens_per_task: 170
+  retrieval_top_k: 5
+  p95_latency_ms: 1100
+  p95_latency_energy_j: 12
+  failed_units_included: true
+}

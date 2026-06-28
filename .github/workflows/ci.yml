@@ -58,6 +58,12 @@ jobs:
       - name: Makefile test suite
         run: make -C Compiler_new_ws/Short_Hand/src test
 
+      - name: C3-ECO conformance gate
+        run: make -C Compiler_new_ws/Short_Hand/src test-c3eco
+
+      - name: Production readiness gate
+        run: bash scripts/production_readiness_gate.sh
+
       - name: Sanitizer tests
         run: make -C Compiler_new_ws/Short_Hand/src sanitize
 

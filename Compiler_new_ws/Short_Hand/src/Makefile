@@ -66,6 +66,8 @@ AI_APP_BIN := ../build/short_ai_app
 AI_TRAIN_BIN := ../build/short_ai_train
 GREEN_AI_TOOL_BIN := ../build/green_ai_tool
 GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
+C3ECO_GATE_BIN := ../build/c3eco_gate
+C3ECO_GATE_SRC := green_ai/C3ECOGate.cpp
 
 all: compiler
 
@@ -108,21 +110,28 @@ green_ai_tool: $(GREEN_AI_TOOL_SRC)
 	@mkdir -p ../build
 	$(CXX) $(CXXFLAGS) -o $(GREEN_AI_TOOL_BIN) $(GREEN_AI_TOOL_SRC)
 
+c3eco_gate: $(C3ECO_GATE_SRC)
+	@mkdir -p ../build
+	$(CXX) $(CXXFLAGS) -o $(C3ECO_GATE_BIN) $(C3ECO_GATE_SRC)
+
 test-green: green_ai_tool
 	bash ../../../tests/green_ai/test_green_ai_tool.sh
+
+test-c3eco: green_ai_tool c3eco_gate
+	bash ../../../tests/green_ai/test_c3eco_gate.sh
 
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool *.bc *.ir *.o
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/c3eco_gate *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-unit test-integration test-green test-compiler test-negative test-llvm test-ai
+test: test-unit test-integration test-green test-c3eco test-compiler test-negative test-llvm test-ai
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -147,8 +156,9 @@ test-ai-app: ai_app
 
 sanitize:
 	$(MAKE) clean
-	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool
+	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool c3eco_gate
 	bash ../../../tests/run_language_tests.sh sanitize
+	$(MAKE) test-c3eco
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \
