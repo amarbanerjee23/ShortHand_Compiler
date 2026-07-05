@@ -111,11 +111,19 @@ green_ai_tool: $(GREEN_AI_TOOL_SRC)
 test-green: green_ai_tool
 	bash ../../../tests/green_ai/test_green_ai_tool.sh
 
+c3eco_gate: green_ai_tool
+	../build/green_ai_tool validate ../../../examples/green_ai/image_classification.greenai --strict strict
+	../build/green_ai_tool report ../../../examples/green_ai/image_classification.greenai --output /tmp/short_hand_c3eco_report.json --strict strict
+	grep -q "Evidence report only; this tool does not grant certification." /tmp/short_hand_c3eco_report.json
+
+test-c3eco: c3eco_gate
+	../build/green_ai_tool check ../../../examples/green_ai/image_classification.greenai --baseline /tmp/short_hand_c3eco_report.json --threshold-percent 10
+
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand ai_app ai_train green_ai_tool test test-unit test-integration test-green test-compiler test-negative test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool *.bc *.ir *.o
 

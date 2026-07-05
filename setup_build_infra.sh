@@ -68,9 +68,12 @@ else
   echo "Optional ai_train build skipped: LIBTORCH_ROOT is not set."
 fi
 
-echo "[setup 2/3] Running strict validation"
+echo "[setup 2/4] Running production-readiness gate"
+bash "${ROOT_DIR}/scripts/production_readiness_gate.sh"
+
+echo "[setup 3/4] Running strict validation"
 bash "${ROOT_DIR}/scripts/validate_language.sh" --strict
-echo "[setup 3/3] Running smoke tests"
+echo "[setup 4/4] Running smoke tests"
 bash "${ROOT_DIR}/scripts/smoke_test.sh"
 
 echo "Setup completed. Run: source ./shorthand_env.sh"

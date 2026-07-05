@@ -11,4 +11,17 @@ make -C Compiler_new_ws/Short_Hand/src test
 make -C Compiler_new_ws/Short_Hand/src sanitize
 ```
 
-Skipped optional checks must be disclosed with the missing dependency (`ONNXRUNTIME_ROOT`, `LIBTORCH_ROOT`, RAPL/NVML, or platform tools). Do not claim production readiness, IEEE TSE readiness, or literal zero bugs. The only acceptable reliability claim is evidence-based: no known bugs under the full validation suite, after that suite passes.
+## Skipped Optional Checks
+
+Default CI may skip optional checks when their local dependencies or host measurement facilities are not present. Skipped items and the missing dependency or facility must be disclosed for:
+
+- `ONNXRUNTIME_ROOT`
+- `LIBTORCH_ROOT`
+- `RAPL/NVML`
+- platform-specific measurement tools
+
+These optional checks must be enabled, run, and backed by retained evidence before any scoped public release or external certification claim that depends on ONNX Runtime execution, LibTorch execution, hardware energy telemetry, GPU telemetry, or host-specific measurement data.
+
+## Claims Policy
+
+Do not make unsupported production, certification, external publication, or absolute defect-freedom claims. The only acceptable reliability statement is evidence-based: no known bugs under the full validation suite, after that suite passes.
