@@ -1,15 +1,121 @@
 #include "SemanticAnalyzer.h"
 #include "../ai_runtime/AI_Types.h"
 #include <set>
-static bool validShape(const std::string&s){ if(s=="dynamic") return true; return shorthand::ai::validateShape(shorthand::ai::parseShapeCsv(s)); }
-int SemanticAnalyzer::visit(AST_PROGRAM*p){ if(p->decl_block) p->decl_block->accept(*this); if(p->functions) p->functions->accept(*this); if(p->code_block) p->code_block->accept(*this); return diagnostics.hasErrors()?1:0; }
-int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK*){ return 0; } int SemanticAnalyzer::visit(AST_FUNCTION_LIST_RULE*f){ for(auto x:f->functions) x->accept(*this); return 0; } int SemanticAnalyzer::visit(AST_LOGIC_BLOCK*b){ if(b->block_statement) b->block_statement->accept(*this); return 0; } int SemanticAnalyzer::visit(AST_STATEMENTS_BLOCK*b){ for(auto s:b->statements) s->accept(*this); return 0; }
-int SemanticAnalyzer::visit(AST_MODEL_DECLARATION*n){ auto &d=n->data; if(models.count(d.name)) diagnostics.error("model redeclared: "+d.name); models[d.name]=d; auto format=shorthand::ai::parseModelFormat(d.format); if(d.format.empty()||format==shorthand::ai::ModelFormat::Unknown) diagnostics.error("model "+d.name+" missing or invalid format"); if(shorthand::ai::parseElementType(d.precision)==shorthand::ai::ElementType::Unknown) diagnostics.error("model "+d.name+" has invalid precision"); if(d.input_shape.empty()||!validShape(d.input_shape)) diagnostics.error("model "+d.name+" has invalid input_shape"); if(!d.output_shape.empty()&&!validShape(d.output_shape)) diagnostics.error("model "+d.name+" has invalid output_shape"); if(!d.has_quality_guardrail) diagnostics.error("model "+d.name+" requires quality_guardrail"); bool hasFallback=false; for(const auto &b:d.backend_preference){ auto kind=shorthand::ai::parseBackendKind(b); hasFallback = hasFallback || kind==shorthand::ai::BackendKind::Fallback; } if(d.backend_preference.empty()) diagnostics.warning("model "+d.name+" has no backend_preference; fallback will be used if allowed"); if(!hasFallback && !d.backend_preference.empty() && format==shorthand::ai::ModelFormat::Onnx){ bool compatible=false; for(const auto &b:d.backend_preference){ auto k=shorthand::ai::parseBackendKind(b); compatible = compatible || k==shorthand::ai::BackendKind::OnnxRuntimeCPU || k==shorthand::ai::BackendKind::OnnxRuntimeCUDA || k==shorthand::ai::BackendKind::OnnxRuntimeTensorRT; } if(!compatible) diagnostics.error("model "+d.name+" has incompatible backend_preference for onnx without fallback"); } return 0; }
-int SemanticAnalyzer::visit(AST_TENSOR_DECLARATION*n){ if(tensors.count(n->data.name)) diagnostics.error("tensor redeclared: "+n->data.name); tensors[n->data.name]=n->data; if(!validShape(n->data.shape_csv)) diagnostics.error("invalid tensor shape for "+n->data.name); return 0; }
-int SemanticAnalyzer::visit(AST_GREENAI_CONTRACT*n){ auto &d=n->data; contracts[d.name]=d; if(!d.has_functional_unit) diagnostics.error("greenai_contract "+d.name+" missing functional_unit"); if(!d.has_success_criteria) diagnostics.error("greenai_contract "+d.name+" missing success_criteria"); if(!d.has_boundary) diagnostics.error("greenai_contract "+d.name+" missing boundary"); if(!d.has_mq||!d.has_dq) diagnostics.error("greenai_contract "+d.name+" requires MQ/DQ"); if(!d.has_carbon_factor||d.carbon_factor<=0) diagnostics.error("greenai_contract "+d.name+" requires positive carbon_factor"); if(!d.has_quality_guardrail) diagnostics.error("greenai_contract "+d.name+" requires quality_guardrail"); if(d.claims_mode!="evidence_only") diagnostics.error("claims_mode must be evidence_only"); if(d.energy_budget_j<0||d.carbon_budget_gco2e<0) diagnostics.error("budgets must be non-negative"); return 0; }
-int SemanticAnalyzer::visit(AST_GREENAI_MEASUREMENT*n){ if(!contracts.empty()&&!contracts.count(n->data.workload)) diagnostics.error("greenai_measure references unknown contract: "+n->data.workload); return 0; }
-int SemanticAnalyzer::visit(AST_INFER_STATEMENT*n){ if(!models.count(n->model_name)) diagnostics.error("infer references unknown model: "+n->model_name); if(!tensors.empty()&&!tensors.count(n->input_name)) diagnostics.error("infer references unknown input tensor: "+n->input_name); return 0; }
-int SemanticAnalyzer::visit(AST_BREAK*){ if(loopDepth==0) diagnostics.error("break outside loop"); return 0; } int SemanticAnalyzer::visit(AST_CONTINUE*){ if(loopDepth==0) diagnostics.error("continue outside loop"); return 0; }
+
+static bool validShape(const std::string &s) {
+    if (s == "dynamic") return true;
+    return shorthand::ai::validateShape(shorthand::ai::parseShapeCsv(s));
+}
+
+static bool shapeCompatible(const std::string &modelShape, const std::string &tensorShape) {
+    if (modelShape.empty() || tensorShape.empty()) return true;
+    if (modelShape == "dynamic" || tensorShape == "dynamic") return true;
+    return shorthand::ai::parseShapeCsv(modelShape) == shorthand::ai::parseShapeCsv(tensorShape);
+}
+
+int SemanticAnalyzer::visit(AST_PROGRAM *p) {
+    if (p->decl_block) p->decl_block->accept(*this);
+    if (p->functions) p->functions->accept(*this);
+    if (p->code_block) p->code_block->accept(*this);
+    return diagnostics.hasErrors() ? 1 : 0;
+}
+
+int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK*) { return 0; }
+
+int SemanticAnalyzer::visit(AST_FUNCTION_LIST_RULE *f) {
+    for (auto x : f->functions) x->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_LOGIC_BLOCK *b) {
+    if (b->block_statement) b->block_statement->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_STATEMENTS_BLOCK *b) {
+    for (auto s : b->statements) s->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
+    auto &d = n->data;
+    if (models.count(d.name)) diagnostics.error("model redeclared: " + d.name);
+    models[d.name] = d;
+
+    auto format = shorthand::ai::parseModelFormat(d.format);
+    if (d.format.empty() || format == shorthand::ai::ModelFormat::Unknown)
+        diagnostics.error("model " + d.name + " missing or invalid format");
+    if (shorthand::ai::parseElementType(d.precision) == shorthand::ai::ElementType::Unknown)
+        diagnostics.error("model " + d.name + " has invalid precision");
+    if (d.input_shape.empty() || !validShape(d.input_shape))
+        diagnostics.error("model " + d.name + " has invalid input_shape");
+    if (!d.output_shape.empty() && !validShape(d.output_shape))
+        diagnostics.error("model " + d.name + " has invalid output_shape");
+    if (!d.has_quality_guardrail)
+        diagnostics.error("model " + d.name + " requires quality_guardrail");
+
+    bool hasFallback = false;
+    for (const auto &b : d.backend_preference) {
+        auto kind = shorthand::ai::parseBackendKind(b);
+        hasFallback = hasFallback || kind == shorthand::ai::BackendKind::Fallback;
+    }
+    if (d.backend_preference.empty())
+        diagnostics.warning("model " + d.name + " has no backend_preference; fallback will be used if allowed");
+    if (!hasFallback && !d.backend_preference.empty() && format == shorthand::ai::ModelFormat::Onnx) {
+        bool compatible = false;
+        for (const auto &b : d.backend_preference) {
+            auto k = shorthand::ai::parseBackendKind(b);
+            compatible = compatible || k == shorthand::ai::BackendKind::OnnxRuntimeCPU || k == shorthand::ai::BackendKind::OnnxRuntimeCUDA || k == shorthand::ai::BackendKind::OnnxRuntimeTensorRT;
+        }
+        if (!compatible) diagnostics.error("model " + d.name + " has incompatible backend_preference for onnx");
+    }
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_TENSOR_DECLARATION *n) {
+    if (tensors.count(n->data.name)) diagnostics.error("tensor redeclared: " + n->data.name);
+    tensors[n->data.name] = n->data;
+    if (!validShape(n->data.shape_csv)) diagnostics.error("invalid tensor shape for " + n->data.name);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_GREENAI_CONTRACT *n) {
+    auto &d = n->data;
+    contracts[d.name] = d;
+    if (!d.has_functional_unit) diagnostics.error("greenai_contract " + d.name + " missing functional_unit");
+    if (!d.has_success_criteria) diagnostics.error("greenai_contract " + d.name + " missing success_criteria");
+    if (!d.has_boundary) diagnostics.error("greenai_contract " + d.name + " missing boundary");
+    if (!d.has_mq || !d.has_dq) diagnostics.error("greenai_contract " + d.name + " requires MQ/DQ");
+    if (!d.has_carbon_factor || d.carbon_factor <= 0) diagnostics.error("greenai_contract " + d.name + " requires positive carbon_factor");
+    if (!d.has_quality_guardrail) diagnostics.error("greenai_contract " + d.name + " requires quality_guardrail");
+    if (d.claims_mode != "evidence_only") diagnostics.error("claims_mode must be evidence_only");
+    if (d.energy_budget_j < 0 || d.carbon_budget_gco2e < 0) diagnostics.error("budgets must be non-negative");
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_GREENAI_MEASUREMENT *n) {
+    if (!contracts.empty() && !contracts.count(n->data.workload))
+        diagnostics.error("greenai_measure references unknown contract: " + n->data.workload);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_INFER_STATEMENT *n) {
+    if (!models.count(n->model_name)) diagnostics.error("infer references unknown model: " + n->model_name);
+    if (!tensors.empty() && !tensors.count(n->input_name)) diagnostics.error("infer references unknown input tensor: " + n->input_name);
+    if (models.count(n->model_name) && tensors.count(n->input_name)) {
+        const auto &model = models[n->model_name];
+        const auto &tensor = tensors[n->input_name];
+        if (!shapeCompatible(model.input_shape, tensor.shape_csv))
+            diagnostics.error("infer input tensor shape " + tensor.shape_csv + " does not match model " + model.name + " input_shape " + model.input_shape);
+    }
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_BREAK*) { if (loopDepth == 0) diagnostics.error("break outside loop"); return 0; }
+int SemanticAnalyzer::visit(AST_CONTINUE*) { if (loopDepth == 0) diagnostics.error("continue outside loop"); return 0; }
+
 #define STUB(T) int SemanticAnalyzer::visit(T*){ return 0; }
 STUB(AST_EXPRESSION_STATEMENT_RULE) STUB(AST_FUNCTION_RULE) STUB(AST_FUNCTION_CALL_RULE) STUB(AST_ASSIGNMENT_RULE) STUB(AST_IF_STATEMENT) STUB(AST_IF_ELSE_STATEMENT) STUB(AST_GOTO_STATEMENT_RULE) STUB(AST_READ_RULE) STUB(AST_PRINT_RULE) STUB(AST_LABEL_RULE) STUB(AST_GREENAI_REPORT_RULE) STUB(AST_AI_INFER_RULE) STUB(AST_RETURN_STATEMENT) STUB(AST_BINARY_EXPRESSION_RULE) STUB(AST_UNARY_EXPRESSION_RULE) STUB(AST_SIMPLE_VARIABLE) STUB(AST_ARRAY_VARIABLE) STUB(AST_LITERAL) STUB(AST_STRING_LITERAL) STUB(AST_BOOL_LITERAL) STUB(AST_FLOAT_LITERAL) STUB(AST_FUNCTION_CALL_EXPRESSION)
-int SemanticAnalyzer::visit(AST_FOR_LOOP_STATEMENT_RULE*n){ loopDepth++; if(n->for_block) n->for_block->accept(*this); loopDepth--; return 0; } int SemanticAnalyzer::visit(AST_WHILE_LOOP_STATEMENT_RULE*n){ loopDepth++; if(n->while_block) n->while_block->accept(*this); loopDepth--; return 0; }
+
+int SemanticAnalyzer::visit(AST_FOR_LOOP_STATEMENT_RULE *n) { loopDepth++; if (n->for_block) n->for_block->accept(*this); loopDepth--; return 0; }
+int SemanticAnalyzer::visit(AST_WHILE_LOOP_STATEMENT_RULE *n) { loopDepth++; if (n->while_block) n->while_block->accept(*this); loopDepth--; return 0; }
