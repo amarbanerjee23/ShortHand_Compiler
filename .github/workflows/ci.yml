@@ -55,6 +55,9 @@ jobs:
       - name: Smoke tests
         run: bash scripts/smoke_test.sh
 
+      - name: Feature plan status check
+        run: bash scripts/check_feature_plan_status.sh
+
       - name: Makefile test suite
         run: make -C Compiler_new_ws/Short_Hand/src test
 
