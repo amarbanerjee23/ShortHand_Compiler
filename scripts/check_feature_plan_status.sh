@@ -40,10 +40,18 @@ for term in "${required_status_terms[@]}"; do
   fi
 done
 
-if grep -qi "fully production-ready" "${STATUS_FILE}"; then
-  echo "error: status file must not claim full production readiness while blockers remain" >&2
-  exit 1
-fi
+unsupported_claim_patterns=(
+  "Current status: fully production-ready"
+  "ShortHand is fully production-ready"
+  "all production blockers are complete"
+)
+
+for pattern in "${unsupported_claim_patterns[@]}"; do
+  if grep -qi "${pattern}" "${STATUS_FILE}"; then
+    echo "error: status file contains unsupported readiness claim: ${pattern}" >&2
+    exit 1
+  fi
+done
 
 if [[ "${REQUIRE_PRODUCTION_READY:-0}" == "1" ]]; then
   if grep -q "| Open |\|| Partial |" "${STATUS_FILE}"; then
