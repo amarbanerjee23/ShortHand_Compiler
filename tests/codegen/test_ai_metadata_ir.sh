@@ -25,9 +25,14 @@ for needle in \
   "shorthand.infer" \
   "classifier" \
   "input_shape=1,3,224,224" \
-  "compiled_metadata_only=true"; do
+  "compiled_runtime_hook=true" \
+  "short_ai_register_model" \
+  "short_ai_register_tensor" \
+  "short_greenai_register_contract" \
+  "short_greenai_record_measurement" \
+  "short_ai_infer"; do
   if ! grep -q "${needle}" "${IR_FILE}"; then
-    echo "expected LLVM IR metadata to contain: ${needle}" >&2
+    echo "expected LLVM IR metadata/runtime lowering to contain: ${needle}" >&2
     cat "${IR_FILE}" >&2
     exit 1
   fi
