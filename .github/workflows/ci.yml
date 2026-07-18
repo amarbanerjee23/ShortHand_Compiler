@@ -40,6 +40,7 @@ jobs:
           command -v clang
           command -v cmake
           command -v ninja
+          command -v base64
           llvm-config --version
           llc --version
           clang --version
@@ -58,8 +59,14 @@ jobs:
       - name: Feature plan status check
         run: bash scripts/check_feature_plan_status.sh
 
+      - name: Enterprise hardening check
+        run: bash scripts/check_enterprise_hardening.sh
+
       - name: Makefile test suite
         run: make -C Compiler_new_ws/Short_Hand/src test
+
+      - name: Certification bundle smoke
+        run: bash scripts/generate_certification_bundle.sh Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short /tmp/shorthand_c3eco_bundle
 
       - name: Sanitizer tests
         run: make -C Compiler_new_ws/Short_Hand/src sanitize
@@ -82,5 +89,6 @@ jobs:
             /tmp/shorthand_*.err
             /tmp/short_hand_*.out
             /tmp/short_hand_*.err
+            /tmp/shorthand_c3eco_bundle/
             Compiler_new_ws/Short_Hand/build/
             build/
