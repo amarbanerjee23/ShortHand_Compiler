@@ -18,7 +18,7 @@ Source plan: `docs/language_feature_implementation_plan.md`
 | L2 | Keep beta syntax stable for tensor/model/contract/measurement/infer | Implemented for current beta syntax | `docs/language_spec.md`, `scanner_parser/parser.yy`, `scanner_parser/scanner.ll` | Provides current beta language surface |
 | L3 | Reject infer when input tensor shape is incompatible with model input shape | Implemented | `Compiler_new_ws/Short_Hand/src/visitors/SemanticAnalyzer.cpp` | Prevents invalid AI programs from reaching runtime |
 | L4 | Add negative tests for invalid AI programs | Implemented | `tests/semantic/invalid/ai_shape_mismatch.short` | Ensures semantic rejection is covered in CI |
-| L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Partial | `IR_Generator.cpp` now emits LLVM metadata globals and compiled runtime hook calls for model, tensor, GreenAI contract, GreenAI measurement, and infer statements; real backend execution remains open | Preserves AI workload metadata and runtime hook intent in compiled IR/bitcode, but does not yet execute a real backend model |
+| L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Partial | `IR_Generator.cpp` emits LLVM metadata globals and compiled runtime hook calls; `OnnxRuntimeBackend.cpp` now has real SDK-backed ONNX Runtime CPU execution when `ONNXRUNTIME_ROOT` is configured | Preserves AI workload metadata and can execute ONNX CPU inference in SDK-enabled builds; full backend matrix remains open |
 
 ## C3-ECO certification language plan status
 
@@ -37,7 +37,7 @@ Source plan: `docs/c3eco_certification_language_upgrade_plan.md`
 | C3L-9 | Certification scoring and level estimator | Open | Must remain candidate-only unless external certifier signs |
 | C3L-10 | Claim-safe report generation | Partial | `c3eco-report`, `c3eco-check`, and `c3eco-workbook` CLI modes exist with candidate-only disclaimers; Markdown report and full schema remain open |
 | C3L-11 | Quality/security/privacy/accessibility guardrails | Open | Needed to ensure efficiency is not achieved by weakening required quality or safety floors |
-| C3L-12 | CI/CD and eco-regression gates | Partial | CI now exercises candidate report/check/workbook paths through evidence tests; release-to-release eco-regression is still open |
+| C3L-12 | CI/CD and eco-regression gates | Partial | CI now exercises candidate report/check/workbook paths and ONNX Runtime backend source/build-wiring checks; release-to-release eco-regression is still open |
 
 ## Enterprise beta requirements status
 
@@ -47,7 +47,7 @@ Source plan: `docs/beta_enterprise_requirements.md`
 | --- | --- | --- | --- |
 | R1 | Language contract | Partial | Current beta syntax is documented, but complete grammar/versioned standard is still missing |
 | R2 | Compiler build and validation | Implemented for current maturity | CI runs setup, strict validation, smoke tests, Makefile tests, sanitizer, CMake, and CTest |
-| R3 | AI runtime behavior | Partial | Fallback is honest and deterministic; real ONNX Runtime CPU execution is still open |
+| R3 | AI runtime behavior | Partial | Fallback is honest and deterministic; ONNX Runtime CPU execution now exists for SDK-enabled builds, while additional backends and release-grade model fixtures remain open |
 | R4 | GreenAI and C3-ECO-aligned evidence | Partial | Evidence mode exists and keeps disclaimer; full evidence bundle automation is still open |
 | R5 | Security and supply-chain baseline | Partial | Security policy and SBOM plan exist; automated SBOM/signing are still open |
 | R6 | Developer experience | Partial | Build docs/examples exist; formatter, linter, editor tooling, and LSP remain open |
@@ -65,7 +65,7 @@ Source plan: `docs/enterprise_release_scorecard.md`
 | G8 compatibility and deprecation policy | Partial | Compatibility notes exist; formal deprecation process incomplete |
 | G9 conformance tests for all syntax | Partial | Some positive/negative tests exist; not full language matrix |
 | G10 diagnostics with source locations | Open | Diagnostics exist but full file/line/range diagnostics are not complete |
-| G11 real AI backend execution | Open | Required for enterprise AI production use |
+| G11 real AI backend execution | Partial | Real ONNX Runtime CPU execution is implemented behind `ONNXRUNTIME_ROOT`; CI verifies source/build wiring and normal fallback behavior, but SDK-backed live model execution still needs an external SDK/model fixture gate |
 | G12 fallback never claims executed inference | Implemented | Fallback path is deterministic and reported honestly |
 | G13 backend failure cases covered | Partial | Missing model and invalid shape paths exist; complete backend matrix is open |
 | G14-G16 GreenAI measurement/evidence | Partial | Evidence exists; full measurement plan and bundle automation remain open |
@@ -79,8 +79,8 @@ Source plan: `docs/enterprise_release_scorecard.md`
 
 These items must be completed before ShortHand can honestly be described as an industry-level production language for enterprise AI applications:
 
-1. Real ONNX Runtime CPU backend execution with tests.
-2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals and runtime hook calls are now partially implemented, but real backend execution remains open.
+1. Real ONNX Runtime CPU backend execution with tests: SDK-backed execution is implemented and source/build wiring is CI-checked; remaining work is a committed or downloadable model fixture plus SDK-enabled integration gate.
+2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals and runtime hook calls are now partially implemented, but linking generated code to the shared runtime and telemetry remains open.
 3. Full backend compatibility and failure matrix.
 4. Complete formal grammar and conformance test suite.
 5. Source-aware diagnostics with file, line, and preferably column/range details.
