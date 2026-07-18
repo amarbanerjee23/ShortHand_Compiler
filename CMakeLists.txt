@@ -135,6 +135,11 @@ add_executable(short_hand
 target_include_directories(short_hand PRIVATE ${SRC_DIR} ${GENERATED_DIR})
 target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
 target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_ONNXRUNTIME=${SHORTHAND_HAS_ONNXRUNTIME} SHORTHAND_HAS_TENSORRT=${SHORTHAND_HAS_TENSORRT} SHORTHAND_HAS_OPENVINO=${SHORTHAND_HAS_OPENVINO} SHORTHAND_HAS_LIBTORCH=${SHORTHAND_HAS_LIBTORCH} SHORTHAND_HAS_LLAMACPP=${SHORTHAND_HAS_LLAMACPP} SHORTHAND_HAS_OPENBLAS=${SHORTHAND_HAS_OPENBLAS} SHORTHAND_HAS_EIGEN=${SHORTHAND_HAS_EIGEN})
+if(SHORTHAND_HAS_ONNXRUNTIME)
+  target_include_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/include)
+  target_link_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/lib)
+  target_link_libraries(short_hand PRIVATE onnxruntime)
+endif()
 target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS})
 
 find_library(FL_LIBRARY fl)
