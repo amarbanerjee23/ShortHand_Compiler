@@ -1,0 +1,13 @@
+tensor input float "1";
+model local_llm {
+  format gguf;
+  path "models/local.gguf";
+  task "generation";
+  precision float32;
+  input_shape "1";
+  output_shape "1";
+  backend_preference onnxruntime_cpu;
+  compact true;
+  quality_guardrail accuracy >= 90;
+};
+infer local_llm(input) -> output;
