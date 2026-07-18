@@ -18,7 +18,7 @@ Source plan: `docs/language_feature_implementation_plan.md`
 | L2 | Keep beta syntax stable for tensor/model/contract/measurement/infer | Implemented for current beta syntax | `docs/language_spec.md`, `scanner_parser/parser.yy`, `scanner_parser/scanner.ll` | Provides current beta language surface |
 | L3 | Reject infer when input tensor shape is incompatible with model input shape | Implemented | `Compiler_new_ws/Short_Hand/src/visitors/SemanticAnalyzer.cpp` | Prevents invalid AI programs from reaching runtime |
 | L4 | Add negative tests for invalid AI programs | Implemented | `tests/semantic/invalid/ai_shape_mismatch.short` | Ensures semantic rejection is covered in CI |
-| L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Partial | `IR_Generator.cpp` now emits LLVM metadata globals for model, tensor, GreenAI contract, GreenAI measurement, and infer statements; real runtime calls remain open | Preserves AI workload metadata in compiled IR/bitcode but does not yet execute real backend inference |
+| L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Partial | `IR_Generator.cpp` now emits LLVM metadata globals and compiled runtime hook calls for model, tensor, GreenAI contract, GreenAI measurement, and infer statements; real backend execution remains open | Preserves AI workload metadata and runtime hook intent in compiled IR/bitcode, but does not yet execute a real backend model |
 
 ## C3-ECO certification language plan status
 
@@ -80,7 +80,7 @@ Source plan: `docs/enterprise_release_scorecard.md`
 These items must be completed before ShortHand can honestly be described as an industry-level production language for enterprise AI applications:
 
 1. Real ONNX Runtime CPU backend execution with tests.
-2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals are now partially implemented, but real runtime call lowering and backend execution remain open.
+2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals and runtime hook calls are now partially implemented, but real backend execution remains open.
 3. Full backend compatibility and failure matrix.
 4. Complete formal grammar and conformance test suite.
 5. Source-aware diagnostics with file, line, and preferably column/range details.
