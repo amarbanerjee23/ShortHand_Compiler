@@ -80,7 +80,7 @@ Source plan: `docs/enterprise_release_scorecard.md`
 These items must be completed before ShortHand can honestly be described as an industry-level production language for enterprise AI applications:
 
 1. Real ONNX Runtime CPU backend execution with tests.
-2. Runtime call lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`; compiled metadata preservation now exists but real backend execution remains open.
+2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals are now partially implemented, but real runtime call lowering and backend execution remain open.
 3. Full backend compatibility and failure matrix.
 4. Complete formal grammar and conformance test suite.
 5. Source-aware diagnostics with file, line, and preferably column/range details.
