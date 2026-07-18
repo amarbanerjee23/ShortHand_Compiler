@@ -1,3 +1,6 @@
+# Compatibility build harness for CI and sanitizer gates.
+# CMake is the production build system, but this Makefile remains intentionally
+# maintained until every Makefile-backed CI target has an equivalent CTest gate.
 CXX ?= g++
 LLVM_CONFIG ?= llvm-config
 LLVM_CXXFLAGS := $(shell $(LLVM_CONFIG) --cxxflags 2>/dev/null)
@@ -57,7 +60,7 @@ ifneq ($(LIBTORCH_ROOT),)
 AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
 endif
 
-AI_RUNTIME_CORE_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
+AI_RUNTIME_CORE_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Telemetry.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
 SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := $(AI_RUNTIME_CORE_SRC)
