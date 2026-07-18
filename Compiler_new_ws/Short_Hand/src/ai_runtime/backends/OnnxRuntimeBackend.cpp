@@ -1,5 +1,6 @@
 #include "OnnxRuntimeBackend.h"
 
+#include <exception>
 #include <sstream>
 #include <string>
 
