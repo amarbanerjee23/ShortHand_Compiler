@@ -1,7 +1,73 @@
 #ifndef SHORTHAND_EVIDENCE_EMITTER_H
 #define SHORTHAND_EVIDENCE_EMITTER_H
+
 #include "../ast/AST.h"
 #include <iosfwd>
 #include <string>
-class EvidenceEmitter : public Visitor { public: EvidenceEmitter(const std::string &source); void write(AST_PROGRAM *p, std::ostream &out); int visit(AST_PROGRAM*) override; int visit(AST_DATA_DECLARATION_BLOCK*) override; int visit(AST_FUNCTION_LIST_RULE*) override; int visit(AST_LOGIC_BLOCK*) override; int visit(AST_EXPRESSION_STATEMENT_RULE*) override; int visit(AST_FUNCTION_RULE*) override; int visit(AST_FUNCTION_CALL_RULE*) override; int visit(AST_ASSIGNMENT_RULE*) override; int visit(AST_STATEMENTS_BLOCK*) override; int visit(AST_IF_STATEMENT*) override; int visit(AST_BREAK*) override; int visit(AST_IF_ELSE_STATEMENT*) override; int visit(AST_FOR_LOOP_STATEMENT_RULE*) override; int visit(AST_WHILE_LOOP_STATEMENT_RULE*) override; int visit(AST_GOTO_STATEMENT_RULE*) override; int visit(AST_READ_RULE*) override; int visit(AST_PRINT_RULE*) override; int visit(AST_LABEL_RULE*) override; int visit(AST_GREENAI_REPORT_RULE*) override; int visit(AST_AI_INFER_RULE*) override; int visit(AST_MODEL_DECLARATION*) override; int visit(AST_TENSOR_DECLARATION*) override; int visit(AST_GREENAI_CONTRACT*) override; int visit(AST_GREENAI_MEASUREMENT*) override; int visit(AST_INFER_STATEMENT*) override; int visit(AST_CONTINUE*) override; int visit(AST_RETURN_STATEMENT*) override; int visit(AST_BINARY_EXPRESSION_RULE*) override; int visit(AST_UNARY_EXPRESSION_RULE*) override; int visit(AST_SIMPLE_VARIABLE*) override; int visit(AST_ARRAY_VARIABLE*) override; int visit(AST_LITERAL*) override; int visit(AST_STRING_LITERAL*) override; int visit(AST_BOOL_LITERAL*) override; int visit(AST_FLOAT_LITERAL*) override; int visit(AST_FUNCTION_CALL_EXPRESSION*) override; private: std::string source; std::vector<ModelDeclarationData> models; std::vector<GreenAIContractData> contracts; std::vector<GreenAIMeasurementData> measures; };
+#include <vector>
+
+struct InferCallEvidence {
+    std::string model_name;
+    std::string input_name;
+    std::string output_name;
+};
+
+class EvidenceEmitter : public Visitor {
+public:
+    EvidenceEmitter(const std::string &source);
+
+    void write(AST_PROGRAM *p, std::ostream &out);
+    void writeCandidateReport(AST_PROGRAM *p, std::ostream &out);
+    void writeWorkbookCsv(AST_PROGRAM *p, std::ostream &out);
+    void writeCheck(AST_PROGRAM *p, std::ostream &out);
+
+    int visit(AST_PROGRAM*) override;
+    int visit(AST_DATA_DECLARATION_BLOCK*) override;
+    int visit(AST_FUNCTION_LIST_RULE*) override;
+    int visit(AST_LOGIC_BLOCK*) override;
+    int visit(AST_EXPRESSION_STATEMENT_RULE*) override;
+    int visit(AST_FUNCTION_RULE*) override;
+    int visit(AST_FUNCTION_CALL_RULE*) override;
+    int visit(AST_ASSIGNMENT_RULE*) override;
+    int visit(AST_STATEMENTS_BLOCK*) override;
+    int visit(AST_IF_STATEMENT*) override;
+    int visit(AST_BREAK*) override;
+    int visit(AST_IF_ELSE_STATEMENT*) override;
+    int visit(AST_FOR_LOOP_STATEMENT_RULE*) override;
+    int visit(AST_WHILE_LOOP_STATEMENT_RULE*) override;
+    int visit(AST_GOTO_STATEMENT_RULE*) override;
+    int visit(AST_READ_RULE*) override;
+    int visit(AST_PRINT_RULE*) override;
+    int visit(AST_LABEL_RULE*) override;
+    int visit(AST_GREENAI_REPORT_RULE*) override;
+    int visit(AST_AI_INFER_RULE*) override;
+    int visit(AST_MODEL_DECLARATION*) override;
+    int visit(AST_TENSOR_DECLARATION*) override;
+    int visit(AST_GREENAI_CONTRACT*) override;
+    int visit(AST_GREENAI_MEASUREMENT*) override;
+    int visit(AST_INFER_STATEMENT*) override;
+    int visit(AST_CONTINUE*) override;
+    int visit(AST_RETURN_STATEMENT*) override;
+    int visit(AST_BINARY_EXPRESSION_RULE*) override;
+    int visit(AST_UNARY_EXPRESSION_RULE*) override;
+    int visit(AST_SIMPLE_VARIABLE*) override;
+    int visit(AST_ARRAY_VARIABLE*) override;
+    int visit(AST_LITERAL*) override;
+    int visit(AST_STRING_LITERAL*) override;
+    int visit(AST_BOOL_LITERAL*) override;
+    int visit(AST_FLOAT_LITERAL*) override;
+    int visit(AST_FUNCTION_CALL_EXPRESSION*) override;
+
+private:
+    void collect(AST_PROGRAM *p);
+    bool hasMinimumC3EcoEvidence() const;
+
+    std::string source;
+    std::vector<ModelDeclarationData> models;
+    std::vector<TensorDeclarationData> tensors;
+    std::vector<GreenAIContractData> contracts;
+    std::vector<GreenAIMeasurementData> measures;
+    std::vector<InferCallEvidence> infer_calls;
+};
+
 #endif
