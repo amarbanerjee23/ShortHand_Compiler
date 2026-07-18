@@ -91,6 +91,29 @@ static void emitShortHandMetadata(const std::string &kind, const std::string &na
     gv->setSection("shorthand_ai_metadata");
 }
 
+static Function *ensureShortHandRuntimeHook(const std::string &name, size_t argc) {
+    if (!module) return nullptr;
+    if (Function *existing = module->getFunction(name)) return existing;
+    std::vector<Type*> args(argc, i8PtrTy());
+    FunctionType *ftype = FunctionType::get(i32Ty(), args, false);
+    Function *fn = Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);
+    BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);
+    IRBuilder<> stubBuilder(entry);
+    stubBuilder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
+    return fn;
+}
+
+static void emitShortHandRuntimeCall(const std::string &hook, const std::vector<std::string> &args) {
+    if (!module || !Builder.GetInsertBlock()) return;
+    Function *fn = ensureShortHandRuntimeHook(hook, args.size());
+    if (!fn) return;
+    std::vector<Value*> llvmArgs;
+    for (size_t i = 0; i < args.size(); ++i) {
+        llvmArgs.push_back(Builder.CreateGlobalStringPtr(args[i], safeMetadataName(hook) + "_arg" + std::to_string(i)));
+    }
+    Builder.CreateCall(fn, llvmArgs, safeMetadataName(hook) + "_call");
+}
+
 Value *ShowError(const char *str) {
     cerr << "Error:\n" << str << "\n";
     return nullptr;
@@ -510,6 +533,7 @@ int IR_Generator::visit(AST_AI_INFER_RULE *ai_infer) {
     args.push_back(Builder.CreateGlobalStringPtr(shape_csv));
     args.push_back(Builder.CreateGlobalStringPtr(input_csv));
     ret = Builder.CreateCall(CalleeF, args, "aiInferPrintfCall");
+    emitShortHandRuntimeCall("short_ai_infer_legacy", {model_path, shape_csv, input_csv});
     return 0;
 }
 
@@ -602,12 +626,23 @@ llvm::Type* IR_Generator::parseType(ShortType type) {
 
 int IR_Generator::visit(AST_MODEL_DECLARATION *n){
     const auto &d = n->data;
+    std::string backend_preference = joinStrings(d.backend_preference, ",");
     emitShortHandMetadata("model", d.name,
         "name=" + d.name + ";format=" + d.format + ";path=" + stripQuotes(d.path) +
         ";task=" + stripQuotes(d.task) + ";precision=" + d.precision +
         ";input_shape=" + d.input_shape + ";output_shape=" + d.output_shape +
-        ";backend_preference=" + joinStrings(d.backend_preference, ",") +
+        ";backend_preference=" + backend_preference +
         ";compact=" + std::string(d.compact ? "true" : "false"));
+    emitShortHandRuntimeCall("short_ai_register_model", {
+        d.name,
+        d.format,
+        stripQuotes(d.path),
+        stripQuotes(d.task),
+        d.precision,
+        d.input_shape,
+        d.output_shape,
+        backend_preference
+    });
     return 0;
 }
 
@@ -617,19 +652,37 @@ int IR_Generator::visit(AST_TENSOR_DECLARATION *n){
         "name=" + d.name + ";element_type=" + d.element_type +
         ";shape=" + d.shape_csv + ";rank=" + std::to_string(d.rank) +
         ";total_elements=" + std::to_string(d.total_elements));
+    emitShortHandRuntimeCall("short_ai_register_tensor", {
+        d.name,
+        d.element_type,
+        d.shape_csv,
+        std::to_string(d.rank),
+        std::to_string(d.total_elements)
+    });
     return 0;
 }
 
 int IR_Generator::visit(AST_GREENAI_CONTRACT *n){
     const auto &d = n->data;
+    std::string boundary = joinStrings(d.boundary, ",");
     emitShortHandMetadata("greenai_contract", d.name,
         "name=" + d.name + ";functional_unit=" + stripQuotes(d.functional_unit) +
         ";success_criteria=" + stripQuotes(d.success_criteria) +
-        ";boundary=" + joinStrings(d.boundary, ",") +
+        ";boundary=" + boundary +
         ";measurement_quality=" + d.measurement_quality +
         ";data_quality=" + d.data_quality +
         ";carbon_factor=" + std::to_string(d.carbon_factor) +
         ";claims_mode=" + d.claims_mode);
+    emitShortHandRuntimeCall("short_greenai_register_contract", {
+        d.name,
+        stripQuotes(d.functional_unit),
+        stripQuotes(d.success_criteria),
+        boundary,
+        d.measurement_quality,
+        d.data_quality,
+        std::to_string(d.carbon_factor),
+        d.claims_mode
+    });
     return 0;
 }
 
@@ -640,13 +693,21 @@ int IR_Generator::visit(AST_GREENAI_MEASUREMENT *n){
         ";inferences=" + std::to_string(d.inferences) +
         ";watts=" + std::to_string(d.watts) +
         ";seconds=" + std::to_string(d.seconds));
+    emitShortHandRuntimeCall("short_greenai_record_measurement", {
+        d.workload,
+        d.backend,
+        std::to_string(d.inferences),
+        std::to_string(d.watts),
+        std::to_string(d.seconds)
+    });
     return 0;
 }
 
 int IR_Generator::visit(AST_INFER_STATEMENT *n){
     emitShortHandMetadata("infer", n->model_name,
         "model=" + n->model_name + ";input=" + n->input_name +
-        ";output=" + n->output_name + ";compiled_metadata_only=true");
+        ";output=" + n->output_name + ";compiled_runtime_hook=true");
+    emitShortHandRuntimeCall("short_ai_infer", {n->model_name, n->input_name, n->output_name});
     return 0;
 }
 
