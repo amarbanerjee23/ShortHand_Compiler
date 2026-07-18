@@ -20,6 +20,7 @@ static IRBuilder<> Builder(ShortGlobalContext);
 static Symbol_Table symbol_table_obj;
 static FunctionCallee CalleeF;
 static FunctionCallee CalleeR;
+static unsigned ShortHandMetadataCounter = 0;
 
 static Type *i32Ty() { return Type::getInt32Ty(ShortGlobalContext); }
 static Type *i1Ty() { return Type::getInt1Ty(ShortGlobalContext); }
@@ -53,6 +54,41 @@ static Value *asBool(Value *value) {
 static AllocaInst *createEntryBlockAlloca(Function *function, const std::string &name) {
     IRBuilder<> tmp(&function->getEntryBlock(), function->getEntryBlock().begin());
     return tmp.CreateAlloca(i32Ty(), nullptr, name);
+}
+
+static std::string stripQuotes(std::string value) {
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+        return value.substr(1, value.length() - 2);
+    }
+    return value;
+}
+
+static std::string safeMetadataName(const std::string &value) {
+    std::string out;
+    for (char c : value) {
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) out += c;
+        else out += '_';
+    }
+    if (out.empty()) out = "unnamed";
+    return out;
+}
+
+static std::string joinStrings(const std::vector<std::string> &values, const std::string &sep) {
+    std::string out;
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (i) out += sep;
+        out += values[i];
+    }
+    return out;
+}
+
+static void emitShortHandMetadata(const std::string &kind, const std::string &name, const std::string &payload) {
+    if (!module) return;
+    std::string text = "shorthand." + kind + "|" + payload;
+    Constant *data = ConstantDataArray::getString(ShortGlobalContext, text, true);
+    std::string global_name = "shorthand_ai_" + safeMetadataName(kind) + "_" + safeMetadataName(name) + "_" + std::to_string(++ShortHandMetadataCounter);
+    GlobalVariable *gv = new GlobalVariable(*module, data->getType(), true, GlobalValue::PrivateLinkage, data, global_name);
+    gv->setSection("shorthand_ai_metadata");
 }
 
 Value *ShowError(const char *str) {
@@ -563,11 +599,57 @@ llvm::Type* IR_Generator::parseType(ShortType type) {
     }
     return i32Ty();
 }
-int IR_Generator::visit(AST_MODEL_DECLARATION *){ return 0; }
-int IR_Generator::visit(AST_TENSOR_DECLARATION *){ return 0; }
-int IR_Generator::visit(AST_GREENAI_CONTRACT *){ return 0; }
-int IR_Generator::visit(AST_GREENAI_MEASUREMENT *){ return 0; }
-int IR_Generator::visit(AST_INFER_STATEMENT *){ return 0; }
+
+int IR_Generator::visit(AST_MODEL_DECLARATION *n){
+    const auto &d = n->data;
+    emitShortHandMetadata("model", d.name,
+        "name=" + d.name + ";format=" + d.format + ";path=" + stripQuotes(d.path) +
+        ";task=" + stripQuotes(d.task) + ";precision=" + d.precision +
+        ";input_shape=" + d.input_shape + ";output_shape=" + d.output_shape +
+        ";backend_preference=" + joinStrings(d.backend_preference, ",") +
+        ";compact=" + std::string(d.compact ? "true" : "false"));
+    return 0;
+}
+
+int IR_Generator::visit(AST_TENSOR_DECLARATION *n){
+    const auto &d = n->data;
+    emitShortHandMetadata("tensor", d.name,
+        "name=" + d.name + ";element_type=" + d.element_type +
+        ";shape=" + d.shape_csv + ";rank=" + std::to_string(d.rank) +
+        ";total_elements=" + std::to_string(d.total_elements));
+    return 0;
+}
+
+int IR_Generator::visit(AST_GREENAI_CONTRACT *n){
+    const auto &d = n->data;
+    emitShortHandMetadata("greenai_contract", d.name,
+        "name=" + d.name + ";functional_unit=" + stripQuotes(d.functional_unit) +
+        ";success_criteria=" + stripQuotes(d.success_criteria) +
+        ";boundary=" + joinStrings(d.boundary, ",") +
+        ";measurement_quality=" + d.measurement_quality +
+        ";data_quality=" + d.data_quality +
+        ";carbon_factor=" + std::to_string(d.carbon_factor) +
+        ";claims_mode=" + d.claims_mode);
+    return 0;
+}
+
+int IR_Generator::visit(AST_GREENAI_MEASUREMENT *n){
+    const auto &d = n->data;
+    emitShortHandMetadata("greenai_measure", d.workload,
+        "workload=" + d.workload + ";backend=" + d.backend +
+        ";inferences=" + std::to_string(d.inferences) +
+        ";watts=" + std::to_string(d.watts) +
+        ";seconds=" + std::to_string(d.seconds));
+    return 0;
+}
+
+int IR_Generator::visit(AST_INFER_STATEMENT *n){
+    emitShortHandMetadata("infer", n->model_name,
+        "model=" + n->model_name + ";input=" + n->input_name +
+        ";output=" + n->output_name + ";compiled_metadata_only=true");
+    return 0;
+}
+
 int IR_Generator::visit(AST_CONTINUE *){ return 0; }
 int IR_Generator::visit(AST_RETURN_STATEMENT * n){ if(n->expression) n->expression->accept(*this); return 0; }
 int IR_Generator::visit(AST_BOOL_LITERAL * n){ return n->value ? 1 : 0; }
