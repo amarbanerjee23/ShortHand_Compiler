@@ -20,6 +20,25 @@ Source plan: `docs/language_feature_implementation_plan.md`
 | L4 | Add negative tests for invalid AI programs | Implemented | `tests/semantic/invalid/ai_shape_mismatch.short` | Ensures semantic rejection is covered in CI |
 | L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Open | `IR_Generator.cpp` currently treats AI declaration/infer visitors as no-op | Blocks production-grade compiled AI workload execution |
 
+## C3-ECO certification language plan status
+
+Source plan: `docs/c3eco_certification_language_upgrade_plan.md`
+
+| ID | Requirement | Implementation status | Notes |
+| --- | --- | --- | --- |
+| C3L-1 | Certification declaration block | Open | Needed for product/version/scope identity |
+| C3L-2 | Structured functional unit and workload profile | Open | Needed for denominator, success condition, workload, sampling and anti-gaming controls |
+| C3L-3 | Typed boundary declaration | Open | Needed for included/excluded layers, materiality and third-party AI boundaries |
+| C3L-4 | Measurement plan block | Open | Needed for instruments, MQ/DQ, factors, sampling, uncertainty and retention |
+| C3L-5 | Resource and telemetry capture primitives | Open | Needed for CPU/GPU/network/storage/token/resource measurement |
+| C3L-6 | AI lifecycle declaration | Open | Needed to separate provider/deployer/integrator responsibilities and model-training scope |
+| C3L-7 | RAG, token, cache and routing metrics | Open | Needed for GenAI evidence, routing, prompt classes and usage accounting |
+| C3L-8 | Carbon and cost calculation built-ins | Open | Needed for workbook, kWh, CO2e and electricity-cost savings |
+| C3L-9 | Certification scoring and level estimator | Open | Must remain candidate-only unless external certifier signs |
+| C3L-10 | Claim-safe report generation | Open | Needed for JSON/Markdown reports, workbook export and permitted claim text |
+| C3L-11 | Quality/security/privacy/accessibility guardrails | Open | Needed to ensure efficiency is not achieved by weakening required quality or safety floors |
+| C3L-12 | CI/CD and eco-regression gates | Open | Needed for release-to-release footprint regression control |
+
 ## Enterprise beta requirements status
 
 Source plan: `docs/beta_enterprise_requirements.md`
@@ -72,6 +91,7 @@ These items must be completed before ShortHand can honestly be described as an i
 10. Container/Kubernetes service hardening, health checks, and deployment validation.
 11. Module/import/package model for enterprise-scale applications.
 12. Developer tooling: formatter, linter, syntax highlighting, and LSP roadmap or implementation.
+13. C3-ECO certification-aware language blocks, workbook generation, scoring, report generation and eco-regression gates.
 
 ## Review rule
 
