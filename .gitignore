@@ -50,6 +50,8 @@ lsan.*
 # IDE/workspace metadata
 .metadata/
 **/.metadata/
+Compiler_new_ws/.metadata/
+Compiler_new_ws/**/.metadata/
 .history/
 **/.history/
 .vscode/
@@ -57,6 +59,10 @@ lsan.*
 *.swp
 *.swo
 .DS_Store
+
+# Deprecated Python tooling is not part of the production compiler path
+# Green AI tooling must live in C++ under Compiler_new_ws/Short_Hand/src/green_ai/
+deprecated/python_tools/
 
 # Downloaded third-party SDKs
 third_party/downloads/
