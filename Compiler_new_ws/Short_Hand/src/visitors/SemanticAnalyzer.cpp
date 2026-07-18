@@ -13,6 +13,27 @@ static bool shapeCompatible(const std::string &modelShape, const std::string &te
     return shorthand::ai::parseShapeCsv(modelShape) == shorthand::ai::parseShapeCsv(tensorShape);
 }
 
+static bool backendCompatibleWithFormat(shorthand::ai::ModelFormat format, shorthand::ai::BackendKind backend) {
+    using shorthand::ai::BackendKind;
+    using shorthand::ai::ModelFormat;
+    if (backend == BackendKind::Fallback) return true;
+    switch (format) {
+        case ModelFormat::Onnx:
+            return backend == BackendKind::OnnxRuntimeCPU || backend == BackendKind::OnnxRuntimeCUDA || backend == BackendKind::OnnxRuntimeTensorRT || backend == BackendKind::TensorRT;
+        case ModelFormat::TensorRTEngine:
+            return backend == BackendKind::TensorRT || backend == BackendKind::OnnxRuntimeTensorRT;
+        case ModelFormat::TorchScript:
+            return backend == BackendKind::LibTorch;
+        case ModelFormat::OpenVINOIR:
+            return backend == BackendKind::OpenVINO;
+        case ModelFormat::GGUF:
+            return backend == BackendKind::LlamaCpp;
+        case ModelFormat::Unknown:
+            return false;
+    }
+    return false;
+}
+
 int SemanticAnalyzer::visit(AST_PROGRAM *p) {
     if (p->decl_block) p->decl_block->accept(*this);
     if (p->functions) p->functions->accept(*this);
@@ -55,20 +76,21 @@ int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
         diagnostics.error("model " + d.name + " requires quality_guardrail");
 
     bool hasFallback = false;
+    bool hasCompatibleRealBackend = false;
     for (const auto &b : d.backend_preference) {
         auto kind = shorthand::ai::parseBackendKind(b);
         hasFallback = hasFallback || kind == shorthand::ai::BackendKind::Fallback;
+        if (kind == shorthand::ai::BackendKind::Fallback) continue;
+        if (backendCompatibleWithFormat(format, kind)) {
+            hasCompatibleRealBackend = true;
+        } else {
+            diagnostics.warning("model " + d.name + " backend_preference " + b + " is not compatible with format " + d.format);
+        }
     }
     if (d.backend_preference.empty())
         diagnostics.warning("model " + d.name + " has no backend_preference; fallback will be used if allowed");
-    if (!hasFallback && !d.backend_preference.empty() && format == shorthand::ai::ModelFormat::Onnx) {
-        bool compatible = false;
-        for (const auto &b : d.backend_preference) {
-            auto k = shorthand::ai::parseBackendKind(b);
-            compatible = compatible || k == shorthand::ai::BackendKind::OnnxRuntimeCPU || k == shorthand::ai::BackendKind::OnnxRuntimeCUDA || k == shorthand::ai::BackendKind::OnnxRuntimeTensorRT;
-        }
-        if (!compatible) diagnostics.error("model " + d.name + " has incompatible backend_preference for onnx");
-    }
+    if (!d.backend_preference.empty() && !hasCompatibleRealBackend && !hasFallback)
+        diagnostics.error("model " + d.name + " has no compatible backend_preference for format " + d.format);
     return 0;
 }
 
@@ -96,6 +118,8 @@ int SemanticAnalyzer::visit(AST_GREENAI_CONTRACT *n) {
 int SemanticAnalyzer::visit(AST_GREENAI_MEASUREMENT *n) {
     if (!contracts.empty() && !contracts.count(n->data.workload))
         diagnostics.error("greenai_measure references unknown contract: " + n->data.workload);
+    if (!models.empty() && !models.count(n->data.backend))
+        diagnostics.warning("greenai_measure backend " + n->data.backend + " is not a declared model; treating as external measurement source");
     return 0;
 }
 
@@ -107,6 +131,13 @@ int SemanticAnalyzer::visit(AST_INFER_STATEMENT *n) {
         const auto &tensor = tensors[n->input_name];
         if (!shapeCompatible(model.input_shape, tensor.shape_csv))
             diagnostics.error("infer input tensor shape " + tensor.shape_csv + " does not match model " + model.name + " input_shape " + model.input_shape);
+        if (tensors.count(n->output_name)) {
+            const auto &outTensor = tensors[n->output_name];
+            if (!model.output_shape.empty() && !shapeCompatible(model.output_shape, outTensor.shape_csv))
+                diagnostics.error("infer output tensor shape " + outTensor.shape_csv + " does not match model " + model.name + " output_shape " + model.output_shape);
+        } else {
+            diagnostics.warning("infer output " + n->output_name + " is implicit; declare a tensor to enable output_shape validation");
+        }
     }
     return 0;
 }
