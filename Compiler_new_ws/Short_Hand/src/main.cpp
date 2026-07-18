@@ -17,20 +17,28 @@ extern "C" FILE *yyin;
 extern "C" int yyparse();
 extern "C" void shorthand_release_scanner_strings();
 AST_PROGRAM * main_program;
+
+static void print_usage() {
+    fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook] [--output file]\n");
+}
+
+static bool has_output_arg(int argc, char *argv[]) {
+    return argc == 5 && !strcmp(argv[3], "--output");
+}
+
 int main(int argc, char *argv[])
 {
 
-	if (argc < 3) {
-			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence]\n");
-			exit(1);
-		}
+    if (argc < 3) {
+        print_usage();
+        exit(1);
+    }
 
-	if (argc > 3) {
-		fprintf(stderr, "Passing more arguments than necessary.\n");
-			fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence]\n");
-	        exit(1);
-		}
-
+    if (argc != 3 && !has_output_arg(argc, argv)) {
+        fprintf(stderr, "Invalid arguments.\n");
+        print_usage();
+        exit(1);
+    }
 
     flex_output = fopen("/dev/null", "w");
     bison_output = fopen("/dev/null", "w");
@@ -40,8 +48,8 @@ int main(int argc, char *argv[])
     std::string::size_type const p(base_filename.find_last_of('.'));
     std::string file_without_extension = base_filename.substr(0, p);
 
-	yyin = fopen(argv[1], "r");
-	int return_val = yyparse();
+    yyin = fopen(argv[1], "r");
+    int return_val = yyparse();
     if(return_val)
     {
         shorthand_release_scanner_strings();
@@ -50,7 +58,6 @@ int main(int argc, char *argv[])
         if (yyin) fclose(yyin);
         exit(1);
     }
-    //fprintf(bison_output, "\nRETURN VALUE : %d\n", return_val);
 
     SemanticAnalyzer semantic;
     main_program->accept(semantic);
@@ -63,48 +70,56 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    if(!strcmp(argv[2], "evidence"))
+    std::string mode(argv[2]);
+
+    if(mode == "evidence" || mode == "c3eco-report" || mode == "c3eco-check" || mode == "c3eco-workbook")
     {
         EvidenceEmitter emitter(argv[1]);
-        if (argc == 5 && !strcmp(argv[3], "--output")) {
+        if (has_output_arg(argc, argv)) {
             std::ofstream out(argv[4]);
-            emitter.write(main_program, out);
+            if (!out) {
+                fprintf(stderr, "Could not open output file: %s\n", argv[4]);
+                shorthand_release_scanner_strings();
+                fclose(flex_output);
+                fclose(bison_output);
+                if (yyin) fclose(yyin);
+                exit(1);
+            }
+            if (mode == "c3eco-check") emitter.writeCheck(main_program, out);
+            else if (mode == "c3eco-workbook") emitter.writeWorkbookCsv(main_program, out);
+            else emitter.writeCandidateReport(main_program, out);
         } else {
-            emitter.write(main_program, std::cout);
+            if (mode == "c3eco-check") emitter.writeCheck(main_program, std::cout);
+            else if (mode == "c3eco-workbook") emitter.writeWorkbookCsv(main_program, std::cout);
+            else emitter.writeCandidateReport(main_program, std::cout);
         }
     }
-    else if(!strcmp(argv[2], "run"))
+    else if(mode == "run")
     {
-        //cout << "interpreting" << endl;
         Interpreter v;
         main_program->accept(v);
     }
-    else if(!strcmp(argv[2], "print"))
+    else if(mode == "print")
     {
         AST_Printer t;
-        //cout << "traversing" << endl;
         main_program->accept(t);
-        //cout << "\n\n SUCCESS" << endl;
     }
-    else if(!strcmp(argv[2], "compile"))
+    else if(mode == "compile")
     {
-        //cout << "generating code" << endl;
         IR_Generator c;
         c.setModuleName(file_without_extension);
-
         main_program->accept(c);
-
         c.dump();
         c.dumpBitcode();
     }
-    else if(!strcmp(argv[2], "compile-bc"))
+    else if(mode == "compile-bc")
     {
         IR_Generator c;
         c.setModuleName(file_without_extension);
         main_program->accept(c);
         c.dumpBitcode();
     }
-    else if(!strcmp(argv[2], "compile-native"))
+    else if(mode == "compile-native")
     {
         IR_Generator c;
         c.setModuleName(file_without_extension);
@@ -122,8 +137,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        fprintf (stderr, "----------------ERROR----------------\n");
-        fprintf(stderr, "Correct usage: short_hand filename [run|print|compile|compile-bc|compile-native|evidence]\n");
+        fprintf(stderr, "----------------ERROR----------------\n");
+        print_usage();
         shorthand_release_scanner_strings();
         fclose(flex_output);
         fclose(bison_output);
