@@ -14,14 +14,14 @@ check_contains() {
   fi
 }
 
-tracked_metadata=$(git ls-files 'Compiler_new_ws/.metadata/*' '**/.metadata/*' || true)
+tracked_metadata=$(git ls-files | grep -E '(^|/)\.metadata/' || true)
 if [[ -n "${tracked_metadata}" ]]; then
   echo "error: tracked IDE metadata must not exist:" >&2
   echo "${tracked_metadata}" >&2
   fail=1
 fi
 
-tracked_python_tools=$(git ls-files 'deprecated/python_tools/*' || true)
+tracked_python_tools=$(git ls-files | grep -E '^deprecated/python_tools/' || true)
 if [[ -n "${tracked_python_tools}" ]]; then
   echo "error: deprecated Python tooling must not be tracked:" >&2
   echo "${tracked_python_tools}" >&2
