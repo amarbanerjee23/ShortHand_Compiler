@@ -33,11 +33,11 @@ Source plan: `docs/c3eco_certification_language_upgrade_plan.md`
 | C3L-5 | Resource and telemetry capture primitives | Open | Needed for CPU/GPU/network/storage/token/resource measurement |
 | C3L-6 | AI lifecycle declaration | Open | Needed to separate provider/deployer/integrator responsibilities and model-training scope |
 | C3L-7 | RAG, token, cache and routing metrics | Open | Needed for GenAI evidence, routing, prompt classes and usage accounting |
-| C3L-8 | Carbon and cost calculation built-ins | Open | Needed for workbook, kWh, CO2e and electricity-cost savings |
+| C3L-8 | Carbon and cost calculation built-ins | Partial | Candidate workbook CSV now calculates declared compute kWh and CO2e from existing measurement declarations; full cost/savings formulas and factors remain open |
 | C3L-9 | Certification scoring and level estimator | Open | Must remain candidate-only unless external certifier signs |
-| C3L-10 | Claim-safe report generation | Open | Needed for JSON/Markdown reports, workbook export and permitted claim text |
+| C3L-10 | Claim-safe report generation | Partial | `c3eco-report`, `c3eco-check`, and `c3eco-workbook` CLI modes exist with candidate-only disclaimers; Markdown report and full schema remain open |
 | C3L-11 | Quality/security/privacy/accessibility guardrails | Open | Needed to ensure efficiency is not achieved by weakening required quality or safety floors |
-| C3L-12 | CI/CD and eco-regression gates | Open | Needed for release-to-release footprint regression control |
+| C3L-12 | CI/CD and eco-regression gates | Partial | CI now exercises candidate report/check/workbook paths through evidence tests; release-to-release eco-regression is still open |
 
 ## Enterprise beta requirements status
 
