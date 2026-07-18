@@ -111,6 +111,19 @@ set_source_files_properties(
   PROPERTIES LANGUAGE CXX
 )
 
+set(SHORTHAND_AI_RUNTIME_SOURCES
+  ${SRC_DIR}/ai_runtime/AI_Runtime.cpp
+  ${SRC_DIR}/ai_runtime/AI_Types.cpp
+  ${SRC_DIR}/ai_runtime/AI_Telemetry.cpp
+  ${SRC_DIR}/ai_runtime/AI_Backend.cpp
+  ${SRC_DIR}/ai_runtime/backends/FallbackBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/OnnxRuntimeBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/TensorRTBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/OpenVINOBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/LibTorchBackend.cpp
+  ${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp
+)
+
 add_executable(short_hand
   ${SRC_DIR}/main.cpp
   ${PARSER_SRC}
@@ -122,15 +135,7 @@ add_executable(short_hand
   ${SRC_DIR}/visitors/SemanticAnalyzer.cpp
   ${SRC_DIR}/visitors/Diagnostics.cpp
   ${SRC_DIR}/evidence/EvidenceEmitter.cpp
-  ${SRC_DIR}/ai_runtime/AI_Runtime.cpp
-  ${SRC_DIR}/ai_runtime/AI_Types.cpp
-  ${SRC_DIR}/ai_runtime/AI_Backend.cpp
-  ${SRC_DIR}/ai_runtime/backends/FallbackBackend.cpp
-  ${SRC_DIR}/ai_runtime/backends/OnnxRuntimeBackend.cpp
-  ${SRC_DIR}/ai_runtime/backends/TensorRTBackend.cpp
-  ${SRC_DIR}/ai_runtime/backends/OpenVINOBackend.cpp
-  ${SRC_DIR}/ai_runtime/backends/LibTorchBackend.cpp
-  ${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp
+  ${SHORTHAND_AI_RUNTIME_SOURCES}
 )
 target_include_directories(short_hand PRIVATE ${SRC_DIR} ${GENERATED_DIR})
 target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
