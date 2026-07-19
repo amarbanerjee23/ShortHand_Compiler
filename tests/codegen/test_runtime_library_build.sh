@@ -15,10 +15,29 @@ test -s "${RUNTIME_LIB}"
 
 cat > "${WORK_DIR}/runtime_probe.cpp" <<'CPP'
 #include "runtime/ShorthandRuntime.h"
+
 int main() {
-    short_ai_register_tensor("input", "float", "1,4", "2", "4");
-    short_ai_infer("classifier", "input", "output");
-    short_greenai_record_measurement("workload", "classifier", "1", "1", "1");
+    if (short_runtime_reset() != SHORTHAND_RUNTIME_OK) return 10;
+    if (short_runtime_model_count() != 0) return 11;
+    if (short_ai_infer("missing", "input", "output") != SHORTHAND_RUNTIME_MODEL_NOT_FOUND) return 12;
+
+    if (short_ai_register_tensor("input", "float", "1,4", "2", "4") != SHORTHAND_RUNTIME_OK) return 20;
+    if (short_ai_register_tensor("output", "float", "1,2", "2", "2") != SHORTHAND_RUNTIME_OK) return 21;
+    if (short_runtime_tensor_count() != 2) return 22;
+
+    if (short_ai_register_model("classifier", "onnx", "models/classifier.onnx", "classification", "float", "1,4", "1,2", "fallback") != SHORTHAND_RUNTIME_OK) return 30;
+    if (short_runtime_model_count() != 1) return 31;
+
+    if (short_ai_infer("classifier", "missing_input", "output") != SHORTHAND_RUNTIME_TENSOR_NOT_FOUND) return 40;
+    if (short_ai_infer("classifier", "input", "missing_output") != SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND) return 41;
+    if (short_ai_infer("classifier", "input", "output") != SHORTHAND_RUNTIME_NOT_EXECUTED) return 42;
+
+    if (short_greenai_register_contract("workload", "1 inference", "accuracy >= 1", "compute", "MQ1", "DQ1", "1", "evidence_only") != SHORTHAND_RUNTIME_OK) return 50;
+    if (short_runtime_contract_count() != 1) return 51;
+    if (short_greenai_record_measurement("workload", "classifier", "1", "1", "1") != SHORTHAND_RUNTIME_OK) return 60;
+    if (short_runtime_measurement_count() != 1) return 61;
+
+    if (short_ai_infer_legacy("model.onnx", "1,1", "0.0") != SHORTHAND_RUNTIME_NOT_EXECUTED) return 70;
     return 0;
 }
 CPP
@@ -26,8 +45,9 @@ CPP
 ${CXX:-g++} -std=c++17 -I"${SRC_DIR}" "${WORK_DIR}/runtime_probe.cpp" "${RUNTIME_LIB}" -o "${WORK_DIR}/runtime_probe"
 "${WORK_DIR}/runtime_probe" >/tmp/shorthand_runtime_probe.out 2>/tmp/shorthand_runtime_probe.err
 
-grep -q '\[shorthand-runtime\] tensor' /tmp/shorthand_runtime_probe.err
-grep -q '\[shorthand-runtime\] infer' /tmp/shorthand_runtime_probe.err
-grep -q '\[shorthand-runtime\] greenai_measure' /tmp/shorthand_runtime_probe.err
+grep -q '\[shorthand-runtime\] tensor name=input' /tmp/shorthand_runtime_probe.err
+grep -q '\[shorthand-runtime\] model name=classifier' /tmp/shorthand_runtime_probe.err
+grep -q '\[shorthand-runtime\] infer model=classifier input=input output=output status=not_executed' /tmp/shorthand_runtime_probe.err
+grep -q '\[shorthand-runtime\] greenai_measure workload=workload' /tmp/shorthand_runtime_probe.err
 
-echo "PASS shorthand runtime library builds and resolves exported hooks"
+echo "PASS shorthand runtime library registry and exported hooks"

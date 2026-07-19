@@ -76,6 +76,12 @@ static std::string resolveShortHandRuntimeLibrary() {
     return "";
 }
 
+static std::string resolveShortHandNativeLinker() {
+    const char *env = std::getenv("SHORTHAND_NATIVE_LINKER");
+    if (env && *env) return std::string(env);
+    return "clang++";
+}
+
 '''
 
 if helpers not in text:
@@ -92,7 +98,8 @@ new_dump = r'''bool IR_Generator::dumpNativeBinary() {
     std::string base = this->getModuleName();
     std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc") + " -o " + shellQuote(base + ".o");
     std::string runtime_lib = resolveShortHandRuntimeLibrary();
-    std::string cmd_bin = "clang -no-pie " + shellQuote(base + ".o");
+    std::string native_linker = resolveShortHandNativeLinker();
+    std::string cmd_bin = shellQuote(native_linker) + " -no-pie " + shellQuote(base + ".o");
     if (!runtime_lib.empty()) {
         cmd_bin += " " + shellQuote(runtime_lib);
     } else {
@@ -105,12 +112,13 @@ new_dump = r'''bool IR_Generator::dumpNativeBinary() {
         return false;
     }
     if (std::system(cmd_bin.c_str()) != 0) {
-        cerr << "Failed to run clang linker step. Build libshorthand_runtime.a or set SHORTHAND_RUNTIME_LIB for AI/GreenAI programs.\n";
+        cerr << "Failed to run C++ linker step. Build libshorthand_runtime.a or set SHORTHAND_RUNTIME_LIB for AI/GreenAI programs.\n";
         return false;
     }
     if (!runtime_lib.empty()) {
         cerr << "Linked ShortHand runtime library: " << runtime_lib << "\n";
     }
+    cerr << "Native linker: " << native_linker << "\n";
     cerr << "Generated native binary: " << base << "\n";
     return true;
 }
