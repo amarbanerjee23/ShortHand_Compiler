@@ -15,7 +15,21 @@ struct TensorSpec { std::string name; ElementType element_type = ElementType::Un
 struct TensorBuffer { TensorSpec spec; std::vector<float> f32_data; std::vector<int8_t> i8_data; };
 struct ModelSpec { std::string name; std::string path; ModelFormat format = ModelFormat::Unknown; std::string task; std::string precision; TensorSpec input; TensorSpec output; std::vector<BackendKind> backend_preference; bool compact = false; bool allow_fallback = true; std::string quality_metric; std::string quality_op; double quality_threshold = 0.0; };
 struct BackendCapabilities { BackendKind kind = BackendKind::Fallback; std::string name; bool available = false; bool supports_onnx = false; bool supports_engine = false; bool supports_torchscript = false; bool supports_openvino_ir = false; bool supports_gguf = false; std::vector<std::string> supported_precisions; std::string unavailable_reason; };
-struct InferenceResult { InferenceStatus status = InferenceStatus::NotExecuted; BackendKind backend = BackendKind::Fallback; std::string backend_name = "fallback"; std::string provider_name = "none"; std::string reason = "backend_not_available"; std::vector<float> output_f32; std::string evidence_json_fragment; };
+struct InferenceResult {
+    InferenceStatus status = InferenceStatus::NotExecuted;
+    BackendKind backend = BackendKind::Fallback;
+    std::string backend_name = "fallback";
+    std::string provider_name = "none";
+    std::string reason = "backend_not_available";
+    std::vector<float> output_f32;
+    std::string evidence_json_fragment;
+    std::string telemetry_json_fragment;
+    long long latency_ns = 0;
+    size_t input_elements = 0;
+    size_t output_elements = 0;
+    double measured_energy_kwh = 0.0;
+    bool measured_energy_available = false;
+};
 
 ElementType parseElementType(const std::string &value);
 ModelFormat parseModelFormat(const std::string &value);
