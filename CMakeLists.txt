@@ -75,7 +75,6 @@ set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(PARSER_SRC ${GENERATED_DIR}/parser.tab.cc)
 set(PARSER_HDR ${GENERATED_DIR}/parser.tab.hh)
 set(SCANNER_SRC ${GENERATED_DIR}/lex.yy.cpp)
-set(DEFAULT_IR_GENERATOR_SRC ${GENERATED_DIR}/IR_Generator.default_runtime.cpp)
 
 add_custom_command(
   OUTPUT ${PARSER_SRC} ${PARSER_HDR}
@@ -101,28 +100,23 @@ else()
   message(WARNING "flex not found; using checked-in lex.yy.c")
 endif()
 
-add_custom_command(
-  OUTPUT ${DEFAULT_IR_GENERATOR_SRC}
-  COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIR}
+add_custom_target(shorthand_runtime_source_lowering
   COMMAND ${BASH_EXECUTABLE}
-          ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_external_runtime_ir_generator.sh
+          ${CMAKE_CURRENT_SOURCE_DIR}/scripts/apply_external_runtime_to_ir_source.sh
           ${SRC_DIR}/visitors/IR_Generator.cpp
-          ${DEFAULT_IR_GENERATOR_SRC}
-  DEPENDS ${SRC_DIR}/visitors/IR_Generator.cpp ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_external_runtime_ir_generator.sh
-  COMMENT "Generating external-runtime ShortHand IR generator"
+  DEPENDS ${SRC_DIR}/visitors/IR_Generator.cpp ${CMAKE_CURRENT_SOURCE_DIR}/scripts/apply_external_runtime_to_ir_source.sh
+  COMMENT "Applying source-level external runtime lowering to IR_Generator.cpp"
   VERBATIM
 )
 
 set_source_files_properties(
   ${PARSER_SRC}
   ${SCANNER_SRC}
-  ${DEFAULT_IR_GENERATOR_SRC}
   PROPERTIES GENERATED TRUE
 )
 
 set_source_files_properties(
   ${SCANNER_SRC}
-  ${DEFAULT_IR_GENERATOR_SRC}
   PROPERTIES LANGUAGE CXX
 )
 
@@ -151,12 +145,13 @@ add_executable(short_hand
   ${SRC_DIR}/ast/AST.cpp
   ${SRC_DIR}/visitors/AST_Printer.cpp
   ${SRC_DIR}/visitors/Interpreter.cpp
-  ${DEFAULT_IR_GENERATOR_SRC}
+  ${SRC_DIR}/visitors/IR_Generator.cpp
   ${SRC_DIR}/visitors/SemanticAnalyzer.cpp
   ${SRC_DIR}/visitors/Diagnostics.cpp
   ${SRC_DIR}/evidence/EvidenceEmitter.cpp
   ${SHORTHAND_AI_RUNTIME_SOURCES}
 )
+add_dependencies(short_hand shorthand_runtime_source_lowering)
 target_include_directories(short_hand PRIVATE ${SRC_DIR} ${GENERATED_DIR})
 target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
 target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_ONNXRUNTIME=${SHORTHAND_HAS_ONNXRUNTIME} SHORTHAND_HAS_TENSORRT=${SHORTHAND_HAS_TENSORRT} SHORTHAND_HAS_OPENVINO=${SHORTHAND_HAS_OPENVINO} SHORTHAND_HAS_LIBTORCH=${SHORTHAND_HAS_LIBTORCH} SHORTHAND_HAS_LLAMACPP=${SHORTHAND_HAS_LLAMACPP} SHORTHAND_HAS_OPENBLAS=${SHORTHAND_HAS_OPENBLAS} SHORTHAND_HAS_EIGEN=${SHORTHAND_HAS_EIGEN})
