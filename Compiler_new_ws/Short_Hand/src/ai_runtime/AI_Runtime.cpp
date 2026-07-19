@@ -57,5 +57,8 @@ bool AI_Runtime::run(const TensorData &input_tensor, std::vector<float> &output)
 }
 
 std::string AI_Runtime::getLastError() const { return last_error_; }
-extern "C" int short_ai_infer(const char*, const char*, const char*, const char*, const char*) { return 2; }
-extern "C" int short_greenai_emit_event(const char*, const char*) { return 0; }
+
+// shorthand_runtime_hook_integration_ready:
+// AI_Runtime owns SDK-backed C++ inference. The public compiled-hook C ABI is
+// owned by runtime/ShorthandRuntime.* so future linked builds do not get duplicate
+// C symbols such as short_ai_infer or short_ai_infer_f32.
