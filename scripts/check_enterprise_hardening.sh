@@ -102,10 +102,18 @@ check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shor
 check_contains docs/compiled_infer_bridge.md 'input_buffer_required_for_ai_runtime_execution'
 check_contains docs/compiled_infer_bridge.md 'Typed tensor-buffer bridge'
 check_contains docs/compiled_infer_bridge.md 'AI_Runtime bridge linkage'
+check_contains docs/compiled_infer_bridge.md 'AI_Runtime execution adapter'
 check_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 check_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 check_not_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'extern "C" int short_ai_infer'
 check_not_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'extern "C" int short_greenai_emit_event'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.h 'RuntimeBridgeModelInput'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.h 'RuntimeBridgeTensorInput'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp 'shorthand.runtime.ai_runtime_execution_adapter.v1'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp 'bridgeRequestIsExecutionReady'
+check_contains docs/ai_runtime_execution_adapter.md 'adapter_contract_status: compile_checked_mapping_only'
+check_contains scripts/check_ai_runtime_execution_adapter.sh 'PASS AI runtime execution adapter gate'
+check_contains tests/codegen/test_ai_runtime_bridge_adapter.sh 'PASS AI runtime bridge adapter compile and mapping test'
 check_contains tests/codegen/test_runtime_library_build.sh 'SHORTHAND_RUNTIME_NOT_EXECUTED'
 check_contains tests/codegen/test_runtime_library_build.sh 'shorthand.runtime.observability.v1'
 check_contains tests/codegen/test_runtime_library_build.sh 'compiled-infer bridge request'
@@ -202,6 +210,14 @@ if bash scripts/check_ai_runtime_bridge_linkage.sh >/tmp/shorthand_ai_runtime_br
 else
   fail_check "AI runtime bridge linkage gate failed"
   cat /tmp/shorthand_ai_runtime_bridge_linkage.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_ai_runtime_execution_adapter.sh >/tmp/shorthand_ai_runtime_execution_adapter.out 2>&1; then
+  log "PASS AI runtime execution adapter gate completed"
+  cat /tmp/shorthand_ai_runtime_execution_adapter.out | tee -a "${LOG_FILE}"
+else
+  fail_check "AI runtime execution adapter gate failed"
+  cat /tmp/shorthand_ai_runtime_execution_adapter.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
