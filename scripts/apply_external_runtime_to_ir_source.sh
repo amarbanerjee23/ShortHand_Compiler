@@ -1,34 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ "$#" -ne 2 ]]; then
-  echo "usage: $0 <IR_Generator.cpp> <output.cpp>" >&2
+if [[ "$#" -ne 1 ]]; then
+  echo "usage: $0 <IR_Generator.cpp>" >&2
   exit 2
 fi
 
 src="$1"
-out="$2"
-mkdir -p "$(dirname "$out")"
 
-python3 - "$src" "$out" <<'PY'
+python3 - "$src" <<'PY'
 import sys
 from pathlib import Path
 
-src = Path(sys.argv[1]).resolve()
-out = Path(sys.argv[2])
+src = Path(sys.argv[1])
 text = src.read_text()
-
-visitor_dir = src.parent
-source_dir = visitor_dir.parent
-include_rewrites = {
-    '#include "IR_Generator.h"': f'#include "{(visitor_dir / "IR_Generator.h").as_posix()}"',
-    '#include "Symbol_Table.h"': f'#include "{(visitor_dir / "Symbol_Table.h").as_posix()}"',
-    '#include "../util/util.h"': f'#include "{(source_dir / "util" / "util.h").as_posix()}"',
-}
-for old, new in include_rewrites.items():
-    if old not in text:
-        raise SystemExit(f"expected include not found for rewrite: {old}")
-    text = text.replace(old, new, 1)
 
 old_hook = '''static Function *ensureShortHandRuntimeHook(const std::string &name, size_t argc) {
     if (!module) return nullptr;
@@ -52,9 +37,10 @@ new_hook = '''static Function *ensureShortHandRuntimeHook(const std::string &nam
 }
 '''
 
-if old_hook not in text:
-    raise SystemExit("expected local runtime-hook stub implementation was not found")
-text = text.replace(old_hook, new_hook)
+if old_hook in text:
+    text = text.replace(old_hook, new_hook)
+elif new_hook not in text:
+    raise SystemExit("expected runtime-hook implementation was not found")
 
 helper_anchor = '''bool IR_Generator::dumpNativeBinary() {
 '''
@@ -96,7 +82,9 @@ static std::string resolveShortHandNativeLinker() {
 
 '''
 
-if helpers not in text:
+if "resolveShortHandRuntimeLibrary" not in text:
+    if helper_anchor not in text:
+        raise SystemExit("could not locate dumpNativeBinary anchor")
     text = text.replace(helper_anchor, helpers + helper_anchor)
 
 start = text.find('bool IR_Generator::dumpNativeBinary() {')
@@ -136,12 +124,19 @@ new_dump = r'''bool IR_Generator::dumpNativeBinary() {
 }
 '''
 
-text = text[:start] + new_dump + text[end:]
+if "resolveShortHandNativeLinker" in text[start:end] and "Linked ShortHand runtime library" in text[start:end]:
+    pass
+else:
+    text = text[:start] + new_dump + text[end:]
 
-if 'BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);' in text:
-    raise SystemExit("local runtime-hook stub body still present after transform")
-if '#include "IR_Generator.h"' in text or '#include "Symbol_Table.h"' in text or '#include "../util/util.h"' in text:
-    raise SystemExit("generated default-runtime IR generator still contains source-location-relative includes")
+for forbidden in [
+    'BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);',
+    'IRBuilder<> stubBuilder(entry);',
+    'stubBuilder.CreateRet(ConstantInt::get(i32Ty(), 0, true));',
+    'std::string cmd_bin = "clang -no-pie " + base + ".o -o " + base;'
+]:
+    if forbidden in text:
+        raise SystemExit("source-level runtime lowering still contains forbidden local-stub/native-link text: " + forbidden)
 
-out.write_text(text)
+src.write_text(text)
 PY

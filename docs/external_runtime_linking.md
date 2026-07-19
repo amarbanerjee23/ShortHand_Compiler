@@ -1,4 +1,4 @@
-# Default external runtime linking
+# Source-level external runtime linking
 
 ## Purpose
 
@@ -11,13 +11,15 @@ Earlier compiler slices emitted hook calls, but the generated LLVM module also c
 
 ## Current implementation
 
-The default Makefile and CMake compiler builds now compile a generated external-runtime IR generator source:
+The default Makefile and CMake builds now compile `Compiler_new_ws/Short_Hand/src/visitors/IR_Generator.cpp` directly.
 
-- Makefile output: `Compiler_new_ws/Short_Hand/build/IR_Generator.default_runtime.cpp`
-- CMake output: `${CMAKE_BINARY_DIR}/generated/IR_Generator.default_runtime.cpp`
-- Source transform: `scripts/generate_external_runtime_ir_generator.sh`
+Before compilation, the build applies a guarded source-level lowering step through:
 
-That generated source is derived from `visitors/IR_Generator.cpp`, but it removes local runtime hook stub bodies and emits external declarations for hooks such as:
+- `scripts/apply_external_runtime_to_ir_source.sh`
+- Makefile target: `runtime-source-lowering`
+- CMake target: `shorthand_runtime_source_lowering`
+
+That source-level lowering removes local runtime hook stub bodies from `IR_Generator.cpp` and makes the compiler emit external declarations for hooks such as:
 
 - `short_ai_register_model`
 - `short_ai_register_tensor`
@@ -26,18 +28,24 @@ That generated source is derived from `visitors/IR_Generator.cpp`, but it remove
 - `short_ai_infer`
 - `short_ai_infer_legacy`
 
-The default native path now resolves those declarations against `libshorthand_runtime.a` when `compile-native` is used. The linker can be overridden with `SHORTHAND_NATIVE_LINKER`; otherwise the generated path uses a C++ linker so the C++ runtime library is resolved correctly.
+The old generated file path `IR_Generator.default_runtime.cpp` has been removed from the default Makefile and CMake builds.
+
+The native path resolves these declarations against `libshorthand_runtime.a` when `compile-native` is used. The linker can be overridden with `SHORTHAND_NATIVE_LINKER`; otherwise the source-level lowered path uses a C++ linker so the C++ runtime library is resolved correctly.
 
 ## Validation
 
-`tests/codegen/test_external_runtime_native.sh` now exercises the default compiler instead of building a separate external-runtime compiler variant. The test verifies that:
+`tests/codegen/test_external_runtime_native.sh` exercises the default compiler. The test verifies that:
 
+- the Makefile uses `runtime-source-lowering`,
+- the Makefile no longer references `IR_Generator.default_runtime.cpp`,
+- `IR_Generator.cpp` contains external runtime hook declarations,
+- `IR_Generator.cpp` no longer contains the local runtime hook stub return,
 - the default compiler generates LLVM IR containing `declare i32 @short_ai_register_model`,
 - the generated LLVM IR does not contain `define i32 @short_ai_register_model`,
 - `compile-native` links `libshorthand_runtime.a`,
 - the native executable emits runtime hook output from the registry-backed runtime library.
 
-The enterprise hardening gate requires this default runtime-lowering test to pass.
+The enterprise hardening gate requires this source-level runtime-lowering test to pass.
 
 ## Runtime behavior
 
@@ -62,7 +70,7 @@ Runtime hooks return explicit status codes for important cases:
 
 ## Remaining work
 
-- Replace the generated default source with direct source-level external hook declaration logic in `IR_Generator.cpp`.
+- Replace the guarded source patcher with a direct hand-edited `IR_Generator.cpp` once the large LLVM visitor file is refactored safely.
 - Route `short_ai_infer()` into `AI_Runtime` for SDK-enabled ONNX Runtime CPU execution.
 - Keep fallback and not-executed statuses explicit when SDKs are unavailable.
 - Move this hook abstraction into the MLIR lowering plan so `model`, `tensor`, `infer`, and `greenai_measure` lower through typed compiler operations rather than string-only hooks.
