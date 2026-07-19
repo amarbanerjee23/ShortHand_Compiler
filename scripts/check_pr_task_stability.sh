@@ -34,6 +34,7 @@ require_file scripts/check_enterprise_hardening.sh
 require_file docs/feature_implementation_status.md
 require_file docs/pr_task_stability_strategy.md
 require_file docs/compiled_infer_bridge.md
+require_file docs/backend_compatibility_matrix.md
 
 # Preserve old task names and ordering anchors from the CI workflow.
 require_contains .github/workflows/ci.yml 'Strict language validation'
@@ -60,11 +61,12 @@ require_contains scripts/check_enterprise_hardening.sh 'check_c3eco_claims_and_s
 require_contains scripts/check_enterprise_hardening.sh 'check_mlir_foundation.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_pr_task_stability.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_release_supply_chain.sh'
+require_contains scripts/check_enterprise_hardening.sh 'check_backend_compatibility_matrix.sh'
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compiled_infer_bridge_request.v1'
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/generate_release_sbom.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
@@ -73,5 +75,7 @@ require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
 require_contains docs/compiled_infer_bridge.md 'input_buffer_required_for_ai_runtime_execution'
 require_contains docs/compiled_infer_bridge.md 'Typed tensor-buffer bridge'
+require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
+require_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
 
 printf 'PASS PR task stability gate\n'
