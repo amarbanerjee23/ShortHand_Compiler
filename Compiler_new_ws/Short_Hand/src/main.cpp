@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
     }
 
     SemanticAnalyzer semantic;
+    semantic.diagnostics.setSourceFile(argv[1]);
     main_program->accept(semantic);
     if (semantic.diagnostics.hasErrors()) {
         semantic.diagnostics.print();
