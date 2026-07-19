@@ -69,6 +69,9 @@ AI_APP_BIN := ../build/short_ai_app
 AI_TRAIN_BIN := ../build/short_ai_train
 GREEN_AI_TOOL_BIN := ../build/green_ai_tool
 GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
+SHORTHAND_RUNTIME_SRC := runtime/ShorthandRuntime.cpp
+SHORTHAND_RUNTIME_OBJ := ../build/ShorthandRuntime.o
+SHORTHAND_RUNTIME_LIB := ../build/libshorthand_runtime.a
 
 all: compiler
 
@@ -99,6 +102,13 @@ short_hand: patch-generated-parser $(SRC)
 	fi
 	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)
 
+runtime_lib: $(SHORTHAND_RUNTIME_LIB)
+
+$(SHORTHAND_RUNTIME_LIB): $(SHORTHAND_RUNTIME_SRC) runtime/ShorthandRuntime.h
+	@mkdir -p ../build
+	$(CXX) $(CXXFLAGS) -c $(SHORTHAND_RUNTIME_SRC) -o $(SHORTHAND_RUNTIME_OBJ)
+	ar rcs $(SHORTHAND_RUNTIME_LIB) $(SHORTHAND_RUNTIME_OBJ)
+
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build
 	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) -o $(AI_APP_BIN) ai_app.cpp $(AI_RUNTIME_CORE_SRC) $(LDFLAGS) $(AI_LDLIBS)
@@ -126,14 +136,14 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool *.bc *.ir *.o
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-unit test-integration test-green test-compiler test-negative test-llvm test-ai
+test: test-unit test-integration test-green test-compiler test-negative test-diagnostics test-runtime-linking test-llvm test-ai
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -147,6 +157,12 @@ test-compiler: short_hand
 test-negative: short_hand
 	bash ../../../tests/run_language_tests.sh negative
 
+test-diagnostics: short_hand
+	SHORTHAND_BIN=$(BIN) bash ../../../tests/diagnostics/test_source_diagnostics.sh
+
+test-runtime-linking: runtime_lib
+	SHORTHAND_RUNTIME_LIB=$(SHORTHAND_RUNTIME_LIB) bash ../../../tests/codegen/test_runtime_library_build.sh
+
 test-llvm: short_hand
 	bash ../../../tests/run_language_tests.sh llvm
 
@@ -158,14 +174,14 @@ test-ai-app: ai_app
 
 sanitize:
 	$(MAKE) clean
-	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool
+	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool runtime_lib
 	bash ../../../tests/run_language_tests.sh sanitize
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \
 	  echo "warning: clang-format is not installed; format check is environment-limited"; \
 	elif [ "$${CLANG_FORMAT_STRICT:-0}" = "1" ]; then \
-	  clang-format --dry-run --Werror main.cpp ast/*.h ast/*.cpp visitors/*.h visitors/*.cpp ai_runtime/*.h ai_runtime/*.cpp green_ai/*.cpp; \
+	  clang-format --dry-run --Werror main.cpp ast/*.h ast/*.cpp visitors/*.h visitors/*.cpp ai_runtime/*.h ai_runtime/*.cpp green_ai/*.cpp runtime/*.h runtime/*.cpp; \
 	else \
 	  echo "clang-format available; set CLANG_FORMAT_STRICT=1 to enforce full legacy formatting"; \
 	fi
