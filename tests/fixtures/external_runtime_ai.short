@@ -1,11 +1,11 @@
 int i;
-tensor input fp32 "1,1";
-tensor output fp32 "1,1";
+tensor input float "1,1";
+tensor output float "1,1";
 model classifier {
   format onnx;
   path "models/classifier.onnx";
   task "classification";
-  precision fp32;
+  precision float;
   input_shape "1,1";
   output_shape "1,1";
   backend_preference fallback;
