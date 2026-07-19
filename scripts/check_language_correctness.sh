@@ -7,6 +7,11 @@ BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
 SHORT="${BUILD_DIR}/short_hand"
 MANIFEST="${ROOT_DIR}/tests/conformance/manifest.txt"
 WORK_DIR="$(mktemp -d)"
+RUNTIME_LIB="${SHORTHAND_RUNTIME_LIB:-${BUILD_DIR}/libshorthand_runtime.a}"
+if [[ "${RUNTIME_LIB}" != /* ]]; then
+  RUNTIME_LIB="${SRC_DIR}/${RUNTIME_LIB}"
+fi
+RUNTIME_LIB="$(cd "$(dirname "${RUNTIME_LIB}")" 2>/dev/null && pwd)/$(basename "${RUNTIME_LIB}")"
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
 pass=0
@@ -50,6 +55,22 @@ ensure_compiler() {
     }
   fi
   log_pass "compiler available"
+}
+
+ensure_runtime_lib() {
+  if [[ ! -f "${RUNTIME_LIB}" ]]; then
+    make -C "${SRC_DIR}" runtime_lib >/tmp/shorthand_language_correctness_runtime_make.out 2>&1 || {
+      cat /tmp/shorthand_language_correctness_runtime_make.out >&2 || true
+      log_fail "runtime library build failed"
+      return 1
+    }
+  fi
+  if [[ -f "${RUNTIME_LIB}" ]]; then
+    log_pass "runtime library available: ${RUNTIME_LIB}"
+  else
+    log_fail "runtime library missing after build: ${RUNTIME_LIB}"
+    return 1
+  fi
 }
 
 compile_semantic_ir_probe() {
@@ -124,6 +145,7 @@ require_contains "${MANIFEST}" 'runtime | tests/codegen/test_external_runtime_na
 
 compile_semantic_ir_probe
 ensure_compiler
+ensure_runtime_lib
 
 run_valid_compile 'tests/fixtures/external_runtime_ai.short'
 run_valid_compile 'Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short'
@@ -137,7 +159,7 @@ run_invalid_reject 'tests/semantic/invalid/ai_output_shape_mismatch.short'
 run_existing_gate 'source diagnostics' env SHORTHAND_BIN="${SHORT}" bash "${ROOT_DIR}/tests/diagnostics/test_source_diagnostics.sh"
 run_existing_gate 'AI metadata IR' env SHORTHAND_BIN="${SHORT}" bash "${ROOT_DIR}/tests/codegen/test_ai_metadata_ir.sh"
 run_existing_gate 'AI evidence backend fields' env SHORTHAND_BIN="${SHORT}" bash "${ROOT_DIR}/tests/evidence/test_ai_evidence.sh"
-run_existing_gate 'external runtime native linking' bash "${ROOT_DIR}/tests/codegen/test_external_runtime_native.sh"
+run_existing_gate 'external runtime native linking' env SHORTHAND_RUNTIME_LIB="${RUNTIME_LIB}" bash "${ROOT_DIR}/tests/codegen/test_external_runtime_native.sh"
 
 printf 'Language correctness summary: pass=%d fail=%d\n' "${pass}" "${fail}"
 [[ "${fail}" -eq 0 ]]
