@@ -69,6 +69,15 @@ int short_ai_infer(const char *model_name,
                    const char *input_name,
                    const char *output_name);
 
+int short_ai_infer_f32(const char *model_name,
+                       const char *input_name,
+                       const float *input_values,
+                       int input_count,
+                       const char *output_name,
+                       float *output_values,
+                       int output_capacity,
+                       int *output_count);
+
 int short_ai_infer_legacy(const char *model_path,
                           const char *shape_csv,
                           const char *input_csv);

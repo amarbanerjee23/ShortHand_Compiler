@@ -4,9 +4,9 @@
 
 This document describes the current compiled-inference runtime bridge contract for ShortHand.
 
-The compiler already emits external runtime hooks for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`. The `libshorthand_runtime.a` hook library now turns a validated compiled `infer(model, input, output)` call into a structured bridge request that is ready to be connected to `AI_Runtime`.
+The compiler already emits external runtime hooks for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`. The `libshorthand_runtime.a` hook library turns a validated compiled `infer(model, input, output)` call into a structured bridge request that is ready to be connected to `AI_Runtime`.
 
-## Current behavior
+## Current metadata-only behavior
 
 When `short_ai_infer(model, input, output)` is called, the runtime:
 
@@ -17,7 +17,7 @@ When `short_ai_infer(model, input, output)` is called, the runtime:
 5. Records the request in runtime observability.
 6. Returns `SHORTHAND_RUNTIME_NOT_EXECUTED`.
 
-The return value intentionally remains `not_executed` because the compiled runtime hook does not yet receive a concrete input tensor buffer. The bridge request records this boundary with:
+The return value intentionally remains `not_executed` because this metadata-only compiled runtime hook does not yet receive a concrete input tensor buffer. The bridge request records this boundary with:
 
 - `schema: shorthand.runtime.compiled_infer_bridge_request.v1`
 - `runtime_target: AI_Runtime`
@@ -26,28 +26,61 @@ The return value intentionally remains `not_executed` because the compiled runti
 - `input_buffer_required: true`
 - `reason: input_buffer_required_for_ai_runtime_execution`
 
+## Typed tensor-buffer bridge
+
+PR #42 adds a typed float32 bridge ABI for runtime callers that can provide concrete tensor buffers:
+
+```c
+int short_ai_infer_f32(const char *model_name,
+                       const char *input_name,
+                       const float *input_values,
+                       int input_count,
+                       const char *output_name,
+                       float *output_values,
+                       int output_capacity,
+                       int *output_count);
+```
+
+The typed bridge validates:
+
+- model, input tensor, and output tensor registration,
+- non-null input and output pointers,
+- positive input and output sizes,
+- input element count against the registered input tensor shape,
+- output capacity against the registered output tensor shape.
+
+After validation, the runtime records a typed bridge request with:
+
+- `schema: shorthand.runtime.typed_infer_buffer_bridge_request.v1`
+- `parent_schema: shorthand.runtime.compiled_infer_bridge_request.v1`
+- `bridge_status: typed_buffer_received_execution_pending`
+- `input_buffer_available: true`
+- `runtime_target: AI_Runtime`
+- `reason: ai_runtime_typed_buffer_bridge_pending`
+
+The function currently returns `SHORTHAND_RUNTIME_NOT_EXECUTED` and sets `output_count` to `0`. It does not fabricate output values.
+
 ## Public C ABI
 
-The bridge request is exposed through:
+The latest bridge request is exposed through:
 
 ```c
 const char *short_runtime_infer_bridge_request_json(void);
 ```
 
-After a successful validation path through `short_ai_infer`, this function returns the latest bridge request. For missing model/tensor and invalid input paths, it returns `{}` because no valid runtime execution request exists.
+After a successful validation path through `short_ai_infer`, this function returns the latest metadata-only bridge request. After a successful validation path through `short_ai_infer_f32`, it returns the latest typed tensor-buffer bridge request. For missing model/tensor and invalid input paths, it returns `{}` because no valid runtime execution request exists.
 
 ## Why this is not yet real execution
 
-The compiled hook currently knows symbolic names and metadata, but not actual tensor data. A real SDK-backed call into `AI_Runtime` requires a typed tensor buffer or a compiled data binding that maps runtime variables into `TensorBuffer`.
+The typed bridge receives input and output buffers, but the runtime hook library is still intentionally separate from the SDK-backed `AI_Runtime` build graph. A real SDK-backed execution step must connect this validated request and buffer payload to `AI_Runtime::infer`, then return `SHORTHAND_RUNTIME_OK` only when backend execution succeeds.
 
 Until that is implemented, ShortHand must not claim that compiled inference executed through ONNX Runtime, TensorRT, OpenVINO, LibTorch, or any other backend from this hook path.
 
 ## Next implementation step
 
-The next step is to add a typed tensor payload bridge, such as one of the following:
+The next step is to route the typed buffer bridge into `AI_Runtime` behind the existing optional backend gates. That future PR should preserve these rules:
 
-- a C ABI that accepts a float32 input pointer and element count,
-- compiler lowering that passes concrete tensor data into the runtime hook,
-- or a runtime-managed tensor buffer registry that stores data separately from tensor metadata.
-
-Once that exists, the runtime hook can safely route into `AI_Runtime` and return `SHORTHAND_RUNTIME_OK` only when backend execution actually succeeds.
+1. Return `SHORTHAND_RUNTIME_OK` only when `AI_Runtime` returns successful inference.
+2. Keep fallback and unavailable backends as `not_executed` or `backend_unavailable`.
+3. Populate `output_values` and `output_count` only when execution succeeds.
+4. Keep observability and bridge request JSON claim-safe.

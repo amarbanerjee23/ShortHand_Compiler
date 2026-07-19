@@ -45,13 +45,30 @@ int main() {
     if (std::strstr(short_runtime_infer_bridge_request_json(), "input_buffer_required_for_ai_runtime_execution") == nullptr) return 49;
     if (std::strstr(short_runtime_observability_json(), "infer_bridge_request") == nullptr) return 50;
 
-    if (short_greenai_register_contract("workload", "1 inference", "accuracy >= 1", "compute", "MQ1", "DQ1", "1", "evidence_only") != SHORTHAND_RUNTIME_OK) return 60;
-    if (short_runtime_contract_count() != 1) return 61;
-    if (short_greenai_record_measurement("workload", "classifier", "1", "1", "1") != SHORTHAND_RUNTIME_OK) return 70;
-    if (short_runtime_measurement_count() != 1) return 71;
+    float input_values[4] = {1.0f, 0.0f, 0.5f, -1.0f};
+    float output_values[2] = {0.0f, 0.0f};
+    int output_count = -1;
 
-    if (short_ai_infer_legacy("model.onnx", "1,1", "0.0") != SHORTHAND_RUNTIME_NOT_EXECUTED) return 80;
-    if (short_runtime_last_infer_status() != SHORTHAND_RUNTIME_NOT_EXECUTED) return 81;
+    if (short_ai_infer_f32("classifier", "input", nullptr, 4, "output", output_values, 2, &output_count) != SHORTHAND_RUNTIME_INVALID_ARGUMENT) return 51;
+    if (output_count != 0) return 52;
+    if (short_ai_infer_f32("classifier", "input", input_values, 3, "output", output_values, 2, &output_count) != SHORTHAND_RUNTIME_INVALID_INPUT) return 53;
+    if (short_ai_infer_f32("classifier", "input", input_values, 4, "output", output_values, 1, &output_count) != SHORTHAND_RUNTIME_INVALID_INPUT) return 54;
+    if (short_ai_infer_f32("classifier", "input", input_values, 4, "output", output_values, 2, &output_count) != SHORTHAND_RUNTIME_NOT_EXECUTED) return 55;
+    if (output_count != 0) return 56;
+    if (std::strstr(short_runtime_last_infer_reason(), "ai_runtime_typed_buffer_bridge_pending") == nullptr) return 57;
+    if (std::strstr(short_runtime_infer_bridge_request_json(), "shorthand.runtime.typed_infer_buffer_bridge_request.v1") == nullptr) return 58;
+    if (std::strstr(short_runtime_infer_bridge_request_json(), "typed_buffer_received_execution_pending") == nullptr) return 59;
+    if (std::strstr(short_runtime_infer_bridge_request_json(), "input_buffer_available") == nullptr) return 60;
+    if (std::strstr(short_runtime_infer_bridge_request_json(), "\"input_element_count\":4") == nullptr) return 61;
+    if (std::strstr(short_runtime_infer_bridge_request_json(), "\"expected_output_elements\":2") == nullptr) return 62;
+
+    if (short_greenai_register_contract("workload", "1 inference", "accuracy >= 1", "compute", "MQ1", "DQ1", "1", "evidence_only") != SHORTHAND_RUNTIME_OK) return 70;
+    if (short_runtime_contract_count() != 1) return 71;
+    if (short_greenai_record_measurement("workload", "classifier", "1", "1", "1") != SHORTHAND_RUNTIME_OK) return 80;
+    if (short_runtime_measurement_count() != 1) return 81;
+
+    if (short_ai_infer_legacy("model.onnx", "1,1", "0.0") != SHORTHAND_RUNTIME_NOT_EXECUTED) return 90;
+    if (short_runtime_last_infer_status() != SHORTHAND_RUNTIME_NOT_EXECUTED) return 91;
     return 0;
 }
 CPP
@@ -63,6 +80,8 @@ grep -q '\[shorthand-runtime\] tensor name=input' /tmp/shorthand_runtime_probe.e
 grep -q '\[shorthand-runtime\] model name=classifier' /tmp/shorthand_runtime_probe.err
 grep -q '\[shorthand-runtime\] infer model=classifier input=input output=output status=not_executed' /tmp/shorthand_runtime_probe.err
 grep -q 'bridge_request=created' /tmp/shorthand_runtime_probe.err
+grep -q 'infer_f32 model=classifier input=input output=output status=not_executed' /tmp/shorthand_runtime_probe.err
+grep -q 'typed_buffer_bridge=created' /tmp/shorthand_runtime_probe.err
 grep -q '\[shorthand-runtime\] greenai_measure workload=workload' /tmp/shorthand_runtime_probe.err
 
-echo "PASS shorthand runtime library registry, infer observability, compiled-infer bridge request, and exported hooks"
+echo "PASS shorthand runtime library registry, infer observability, compiled-infer bridge request, typed buffer bridge, and exported hooks"
