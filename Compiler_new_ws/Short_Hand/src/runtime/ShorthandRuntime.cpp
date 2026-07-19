@@ -98,6 +98,25 @@ bool shape_is_valid(const std::string &csv) {
     return !parse_shape(csv).empty();
 }
 
+long long shape_product(const std::vector<long long> &shape) {
+    if (shape.empty()) return 0;
+    long long product = 1;
+    for (long long dim : shape) {
+        if (dim <= 0) return 0;
+        product *= dim;
+    }
+    return product;
+}
+
+long long declared_element_count(const TensorRecord &tensor) {
+    if (!tensor.total_elements.empty()) {
+        char *end = nullptr;
+        long long value = std::strtoll(tensor.total_elements.c_str(), &end, 10);
+        if (end != tensor.total_elements.c_str() && value > 0) return value;
+    }
+    return shape_product(parse_shape(tensor.shape));
+}
+
 std::string status_name(int status) {
     switch (status) {
         case SHORTHAND_RUNTIME_OK: return "success";
@@ -164,6 +183,46 @@ std::string build_compiled_infer_bridge_request(const ModelRecord &model,
         << "\",\"shape\":\"" << json_escape(output.shape)
         << "\",\"rank\":\"" << json_escape(output.rank)
         << "\",\"total_elements\":\"" << json_escape(output.total_elements) << "\"}}";
+    return out.str();
+}
+
+std::string build_typed_buffer_bridge_request(const ModelRecord &model,
+                                              const TensorRecord &input,
+                                              const TensorRecord &output,
+                                              const std::string &backend,
+                                              int status,
+                                              const std::string &reason,
+                                              int input_count,
+                                              int output_capacity,
+                                              long long expected_input_elements,
+                                              long long expected_output_elements,
+                                              int output_count) {
+    std::ostringstream out;
+    out << "{\"schema\":\"shorthand.runtime.typed_infer_buffer_bridge_request.v1\""
+        << ",\"parent_schema\":\"shorthand.runtime.compiled_infer_bridge_request.v1\""
+        << ",\"status\":\"" << json_escape(status_name(status)) << "\""
+        << ",\"bridge_status\":\"typed_buffer_received_execution_pending\""
+        << ",\"execution_ready\":false"
+        << ",\"runtime_target\":\"AI_Runtime\""
+        << ",\"input_buffer_available\":true"
+        << ",\"input_element_count\":" << input_count
+        << ",\"expected_input_elements\":" << expected_input_elements
+        << ",\"output_capacity\":" << output_capacity
+        << ",\"expected_output_elements\":" << expected_output_elements
+        << ",\"output_count\":" << output_count
+        << ",\"reason\":\"" << json_escape(reason) << "\""
+        << ",\"model\":{\"name\":\"" << json_escape(model.name)
+        << "\",\"format\":\"" << json_escape(model.format)
+        << "\",\"path\":\"" << json_escape(model.path)
+        << "\",\"task\":\"" << json_escape(model.task)
+        << "\",\"precision\":\"" << json_escape(model.precision)
+        << "\",\"backend_preference\":\"" << json_escape(backend) << "\"}"
+        << ",\"input\":{\"name\":\"" << json_escape(input.name)
+        << "\",\"element_type\":\"" << json_escape(input.element_type)
+        << "\",\"shape\":\"" << json_escape(input.shape) << "\"}"
+        << ",\"output\":{\"name\":\"" << json_escape(output.name)
+        << "\",\"element_type\":\"" << json_escape(output.element_type)
+        << "\",\"shape\":\"" << json_escape(output.shape) << "\"}}";
     return out.str();
 }
 
@@ -359,6 +418,87 @@ extern "C" int short_ai_infer(const char *model_name,
                                                                           "input_buffer_required_for_ai_runtime_execution");
     std::fprintf(stderr,
                  "[shorthand-runtime] infer model=%s input=%s output=%s status=not_executed backend_preference=%s reason=%s bridge_request=created\n",
+                 model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str(), reason.c_str());
+    return status;
+}
+
+extern "C" int short_ai_infer_f32(const char *model_name,
+                                  const char *input_name,
+                                  const float *input_values,
+                                  int input_count,
+                                  const char *output_name,
+                                  float *output_values,
+                                  int output_capacity,
+                                  int *output_count) {
+    if (output_count) *output_count = 0;
+
+    if (blank(model_name) || blank(input_name) || blank(output_name) ||
+        input_values == nullptr || output_values == nullptr || output_count == nullptr ||
+        input_count <= 0 || output_capacity <= 0) {
+        const int status = SHORTHAND_RUNTIME_INVALID_ARGUMENT;
+        set_last_infer(status, "none", "missing_or_invalid_typed_buffer_arguments");
+        log_status("infer_f32", status, "reason=missing_or_invalid_typed_buffer_arguments");
+        return status;
+    }
+
+    const std::string model_key = s(model_name);
+    const std::string input_key = s(input_name);
+    const std::string output_key = s(output_name);
+
+    auto model_it = models.find(model_key);
+    if (model_it == models.end()) {
+        const int status = SHORTHAND_RUNTIME_MODEL_NOT_FOUND;
+        set_last_infer(status, "none", "model_not_registered");
+        log_status("infer_f32", status, "model=" + model_key + " reason=model_not_registered");
+        return status;
+    }
+
+    auto input_it = tensors.find(input_key);
+    if (input_it == tensors.end()) {
+        const int status = SHORTHAND_RUNTIME_TENSOR_NOT_FOUND;
+        set_last_infer(status, "none", "input_tensor_not_registered");
+        log_status("infer_f32", status, "model=" + model_key + " input=" + input_key + " reason=input_tensor_not_registered");
+        return status;
+    }
+
+    auto output_it = tensors.find(output_key);
+    if (output_it == tensors.end()) {
+        const int status = SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND;
+        set_last_infer(status, "none", "output_tensor_not_registered");
+        log_status("infer_f32", status, "model=" + model_key + " output=" + output_key + " reason=output_tensor_not_registered");
+        return status;
+    }
+
+    const long long expected_input = declared_element_count(input_it->second);
+    const long long expected_output = declared_element_count(output_it->second);
+    if (expected_input <= 0 || expected_output <= 0 ||
+        input_count != expected_input || output_capacity < expected_output) {
+        const int status = SHORTHAND_RUNTIME_INVALID_INPUT;
+        set_last_infer(status, "none", "typed_buffer_shape_or_capacity_mismatch");
+        std::fprintf(stderr,
+                     "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=invalid_input reason=typed_buffer_shape_or_capacity_mismatch input_count=%d expected_input=%lld output_capacity=%d expected_output=%lld\n",
+                     model_key.c_str(), input_key.c_str(), output_key.c_str(), input_count, expected_input, output_capacity, expected_output);
+        return status;
+    }
+
+    const int status = SHORTHAND_RUNTIME_NOT_EXECUTED;
+    const std::string backend = model_it->second.backend_preference.empty() ? "fallback" : model_it->second.backend_preference;
+    const std::string reason = "ai_runtime_typed_buffer_bridge_pending";
+    set_last_infer(status, backend, reason);
+    *output_count = 0;
+    infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model_it->second,
+                                                                        input_it->second,
+                                                                        output_it->second,
+                                                                        backend,
+                                                                        status,
+                                                                        reason,
+                                                                        input_count,
+                                                                        output_capacity,
+                                                                        expected_input,
+                                                                        expected_output,
+                                                                        *output_count);
+    std::fprintf(stderr,
+                 "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=not_executed backend_preference=%s reason=%s typed_buffer_bridge=created\n",
                  model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str(), reason.c_str());
     return status;
 }
