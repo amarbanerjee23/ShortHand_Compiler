@@ -13,7 +13,7 @@ RUNTIME_LIB="${SHORTHAND_RUNTIME_LIB:-${BUILD_DIR}/libshorthand_runtime.a}"
 rm -rf "${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 
-make -C "${SRC_DIR}" parser.tab.cc lex.yy.c runtime_lib >/tmp/shorthand_external_runtime_make.out 2>&1
+make -C "${SRC_DIR}" parser.tab.cc lex.yy.c runtime_lib patch-generated-parser >/tmp/shorthand_external_runtime_make.out 2>&1
 bash "${ROOT_DIR}/scripts/generate_external_runtime_ir_generator.sh" \
   "${SRC_DIR}/visitors/IR_Generator.cpp" \
   "${EXTERNAL_IR}"
