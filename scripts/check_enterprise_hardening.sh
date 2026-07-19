@@ -69,6 +69,8 @@ check_contains tests/integration/test_onnxruntime_sdk_gate.sh 'identity_float32_
 check_contains docs/backend_compatibility_matrix.md 'ONNX'
 check_contains docs/telemetry_schema.md 'OTLP'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.json'
+check_contains scripts/generate_external_runtime_ir_generator.sh 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);'
+check_contains tests/codegen/test_external_runtime_native.sh 'declare i32 @short_ai_register_model'
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"
@@ -76,6 +78,14 @@ if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_
 else
   fail_check "ONNX Runtime SDK gate failed"
   cat /tmp/shorthand_onnx_sdk_gate.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash tests/codegen/test_external_runtime_native.sh >/tmp/shorthand_external_runtime_native.out 2>&1; then
+  log "PASS external runtime native linking gate completed"
+  cat /tmp/shorthand_external_runtime_native.out | tee -a "${LOG_FILE}"
+else
+  fail_check "external runtime native linking gate failed"
+  cat /tmp/shorthand_external_runtime_native.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
