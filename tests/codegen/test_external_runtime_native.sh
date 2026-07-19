@@ -25,6 +25,7 @@ fi
 
 grep -Fq 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);' "${EXTERNAL_IR}"
 grep -Fq 'SHORTHAND_RUNTIME_LIB' "${EXTERNAL_IR}"
+grep -Fq 'precision float;' "${FIXTURE}"
 
 LLVM_CXXFLAGS="$(llvm-config --cxxflags)"
 LLVM_LDFLAGS="$(llvm-config --ldflags --system-libs --libs core bitwriter)"
@@ -55,7 +56,11 @@ AI_RUNTIME_CORE_SRC="ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtim
 
 (
   cd "${WORK_DIR}"
-  SHORTHAND_RUNTIME_LIB="${RUNTIME_LIB}" "${EXTERNAL_BIN}" "${FIXTURE}" compile >/tmp/shorthand_external_compile.out 2>&1
+  if ! SHORTHAND_RUNTIME_LIB="${RUNTIME_LIB}" "${EXTERNAL_BIN}" "${FIXTURE}" compile >/tmp/shorthand_external_compile.out 2>&1; then
+    echo "FAIL external runtime fixture did not compile" >&2
+    cat /tmp/shorthand_external_compile.out >&2 || true
+    exit 1
+  fi
   grep -Fq 'declare i32 @short_ai_register_model' external_runtime_ai.ir
   grep -Fq 'declare i32 @short_ai_infer' external_runtime_ai.ir
   if grep -Fq 'define i32 @short_ai_register_model' external_runtime_ai.ir; then
@@ -63,7 +68,11 @@ AI_RUNTIME_CORE_SRC="ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtim
     exit 1
   fi
 
-  SHORTHAND_RUNTIME_LIB="${RUNTIME_LIB}" "${EXTERNAL_BIN}" "${FIXTURE}" compile-native >/tmp/shorthand_external_native.out 2>&1
+  if ! SHORTHAND_RUNTIME_LIB="${RUNTIME_LIB}" "${EXTERNAL_BIN}" "${FIXTURE}" compile-native >/tmp/shorthand_external_native.out 2>&1; then
+    echo "FAIL external runtime fixture did not compile-native" >&2
+    cat /tmp/shorthand_external_native.out >&2 || true
+    exit 1
+  fi
   ./external_runtime_ai >/tmp/shorthand_external_runtime_run.out 2>&1
 )
 
