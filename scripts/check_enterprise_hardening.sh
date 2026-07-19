@@ -104,6 +104,11 @@ check_contains schemas/c3eco/candidate_check.schema.json 'shorthand.c3eco.check.
 check_contains schemas/c3eco/bundle_manifest.schema.json 'shorthand.c3eco.bundle_manifest.v1'
 check_contains docs/c3eco_schema_and_claim_safety.md 'claim-safety gate'
 check_contains scripts/check_c3eco_claims_and_schema.sh 'PASS C3-ECO schema and claim-safety gate'
+check_contains mlir/include/ShortHand/IR/ShortHandDialect.td 'def ShortHand_Dialect : Dialect'
+check_contains mlir/include/ShortHand/IR/ShortHandOps.td 'def ShortHand_InferOp'
+check_contains mlir/examples/ai_greenai_pipeline.mlir '"shorthand.infer"'
+check_contains docs/mlir_lowering_plan.md 'ShortHand MLIR dialect'
+check_contains scripts/check_mlir_foundation.sh 'PASS MLIR foundation gate'
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"
@@ -135,6 +140,14 @@ if bash scripts/check_c3eco_claims_and_schema.sh >/tmp/shorthand_c3eco_claims_sc
 else
   fail_check "C3-ECO schema and claim-safety gate failed"
   cat /tmp/shorthand_c3eco_claims_schema.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_mlir_foundation.sh >/tmp/shorthand_mlir_foundation.out 2>&1; then
+  log "PASS MLIR foundation gate completed"
+  cat /tmp/shorthand_mlir_foundation.out | tee -a "${LOG_FILE}"
+else
+  fail_check "MLIR foundation gate failed"
+  cat /tmp/shorthand_mlir_foundation.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
