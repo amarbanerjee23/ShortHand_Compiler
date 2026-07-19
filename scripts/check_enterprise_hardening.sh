@@ -109,6 +109,10 @@ check_contains mlir/include/ShortHand/IR/ShortHandOps.td 'def ShortHand_InferOp'
 check_contains mlir/examples/ai_greenai_pipeline.mlir '"shorthand.infer"'
 check_contains docs/mlir_lowering_plan.md 'ShortHand MLIR dialect'
 check_contains scripts/check_mlir_foundation.sh 'PASS MLIR foundation gate'
+check_contains scripts/generate_release_sbom.sh 'SPDX-2.3'
+check_contains scripts/check_release_supply_chain.sh 'PASS release supply-chain gate'
+check_contains schemas/release/release_provenance.schema.json 'shorthand.release.provenance.v1'
+check_contains docs/release_supply_chain_hardening.md 'candidate release evidence'
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"
@@ -148,6 +152,14 @@ if bash scripts/check_mlir_foundation.sh >/tmp/shorthand_mlir_foundation.out 2>&
 else
   fail_check "MLIR foundation gate failed"
   cat /tmp/shorthand_mlir_foundation.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_release_supply_chain.sh >/tmp/shorthand_release_supply_chain.out 2>&1; then
+  log "PASS release supply-chain gate completed"
+  cat /tmp/shorthand_release_supply_chain.out | tee -a "${LOG_FILE}"
+else
+  fail_check "release supply-chain gate failed"
+  cat /tmp/shorthand_release_supply_chain.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
