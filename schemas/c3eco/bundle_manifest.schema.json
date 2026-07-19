@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/bundle_manifest.schema.json",
+  "title": "ShortHand C3-ECO Candidate Bundle Manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "source_program",
+    "claim_status",
+    "official_certification_granted",
+    "artifacts"
+  ],
+  "properties": {
+    "schema": { "const": "shorthand.c3eco.bundle_manifest.v1" },
+    "claim_status": { "const": "candidate_evidence_only" },
+    "official_certification_granted": { "const": false },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "contains": { "const": "candidate_report.json" }
+    }
+  }
+}

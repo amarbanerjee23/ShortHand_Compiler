@@ -69,6 +69,7 @@ check_contains tests/integration/test_onnxruntime_sdk_gate.sh 'identity_float32_
 check_contains docs/backend_compatibility_matrix.md 'ONNX'
 check_contains docs/telemetry_schema.md 'OTLP'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.json'
+check_contains scripts/generate_certification_bundle.sh 'candidate_report.schema.json'
 check_contains scripts/generate_external_runtime_ir_generator.sh 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);'
 check_contains tests/codegen/test_external_runtime_native.sh 'PASS default external runtime native linking'
 check_contains Compiler_new_ws/Short_Hand/src/Makefile 'IR_Generator.default_runtime.cpp'
@@ -81,6 +82,11 @@ check_contains docs/language_grammar_ebnf.md 'infer_statement'
 check_contains docs/semantic_ir_and_diagnostics_plan.md 'ShortHand semantic IR'
 check_contains tests/conformance/manifest.txt 'semantic-invalid'
 check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-conformance'
+check_contains schemas/c3eco/candidate_report.schema.json 'shorthand.c3eco.candidate_report.v1'
+check_contains schemas/c3eco/candidate_check.schema.json 'shorthand.c3eco.check.v1'
+check_contains schemas/c3eco/bundle_manifest.schema.json 'shorthand.c3eco.bundle_manifest.v1'
+check_contains docs/c3eco_schema_and_claim_safety.md 'claim-safety gate'
+check_contains scripts/check_c3eco_claims_and_schema.sh 'PASS C3-ECO schema and claim-safety gate'
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"
@@ -104,6 +110,14 @@ if bash scripts/check_language_correctness.sh >/tmp/shorthand_language_correctne
 else
   fail_check "language correctness gate failed"
   cat /tmp/shorthand_language_correctness.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_c3eco_claims_and_schema.sh >/tmp/shorthand_c3eco_claims_schema.out 2>&1; then
+  log "PASS C3-ECO schema and claim-safety gate completed"
+  cat /tmp/shorthand_c3eco_claims_schema.out | tee -a "${LOG_FILE}"
+else
+  fail_check "C3-ECO schema and claim-safety gate failed"
+  cat /tmp/shorthand_c3eco_claims_schema.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then

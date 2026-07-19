@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/candidate_check.schema.json",
+  "title": "ShortHand C3-ECO Candidate Check",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "status",
+    "minimum_c3eco_evidence_present",
+    "official_certification_granted",
+    "blocking_items",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": { "const": "shorthand.c3eco.check.v1" },
+    "status": {
+      "enum": ["candidate_ready_with_blockers", "missing_required_evidence"]
+    },
+    "minimum_c3eco_evidence_present": { "type": "boolean" },
+    "official_certification_granted": { "const": false },
+    "blocking_items": { "type": "array" },
+    "disclaimer": { "type": "string" }
+  }
+}
