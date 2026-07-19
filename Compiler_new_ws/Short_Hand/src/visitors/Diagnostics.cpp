@@ -1,18 +1,11 @@
 #include "Diagnostics.h"
 
-#include <algorithm>
 #include <cctype>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 namespace {
-std::string trimLeft(const std::string &value) {
-    size_t pos = 0;
-    while (pos < value.size() && std::isspace(static_cast<unsigned char>(value[pos]))) ++pos;
-    return value.substr(pos);
-}
-
 bool contains(const std::string &line, const std::string &needle) {
     return !needle.empty() && line.find(needle) != std::string::npos;
 }
