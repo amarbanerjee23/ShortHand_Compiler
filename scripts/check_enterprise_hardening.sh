@@ -1,16 +1,26 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "${ROOT_DIR}"
+cd "${ROOT_DIR}" || exit 1
 
+LOG_FILE="/tmp/shorthand_enterprise_hardening.out"
+: > "${LOG_FILE}"
 fail=0
+
+log() {
+  printf '%s\n' "$*" | tee -a "${LOG_FILE}"
+}
+
+fail_check() {
+  log "error: $*"
+  fail=1
+}
 
 require_file() {
   local file="$1"
   if [[ ! -f "$file" ]]; then
-    echo "error: required file is missing: ${file}" >&2
-    fail=1
+    fail_check "required file is missing: ${file}"
     return 1
   fi
   return 0
@@ -20,24 +30,31 @@ check_contains() {
   local file="$1"
   local needle="$2"
   require_file "$file" || return 0
-  if ! grep -Fq "$needle" "$file"; then
-    echo "error: ${file} missing required text: ${needle}" >&2
-    fail=1
+  if grep -Fq "$needle" "$file"; then
+    log "PASS contains: ${file} :: ${needle}"
+  else
+    fail_check "${file} missing required text: ${needle}"
   fi
 }
 
-tracked_metadata="$(git ls-files | grep -E '(^|/)\.metadata/' || true)"
+log "Enterprise hardening check started."
+log "Repository: $(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+log "Commit: $(git rev-parse HEAD 2>/dev/null || echo unknown)"
+
+tracked_metadata="$(git ls-files | awk '/(^|\/)\.metadata\// { print }')"
 if [[ -n "${tracked_metadata}" ]]; then
-  echo "error: tracked IDE metadata must not exist:" >&2
-  echo "${tracked_metadata}" >&2
-  fail=1
+  fail_check "tracked IDE metadata must not exist:"
+  log "${tracked_metadata}"
+else
+  log "PASS no tracked IDE metadata files"
 fi
 
-tracked_python_tools="$(git ls-files | grep -E '^deprecated/python_tools/' || true)"
+tracked_python_tools="$(git ls-files | awk '/^deprecated\/python_tools\// { print }')"
 if [[ -n "${tracked_python_tools}" ]]; then
-  echo "error: deprecated Python tooling must not be tracked:" >&2
-  echo "${tracked_python_tools}" >&2
-  fail=1
+  fail_check "deprecated Python tooling must not be tracked:"
+  log "${tracked_python_tools}"
+else
+  log "PASS no tracked deprecated Python tooling"
 fi
 
 check_contains .gitignore 'Compiler_new_ws/.metadata/'
@@ -53,16 +70,17 @@ check_contains docs/backend_compatibility_matrix.md 'ONNX'
 check_contains docs/telemetry_schema.md 'OTLP'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.json'
 
-if ! bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
-  cat /tmp/shorthand_onnx_sdk_gate.out >&2 || true
-  fail=1
+if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
+  log "PASS ONNX Runtime SDK gate command completed"
+  cat /tmp/shorthand_onnx_sdk_gate.out | tee -a "${LOG_FILE}"
 else
-  cat /tmp/shorthand_onnx_sdk_gate.out
+  fail_check "ONNX Runtime SDK gate failed"
+  cat /tmp/shorthand_onnx_sdk_gate.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
-  echo "Enterprise hardening check failed." >&2
+  log "Enterprise hardening check failed."
   exit 1
 fi
 
-echo "Enterprise hardening check passed."
+log "Enterprise hardening check passed."
