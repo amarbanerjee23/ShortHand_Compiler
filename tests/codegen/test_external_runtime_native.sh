@@ -12,6 +12,11 @@ RUNTIME_LIB="${SHORTHAND_RUNTIME_LIB:-${BUILD_DIR}/libshorthand_runtime.a}"
 rm -rf "${WORK_DIR}"
 mkdir -p "${WORK_DIR}"
 
+case "${SHORT_BIN}" in
+  /*) ;;
+  *) SHORT_BIN="$(cd "${SRC_DIR}" && mkdir -p "$(dirname "${SHORT_BIN}")" && cd "$(dirname "${SHORT_BIN}")" && pwd)/$(basename "${SHORT_BIN}")" ;;
+esac
+
 case "${RUNTIME_LIB}" in
   /*) ;;
   *) RUNTIME_LIB="$(cd "${SRC_DIR}" && mkdir -p "$(dirname "${RUNTIME_LIB}")" && cd "$(dirname "${RUNTIME_LIB}")" && pwd)/$(basename "${RUNTIME_LIB}")" ;;
