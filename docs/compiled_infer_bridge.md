@@ -72,6 +72,12 @@ The typed buffer bridge is now tied to the backend compatibility matrix gate. Th
 
 This protects the project from accidentally describing the typed bridge as real backend execution before the runtime link is implemented.
 
+## AI_Runtime bridge linkage
+
+The runtime-hook ABI owner is `runtime/ShorthandRuntime.*`. `AI_Runtime.cpp` owns SDK-backed C++ runtime behavior and must not export duplicate `extern "C"` compiled-hook symbols such as `short_ai_infer`.
+
+The bridge linkage boundary is documented in `docs/ai_runtime_bridge_linkage.md` and validated by `scripts/check_ai_runtime_bridge_linkage.sh`.
+
 ## Public C ABI
 
 The latest bridge request is exposed through:
@@ -97,3 +103,4 @@ The next step is to route the typed buffer bridge into `AI_Runtime` behind the e
 3. Populate `output_values` and `output_count` only when execution succeeds.
 4. Keep observability and bridge request JSON claim-safe.
 5. Pass the backend compatibility matrix gate before changing public execution claims.
+6. Preserve runtime-hook ABI ownership so the linked build has no duplicate C symbol.
