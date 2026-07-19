@@ -60,6 +60,18 @@ After validation, the runtime records a typed bridge request with:
 
 The function currently returns `SHORTHAND_RUNTIME_NOT_EXECUTED` and sets `output_count` to `0`. It does not fabricate output values.
 
+## Backend matrix guardrail
+
+The typed buffer bridge is now tied to the backend compatibility matrix gate. The gate verifies that:
+
+- backend compatibility policy is documented separately from real execution,
+- fallback paths remain `not_executed`,
+- the ONNX Runtime SDK gate skips safely when `ONNXRUNTIME_ROOT` is absent,
+- the ONNX Runtime SDK gate rejects fallback when a real SDK execution run is requested,
+- and the compiled hook bridge is still marked as execution-pending until it is actually connected to `AI_Runtime`.
+
+This protects the project from accidentally describing the typed bridge as real backend execution before the runtime link is implemented.
+
 ## Public C ABI
 
 The latest bridge request is exposed through:
@@ -84,3 +96,4 @@ The next step is to route the typed buffer bridge into `AI_Runtime` behind the e
 2. Keep fallback and unavailable backends as `not_executed` or `backend_unavailable`.
 3. Populate `output_values` and `output_count` only when execution succeeds.
 4. Keep observability and bridge request JSON claim-safe.
+5. Pass the backend compatibility matrix gate before changing public execution claims.

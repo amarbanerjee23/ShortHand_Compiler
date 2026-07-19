@@ -78,6 +78,9 @@ check_contains CMakeLists.txt 'AI_Telemetry.cpp'
 check_contains Compiler_new_ws/Short_Hand/src/Makefile 'AI_Telemetry.cpp'
 check_contains tests/integration/test_onnxruntime_sdk_gate.sh 'identity_float32_v13.onnx.b64'
 check_contains docs/backend_compatibility_matrix.md 'ONNX'
+check_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
+check_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
+check_contains scripts/check_backend_compatibility_matrix.sh 'PASS backend compatibility matrix gate'
 check_contains docs/telemetry_schema.md 'OTLP'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.json'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.schema.json'
@@ -178,6 +181,14 @@ if bash scripts/check_release_supply_chain.sh >/tmp/shorthand_release_supply_cha
 else
   fail_check "release supply-chain gate failed"
   cat /tmp/shorthand_release_supply_chain.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_backend_compatibility_matrix.sh >/tmp/shorthand_backend_matrix.out 2>&1; then
+  log "PASS backend compatibility matrix gate completed"
+  cat /tmp/shorthand_backend_matrix.out | tee -a "${LOG_FILE}"
+else
+  fail_check "backend compatibility matrix gate failed"
+  cat /tmp/shorthand_backend_matrix.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
