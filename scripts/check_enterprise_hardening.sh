@@ -71,6 +71,9 @@ check_contains docs/telemetry_schema.md 'OTLP'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.json'
 check_contains scripts/generate_external_runtime_ir_generator.sh 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);'
 check_contains tests/codegen/test_external_runtime_native.sh 'declare i32 @short_ai_register_model'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'SHORTHAND_RUNTIME_MODEL_NOT_FOUND'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'std::map<std::string, ModelRecord> models'
+check_contains tests/codegen/test_runtime_library_build.sh 'SHORTHAND_RUNTIME_NOT_EXECUTED'
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"
