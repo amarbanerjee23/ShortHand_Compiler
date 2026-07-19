@@ -1,0 +1,14 @@
+# ShortHand language conformance manifest
+# Format: category | path | expectation | rationale
+
+parser-valid | tests/fixtures/external_runtime_ai.short | accept | AI/GreenAI declarations plus infer statement should parse and pass semantic validation.
+parser-valid | Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short | accept | Current beta AI syntax used by runtime and evidence paths should remain accepted.
+parser-valid | Compiler_new_ws/Short_Hand/examples/greenai_report.short | accept | Core GreenAI report example should remain accepted.
+parser-invalid | tests/parser/invalid/missing_semicolon.short | reject | Parser must reject incomplete statements.
+semantic-invalid | tests/semantic/invalid/ai_shape_mismatch.short | reject | Semantic analyzer must reject model/input tensor shape mismatch.
+semantic-invalid | tests/semantic/invalid/ai_backend_mismatch.short | reject | Semantic analyzer must reject incompatible backend and model format declarations.
+semantic-invalid | tests/semantic/invalid/ai_output_shape_mismatch.short | reject | Semantic analyzer must reject model/output tensor shape mismatch.
+diagnostics | tests/diagnostics/test_source_diagnostics.sh | accept | Source diagnostics must include file, line, column and caret.
+codegen | tests/codegen/test_ai_metadata_ir.sh | accept | LLVM metadata for AI/GreenAI constructs must remain emitted.
+runtime | tests/codegen/test_external_runtime_native.sh | accept | Native runtime-linking path must remain valid.
+evidence | tests/evidence/test_ai_evidence.sh | accept | Evidence output must retain backend and fallback honesty fields.
