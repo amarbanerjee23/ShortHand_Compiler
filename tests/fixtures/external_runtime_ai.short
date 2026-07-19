@@ -1,0 +1,29 @@
+int i;
+tensor input float "1,1";
+tensor output float "1,1";
+model classifier {
+  format onnx;
+  path "models/classifier.onnx";
+  task "classification";
+  precision float;
+  input_shape "1,1";
+  output_shape "1,1";
+  backend_preference fallback;
+  compact false;
+  quality_guardrail accuracy >= 1;
+};
+greenai_contract external_runtime {
+  functional_unit "1 inference";
+  success_criteria "accuracy >= 1";
+  boundary compute;
+  measurement_quality MQ1;
+  data_quality DQ1;
+  carbon_factor location 1;
+  energy_budget_j 10;
+  carbon_budget_gco2e 10;
+  quality_guardrail accuracy >= 1;
+  evidence_retention "30 days";
+  claims_mode evidence_only;
+};
+greenai_measure external_runtime { inferences 1; watts 1; seconds 1; backend classifier; };
+infer classifier(input) -> output;

@@ -6,7 +6,7 @@ This tracker maps the feature plans in `docs/` to the current implementation. It
 
 Current status: controlled beta / pilot language foundation.
 
-ShortHand is not yet a fully production-ready industrial language for arbitrary enterprise AI applications. It has a working compiler foundation, AI/GreenAI syntax, semantic validation, fallback-aware runtime behavior, ONNX Runtime CPU execution when the SDK is configured, evidence reporting, CI validation, source-aware semantic diagnostics, and release-readiness infrastructure. The remaining blockers are listed below and must be completed before any full enterprise production claim.
+ShortHand is not yet a fully production-ready industrial language for arbitrary enterprise AI applications. It has a working compiler foundation, AI/GreenAI syntax, semantic validation, fallback-aware runtime behavior, ONNX Runtime CPU execution when the SDK is configured, evidence reporting, CI validation, source-aware semantic diagnostics, runtime hook library groundwork, and release-readiness infrastructure. The remaining blockers are listed below and must be completed before any full enterprise production claim.
 
 ## Language feature plan status
 
@@ -18,7 +18,7 @@ Source plan: `docs/language_feature_implementation_plan.md`
 | L2 | Keep beta syntax stable for tensor/model/contract/measurement/infer | Implemented for current beta syntax | `docs/language_spec.md`, `scanner_parser/parser.yy`, `scanner_parser/scanner.ll` | Provides current beta language surface |
 | L3 | Reject infer when input tensor shape is incompatible with model input shape | Implemented | `Compiler_new_ws/Short_Hand/src/visitors/SemanticAnalyzer.cpp` | Prevents invalid AI programs from reaching runtime |
 | L4 | Add negative tests for invalid AI programs | Implemented | `tests/semantic/invalid/ai_shape_mismatch.short`, `tests/semantic/invalid/ai_backend_mismatch.short`, `tests/semantic/invalid/ai_output_shape_mismatch.short` | Ensures semantic rejection is covered in CI |
-| L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Partial | `IR_Generator.cpp` emits LLVM metadata globals and compiled runtime hook calls; `runtime/ShorthandRuntime.cpp` provides a linkable hook library; `OnnxRuntimeBackend.cpp` has SDK-backed ONNX Runtime CPU execution when `ONNXRUNTIME_ROOT` is configured | Preserves AI workload metadata and introduces a runtime-library target; the next compiler step is switching LLVM hook emission from local stubs to external runtime declarations for native generated binaries |
+| L5 | Emit runtime metadata for AI declarations and infer in compiled code instead of no-op lowering | Partial | `IR_Generator.cpp` emits LLVM metadata globals and compiled runtime hook calls; `runtime/ShorthandRuntime.cpp` provides a linkable hook library; `scripts/generate_external_runtime_ir_generator.sh` creates an external-runtime lowering variant; `tests/codegen/test_external_runtime_native.sh` verifies external declarations and native runtime-link execution | Demonstrates native AI/GreenAI hook execution through `libshorthand_runtime.a`; next step is to make the external-runtime lowering path the default source implementation instead of a generated transitional path |
 | L6 | Source-aware diagnostics for semantic errors | Partial | `Diagnostics.cpp`, `SemanticAnalyzer.cpp`, `tests/diagnostics/test_source_diagnostics.sh` | Semantic errors now include source file, line, column, source line and caret for key AI/GreenAI anchors; full AST span/range tracking remains open |
 
 ## C3-ECO certification language plan status
@@ -31,14 +31,14 @@ Source plan: `docs/c3eco_certification_language_upgrade_plan.md`
 | C3L-2 | Structured functional unit and workload profile | Open | Needed for denominator, success condition, workload, sampling and anti-gaming controls |
 | C3L-3 | Typed boundary declaration | Open | Needed for included/excluded layers, materiality and third-party AI boundaries |
 | C3L-4 | Measurement plan block | Open | Needed for instruments, MQ/DQ, factors, sampling, uncertainty and retention |
-| C3L-5 | Resource and telemetry capture primitives | Partial | ONNX Runtime path now emits latency/input/output telemetry JSON; direct energy measurement and OTLP SDK export remain open |
+| C3L-5 | Resource and telemetry capture primitives | Partial | ONNX Runtime path now emits latency/input/output telemetry JSON; external runtime native linking gate exists; direct energy measurement and OTLP SDK export remain open |
 | C3L-6 | AI lifecycle declaration | Open | Needed to separate provider/deployer/integrator responsibilities and model-training scope |
 | C3L-7 | RAG, token, cache and routing metrics | Open | Needed for GenAI evidence, routing, prompt classes and usage accounting |
 | C3L-8 | Carbon and cost calculation built-ins | Partial | Candidate workbook CSV calculates declared compute kWh and CO2e from existing measurement declarations; full cost/savings formulas and factors remain open |
 | C3L-9 | Certification scoring and level estimator | Open | Must remain candidate-only unless external certifier signs |
 | C3L-10 | Claim-safe report generation | Partial | `c3eco-report`, `c3eco-check`, `c3eco-workbook`, and `scripts/generate_certification_bundle.sh` exist with candidate-only disclaimers; Markdown report and full schema remain open |
 | C3L-11 | Quality/security/privacy/accessibility guardrails | Open | Needed to ensure efficiency is not achieved by weakening required quality or safety floors |
-| C3L-12 | CI/CD and eco-regression gates | Partial | CI exercises candidate report/check/workbook paths, enterprise hardening checks, source diagnostics, runtime-library build checks, and the optional ONNX SDK gate skip path; release-to-release eco-regression is still open |
+| C3L-12 | CI/CD and eco-regression gates | Partial | CI exercises candidate report/check/workbook paths, enterprise hardening checks, source diagnostics, runtime-library build checks, external runtime native linking, and the optional ONNX SDK gate skip path; release-to-release eco-regression is still open |
 
 ## Enterprise beta requirements status
 
@@ -48,12 +48,12 @@ Source plan: `docs/beta_enterprise_requirements.md`
 | --- | --- | --- | --- |
 | R1 | Language contract | Partial | Current beta syntax is documented, but complete grammar/versioned standard is still missing |
 | R2 | Compiler build and validation | Implemented for current maturity | CI runs setup, strict validation, smoke tests, feature/enterprise hardening checks, Makefile tests, sanitizer, CMake, and CTest |
-| R3 | AI runtime behavior | Partial | Fallback is honest; ONNX Runtime CPU execution exists for SDK-enabled builds with an optional model-fixture gate; `libshorthand_runtime.a` now exports hook symbols, but generated native binaries still need external hook lowering wired in |
+| R3 | AI runtime behavior | Partial | Fallback is honest; ONNX Runtime CPU execution exists for SDK-enabled builds with an optional model-fixture gate; `libshorthand_runtime.a` exports hook symbols; generated external-runtime lowering is verified through a native-link test path |
 | R4 | GreenAI and C3-ECO-aligned evidence | Partial | Evidence/report modes and bundle generator exist; full authority-ready evidence schema remains open |
 | R5 | Security and supply-chain baseline | Partial | Security policy and SBOM plan exist; automated SBOM/signing are still open |
 | R6 | Developer experience | Partial | Build docs/examples and source-aware semantic diagnostics exist; formatter, linter, editor tooling, and LSP remain open |
 | R7 | Deployment and operations | Partial | Docker/Kubernetes scaffolds and observability plan exist; runtime telemetry JSON now exists, but production OTLP/Prometheus export remains open |
-| R8 | Governance and release control | Partial | Release plans/status docs exist; full RFC/governance automation remains open |
+| R8 | Governance and release control | Partial | Release plans/status docs exist; full RFC workflow and automated release provenance are open |
 
 ## Enterprise release scorecard status
 
@@ -72,7 +72,7 @@ Source plan: `docs/enterprise_release_scorecard.md`
 | G14-G16 GreenAI measurement/evidence | Partial | Evidence modes and candidate bundle generator exist; full measurement plan and authority-ready bundle remain open |
 | G17-G19 SBOM/signing/security scans | Open | Plans exist but automation is not implemented |
 | G20 security disclosure | Implemented baseline | `SECURITY.md` exists |
-| G21-G23 deployment and observability | Partial | Docker/Kubernetes scaffolds, observability plan, and runtime telemetry JSON exist; production OTLP SDK/exporter remains open |
+| G21-G23 deployment and observability | Partial | Docker/Kubernetes scaffolds, observability plan, runtime hook library, and runtime telemetry JSON exist; production OTLP SDK/exporter remains open |
 | G24 governance/RFC | Partial | Release docs exist; formal RFC workflow is open |
 | G25 unsupported claims blocked | Partial | Docs and reports avoid claims; automated claim gate is still open |
 
@@ -81,7 +81,7 @@ Source plan: `docs/enterprise_release_scorecard.md`
 These items must be completed before ShortHand can honestly be described as an industry-level production language for enterprise AI applications:
 
 1. Real ONNX Runtime CPU backend execution with tests: SDK-backed execution is implemented and an optional SDK-enabled identity-model gate exists; default CI skips it when `ONNXRUNTIME_ROOT` is absent.
-2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals and runtime hook calls are implemented, and a runtime hook library now exists; remaining work is to remove in-module hook stubs from generated LLVM and link native output to the shared/static runtime by default.
+2. Compiled-code metadata/runtime lowering for `model`, `tensor`, `greenai_contract`, `greenai_measure`, and `infer`: metadata globals, runtime hook calls, runtime hook library, and an external-runtime native-link test path exist; remaining work is to replace the transitional generated external-runtime lowering with direct source-level external hook declarations in `IR_Generator.cpp`.
 3. Full backend compatibility and failure matrix: policy and semantic tests exist; live SDK execution across all marketed backends remains open.
 4. Complete formal grammar and conformance test suite.
 5. Source-aware diagnostics with full AST file, line, column and range details across all parser and semantic errors.
