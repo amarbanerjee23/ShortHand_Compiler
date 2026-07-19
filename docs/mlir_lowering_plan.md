@@ -37,7 +37,7 @@ This PR does not:
 - replace the current LLVM IR generator,
 - lower MLIR to LLVM dialect,
 - route compiled inference into the real SDK-backed runtime path,
-- claim production readiness.
+- make any production readiness claim.
 
 ## Validation strategy
 
@@ -47,7 +47,7 @@ Until MLIR toolchain support is introduced, CI validates the dialect foundation 
 - all expected operations are present,
 - the example module uses all expected op names,
 - the lowering plan preserves the AST -> Semantic IR -> MLIR -> LLVM path,
-- the feature tracker records MLIR as scaffolded rather than production-ready.
+- the feature tracker records MLIR as scaffolded and incomplete.
 
 ## Next implementation steps
 
