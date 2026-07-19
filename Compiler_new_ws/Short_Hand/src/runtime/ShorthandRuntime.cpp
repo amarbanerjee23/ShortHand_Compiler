@@ -1,7 +1,9 @@
 #include "ShorthandRuntime.h"
 
 #include <cstdio>
+#include <cstdlib>
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -44,50 +46,140 @@ struct MeasurementRecord {
     std::string seconds;
 };
 
+struct RuntimeStats {
+    int infer_calls = 0;
+    int infer_success = 0;
+    int infer_not_executed = 0;
+    int infer_backend_unavailable = 0;
+    int infer_invalid_input = 0;
+};
+
 std::map<std::string, ModelRecord> models;
 std::map<std::string, TensorRecord> tensors;
 std::map<std::string, ContractRecord> contracts;
 std::vector<MeasurementRecord> measurements;
+RuntimeStats stats;
 
-const char *safe(const char *value) {
-    return value ? value : "";
+int last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
+std::string last_infer_backend = "none";
+std::string last_infer_reason = "not_run";
+std::string last_infer_telemetry_json = "{}";
+std::string observability_json_cache = "{}";
+
+const char *safe(const char *value) { return value ? value : ""; }
+std::string s(const char *value) { return std::string(safe(value)); }
+bool blank(const char *value) { return s(value).empty(); }
+
+std::string json_escape(const std::string &value) {
+    std::string out;
+    for (char c : value) {
+        if (c == '"' || c == '\\') { out += '\\'; out += c; }
+        else if (c == '\n') out += "\\n";
+        else out += c;
+    }
+    return out;
 }
 
-std::string s(const char *value) {
-    return std::string(safe(value));
+std::vector<long long> parse_shape(const std::string &csv) {
+    std::vector<long long> out;
+    std::stringstream ss(csv);
+    std::string token;
+    while (std::getline(ss, token, ',')) {
+        char *end = nullptr;
+        long long value = std::strtoll(token.c_str(), &end, 10);
+        if (end == token.c_str() || value <= 0) return {};
+        out.push_back(value);
+    }
+    return out;
 }
 
-bool blank(const char *value) {
-    return s(value).empty();
+bool shape_is_valid(const std::string &csv) {
+    return !parse_shape(csv).empty();
+}
+
+std::string status_name(int status) {
+    switch (status) {
+        case SHORTHAND_RUNTIME_OK: return "success";
+        case SHORTHAND_RUNTIME_INVALID_ARGUMENT: return "invalid_argument";
+        case SHORTHAND_RUNTIME_MODEL_NOT_FOUND: return "model_not_found";
+        case SHORTHAND_RUNTIME_TENSOR_NOT_FOUND: return "tensor_not_found";
+        case SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND: return "output_tensor_not_found";
+        case SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE: return "backend_unavailable";
+        case SHORTHAND_RUNTIME_NOT_EXECUTED: return "not_executed";
+        case SHORTHAND_RUNTIME_INVALID_INPUT: return "invalid_input";
+        case SHORTHAND_RUNTIME_RUNTIME_ERROR: return "runtime_error";
+    }
+    return "runtime_error";
+}
+
+void update_stats(int status) {
+    stats.infer_calls++;
+    if (status == SHORTHAND_RUNTIME_OK) stats.infer_success++;
+    else if (status == SHORTHAND_RUNTIME_NOT_EXECUTED) stats.infer_not_executed++;
+    else if (status == SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE) stats.infer_backend_unavailable++;
+    else if (status == SHORTHAND_RUNTIME_INVALID_INPUT || status == SHORTHAND_RUNTIME_INVALID_ARGUMENT) stats.infer_invalid_input++;
+}
+
+void set_last_infer(int status, const std::string &backend, const std::string &reason) {
+    last_infer_status = status;
+    last_infer_backend = backend.empty() ? "none" : backend;
+    last_infer_reason = reason.empty() ? "unspecified" : reason;
+    last_infer_telemetry_json = std::string("{\"schema\":\"shorthand.runtime.infer_telemetry.v1\",\"status\":\"") +
+        json_escape(status_name(status)) + "\",\"backend\":\"" + json_escape(last_infer_backend) +
+        "\",\"reason\":\"" + json_escape(last_infer_reason) + "\"}";
+    update_stats(status);
 }
 
 void log_status(const char *operation, int status, const std::string &message) {
     std::fprintf(stderr, "[shorthand-runtime] %s status=%d %s\n", operation, status, message.c_str());
 }
-}
+} // namespace
 
 extern "C" int short_runtime_reset(void) {
     models.clear();
     tensors.clear();
     contracts.clear();
     measurements.clear();
+    stats = RuntimeStats{};
+    last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
+    last_infer_backend = "none";
+    last_infer_reason = "not_run";
+    last_infer_telemetry_json = "{}";
+    observability_json_cache = "{}";
     return SHORTHAND_RUNTIME_OK;
 }
 
-extern "C" int short_runtime_model_count(void) {
-    return static_cast<int>(models.size());
-}
+extern "C" int short_runtime_model_count(void) { return static_cast<int>(models.size()); }
+extern "C" int short_runtime_tensor_count(void) { return static_cast<int>(tensors.size()); }
+extern "C" int short_runtime_contract_count(void) { return static_cast<int>(contracts.size()); }
+extern "C" int short_runtime_measurement_count(void) { return static_cast<int>(measurements.size()); }
+extern "C" int short_runtime_infer_count(void) { return stats.infer_calls; }
+extern "C" int short_runtime_infer_success_count(void) { return stats.infer_success; }
+extern "C" int short_runtime_infer_not_executed_count(void) { return stats.infer_not_executed; }
+extern "C" int short_runtime_infer_backend_unavailable_count(void) { return stats.infer_backend_unavailable; }
+extern "C" int short_runtime_infer_invalid_input_count(void) { return stats.infer_invalid_input; }
+extern "C" int short_runtime_last_infer_status(void) { return last_infer_status; }
+extern "C" const char *short_runtime_last_infer_backend(void) { return last_infer_backend.c_str(); }
+extern "C" const char *short_runtime_last_infer_reason(void) { return last_infer_reason.c_str(); }
+extern "C" const char *short_runtime_last_infer_telemetry_json(void) { return last_infer_telemetry_json.c_str(); }
 
-extern "C" int short_runtime_tensor_count(void) {
-    return static_cast<int>(tensors.size());
-}
-
-extern "C" int short_runtime_contract_count(void) {
-    return static_cast<int>(contracts.size());
-}
-
-extern "C" int short_runtime_measurement_count(void) {
-    return static_cast<int>(measurements.size());
+extern "C" const char *short_runtime_observability_json(void) {
+    std::ostringstream out;
+    out << "{\"schema\":\"shorthand.runtime.observability.v1\""
+        << ",\"models\":" << models.size()
+        << ",\"tensors\":" << tensors.size()
+        << ",\"contracts\":" << contracts.size()
+        << ",\"measurements\":" << measurements.size()
+        << ",\"infer_calls\":" << stats.infer_calls
+        << ",\"infer_success\":" << stats.infer_success
+        << ",\"infer_not_executed\":" << stats.infer_not_executed
+        << ",\"infer_backend_unavailable\":" << stats.infer_backend_unavailable
+        << ",\"infer_invalid_input\":" << stats.infer_invalid_input
+        << ",\"last_status\":\"" << json_escape(status_name(last_infer_status)) << "\""
+        << ",\"last_backend\":\"" << json_escape(last_infer_backend) << "\""
+        << ",\"last_reason\":\"" << json_escape(last_infer_reason) << "\"}";
+    observability_json_cache = out.str();
+    return observability_json_cache.c_str();
 }
 
 extern "C" int short_ai_register_model(const char *name,
@@ -172,8 +264,10 @@ extern "C" int short_ai_infer(const char *model_name,
                                const char *input_name,
                                const char *output_name) {
     if (blank(model_name) || blank(input_name) || blank(output_name)) {
-        log_status("infer", SHORTHAND_RUNTIME_INVALID_ARGUMENT, "reason=missing_model_input_or_output");
-        return SHORTHAND_RUNTIME_INVALID_ARGUMENT;
+        const int status = SHORTHAND_RUNTIME_INVALID_ARGUMENT;
+        set_last_infer(status, "none", "missing_model_input_or_output");
+        log_status("infer", status, "reason=missing_model_input_or_output");
+        return status;
     }
 
     const std::string model_key = s(model_name);
@@ -182,36 +276,60 @@ extern "C" int short_ai_infer(const char *model_name,
 
     auto model_it = models.find(model_key);
     if (model_it == models.end()) {
-        log_status("infer", SHORTHAND_RUNTIME_MODEL_NOT_FOUND, "model=" + model_key + " reason=model_not_registered");
-        return SHORTHAND_RUNTIME_MODEL_NOT_FOUND;
+        const int status = SHORTHAND_RUNTIME_MODEL_NOT_FOUND;
+        set_last_infer(status, "none", "model_not_registered");
+        log_status("infer", status, "model=" + model_key + " reason=model_not_registered");
+        return status;
     }
 
-    if (tensors.find(input_key) == tensors.end()) {
-        log_status("infer", SHORTHAND_RUNTIME_TENSOR_NOT_FOUND, "model=" + model_key + " input=" + input_key + " reason=input_tensor_not_registered");
-        return SHORTHAND_RUNTIME_TENSOR_NOT_FOUND;
+    auto input_it = tensors.find(input_key);
+    if (input_it == tensors.end()) {
+        const int status = SHORTHAND_RUNTIME_TENSOR_NOT_FOUND;
+        set_last_infer(status, "none", "input_tensor_not_registered");
+        log_status("infer", status, "model=" + model_key + " input=" + input_key + " reason=input_tensor_not_registered");
+        return status;
     }
 
-    if (tensors.find(output_key) == tensors.end()) {
-        log_status("infer", SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND, "model=" + model_key + " output=" + output_key + " reason=output_tensor_not_registered");
-        return SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND;
+    auto output_it = tensors.find(output_key);
+    if (output_it == tensors.end()) {
+        const int status = SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND;
+        set_last_infer(status, "none", "output_tensor_not_registered");
+        log_status("infer", status, "model=" + model_key + " output=" + output_key + " reason=output_tensor_not_registered");
+        return status;
     }
 
+    if (!shape_is_valid(input_it->second.shape) || !shape_is_valid(output_it->second.shape)) {
+        const int status = SHORTHAND_RUNTIME_INVALID_INPUT;
+        set_last_infer(status, "none", "registered_tensor_shape_invalid");
+        std::fprintf(stderr,
+                     "[shorthand-runtime] infer model=%s input=%s output=%s status=invalid_input reason=registered_tensor_shape_invalid\n",
+                     model_key.c_str(), input_key.c_str(), output_key.c_str());
+        return status;
+    }
+
+    const int status = SHORTHAND_RUNTIME_NOT_EXECUTED;
+    const std::string backend = model_it->second.backend_preference.empty() ? "fallback" : model_it->second.backend_preference;
+    set_last_infer(status, backend, "ai_runtime_execution_bridge_pending");
     std::fprintf(stderr,
-                 "[shorthand-runtime] infer model=%s input=%s output=%s status=not_executed backend_preference=%s reason=runtime_bridge_pending\n",
-                 model_key.c_str(), input_key.c_str(), output_key.c_str(), model_it->second.backend_preference.c_str());
-    return SHORTHAND_RUNTIME_NOT_EXECUTED;
+                 "[shorthand-runtime] infer model=%s input=%s output=%s status=not_executed backend_preference=%s reason=ai_runtime_execution_bridge_pending\n",
+                 model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str());
+    return status;
 }
 
 extern "C" int short_ai_infer_legacy(const char *model_path,
                                       const char *shape_csv,
                                       const char *input_csv) {
     if (blank(model_path) || blank(shape_csv) || blank(input_csv)) {
-        log_status("infer_legacy", SHORTHAND_RUNTIME_INVALID_ARGUMENT, "reason=missing_model_shape_or_input");
-        return SHORTHAND_RUNTIME_INVALID_ARGUMENT;
+        const int status = SHORTHAND_RUNTIME_INVALID_ARGUMENT;
+        set_last_infer(status, "none", "missing_model_shape_or_input");
+        log_status("infer_legacy", status, "reason=missing_model_shape_or_input");
+        return status;
     }
 
+    const int status = SHORTHAND_RUNTIME_NOT_EXECUTED;
+    set_last_infer(status, "legacy", "legacy_runtime_bridge_pending");
     std::fprintf(stderr,
                  "[shorthand-runtime] infer_legacy model_path=%s shape=%s input=%s status=not_executed reason=legacy_runtime_bridge_pending\n",
                  safe(model_path), safe(shape_csv), safe(input_csv));
-    return SHORTHAND_RUNTIME_NOT_EXECUTED;
+    return status;
 }

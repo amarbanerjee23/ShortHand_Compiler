@@ -11,7 +11,9 @@ enum ShortHandRuntimeStatus {
     SHORTHAND_RUNTIME_TENSOR_NOT_FOUND = 3,
     SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND = 4,
     SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE = 5,
-    SHORTHAND_RUNTIME_NOT_EXECUTED = 6
+    SHORTHAND_RUNTIME_NOT_EXECUTED = 6,
+    SHORTHAND_RUNTIME_INVALID_INPUT = 7,
+    SHORTHAND_RUNTIME_RUNTIME_ERROR = 8
 };
 
 int short_runtime_reset(void);
@@ -19,6 +21,18 @@ int short_runtime_model_count(void);
 int short_runtime_tensor_count(void);
 int short_runtime_contract_count(void);
 int short_runtime_measurement_count(void);
+
+int short_runtime_infer_count(void);
+int short_runtime_infer_success_count(void);
+int short_runtime_infer_not_executed_count(void);
+int short_runtime_infer_backend_unavailable_count(void);
+int short_runtime_infer_invalid_input_count(void);
+
+int short_runtime_last_infer_status(void);
+const char *short_runtime_last_infer_backend(void);
+const char *short_runtime_last_infer_reason(void);
+const char *short_runtime_last_infer_telemetry_json(void);
+const char *short_runtime_observability_json(void);
 
 int short_ai_register_model(const char *name,
                             const char *format,
