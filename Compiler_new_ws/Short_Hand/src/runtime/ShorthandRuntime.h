@@ -4,6 +4,22 @@
 extern "C" {
 #endif
 
+enum ShortHandRuntimeStatus {
+    SHORTHAND_RUNTIME_OK = 0,
+    SHORTHAND_RUNTIME_INVALID_ARGUMENT = 1,
+    SHORTHAND_RUNTIME_MODEL_NOT_FOUND = 2,
+    SHORTHAND_RUNTIME_TENSOR_NOT_FOUND = 3,
+    SHORTHAND_RUNTIME_OUTPUT_TENSOR_NOT_FOUND = 4,
+    SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE = 5,
+    SHORTHAND_RUNTIME_NOT_EXECUTED = 6
+};
+
+int short_runtime_reset(void);
+int short_runtime_model_count(void);
+int short_runtime_tensor_count(void);
+int short_runtime_contract_count(void);
+int short_runtime_measurement_count(void);
+
 int short_ai_register_model(const char *name,
                             const char *format,
                             const char *path,
