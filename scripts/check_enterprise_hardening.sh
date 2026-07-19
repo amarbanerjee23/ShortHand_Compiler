@@ -74,6 +74,11 @@ check_contains tests/codegen/test_external_runtime_native.sh 'declare i32 @short
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'SHORTHAND_RUNTIME_MODEL_NOT_FOUND'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'std::map<std::string, ModelRecord> models'
 check_contains tests/codegen/test_runtime_library_build.sh 'SHORTHAND_RUNTIME_NOT_EXECUTED'
+check_contains Compiler_new_ws/Short_Hand/src/semantic_ir/SemanticIR.h 'struct ProgramIR'
+check_contains docs/language_grammar_ebnf.md 'infer_statement'
+check_contains docs/semantic_ir_and_diagnostics_plan.md 'ShortHand semantic IR'
+check_contains tests/conformance/manifest.txt 'semantic-invalid'
+check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-conformance'
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"
@@ -89,6 +94,14 @@ if bash tests/codegen/test_external_runtime_native.sh >/tmp/shorthand_external_r
 else
   fail_check "external runtime native linking gate failed"
   cat /tmp/shorthand_external_runtime_native.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_language_correctness.sh >/tmp/shorthand_language_correctness.out 2>&1; then
+  log "PASS language correctness gate completed"
+  cat /tmp/shorthand_language_correctness.out | tee -a "${LOG_FILE}"
+else
+  fail_check "language correctness gate failed"
+  cat /tmp/shorthand_language_correctness.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
