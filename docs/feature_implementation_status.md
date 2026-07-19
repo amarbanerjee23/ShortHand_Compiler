@@ -6,7 +6,7 @@ This tracker maps the feature plans in `docs/` to the current implementation. It
 
 Current status: controlled beta / pilot language foundation.
 
-ShortHand is not yet a fully production-ready industrial language for arbitrary enterprise AI applications. It has a working compiler foundation, AI/GreenAI syntax, semantic validation, fallback-aware runtime behavior, ONNX Runtime CPU execution when the SDK is configured, evidence reporting, CI validation, source-aware semantic diagnostics, runtime hook registries, runtime infer observability counters/JSON, semantic IR scaffolding, a beta EBNF grammar draft, conformance validation, source-level external-runtime lowering in the Makefile/CMake build path, a ShortHand MLIR dialect scaffold, C3-ECO candidate schema/claim-safety gates, and release-readiness infrastructure. The remaining blockers are listed below and must be completed before any full enterprise production claim.
+ShortHand is not yet a fully production-ready industrial language for arbitrary enterprise AI applications. It has a working compiler foundation, AI/GreenAI syntax, semantic validation, fallback-aware runtime behavior, ONNX Runtime CPU execution when the SDK is configured, evidence reporting, CI validation, source-aware semantic diagnostics, runtime hook registries, runtime infer observability counters/JSON, semantic IR scaffolding, a beta EBNF grammar draft, conformance validation, source-level external-runtime lowering in the Makefile/CMake build path, a ShortHand MLIR dialect scaffold, C3-ECO candidate schema/claim-safety gates, candidate release SBOM/provenance generation, baseline release supply-chain scans, and release-readiness infrastructure. The remaining blockers are listed below and must be completed before any full enterprise production claim.
 
 ## Language feature plan status
 
@@ -39,7 +39,7 @@ Source plan: `docs/c3eco_certification_language_upgrade_plan.md`
 | C3L-9 | Certification scoring and level estimator | Open | Must remain candidate-only unless external certifier signs |
 | C3L-10 | Claim-safe report generation | Partial | `c3eco-report`, `c3eco-check`, `c3eco-workbook`, `scripts/generate_certification_bundle.sh`, C3-ECO schema files, and `scripts/check_c3eco_claims_and_schema.sh` validate candidate-only report structure and block unsupported public claims; Markdown report and full third-party JSON Schema validator remain open |
 | C3L-11 | Quality/security/privacy/accessibility guardrails | Open | Needed to ensure efficiency is not achieved by weakening required quality or safety floors |
-| C3L-12 | CI/CD and eco-regression gates | Partial | CI exercises candidate report/check/workbook paths, C3-ECO schema/claim-safety gate, enterprise hardening checks, source diagnostics, language conformance, runtime-library build checks, source-level external runtime native linking, registry-backed runtime hook checks, runtime infer observability checks, MLIR foundation checks, and the optional ONNX SDK gate skip path; release-to-release eco-regression is still open |
+| C3L-12 | CI/CD and eco-regression gates | Partial | CI exercises candidate report/check/workbook paths, C3-ECO schema/claim-safety gate, enterprise hardening checks, source diagnostics, language conformance, runtime-library build checks, source-level external runtime native linking, registry-backed runtime hook checks, runtime infer observability checks, MLIR foundation checks, release supply-chain checks, and the optional ONNX SDK gate skip path; release-to-release eco-regression is still open |
 
 ## Enterprise beta requirements status
 
@@ -51,10 +51,10 @@ Source plan: `docs/beta_enterprise_requirements.md`
 | R2 | Compiler build and validation | Implemented for current maturity | CI runs setup, strict validation, smoke tests, feature/enterprise hardening checks, language conformance, Makefile tests, sanitizer, CMake, and CTest |
 | R3 | AI runtime behavior | Partial | Fallback is honest; ONNX Runtime CPU execution exists for SDK-enabled builds with an optional model-fixture gate; `libshorthand_runtime.a` exports hook symbols and maintains model/tensor/contract/measurement registries plus infer counters, last-infer status/reason/backend, telemetry JSON, and observability JSON; real compiled-hook execution through `AI_Runtime` remains open |
 | R4 | GreenAI and C3-ECO-aligned evidence | Partial | Evidence/report modes, semantic IR measurement scaffolding, MLIR GreenAI ops scaffold, bundle generator, schema files, and claim-safety gate exist; full authority-ready auditor handoff remains open |
-| R5 | Security and supply-chain baseline | Partial | Security policy and SBOM plan exist; automated SBOM/signing are still open |
+| R5 | Security and supply-chain baseline | Partial | Security policy, SBOM plan, candidate SPDX SBOM generation, release provenance schema/output, source hash manifest, baseline secret scan, and release supply-chain gate exist; signed artifacts and external vulnerability scanner integration remain open |
 | R6 | Developer experience | Partial | Build docs/examples, source-aware semantic diagnostics, grammar draft, conformance validation, and MLIR lowering plan exist; formatter, linter, editor tooling, and LSP remain open |
 | R7 | Deployment and operations | Partial | Docker/Kubernetes scaffolds, observability plan, runtime hook library, runtime telemetry JSON fragments, and runtime observability JSON exist; production OTLP/Prometheus export remains open |
-| R8 | Governance and release control | Partial | Release plans/status docs exist; full RFC workflow and automated release provenance are open |
+| R8 | Governance and release control | Partial | Release plans/status docs and candidate provenance output exist; full RFC workflow, protected release workflow, and signed release provenance are open |
 
 ## Enterprise release scorecard status
 
@@ -71,10 +71,10 @@ Source plan: `docs/enterprise_release_scorecard.md`
 | G12 fallback never claims executed inference | Implemented | Fallback and bridge-pending paths return `not_executed` and expose reason/status telemetry |
 | G13 backend failure cases covered | Partial | Backend compatibility matrix and negative tests exist; live execution matrix across all backends remains open |
 | G14-G16 GreenAI measurement/evidence | Partial | Evidence modes, candidate bundle generator, semantic IR measurement op, runtime measurement registry, schema files, claim-safety gate, runtime observability JSON, and MLIR GreenAI op scaffold exist; full measurement plan and authority-ready bundle remain open |
-| G17-G19 SBOM/signing/security scans | Open | Plans exist but automation is not implemented |
+| G17-G19 SBOM/signing/security scans | Partial | Dependency-free candidate SPDX SBOM generation, release provenance JSON, source hash manifest, and baseline secret/claim scan gate exist; signed artifacts and external dependency vulnerability scans remain open |
 | G20 security disclosure | Implemented baseline | `SECURITY.md` exists |
 | G21-G23 deployment and observability | Partial | Docker/Kubernetes scaffolds, observability plan, runtime hook library, runtime telemetry JSON, and runtime observability JSON exist; production OTLP SDK/exporter remains open |
-| G24 governance/RFC | Partial | Release docs exist; formal RFC workflow is open |
+| G24 governance/RFC | Partial | Release docs and candidate provenance exist; formal RFC workflow and protected release publication are open |
 | G25 unsupported claims blocked | Partial | Candidate evidence outputs include disclaimers and the CI gate checks schema/claim safety; broader docs-wide claim scanning remains open |
 | G26 MLIR dialect and lowering architecture | Scaffolded | `mlir/include/ShortHand/IR/ShortHandDialect.td`, `ShortHandOps.td`, example MLIR module, and `docs/mlir_lowering_plan.md` exist; real MLIR build integration and lowering passes remain open |
 
@@ -87,8 +87,8 @@ These items must be completed before ShortHand can honestly be described as an i
 3. Full backend compatibility and failure matrix: policy and semantic tests exist; live SDK execution across all marketed backends remains open.
 4. Complete formal grammar and conformance test suite: EBNF draft, conformance manifest, and language correctness gate exist; full matrix coverage and versioning remain open.
 5. Source-aware diagnostics with full AST file, line, column and range details across all parser and semantic errors: source-aware diagnostics and source range scaffolding exist; full AST parser-action integration remains open.
-6. Automated SBOM generation and release signing.
-7. Security/dependency scans in CI.
+6. Automated SBOM generation and release signing: candidate SPDX SBOM, source hashes, provenance JSON, and baseline scan exist; signed release artifacts and protected release publication remain open.
+7. Security/dependency scans in CI: baseline source secret scan exists; external dependency vulnerability scanning remains open.
 8. Full authority-ready evidence bundle generator with auditor handoff. Candidate schema and claim-safety gates exist, but full independent validator/auditor workflow remains open.
 9. Runtime observability implementation with real OTLP/Prometheus export. Runtime observability JSON exists; external exporter integration remains open.
 10. Container/Kubernetes service hardening, health checks, and deployment validation.

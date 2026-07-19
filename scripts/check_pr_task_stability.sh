@@ -58,9 +58,10 @@ require_contains scripts/check_enterprise_hardening.sh 'check_language_correctne
 require_contains scripts/check_enterprise_hardening.sh 'check_c3eco_claims_and_schema.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_mlir_foundation.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_pr_task_stability.sh'
+require_contains scripts/check_enterprise_hardening.sh 'check_release_supply_chain.sh'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
