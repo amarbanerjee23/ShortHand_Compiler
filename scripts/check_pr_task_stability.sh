@@ -33,6 +33,7 @@ require_file scripts/check_feature_plan_status.sh
 require_file scripts/check_enterprise_hardening.sh
 require_file docs/feature_implementation_status.md
 require_file docs/pr_task_stability_strategy.md
+require_file docs/compiled_infer_bridge.md
 
 # Preserve old task names and ordering anchors from the CI workflow.
 require_contains .github/workflows/ci.yml 'Strict language validation'
@@ -59,6 +60,7 @@ require_contains scripts/check_enterprise_hardening.sh 'check_c3eco_claims_and_s
 require_contains scripts/check_enterprise_hardening.sh 'check_mlir_foundation.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_pr_task_stability.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_release_supply_chain.sh'
+require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compiled_infer_bridge_request.v1'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
 for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/generate_release_sbom.sh; do
@@ -68,5 +70,6 @@ done
 # The strategy itself must explain the old-task contract so future changes do not silently rename CI anchors.
 require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
+require_contains docs/compiled_infer_bridge.md 'input_buffer_required_for_ai_runtime_execution'
 
 printf 'PASS PR task stability gate\n'

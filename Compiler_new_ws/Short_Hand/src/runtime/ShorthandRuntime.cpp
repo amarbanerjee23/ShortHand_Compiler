@@ -64,6 +64,7 @@ int last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
 std::string last_infer_backend = "none";
 std::string last_infer_reason = "not_run";
 std::string last_infer_telemetry_json = "{}";
+std::string infer_bridge_request_json_cache = "{}";
 std::string observability_json_cache = "{}";
 
 const char *safe(const char *value) { return value ? value : ""; }
@@ -124,10 +125,46 @@ void set_last_infer(int status, const std::string &backend, const std::string &r
     last_infer_status = status;
     last_infer_backend = backend.empty() ? "none" : backend;
     last_infer_reason = reason.empty() ? "unspecified" : reason;
+    infer_bridge_request_json_cache = "{}";
     last_infer_telemetry_json = std::string("{\"schema\":\"shorthand.runtime.infer_telemetry.v1\",\"status\":\"") +
         json_escape(status_name(status)) + "\",\"backend\":\"" + json_escape(last_infer_backend) +
         "\",\"reason\":\"" + json_escape(last_infer_reason) + "\"}";
     update_stats(status);
+}
+
+std::string build_compiled_infer_bridge_request(const ModelRecord &model,
+                                                const TensorRecord &input,
+                                                const TensorRecord &output,
+                                                const std::string &backend,
+                                                int status,
+                                                const std::string &reason) {
+    std::ostringstream out;
+    out << "{\"schema\":\"shorthand.runtime.compiled_infer_bridge_request.v1\""
+        << ",\"status\":\"" << json_escape(status_name(status)) << "\""
+        << ",\"bridge_status\":\"candidate_request_only\""
+        << ",\"execution_ready\":false"
+        << ",\"reason\":\"" << json_escape(reason) << "\""
+        << ",\"runtime_target\":\"AI_Runtime\""
+        << ",\"input_buffer_required\":true"
+        << ",\"model\":{\"name\":\"" << json_escape(model.name)
+        << "\",\"format\":\"" << json_escape(model.format)
+        << "\",\"path\":\"" << json_escape(model.path)
+        << "\",\"task\":\"" << json_escape(model.task)
+        << "\",\"precision\":\"" << json_escape(model.precision)
+        << "\",\"input_shape\":\"" << json_escape(model.input_shape)
+        << "\",\"output_shape\":\"" << json_escape(model.output_shape)
+        << "\",\"backend_preference\":\"" << json_escape(backend) << "\"}"
+        << ",\"input\":{\"name\":\"" << json_escape(input.name)
+        << "\",\"element_type\":\"" << json_escape(input.element_type)
+        << "\",\"shape\":\"" << json_escape(input.shape)
+        << "\",\"rank\":\"" << json_escape(input.rank)
+        << "\",\"total_elements\":\"" << json_escape(input.total_elements) << "\"}"
+        << ",\"output\":{\"name\":\"" << json_escape(output.name)
+        << "\",\"element_type\":\"" << json_escape(output.element_type)
+        << "\",\"shape\":\"" << json_escape(output.shape)
+        << "\",\"rank\":\"" << json_escape(output.rank)
+        << "\",\"total_elements\":\"" << json_escape(output.total_elements) << "\"}}";
+    return out.str();
 }
 
 void log_status(const char *operation, int status, const std::string &message) {
@@ -145,6 +182,7 @@ extern "C" int short_runtime_reset(void) {
     last_infer_backend = "none";
     last_infer_reason = "not_run";
     last_infer_telemetry_json = "{}";
+    infer_bridge_request_json_cache = "{}";
     observability_json_cache = "{}";
     return SHORTHAND_RUNTIME_OK;
 }
@@ -162,6 +200,7 @@ extern "C" int short_runtime_last_infer_status(void) { return last_infer_status;
 extern "C" const char *short_runtime_last_infer_backend(void) { return last_infer_backend.c_str(); }
 extern "C" const char *short_runtime_last_infer_reason(void) { return last_infer_reason.c_str(); }
 extern "C" const char *short_runtime_last_infer_telemetry_json(void) { return last_infer_telemetry_json.c_str(); }
+extern "C" const char *short_runtime_infer_bridge_request_json(void) { return infer_bridge_request_json_cache.c_str(); }
 
 extern "C" const char *short_runtime_observability_json(void) {
     std::ostringstream out;
@@ -177,7 +216,8 @@ extern "C" const char *short_runtime_observability_json(void) {
         << ",\"infer_invalid_input\":" << stats.infer_invalid_input
         << ",\"last_status\":\"" << json_escape(status_name(last_infer_status)) << "\""
         << ",\"last_backend\":\"" << json_escape(last_infer_backend) << "\""
-        << ",\"last_reason\":\"" << json_escape(last_infer_reason) << "\"}";
+        << ",\"last_reason\":\"" << json_escape(last_infer_reason) << "\""
+        << ",\"infer_bridge_request\":" << infer_bridge_request_json_cache << "}";
     observability_json_cache = out.str();
     return observability_json_cache.c_str();
 }
@@ -309,10 +349,17 @@ extern "C" int short_ai_infer(const char *model_name,
 
     const int status = SHORTHAND_RUNTIME_NOT_EXECUTED;
     const std::string backend = model_it->second.backend_preference.empty() ? "fallback" : model_it->second.backend_preference;
-    set_last_infer(status, backend, "ai_runtime_execution_bridge_pending");
+    const std::string reason = "ai_runtime_execution_bridge_pending";
+    set_last_infer(status, backend, reason);
+    infer_bridge_request_json_cache = build_compiled_infer_bridge_request(model_it->second,
+                                                                          input_it->second,
+                                                                          output_it->second,
+                                                                          backend,
+                                                                          status,
+                                                                          "input_buffer_required_for_ai_runtime_execution");
     std::fprintf(stderr,
-                 "[shorthand-runtime] infer model=%s input=%s output=%s status=not_executed backend_preference=%s reason=ai_runtime_execution_bridge_pending\n",
-                 model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str());
+                 "[shorthand-runtime] infer model=%s input=%s output=%s status=not_executed backend_preference=%s reason=%s bridge_request=created\n",
+                 model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str(), reason.c_str());
     return status;
 }
 
