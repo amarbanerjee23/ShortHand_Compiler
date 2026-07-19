@@ -26,7 +26,17 @@ make -C "${SRC_DIR}" short_hand runtime_lib >/tmp/shorthand_default_runtime_make
 
 test -x "${SHORT_BIN}"
 test -s "${RUNTIME_LIB}"
-grep -Fq 'IR_Generator.default_runtime.cpp' "${SRC_DIR}/Makefile"
+grep -Fq 'runtime-source-lowering' "${SRC_DIR}/Makefile"
+grep -Fq 'visitors/IR_Generator.cpp' "${SRC_DIR}/Makefile"
+if grep -Fq 'IR_Generator.default_runtime.cpp' "${SRC_DIR}/Makefile"; then
+  echo "FAIL Makefile still uses generated IR_Generator.default_runtime.cpp" >&2
+  exit 1
+fi
+grep -Fq 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);' "${SRC_DIR}/visitors/IR_Generator.cpp"
+if grep -Fq 'stubBuilder.CreateRet' "${SRC_DIR}/visitors/IR_Generator.cpp"; then
+  echo "FAIL IR_Generator.cpp still contains local runtime hook stub return" >&2
+  exit 1
+fi
 grep -Fq 'precision float;' "${FIXTURE}"
 
 (
@@ -56,4 +66,4 @@ grep -Fq 'Native linker:' /tmp/shorthand_external_native.out
 grep -Fq '[shorthand-runtime] model name=classifier' /tmp/shorthand_external_runtime_run.out
 grep -Fq '[shorthand-runtime] infer model=classifier input=input output=output' /tmp/shorthand_external_runtime_run.out
 
-echo "PASS default external runtime native linking"
+echo "PASS source-level external runtime native linking"
