@@ -124,6 +124,11 @@ set(SHORTHAND_AI_RUNTIME_SOURCES
   ${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp
 )
 
+add_library(shorthand_runtime STATIC
+  ${SRC_DIR}/runtime/ShorthandRuntime.cpp
+)
+target_include_directories(shorthand_runtime PUBLIC ${SRC_DIR}/runtime)
+
 add_executable(short_hand
   ${SRC_DIR}/main.cpp
   ${PARSER_SRC}
@@ -183,4 +188,9 @@ add_test(
 set_tests_properties(cmake_short_hand_greenai_run PROPERTIES
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   PASS_REGULAR_EXPRESSION "GreenAI workload"
+)
+
+add_test(
+  NAME cmake_shorthand_runtime_builds
+  COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_runtime>"
 )
