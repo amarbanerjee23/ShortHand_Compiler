@@ -32,6 +32,7 @@ int short_runtime_last_infer_status(void);
 const char *short_runtime_last_infer_backend(void);
 const char *short_runtime_last_infer_reason(void);
 const char *short_runtime_last_infer_telemetry_json(void);
+const char *short_runtime_infer_bridge_request_json(void);
 const char *short_runtime_observability_json(void);
 
 int short_ai_register_model(const char *name,
