@@ -70,7 +70,9 @@ check_contains docs/backend_compatibility_matrix.md 'ONNX'
 check_contains docs/telemetry_schema.md 'OTLP'
 check_contains scripts/generate_certification_bundle.sh 'candidate_report.json'
 check_contains scripts/generate_external_runtime_ir_generator.sh 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);'
-check_contains tests/codegen/test_external_runtime_native.sh 'declare i32 @short_ai_register_model'
+check_contains tests/codegen/test_external_runtime_native.sh 'PASS default external runtime native linking'
+check_contains Compiler_new_ws/Short_Hand/src/Makefile 'IR_Generator.default_runtime.cpp'
+check_contains CMakeLists.txt 'IR_Generator.default_runtime.cpp'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'SHORTHAND_RUNTIME_MODEL_NOT_FOUND'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'std::map<std::string, ModelRecord> models'
 check_contains tests/codegen/test_runtime_library_build.sh 'SHORTHAND_RUNTIME_NOT_EXECUTED'
@@ -89,10 +91,10 @@ else
 fi
 
 if bash tests/codegen/test_external_runtime_native.sh >/tmp/shorthand_external_runtime_native.out 2>&1; then
-  log "PASS external runtime native linking gate completed"
+  log "PASS default external runtime native linking gate completed"
   cat /tmp/shorthand_external_runtime_native.out | tee -a "${LOG_FILE}"
 else
-  fail_check "external runtime native linking gate failed"
+  fail_check "default external runtime native linking gate failed"
   cat /tmp/shorthand_external_runtime_native.out | tee -a "${LOG_FILE}" || true
 fi
 

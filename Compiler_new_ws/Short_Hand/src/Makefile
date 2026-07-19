@@ -61,7 +61,8 @@ AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/
 endif
 
 AI_RUNTIME_CORE_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Telemetry.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
+DEFAULT_IR_GENERATOR_SRC := ../build/IR_Generator.default_runtime.cpp
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp $(DEFAULT_IR_GENERATOR_SRC) visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := $(AI_RUNTIME_CORE_SRC)
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
@@ -93,6 +94,10 @@ parser.tab.cc parser.tab.hh: scanner_parser/parser.yy ast/AST.h
 
 lex.yy.c: scanner_parser/scanner.ll parser.tab.hh
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
+
+$(DEFAULT_IR_GENERATOR_SRC): visitors/IR_Generator.cpp ../../../scripts/generate_external_runtime_ir_generator.sh
+	@mkdir -p ../build
+	bash ../../../scripts/generate_external_runtime_ir_generator.sh visitors/IR_Generator.cpp $(DEFAULT_IR_GENERATOR_SRC)
 
 short_hand: patch-generated-parser $(SRC)
 	@mkdir -p ../build
@@ -138,7 +143,7 @@ regen:
 
 .PHONY: all compiler short_hand runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o *.bc *.ir *.o
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o ../build/IR_Generator.default_runtime.cpp *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
