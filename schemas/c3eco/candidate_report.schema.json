@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/candidate_report.schema.json",
+  "title": "ShortHand C3-ECO Candidate Report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "report_status",
+    "source_file",
+    "compiler_version",
+    "minimum_c3eco_evidence_present",
+    "official_certification_granted",
+    "workload",
+    "functional_unit",
+    "success_criteria",
+    "measurement_quality",
+    "data_quality",
+    "carbon_factor_gco2e_per_kwh",
+    "measurement_status",
+    "runtime_backend",
+    "inference_status",
+    "blocked_certification_items",
+    "claim_safe_text",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": { "const": "shorthand.c3eco.candidate_report.v1" },
+    "report_status": { "const": "candidate_assessment_only" },
+    "minimum_c3eco_evidence_present": { "type": "boolean" },
+    "official_certification_granted": { "const": false },
+    "measurement_status": {
+      "enum": ["declared_budget_only", "measured", "estimated", "unavailable"]
+    },
+    "inference_status": {
+      "enum": ["not_executed", "executed", "backend_unavailable", "fallback"]
+    },
+    "offsets_gco2e": { "type": "number", "minimum": 0 },
+    "avoided_impact_gco2e": { "type": "number", "minimum": 0 },
+    "base_footprint_not_reduced_by_offsets": { "const": true },
+    "models": { "type": "array" },
+    "tensors": { "type": "array" },
+    "infer_calls": { "type": "array" },
+    "measurements": { "type": "array" },
+    "blocked_certification_items": { "type": "array" },
+    "claim_safe_text": { "type": "string" },
+    "disclaimer": { "type": "string" }
+  }
+}
