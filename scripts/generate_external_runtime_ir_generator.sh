@@ -14,9 +14,21 @@ python3 - "$src" "$out" <<'PY'
 import sys
 from pathlib import Path
 
-src = Path(sys.argv[1])
+src = Path(sys.argv[1]).resolve()
 out = Path(sys.argv[2])
 text = src.read_text()
+
+visitor_dir = src.parent
+source_dir = visitor_dir.parent
+include_rewrites = {
+    '#include "IR_Generator.h"': f'#include "{(visitor_dir / "IR_Generator.h").as_posix()}"',
+    '#include "Symbol_Table.h"': f'#include "{(visitor_dir / "Symbol_Table.h").as_posix()}"',
+    '#include "../util/util.h"': f'#include "{(source_dir / "util" / "util.h").as_posix()}"',
+}
+for old, new in include_rewrites.items():
+    if old not in text:
+        raise SystemExit(f"expected include not found for rewrite: {old}")
+    text = text.replace(old, new, 1)
 
 old_hook = '''static Function *ensureShortHandRuntimeHook(const std::string &name, size_t argc) {
     if (!module) return nullptr;
@@ -128,6 +140,8 @@ text = text[:start] + new_dump + text[end:]
 
 if 'BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);' in text:
     raise SystemExit("local runtime-hook stub body still present after transform")
+if '#include "IR_Generator.h"' in text or '#include "Symbol_Table.h"' in text or '#include "../util/util.h"' in text:
+    raise SystemExit("generated default-runtime IR generator still contains source-location-relative includes")
 
 out.write_text(text)
 PY
