@@ -80,11 +80,17 @@ The bridge linkage boundary is documented in `docs/ai_runtime_bridge_linkage.md`
 
 ## AI_Runtime execution adapter
 
-PR #45 adds `runtime/AIRuntimeBridgeAdapter.*`, a compile-checked adapter layer for mapping runtime-hook model/tensor/buffer records into `AI_Runtime` data structures.
+`runtime/AIRuntimeBridgeAdapter.*` is a compile-checked adapter layer for mapping runtime-hook model/tensor/buffer records into `AI_Runtime` data structures.
 
 The adapter contract is documented in `docs/ai_runtime_execution_adapter.md` and validated by `scripts/check_ai_runtime_execution_adapter.sh`.
 
-The adapter currently owns only conversion and status mapping. It does not call `AIRuntime::infer` yet, and it does not change the public C ABI return behavior.
+The adapter currently owns only conversion and status mapping. It does not change the public C ABI return behavior.
+
+## Runtime AI bridge link build
+
+The runtime AI bridge link-build gate compiles the runtime hook layer, execution adapter, AI runtime core, telemetry, and backend sources into one probe binary. The gate is validated by `scripts/check_runtime_ai_bridge_link_build.sh`.
+
+This proves that the layers can link together without duplicate C hook symbols. It does not change `short_ai_infer_f32` behavior.
 
 ## Public C ABI
 
@@ -98,7 +104,7 @@ After a successful validation path through `short_ai_infer`, this function retur
 
 ## Why this is not yet real execution
 
-The typed bridge receives input and output buffers, and the adapter can map them into `AI_Runtime` types. The public C ABI still intentionally does not call `AIRuntime::infer`. A real SDK-backed execution step must connect this validated request and buffer payload to `AI_Runtime::infer`, then return `SHORTHAND_RUNTIME_OK` only when backend execution succeeds.
+The typed bridge receives input and output buffers, and the adapter can map them into `AI_Runtime` types. The public C ABI still intentionally does not route successful execution results from `AIRuntime::infer`. A real SDK-backed execution step must connect this validated request and buffer payload to `AI_Runtime::infer`, then return `SHORTHAND_RUNTIME_OK` only when backend execution succeeds.
 
 Until that is implemented, ShortHand must not claim that compiled inference executed through ONNX Runtime, TensorRT, OpenVINO, LibTorch, or any other backend from this hook path.
 
@@ -113,3 +119,4 @@ The next step is to route the typed buffer bridge into `AI_Runtime` behind the e
 5. Pass the backend compatibility matrix gate before changing public execution claims.
 6. Preserve runtime-hook ABI ownership so the linked build has no duplicate C symbol.
 7. Pass the AI Runtime execution adapter gate before wiring the public C ABI to `AIRuntime::infer`.
+8. Keep the runtime AI bridge link-build gate passing before changing `short_ai_infer_f32` behavior.
