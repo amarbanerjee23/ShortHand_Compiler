@@ -103,6 +103,7 @@ check_contains docs/compiled_infer_bridge.md 'input_buffer_required_for_ai_runti
 check_contains docs/compiled_infer_bridge.md 'Typed tensor-buffer bridge'
 check_contains docs/compiled_infer_bridge.md 'AI_Runtime bridge linkage'
 check_contains docs/compiled_infer_bridge.md 'AI_Runtime execution adapter'
+check_contains docs/compiled_infer_bridge.md 'Runtime AI bridge link build'
 check_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 check_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 check_not_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'extern "C" int short_ai_infer'
@@ -112,8 +113,12 @@ check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.h '
 check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp 'shorthand.runtime.ai_runtime_execution_adapter.v1'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp 'bridgeRequestIsExecutionReady'
 check_contains docs/ai_runtime_execution_adapter.md 'adapter_contract_status: compile_checked_mapping_only'
+check_contains docs/ai_runtime_execution_adapter.md 'bridge_link_status: runtime_adapter_ai_core_link_checked'
 check_contains scripts/check_ai_runtime_execution_adapter.sh 'PASS AI runtime execution adapter gate'
 check_contains tests/codegen/test_ai_runtime_bridge_adapter.sh 'PASS AI runtime bridge adapter compile and mapping test'
+check_contains scripts/check_runtime_ai_bridge_link_build.sh 'PASS runtime AI bridge link build gate'
+check_contains tests/codegen/test_runtime_ai_bridge_link_build.sh 'AIRuntime runtime'
+check_contains tests/codegen/test_runtime_ai_bridge_link_build.sh 'runtime.infer(model_spec, input_buffer)'
 check_contains tests/codegen/test_runtime_library_build.sh 'SHORTHAND_RUNTIME_NOT_EXECUTED'
 check_contains tests/codegen/test_runtime_library_build.sh 'shorthand.runtime.observability.v1'
 check_contains tests/codegen/test_runtime_library_build.sh 'compiled-infer bridge request'
@@ -218,6 +223,14 @@ if bash scripts/check_ai_runtime_execution_adapter.sh >/tmp/shorthand_ai_runtime
 else
   fail_check "AI runtime execution adapter gate failed"
   cat /tmp/shorthand_ai_runtime_execution_adapter.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_runtime_ai_bridge_link_build.sh >/tmp/shorthand_runtime_ai_bridge_link_build.out 2>&1; then
+  log "PASS runtime AI bridge link build gate completed"
+  cat /tmp/shorthand_runtime_ai_bridge_link_build.out | tee -a "${LOG_FILE}"
+else
+  fail_check "runtime AI bridge link build gate failed"
+  cat /tmp/shorthand_runtime_ai_bridge_link_build.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
