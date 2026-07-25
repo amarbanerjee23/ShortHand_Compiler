@@ -1,8 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-07-25-pr51-r2
+production_readiness_plan_version: 2026-07-25-pr52
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
+LAST_COMPLETED_PR: 52
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -59,9 +60,9 @@ The update should change:
 
 A PR must not mark ShortHand as production ready unless all production-readiness rows are MERGED or intentionally DEFERRED with a clear reason.
 
-## Current baseline after PR #50
+## Current baseline after PR #52
 
-Current state after PR #50:
+Current state after PR #52:
 
 - Beta language contract is explicit as `beta-0.1`.
 - Conformance manifest has a version row and required categories.
@@ -69,33 +70,34 @@ Current state after PR #50:
 - ONNX Runtime CPU execution exists when `ONNXRUNTIME_ROOT` is configured.
 - The compiled-hook path has an optional ONNX Runtime success fixture.
 - Runtime observability has JSON, Prometheus-style text, and OTLP-like span JSON exports.
+- A shared backend live SDK matrix harness records row-level `live_success`, `skip_safe`, `policy_compatible_only`, and `dedicated_fixture_planned` status without making unsupported backend claims.
 
 Important boundary:
 
-ShortHand is still not production ready. The open work includes live backend matrix coverage, stable runtime ABI/versioning, runtime state/thread-safety, production packaging, real observability export integration, full diagnostics, parser robustness, container hardening, release signing, external vulnerability scans, module/package support, developer tooling, full C3-ECO language support, and MLIR lowering integration.
+ShortHand is still not production ready. The open work includes backend-specific live fixtures beyond ONNX Runtime CPU, stable runtime ABI/versioning, runtime state/thread-safety, production packaging, real observability export integration, full diagnostics, parser robustness, container hardening, release signing, external vulnerability scans, module/package support, developer tooling, full C3-ECO language support, and MLIR lowering integration.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 28 PRs total.
 
-That includes this planning PR.
+That includes PR #51, the planning PR.
 
-After this planning PR is merged, the remaining implementation path is expected to be about 27 PRs. Some PRs may split further if SDK availability, MLIR build tooling, parser changes, or C3-ECO evidence generation becomes larger than expected.
+After PR #52 is merged, the remaining implementation path is expected to be about 26 PRs. Some PRs may split further if SDK availability, MLIR build tooling, parser changes, or C3-ECO evidence generation becomes larger than expected.
 
 ## Next recommended PR
 
-Next recommended PR after this planning PR:
+Next recommended PR after PR #52:
 
-PR52 - Backend live SDK matrix harness.
+PR53 - TensorRT optional live execution fixture.
 
-Reason: backend execution is currently strong for ONNX Runtime CPU but not yet represented by one live matrix harness across the marketed backend set. Production claims should not advance until backend coverage, skip behavior, and failure behavior are represented by a repeatable matrix harness.
+Reason: PR #52 provides the shared matrix harness. The next highest-value backend slice is to add the first non-ONNX-CPU dedicated fixture or a strict unavailable-path proof for TensorRT and ONNX Runtime TensorRT, without false success claims.
 
 ## PR roadmap table
 
 | Planned PR | Status | Area | Goal | Expected evidence |
 | --- | --- | --- | --- | --- |
-| PR51 - Production readiness plan and tracking contract | IN_PROGRESS | Planning and governance | Add this plan and a lightweight gate so future PRs update the roadmap instead of re-evaluating from scratch. | `docs/production_readiness_pr_plan.md`, `scripts/check_production_readiness_pr_plan.sh` |
-| PR52 - Backend live SDK matrix harness | PLANNED | AI runtime backend coverage | Add one matrix runner that can execute or skip SDK-backed backend probes consistently. Keep default CI skip-safe. | backend matrix runner, updated `docs/backend_compatibility_matrix.md`, CI gate |
+| PR51 - Production readiness plan and tracking contract | MERGED | Planning and governance | Add this plan and a lightweight gate so future PRs update the roadmap instead of re-evaluating from scratch. | `docs/production_readiness_pr_plan.md`, `scripts/check_production_readiness_pr_plan.sh` |
+| PR52 - Backend live SDK matrix harness | MERGED | AI runtime backend coverage | Add one matrix runner that can execute or skip SDK-backed backend probes consistently. Keep default CI skip-safe. | `docs/backend_live_sdk_matrix.md`, `tests/integration/test_backend_live_sdk_matrix.sh`, `scripts/check_backend_live_sdk_matrix.sh`, updated `docs/backend_compatibility_matrix.md` |
 | PR53 - TensorRT optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional TensorRT execution fixture or explicit unavailable-path proof with no false success. | TensorRT gate and fixture docs |
 | PR54 - OpenVINO optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional OpenVINO execution fixture or explicit unavailable-path proof with no false success. | OpenVINO gate and fixture docs |
 | PR55 - LibTorch optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional LibTorch execution fixture or explicit unavailable-path proof with no false success. | LibTorch gate and fixture docs |
@@ -185,5 +187,5 @@ When a planned PR is deferred:
 
 ## Current remaining PR count field
 
-remaining_planned_prs_including_this_file: 28
-remaining_planned_prs_after_this_file: 27
+remaining_planned_prs_total_from_pr51: 28
+remaining_planned_prs_after_pr52: 26

@@ -39,6 +39,7 @@ require_file docs/language_spec.md
 require_file docs/language_versioning_and_conformance.md
 require_file docs/compiled_infer_bridge.md
 require_file docs/backend_compatibility_matrix.md
+require_file docs/backend_live_sdk_matrix.md
 require_file docs/ai_runtime_bridge_linkage.md
 require_file docs/ai_runtime_execution_adapter.md
 require_file docs/runtime_observability_exports.md
@@ -47,7 +48,9 @@ require_file tests/codegen/test_runtime_ai_bridge_link_build.sh
 require_file tests/codegen/test_runtime_ai_bridge_execution_path.sh
 require_file tests/codegen/test_runtime_observability_exports.sh
 require_file tests/integration/test_compiled_hook_onnxruntime_success.sh
+require_file tests/integration/test_backend_live_sdk_matrix.sh
 require_file scripts/check_compiled_hook_onnxruntime_success.sh
+require_file scripts/check_backend_live_sdk_matrix.sh
 require_file scripts/check_runtime_observability_exports.sh
 require_file scripts/check_language_versioning.sh
 require_file scripts/check_production_readiness_pr_plan.sh
@@ -87,18 +90,21 @@ require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compil
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_language_versioning.sh scripts/check_production_readiness_pr_plan.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_language_versioning.sh scripts/check_production_readiness_pr_plan.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_backend_live_sdk_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
 # The strategy itself must explain the old-task contract so future changes do not silently rename CI anchors.
 require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
-require_contains docs/production_readiness_pr_plan.md 'production_readiness_plan_version: 2026-07-25-pr51-r2'
-require_contains docs/production_readiness_pr_plan.md 'PLAN_STATUS: active'
+require_contains docs/production_readiness_pr_plan.md 'production_readiness_plan_version: 2026-07-25-pr52'
+require_contains docs/production_readiness_pr_plan.md 'LAST_COMPLETED_PR: 52'
 require_contains docs/production_readiness_pr_plan.md 'Desired outcome definition'
 require_contains docs/production_readiness_pr_plan.md 'Recommended path from PR #51 onward: 28 PRs total.'
-require_contains docs/production_readiness_pr_plan.md 'PR52 - Backend live SDK matrix harness'
+require_contains docs/production_readiness_pr_plan.md 'PR51 - Production readiness plan and tracking contract | MERGED'
+require_contains docs/production_readiness_pr_plan.md 'PR52 - Backend live SDK matrix harness | MERGED'
+require_contains docs/production_readiness_pr_plan.md 'PR53 - TensorRT optional live execution fixture.'
+require_contains docs/production_readiness_pr_plan.md 'remaining_planned_prs_after_pr52: 26'
 require_contains docs/production_readiness_pr_plan.md 'PR58 - Runtime ABI and API version stability gate'
 require_contains docs/production_readiness_pr_plan.md 'PR59 - Runtime state isolation and thread-safety policy'
 require_contains docs/production_readiness_pr_plan.md 'PR66 - Parser robustness and negative corpus hardening'
@@ -119,7 +125,13 @@ require_contains docs/compiled_infer_bridge.md 'Runtime AI bridge link build'
 require_contains docs/compiled_infer_bridge.md 'Runtime AI bridge execution path'
 require_contains docs/compiled_infer_bridge.md 'Compiled hook ONNX Runtime success fixture'
 require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
+require_contains docs/backend_compatibility_matrix.md 'backend_live_sdk_matrix_status: optional_matrix_harness'
 require_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
+require_contains docs/backend_live_sdk_matrix.md 'backend_live_sdk_matrix_status: optional_matrix_harness'
+require_contains docs/backend_live_sdk_matrix.md 'shorthand.backend_live_sdk_matrix.v1'
+require_contains scripts/check_backend_compatibility_matrix.sh 'check_backend_live_sdk_matrix.sh'
+require_contains scripts/check_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix gate'
+require_contains tests/integration/test_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix harness'
 require_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 require_contains docs/ai_runtime_execution_adapter.md 'adapter_contract_status: compile_checked_mapping_only'
 require_contains docs/ai_runtime_execution_adapter.md 'bridge_link_status: runtime_adapter_ai_core_link_checked'

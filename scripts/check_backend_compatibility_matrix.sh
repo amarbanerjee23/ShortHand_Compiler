@@ -23,20 +23,27 @@ require_contains() {
 }
 
 require_file docs/backend_compatibility_matrix.md
+require_file docs/backend_live_sdk_matrix.md
 require_file docs/compiled_infer_bridge.md
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp
 require_file Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
 require_file tests/integration/test_onnxruntime_sdk_gate.sh
+require_file tests/integration/test_backend_live_sdk_matrix.sh
+require_file scripts/check_backend_live_sdk_matrix.sh
 
 # Documentation must explicitly distinguish compatibility policy from real execution status.
 require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
 require_contains docs/backend_compatibility_matrix.md 'policy_compatible'
 require_contains docs/backend_compatibility_matrix.md 'sdk_execution_optional'
+require_contains docs/backend_compatibility_matrix.md 'backend_live_sdk_matrix_harness'
 require_contains docs/backend_compatibility_matrix.md 'compiled_hook_bridge_pending'
 require_contains docs/backend_compatibility_matrix.md 'fallback must report `not_executed`'
 require_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
 require_contains docs/backend_compatibility_matrix.md 'typed buffer bridge'
+require_contains docs/backend_compatibility_matrix.md 'backend_live_sdk_matrix_status: optional_matrix_harness'
+require_contains docs/backend_live_sdk_matrix.md 'shorthand.backend_live_sdk_matrix.v1'
+require_contains docs/backend_live_sdk_matrix.md 'dedicated_fixture_planned'
 
 # All advertised formats and backend aliases must still be present in the parser/matrix contract.
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp 'ModelFormat::Onnx'
@@ -57,7 +64,7 @@ require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'regis
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'r.status=InferenceStatus::NotExecuted'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'backend_not_available'
 
-# The compiled hook bridge may validate metadata and typed buffers, but must remain honest until SDK execution is wired in.
+# The compiled hook bridge may validate metadata and typed buffers, but must remain honest unless SDK execution succeeds.
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai_runtime_typed_buffer_bridge_pending'
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'SHORTHAND_RUNTIME_NOT_EXECUTED'
@@ -68,5 +75,10 @@ require_contains docs/compiled_infer_bridge.md 'must not claim that compiled inf
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'SKIP onnxruntime_sdk_gate: ONNXRUNTIME_ROOT is not set'
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'PASS onnxruntime_sdk_gate: real ONNX Runtime CPU execution succeeded'
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'fallback\|backend_unavailable\|not_executed'
+
+# PR #52 shared backend live SDK matrix harness.
+require_contains tests/integration/test_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix harness'
+require_contains scripts/check_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix gate'
+bash scripts/check_backend_live_sdk_matrix.sh
 
 printf 'PASS backend compatibility matrix gate\n'
