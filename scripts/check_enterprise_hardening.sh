@@ -93,9 +93,13 @@ check_not_contains CMakeLists.txt 'IR_Generator.default_runtime.cpp'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'SHORTHAND_RUNTIME_MODEL_NOT_FOUND'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_observability_json'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_infer_bridge_request_json'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_prometheus_metrics'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_otlp_spans_json'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_ai_infer_f32'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'std::map<std::string, ModelRecord> models'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.observability.v1'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.otlp_spans.v1'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand_runtime_infer_total'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai_runtime_execution_bridge_pending'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.compiled_infer_bridge_request.v1'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
@@ -109,6 +113,10 @@ check_contains docs/compiled_infer_bridge.md 'AI_Runtime bridge linkage'
 check_contains docs/compiled_infer_bridge.md 'AI_Runtime execution adapter'
 check_contains docs/compiled_infer_bridge.md 'Runtime AI bridge link build'
 check_contains docs/compiled_infer_bridge.md 'Runtime AI bridge execution path'
+check_contains docs/runtime_observability_exports.md 'Prometheus-style metrics'
+check_contains docs/runtime_observability_exports.md 'OTLP-like span JSON'
+check_contains scripts/check_runtime_observability_exports.sh 'PASS runtime observability export gate'
+check_contains tests/codegen/test_runtime_observability_exports.sh 'PASS runtime observability export gate'
 check_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 check_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 check_not_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'extern "C" int short_ai_infer'
@@ -248,6 +256,14 @@ if bash scripts/check_runtime_ai_bridge_execution_path.sh >/tmp/shorthand_runtim
 else
   fail_check "runtime AI bridge execution path gate failed"
   cat /tmp/shorthand_runtime_ai_bridge_execution_path.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_runtime_observability_exports.sh >/tmp/shorthand_runtime_observability_exports.out 2>&1; then
+  log "PASS runtime observability export gate completed"
+  cat /tmp/shorthand_runtime_observability_exports.out | tee -a "${LOG_FILE}"
+else
+  fail_check "runtime observability export gate failed"
+  cat /tmp/shorthand_runtime_observability_exports.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then
