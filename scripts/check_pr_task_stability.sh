@@ -37,10 +37,13 @@ require_file docs/compiled_infer_bridge.md
 require_file docs/backend_compatibility_matrix.md
 require_file docs/ai_runtime_bridge_linkage.md
 require_file docs/ai_runtime_execution_adapter.md
+require_file docs/runtime_observability_exports.md
 require_file tests/codegen/test_runtime_ai_bridge_link_build.sh
 require_file tests/codegen/test_runtime_ai_bridge_execution_path.sh
+require_file tests/codegen/test_runtime_observability_exports.sh
 require_file tests/integration/test_compiled_hook_onnxruntime_success.sh
 require_file scripts/check_compiled_hook_onnxruntime_success.sh
+require_file scripts/check_runtime_observability_exports.sh
 
 # Preserve old task names and ordering anchors from the CI workflow.
 require_contains .github/workflows/ci.yml 'Strict language validation'
@@ -72,11 +75,12 @@ require_contains scripts/check_enterprise_hardening.sh 'check_ai_runtime_bridge_
 require_contains scripts/check_enterprise_hardening.sh 'check_ai_runtime_execution_adapter.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_runtime_ai_bridge_link_build.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_runtime_ai_bridge_execution_path.sh'
+require_contains scripts/check_enterprise_hardening.sh 'check_runtime_observability_exports.sh'
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compiled_infer_bridge_request.v1'
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/generate_release_sbom.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
@@ -97,14 +101,18 @@ require_contains docs/ai_runtime_execution_adapter.md 'adapter_contract_status: 
 require_contains docs/ai_runtime_execution_adapter.md 'bridge_link_status: runtime_adapter_ai_core_link_checked'
 require_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_execution_status: bridge_enabled_ai_runtime_infer_attempt'
 require_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_success_status: optional_onnxruntime_success_fixture'
+require_contains docs/runtime_observability_exports.md 'runtime_observability_export_status: dependency_free_prometheus_and_otlp_like_exports'
 require_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 require_contains scripts/check_ai_runtime_execution_adapter.sh 'PASS AI runtime execution adapter gate'
 require_contains scripts/check_runtime_ai_bridge_link_build.sh 'PASS runtime AI bridge link build gate'
 require_contains scripts/check_runtime_ai_bridge_execution_path.sh 'PASS runtime AI bridge execution path gate'
 require_contains scripts/check_runtime_ai_bridge_execution_path.sh 'check_compiled_hook_onnxruntime_success.sh'
 require_contains scripts/check_compiled_hook_onnxruntime_success.sh 'PASS compiled hook ONNX Runtime success gate'
+require_contains scripts/check_runtime_observability_exports.sh 'PASS runtime observability export gate'
 require_contains tests/codegen/test_runtime_ai_bridge_link_build.sh 'runtime.infer(model_spec, input_buffer)'
 require_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'
+require_contains tests/codegen/test_runtime_observability_exports.sh 'short_runtime_prometheus_metrics'
+require_contains tests/codegen/test_runtime_observability_exports.sh 'short_runtime_otlp_spans_json'
 require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'Output: 42'
 
 printf 'PASS PR task stability gate\n'
