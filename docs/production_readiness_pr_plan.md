@@ -1,6 +1,6 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-07-25-pr51
+production_readiness_plan_version: 2026-07-25-pr51-r2
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
 BASELINE_LANGUAGE_VERSION: beta-0.1
@@ -11,6 +11,33 @@ TARGET: enterprise production usage ready language
 This document is the single planning source for moving ShortHand from the current controlled beta foundation to an enterprise production usage ready language.
 
 Future PRs should update this file whenever they complete, split, defer, or materially change a production-readiness milestone. This avoids re-evaluating the full roadmap every time a PR is merged.
+
+## Desired outcome definition
+
+For this roadmap, enterprise production usage ready language means:
+
+1. The supported language surface is versioned, tested, documented, and compatible across releases.
+2. The compiler and runtime can be built, packaged, tested, and released through repeatable production workflows.
+3. Runtime inference, fallback, telemetry, and evidence paths are honest and claim-safe.
+4. Supported AI backends are either live-tested or clearly marked as non-production / policy-compatible only.
+5. Multi-file enterprise programs can be organized through module/import/package boundaries.
+6. Operators have deployment, observability, security, and release evidence that can survive enterprise review.
+7. C3-ECO evidence is authority-ready for auditor handoff but does not claim external certification unless a certifier signs it.
+8. MLIR lowering is integrated beyond scaffold status for production-grade compiler evolution.
+
+A production-ready claim must not depend on optional SDKs being present in default CI. Optional backend checks may skip safely, but unsupported or unavailable paths must never report successful execution.
+
+## Audit correction applied in PR #51
+
+The first version of this plan listed 25 PRs from PR #51 onward. After reviewing the desired outcome more strictly, that count was too optimistic.
+
+The corrected plan adds three production-critical slices:
+
+1. Runtime ABI and API version stability.
+2. Runtime state isolation and thread-safety / reentrancy policy.
+3. Parser robustness and negative corpus hardening.
+
+These are important because enterprise users need stable runtime contracts, predictable behavior under concurrent or repeated use, and parser resilience beyond happy-path conformance.
 
 ## Status values
 
@@ -45,15 +72,15 @@ Current state after PR #50:
 
 Important boundary:
 
-ShortHand is still not production ready. The open work includes live backend matrix coverage, production packaging, real observability export integration, full diagnostics, container hardening, release signing, external vulnerability scans, module/package support, developer tooling, full C3-ECO language support, and MLIR lowering integration.
+ShortHand is still not production ready. The open work includes live backend matrix coverage, stable runtime ABI/versioning, runtime state/thread-safety, production packaging, real observability export integration, full diagnostics, parser robustness, container hardening, release signing, external vulnerability scans, module/package support, developer tooling, full C3-ECO language support, and MLIR lowering integration.
 
 ## Recommended remaining PR count
 
-Recommended path from PR #51 onward: 25 PRs total.
+Recommended path from PR #51 onward: 28 PRs total.
 
 That includes this planning PR.
 
-After this planning PR is merged, the remaining implementation path is expected to be about 24 PRs. Some PRs may split further if SDK availability, MLIR build tooling, or C3-ECO evidence generation becomes larger than expected.
+After this planning PR is merged, the remaining implementation path is expected to be about 27 PRs. Some PRs may split further if SDK availability, MLIR build tooling, parser changes, or C3-ECO evidence generation becomes larger than expected.
 
 ## Next recommended PR
 
@@ -61,7 +88,7 @@ Next recommended PR after this planning PR:
 
 PR52 - Backend live SDK matrix harness.
 
-Reason: backend execution is currently strong for ONNX Runtime CPU but not yet live across the marketed backend matrix. Production claims should not advance until backend coverage and failure behavior are represented by a repeatable matrix harness.
+Reason: backend execution is currently strong for ONNX Runtime CPU but not yet represented by one live matrix harness across the marketed backend set. Production claims should not advance until backend coverage, skip behavior, and failure behavior are represented by a repeatable matrix harness.
 
 ## PR roadmap table
 
@@ -74,24 +101,27 @@ Reason: backend execution is currently strong for ONNX Runtime CPU but not yet l
 | PR55 - LibTorch optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional LibTorch execution fixture or explicit unavailable-path proof with no false success. | LibTorch gate and fixture docs |
 | PR56 - Llama.cpp optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional Llama.cpp execution fixture or mark the backend as policy-compatible only until a real fixture is available. | Llama.cpp gate or documented deferral |
 | PR57 - Backend failure-mode matrix finalization | PLANNED | AI runtime reliability | Cover invalid model format, missing SDK, wrong tensor shape, unsupported precision, capacity mismatch, and fallback honesty across backends. | failure matrix tests and docs |
-| PR58 - Production build packaging for runtime and AI bridge | PLANNED | Build and packaging | Provide explicit Make/CMake production targets for compiled-hook plus AI runtime bridge without ad hoc flags. | Makefile/CMake targets, link tests |
-| PR59 - Prometheus scrape endpoint host adapter | PLANNED | Observability operations | Turn Prometheus-style metrics strings into a minimal host-exposable scrape endpoint or adapter. | host adapter test, docs |
-| PR60 - OTLP exporter adapter | PLANNED | Observability operations | Add an optional OTLP exporter or collector adapter while preserving dependency-light core runtime. | OTLP adapter test, docs |
-| PR61 - AST source ranges across parser nodes | PLANNED | Diagnostics | Add consistent source span storage for parser and AST nodes. | parser/AST changes and source-span tests |
-| PR62 - Diagnostics coverage matrix | PLANNED | Diagnostics | Extend diagnostics so parser, semantic, AI, GreenAI, model/tensor, and runtime-lowering errors have file, line, column, source line, and caret/range. | diagnostics matrix and tests |
-| PR63 - Full grammar and conformance matrix beta-0.2 | PLANNED | Language contract | Expand conformance manifest to a fuller syntax matrix and advance the language contract only if compatible. | updated grammar, manifest, versioning gate |
-| PR64 - Module/import/package design and parser scaffold | PLANNED | Enterprise language scale | Add module/import/package syntax design and parser scaffold without full resolver risk. | design doc, parser fixtures |
-| PR65 - Module resolver and codegen integration | PLANNED | Enterprise language scale | Implement module resolution, import path handling, package boundaries, and codegen integration. | resolver tests, integration tests |
-| PR66 - Signed release and protected release workflow | PLANNED | Release governance | Add signed release artifacts, protected release workflow, and provenance linkage. | release workflow, signing docs, provenance tests |
-| PR67 - External dependency vulnerability scan gate | PLANNED | Security and supply chain | Add external dependency vulnerability scanning while keeping current baseline secret/source scans. | CI scan gate and policy docs |
-| PR68 - Container and Kubernetes hardening | PLANNED | Deployment | Add health checks, readiness/liveness probes, resource limits, non-root container guidance, and deployment validation. | container/Kubernetes tests and docs |
-| PR69 - Formatter and linter baseline | PLANNED | Developer experience | Add baseline formatter/linter behavior or specification so enterprise users can standardize code style. | formatter/linter tests or spec gate |
-| PR70 - Syntax highlighting and LSP skeleton | PLANNED | Developer experience | Add syntax highlighting assets and an LSP roadmap or minimal skeleton. | syntax grammar, LSP scaffold/tests |
-| PR71 - C3-ECO certification language blocks | PLANNED | GreenAI/C3-ECO language | Add certification declaration, boundary, workload, measurement plan, lifecycle, and RAG/token/cache syntax blocks. | grammar, parser, semantic tests |
-| PR72 - C3-ECO scoring, report generation, and eco-regression | PLANNED | GreenAI/C3-ECO evidence | Add candidate-only scoring, report generation expansion, and eco-regression gates. | schema/report/workbook tests |
-| PR73 - Authority-ready C3-ECO auditor bundle | PLANNED | GreenAI/C3-ECO evidence | Package evidence for auditor handoff while retaining candidate-only claim safety. | bundle manifest, auditor docs, validation gate |
-| PR74 - MLIR generated dialect build integration | PLANNED | MLIR lowering | Integrate generated MLIR dialect build artifacts and parser/printer tests. | MLIR CMake/build tests |
-| PR75 - MLIR lowering passes and production RC gate | PLANNED | MLIR and release readiness | Add semantic IR to MLIR lowering pass coverage and a final production release-candidate gate that checks all blockers and claim safety. | lowering tests, RC gate, docs-wide claim scan |
+| PR58 - Runtime ABI and API version stability gate | PLANNED | Runtime contract | Add runtime ABI version exports, API compatibility rules, symbol ownership checks, and deprecation policy for public C hooks. | ABI version API, symbol checks, compatibility docs |
+| PR59 - Runtime state isolation and thread-safety policy | PLANNED | Runtime reliability | Decide and enforce production state model: thread-safe shared runtime, explicit context handles, or documented single-thread limitation with tests. | state isolation tests, concurrency or single-thread guardrails |
+| PR60 - Production build packaging for runtime and AI bridge | PLANNED | Build and packaging | Provide explicit Make/CMake production targets for compiled-hook plus AI runtime bridge without ad hoc flags. | Makefile/CMake targets, link tests |
+| PR61 - Prometheus scrape endpoint host adapter | PLANNED | Observability operations | Turn Prometheus-style metrics strings into a minimal host-exposable scrape endpoint or adapter. | host adapter test, docs |
+| PR62 - OTLP exporter adapter | PLANNED | Observability operations | Add an optional OTLP exporter or collector adapter while preserving dependency-light core runtime. | OTLP adapter test, docs |
+| PR63 - AST source ranges across parser nodes | PLANNED | Diagnostics | Add consistent source span storage for parser and AST nodes. | parser/AST changes and source-span tests |
+| PR64 - Diagnostics coverage matrix | PLANNED | Diagnostics | Extend diagnostics so parser, semantic, AI, GreenAI, model/tensor, and runtime-lowering errors have file, line, column, source line, and caret/range. | diagnostics matrix and tests |
+| PR65 - Full grammar and conformance matrix beta-0.2 | PLANNED | Language contract | Expand conformance manifest to a fuller syntax matrix and advance the language contract only if compatible. | updated grammar, manifest, versioning gate |
+| PR66 - Parser robustness and negative corpus hardening | PLANNED | Language robustness | Add parser robustness checks, malformed-input corpus, and regression tests so syntax failures remain deterministic and useful. | parser negative corpus, robustness gate |
+| PR67 - Module/import/package design and parser scaffold | PLANNED | Enterprise language scale | Add module/import/package syntax design and parser scaffold without full resolver risk. | design doc, parser fixtures |
+| PR68 - Module resolver and codegen integration | PLANNED | Enterprise language scale | Implement module resolution, import path handling, package boundaries, and codegen integration. | resolver tests, integration tests |
+| PR69 - Signed release and protected release workflow | PLANNED | Release governance | Add signed release artifacts, protected release workflow, and provenance linkage. | release workflow, signing docs, provenance tests |
+| PR70 - External dependency vulnerability scan gate | PLANNED | Security and supply chain | Add external dependency vulnerability scanning while keeping current baseline secret/source scans. | CI scan gate and policy docs |
+| PR71 - Container and Kubernetes hardening | PLANNED | Deployment | Add health checks, readiness/liveness probes, resource limits, non-root container guidance, and deployment validation. | container/Kubernetes tests and docs |
+| PR72 - Formatter and linter baseline | PLANNED | Developer experience | Add baseline formatter/linter behavior or specification so enterprise users can standardize code style. | formatter/linter tests or spec gate |
+| PR73 - Syntax highlighting and LSP skeleton | PLANNED | Developer experience | Add syntax highlighting assets and an LSP roadmap or minimal skeleton. | syntax grammar, LSP scaffold/tests |
+| PR74 - C3-ECO certification language blocks | PLANNED | GreenAI/C3-ECO language | Add certification declaration, boundary, workload, measurement plan, lifecycle, and RAG/token/cache syntax blocks. | grammar, parser, semantic tests |
+| PR75 - C3-ECO scoring, report generation, and eco-regression | PLANNED | GreenAI/C3-ECO evidence | Add candidate-only scoring, report generation expansion, and eco-regression gates. | schema/report/workbook tests |
+| PR76 - Authority-ready C3-ECO auditor bundle | PLANNED | GreenAI/C3-ECO evidence | Package evidence for auditor handoff while retaining candidate-only claim safety. | bundle manifest, auditor docs, validation gate |
+| PR77 - MLIR generated dialect build integration | PLANNED | MLIR lowering | Integrate generated MLIR dialect build artifacts and parser/printer tests. | MLIR CMake/build tests |
+| PR78 - MLIR lowering passes and production RC gate | PLANNED | MLIR and release readiness | Add semantic IR to MLIR lowering pass coverage and a final production release-candidate gate that checks all blockers and claim safety. | lowering tests, RC gate, docs-wide claim scan |
 
 ## Production readiness exit criteria
 
@@ -103,16 +133,32 @@ ShortHand can be considered enterprise production usage ready only when the foll
 4. Runtime fallback never claims executed inference.
 5. ONNX Runtime CPU has a real compiled-hook success fixture.
 6. Other marketed backends are either live-tested or clearly marked non-executing and not marketed as production-supported.
-7. Runtime observability can be exported through production-facing mechanisms.
-8. Parser and semantic diagnostics include source locations and useful ranges.
-9. Release artifacts are signed and backed by provenance.
-10. Dependency vulnerability scanning is part of CI.
-11. Container/Kubernetes deployment has health, readiness, and security posture checks.
-12. Module/import/package support works for multi-file enterprise programs.
-13. Developer tooling has at least baseline formatter, linter, syntax highlighting, and LSP path.
-14. C3-ECO evidence generation is authority-ready but still claim-safe unless an external certifier signs it.
-15. MLIR lowering is integrated beyond scaffold status.
-16. The final production RC gate blocks unsupported production claims.
+7. Runtime ABI and public hook compatibility are versioned and guarded.
+8. Runtime state behavior is production-safe, either through tested isolation/thread-safety or an explicit documented limitation.
+9. Runtime observability can be exported through production-facing mechanisms.
+10. Parser and semantic diagnostics include source locations and useful ranges.
+11. Parser robustness is covered by negative fixtures and deterministic failure behavior.
+12. Release artifacts are signed and backed by provenance.
+13. Dependency vulnerability scanning is part of CI.
+14. Container/Kubernetes deployment has health, readiness, and security posture checks.
+15. Module/import/package support works for multi-file enterprise programs.
+16. Developer tooling has at least baseline formatter, linter, syntax highlighting, and LSP path.
+17. C3-ECO evidence generation is authority-ready but still claim-safe unless an external certifier signs it.
+18. MLIR lowering is integrated beyond scaffold status.
+19. The final production RC gate blocks unsupported production claims.
+
+## Production claim rules
+
+The project may claim controlled beta only until every non-deferred row required for the desired outcome is MERGED.
+
+The project may claim production-ready core language only if:
+
+- core grammar, diagnostics, module/import, build, release, runtime ABI, runtime state model, observability, and deployment rows are MERGED,
+- unsupported optional backends are not marketed as production-supported,
+- C3-ECO evidence remains candidate-only unless externally certified,
+- the final RC gate passes.
+
+The project may claim full production backend matrix only if every marketed backend has a live success fixture or is removed from production-supported claims.
 
 ## How to update this file
 
@@ -139,5 +185,5 @@ When a planned PR is deferred:
 
 ## Current remaining PR count field
 
-remaining_planned_prs_including_this_file: 25
-remaining_planned_prs_after_this_file: 24
+remaining_planned_prs_including_this_file: 28
+remaining_planned_prs_after_this_file: 27
