@@ -86,7 +86,7 @@ if grep -E '"backend":"(onnxruntime_cuda|onnxruntime_tensorrt|tensorrt|openvino|
   exit 1
 fi
 
-if ! grep -q '"status":"live_success"\|"status":"skip_safe"' "${REPORT}"; then
+if ! grep -Eq '"status":"(live_success|skip_safe)"' "${REPORT}"; then
   echo "error: matrix harness produced no usable row status" >&2
   cat "${REPORT}" >&2 || true
   exit 1
