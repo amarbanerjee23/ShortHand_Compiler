@@ -39,6 +39,8 @@ require_file docs/ai_runtime_bridge_linkage.md
 require_file docs/ai_runtime_execution_adapter.md
 require_file tests/codegen/test_runtime_ai_bridge_link_build.sh
 require_file tests/codegen/test_runtime_ai_bridge_execution_path.sh
+require_file tests/integration/test_compiled_hook_onnxruntime_success.sh
+require_file scripts/check_compiled_hook_onnxruntime_success.sh
 
 # Preserve old task names and ordering anchors from the CI workflow.
 require_contains .github/workflows/ci.yml 'Strict language validation'
@@ -74,7 +76,7 @@ require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compil
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/generate_release_sbom.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
@@ -87,17 +89,22 @@ require_contains docs/compiled_infer_bridge.md 'AI_Runtime bridge linkage'
 require_contains docs/compiled_infer_bridge.md 'AI_Runtime execution adapter'
 require_contains docs/compiled_infer_bridge.md 'Runtime AI bridge link build'
 require_contains docs/compiled_infer_bridge.md 'Runtime AI bridge execution path'
+require_contains docs/compiled_infer_bridge.md 'Compiled hook ONNX Runtime success fixture'
 require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
 require_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
 require_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 require_contains docs/ai_runtime_execution_adapter.md 'adapter_contract_status: compile_checked_mapping_only'
 require_contains docs/ai_runtime_execution_adapter.md 'bridge_link_status: runtime_adapter_ai_core_link_checked'
 require_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_execution_status: bridge_enabled_ai_runtime_infer_attempt'
+require_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_success_status: optional_onnxruntime_success_fixture'
 require_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 require_contains scripts/check_ai_runtime_execution_adapter.sh 'PASS AI runtime execution adapter gate'
 require_contains scripts/check_runtime_ai_bridge_link_build.sh 'PASS runtime AI bridge link build gate'
 require_contains scripts/check_runtime_ai_bridge_execution_path.sh 'PASS runtime AI bridge execution path gate'
+require_contains scripts/check_runtime_ai_bridge_execution_path.sh 'check_compiled_hook_onnxruntime_success.sh'
+require_contains scripts/check_compiled_hook_onnxruntime_success.sh 'PASS compiled hook ONNX Runtime success gate'
 require_contains tests/codegen/test_runtime_ai_bridge_link_build.sh 'runtime.infer(model_spec, input_buffer)'
 require_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'
+require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'Output: 42'
 
 printf 'PASS PR task stability gate\n'
