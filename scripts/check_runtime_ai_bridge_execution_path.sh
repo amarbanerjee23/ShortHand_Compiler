@@ -26,6 +26,8 @@ require_file Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
 require_file Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp
 require_file tests/codegen/test_runtime_ai_bridge_execution_path.sh
+require_file tests/integration/test_compiled_hook_onnxruntime_success.sh
+require_file scripts/check_compiled_hook_onnxruntime_success.sh
 require_file docs/compiled_infer_bridge.md
 require_file docs/ai_runtime_execution_adapter.md
 
@@ -38,9 +40,16 @@ require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai
 require_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'
 require_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'backend_not_available'
 require_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'PASS runtime AI bridge execution path gate'
+require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'SHORTHAND_HAS_ONNXRUNTIME=1'
+require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'short_ai_infer_f32("identity"'
+require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'Output: 42'
+require_contains scripts/check_compiled_hook_onnxruntime_success.sh 'PASS compiled hook ONNX Runtime success gate'
 require_contains docs/compiled_infer_bridge.md 'Runtime AI bridge execution path'
+require_contains docs/compiled_infer_bridge.md 'Compiled hook ONNX Runtime success fixture'
 require_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_execution_status: bridge_enabled_ai_runtime_infer_attempt'
+require_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_success_status: optional_onnxruntime_success_fixture'
 
 bash tests/codegen/test_runtime_ai_bridge_execution_path.sh
+bash scripts/check_compiled_hook_onnxruntime_success.sh
 
 echo "PASS runtime AI bridge execution path gate"

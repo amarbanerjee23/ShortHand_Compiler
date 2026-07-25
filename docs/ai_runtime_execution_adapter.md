@@ -12,7 +12,9 @@ The current status is:
 
 `compiled_hook_execution_status: bridge_enabled_ai_runtime_infer_attempt`
 
-This means the adapter compiles and maps runtime-hook inputs into `AI_Runtime` data structures, an isolated link-build gate proves that the runtime hook layer, adapter layer, and AI runtime core can be compiled together, and bridge-enabled builds can route `short_ai_infer_f32` into `AIRuntime::infer`.
+`compiled_hook_success_status: optional_onnxruntime_success_fixture`
+
+This means the adapter compiles and maps runtime-hook inputs into `AI_Runtime` data structures, an isolated link-build gate proves that the runtime hook layer, adapter layer, and AI runtime core can be compiled together, bridge-enabled builds can route `short_ai_infer_f32` into `AIRuntime::infer`, and SDK-enabled environments can prove a real ONNX Runtime success path through the public compiled hook.
 
 The default standalone runtime library remains dependency-light and keeps the existing pending behavior unless it is compiled with `SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1` and linked with the AI runtime core.
 
@@ -50,6 +52,21 @@ SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1
 ```
 
 When SDK backends are not enabled, `AIRuntime::infer` still falls back honestly to `NotExecuted`, so the public C ABI returns `SHORTHAND_RUNTIME_NOT_EXECUTED`, keeps `output_count` at `0`, and records `backend_not_available` instead of claiming inference succeeded.
+
+## Optional ONNX Runtime success fixture
+
+PR #48 adds `tests/integration/test_compiled_hook_onnxruntime_success.sh` and `scripts/check_compiled_hook_onnxruntime_success.sh`.
+
+When `ONNXRUNTIME_ROOT` is available, this fixture compiles the bridge-enabled runtime with `SHORTHAND_HAS_ONNXRUNTIME=1`, runs the identity ONNX fixture through `short_ai_infer_f32`, and verifies:
+
+- public status is `SHORTHAND_RUNTIME_OK`,
+- backend is `onnxruntime_cpu`,
+- output count is `1`,
+- output value round-trips to `42`,
+- bridge status is `ai_runtime_execution_succeeded`,
+- telemetry is attached to the runtime hook result.
+
+When `ONNXRUNTIME_ROOT` is absent, the fixture returns a clean skip so default CI remains dependency-light.
 
 ## Status mapping contract
 
@@ -114,6 +131,8 @@ The gate `scripts/check_runtime_ai_bridge_link_build.sh` runs `tests/codegen/tes
 
 The gate `scripts/check_runtime_ai_bridge_execution_path.sh` runs the bridge-enabled execution probe and verifies the safe no-SDK fallback path.
 
+The gate `scripts/check_compiled_hook_onnxruntime_success.sh` runs the optional SDK-backed compiled hook success fixture. It skips when `ONNXRUNTIME_ROOT` is absent and proves real `SHORTHAND_RUNTIME_OK` behavior when the SDK is configured.
+
 ## Next implementation step
 
-The next runtime PR should add an optional SDK-backed success fixture for the compiled hook path. It must continue returning `SHORTHAND_RUNTIME_NOT_EXECUTED` or `SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE` unless real backend execution succeeds and populates output values.
+The next runtime PR should move from hook-local JSON and telemetry fragments toward an exportable runtime observability path. It must continue returning `SHORTHAND_RUNTIME_NOT_EXECUTED` or `SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE` unless real backend execution succeeds and populates output values.

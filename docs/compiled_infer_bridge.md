@@ -101,6 +101,21 @@ The bridge-enabled path records:
 
 With optional SDK macros disabled, the execution-path gate expects `SHORTHAND_RUNTIME_NOT_EXECUTED` and `backend_not_available`. This proves the request reached `AIRuntime::infer` without pretending that fallback executed inference.
 
+## Compiled hook ONNX Runtime success fixture
+
+PR #48 adds an optional SDK-backed fixture for the compiled hook path. The fixture is validated by `scripts/check_compiled_hook_onnxruntime_success.sh`, which runs `tests/integration/test_compiled_hook_onnxruntime_success.sh`.
+
+When `ONNXRUNTIME_ROOT` is set, the fixture:
+
+1. decodes the existing identity ONNX model,
+2. compiles `ShorthandRuntime.cpp` with `SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1` and `SHORTHAND_HAS_ONNXRUNTIME=1`,
+3. registers the identity model and float32 input/output tensors through the public runtime hook API,
+4. calls `short_ai_infer_f32`,
+5. verifies `SHORTHAND_RUNTIME_OK`, `output_count == 1`, and `Output: 42`,
+6. verifies the bridge request records `ai_runtime_execution_succeeded`.
+
+When `ONNXRUNTIME_ROOT` is not set, the fixture skips safely. This keeps default CI dependency-light while still providing a real SDK-backed success proof for environments that provide ONNX Runtime.
+
 ## Public C ABI
 
 The latest bridge request is exposed through:
@@ -119,12 +134,12 @@ The default standalone runtime library remains pending-safe. The bridge-enabled 
 
 ## Next implementation step
 
-The next step is to add an optional SDK-backed compiled-hook fixture that proves the bridge-enabled path can return `SHORTHAND_RUNTIME_OK` with real output values when ONNX Runtime is configured. That future PR should preserve these rules:
+The next step is to expand runtime observability from JSON snapshots to a real OTLP/Prometheus-style exporter path. That future PR should preserve these rules:
 
-1. Return `SHORTHAND_RUNTIME_OK` only when `AIRuntime::infer` returns successful inference.
+1. Keep `SHORTHAND_RUNTIME_OK` reserved for real backend success.
 2. Keep fallback and unavailable backends as `not_executed` or `backend_unavailable`.
-3. Populate `output_values` and `output_count` only when execution succeeds.
+3. Keep optional SDK tests skip-safe when SDK roots are absent.
 4. Keep observability and bridge request JSON claim-safe.
 5. Pass the backend compatibility matrix gate before changing public execution claims.
 6. Preserve runtime-hook ABI ownership so the linked build has no duplicate C symbol.
-7. Keep adapter, link-build, and execution-path gates passing.
+7. Keep adapter, link-build, execution-path, and optional ONNX Runtime success gates passing.
