@@ -1,6 +1,7 @@
 # ShortHand language conformance manifest
 # Format: category | path | expectation | rationale
 
+version | shorthand.language.version | beta-0.1 | Current beta language contract marker.
 parser-valid | tests/fixtures/external_runtime_ai.short | accept | AI/GreenAI declarations plus infer statement should parse and pass semantic validation.
 parser-valid | Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short | accept | Current beta AI syntax used by runtime and evidence paths should remain accepted.
 parser-valid | Compiler_new_ws/Short_Hand/examples/greenai_report.short | accept | Core GreenAI report example should remain accepted.

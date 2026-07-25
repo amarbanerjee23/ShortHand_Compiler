@@ -2,6 +2,10 @@
 
 Status: beta grammar draft for conformance and review.
 
+Language version: beta-0.1
+
+Conformance contract: beta-0.1
+
 This document records the current accepted AI, GreenAI, and core statement surface used by the compiler tests. It is not yet a full language standard. The goal is to create a stable contract that parser tests, semantic tests, diagnostics, and future MLIR lowering can reference.
 
 ## Lexical conventions
@@ -131,3 +135,5 @@ legacy_ai_infer = "ai_infer" , string , string , string , ";" ;
 ## Conformance rule
 
 Every new syntax addition must add at least one parser-positive fixture, one parser-negative or semantic-negative fixture when applicable, and a conformance manifest entry. Production claims must not be added merely because a grammar rule exists.
+
+The beta-0.1 conformance rules and compatibility policy are defined in `docs/language_versioning_and_conformance.md`.
