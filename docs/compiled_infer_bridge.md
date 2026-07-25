@@ -113,7 +113,7 @@ After a successful validation path through `short_ai_infer`, this function retur
 
 ## Execution boundary
 
-ShortHand must not claim compiled inference executed through ONNX Runtime, TensorRT, OpenVINO, LibTorch, or any other backend unless `AIRuntime::infer` returns success and the runtime copies actual output values into the caller-provided output buffer.
+ShortHand must not claim that compiled inference executed through ONNX Runtime, TensorRT, OpenVINO, LibTorch, or any other backend unless `AIRuntime::infer` returns success and the runtime copies actual output values into the caller-provided output buffer.
 
 The default standalone runtime library remains pending-safe. The bridge-enabled build can attempt AI runtime execution, but `SHORTHAND_RUNTIME_OK` is still reserved for real backend success.
 
