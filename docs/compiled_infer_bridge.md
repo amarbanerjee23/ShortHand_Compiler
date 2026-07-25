@@ -49,7 +49,7 @@ The typed bridge validates:
 - input element count against the registered input tensor shape,
 - output capacity against the registered output tensor shape.
 
-After validation, the runtime records a typed bridge request with:
+In the default dependency-light runtime library build, the typed bridge still records a pending request and returns `SHORTHAND_RUNTIME_NOT_EXECUTED`:
 
 - `schema: shorthand.runtime.typed_infer_buffer_bridge_request.v1`
 - `parent_schema: shorthand.runtime.compiled_infer_bridge_request.v1`
@@ -58,17 +58,15 @@ After validation, the runtime records a typed bridge request with:
 - `runtime_target: AI_Runtime`
 - `reason: ai_runtime_typed_buffer_bridge_pending`
 
-The function currently returns `SHORTHAND_RUNTIME_NOT_EXECUTED` and sets `output_count` to `0`. It does not fabricate output values.
-
 ## Backend matrix guardrail
 
-The typed buffer bridge is now tied to the backend compatibility matrix gate. The gate verifies that:
+The typed buffer bridge is tied to the backend compatibility matrix gate. The gate verifies that:
 
 - backend compatibility policy is documented separately from real execution,
 - fallback paths remain `not_executed`,
 - the ONNX Runtime SDK gate skips safely when `ONNXRUNTIME_ROOT` is absent,
 - the ONNX Runtime SDK gate rejects fallback when a real SDK execution run is requested,
-- and the compiled hook bridge is still marked as execution-pending until it is actually connected to `AI_Runtime`.
+- and the compiled hook bridge is not described as successful backend execution unless `AIRuntime::infer` succeeds.
 
 This protects the project from accidentally describing the typed bridge as real backend execution before the runtime link is implemented.
 
@@ -84,13 +82,24 @@ The bridge linkage boundary is documented in `docs/ai_runtime_bridge_linkage.md`
 
 The adapter contract is documented in `docs/ai_runtime_execution_adapter.md` and validated by `scripts/check_ai_runtime_execution_adapter.sh`.
 
-The adapter currently owns only conversion and status mapping. It does not change the public C ABI return behavior.
-
 ## Runtime AI bridge link build
 
 The runtime AI bridge link-build gate compiles the runtime hook layer, execution adapter, AI runtime core, telemetry, and backend sources into one probe binary. The gate is validated by `scripts/check_runtime_ai_bridge_link_build.sh`.
 
-This proves that the layers can link together without duplicate C hook symbols. It does not change `short_ai_infer_f32` behavior.
+This proves that the layers can link together without duplicate C hook symbols.
+
+## Runtime AI bridge execution path
+
+When `ShorthandRuntime.cpp` is compiled with `SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1` and linked with the AI runtime core, `short_ai_infer_f32` routes a validated typed-buffer request into `AIRuntime::infer`.
+
+The bridge-enabled path records:
+
+- `bridge_status: ai_runtime_execution_attempted` when `AIRuntime::infer` is called but no backend succeeds,
+- `bridge_status: ai_runtime_execution_succeeded` only when `AIRuntime::infer` returns success,
+- `execution_ready: true` after adapter validation passes,
+- `output_count` greater than zero only when real backend output values are copied.
+
+With optional SDK macros disabled, the execution-path gate expects `SHORTHAND_RUNTIME_NOT_EXECUTED` and `backend_not_available`. This proves the request reached `AIRuntime::infer` without pretending that fallback executed inference.
 
 ## Public C ABI
 
@@ -102,21 +111,20 @@ const char *short_runtime_infer_bridge_request_json(void);
 
 After a successful validation path through `short_ai_infer`, this function returns the latest metadata-only bridge request. After a successful validation path through `short_ai_infer_f32`, it returns the latest typed tensor-buffer bridge request. For missing model/tensor and invalid input paths, it returns `{}` because no valid runtime execution request exists.
 
-## Why this is not yet real execution
+## Execution boundary
 
-The typed bridge receives input and output buffers, and the adapter can map them into `AI_Runtime` types. The public C ABI still intentionally does not route successful execution results from `AIRuntime::infer`. A real SDK-backed execution step must connect this validated request and buffer payload to `AI_Runtime::infer`, then return `SHORTHAND_RUNTIME_OK` only when backend execution succeeds.
+ShortHand must not claim that compiled inference executed through ONNX Runtime, TensorRT, OpenVINO, LibTorch, or any other backend unless `AIRuntime::infer` returns success and the runtime copies actual output values into the caller-provided output buffer.
 
-Until that is implemented, ShortHand must not claim that compiled inference executed through ONNX Runtime, TensorRT, OpenVINO, LibTorch, or any other backend from this hook path.
+The default standalone runtime library remains pending-safe. The bridge-enabled build can attempt AI runtime execution, but `SHORTHAND_RUNTIME_OK` is still reserved for real backend success.
 
 ## Next implementation step
 
-The next step is to route the typed buffer bridge into `AI_Runtime` behind the existing optional backend gates. That future PR should preserve these rules:
+The next step is to add an optional SDK-backed compiled-hook fixture that proves the bridge-enabled path can return `SHORTHAND_RUNTIME_OK` with real output values when ONNX Runtime is configured. That future PR should preserve these rules:
 
-1. Return `SHORTHAND_RUNTIME_OK` only when `AI_Runtime` returns successful inference.
+1. Return `SHORTHAND_RUNTIME_OK` only when `AIRuntime::infer` returns successful inference.
 2. Keep fallback and unavailable backends as `not_executed` or `backend_unavailable`.
 3. Populate `output_values` and `output_count` only when execution succeeds.
 4. Keep observability and bridge request JSON claim-safe.
 5. Pass the backend compatibility matrix gate before changing public execution claims.
 6. Preserve runtime-hook ABI ownership so the linked build has no duplicate C symbol.
-7. Pass the AI Runtime execution adapter gate before wiring the public C ABI to `AIRuntime::infer`.
-8. Keep the runtime AI bridge link-build gate passing before changing `short_ai_infer_f32` behavior.
+7. Keep adapter, link-build, and execution-path gates passing.

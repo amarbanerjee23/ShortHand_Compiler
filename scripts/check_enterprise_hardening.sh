@@ -99,11 +99,16 @@ check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shor
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai_runtime_execution_bridge_pending'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.compiled_infer_bridge_request.v1'
 check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'execute_typed_buffer_through_ai_runtime'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'runtime.infer(model_spec, input_buffer)'
+check_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai_runtime_execution_attempted'
 check_contains docs/compiled_infer_bridge.md 'input_buffer_required_for_ai_runtime_execution'
 check_contains docs/compiled_infer_bridge.md 'Typed tensor-buffer bridge'
 check_contains docs/compiled_infer_bridge.md 'AI_Runtime bridge linkage'
 check_contains docs/compiled_infer_bridge.md 'AI_Runtime execution adapter'
 check_contains docs/compiled_infer_bridge.md 'Runtime AI bridge link build'
+check_contains docs/compiled_infer_bridge.md 'Runtime AI bridge execution path'
 check_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 check_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 check_not_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'extern "C" int short_ai_infer'
@@ -114,11 +119,15 @@ check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp
 check_contains Compiler_new_ws/Short_Hand/src/runtime/AIRuntimeBridgeAdapter.cpp 'bridgeRequestIsExecutionReady'
 check_contains docs/ai_runtime_execution_adapter.md 'adapter_contract_status: compile_checked_mapping_only'
 check_contains docs/ai_runtime_execution_adapter.md 'bridge_link_status: runtime_adapter_ai_core_link_checked'
+check_contains docs/ai_runtime_execution_adapter.md 'compiled_hook_execution_status: bridge_enabled_ai_runtime_infer_attempt'
 check_contains scripts/check_ai_runtime_execution_adapter.sh 'PASS AI runtime execution adapter gate'
 check_contains tests/codegen/test_ai_runtime_bridge_adapter.sh 'PASS AI runtime bridge adapter compile and mapping test'
 check_contains scripts/check_runtime_ai_bridge_link_build.sh 'PASS runtime AI bridge link build gate'
 check_contains tests/codegen/test_runtime_ai_bridge_link_build.sh 'AIRuntime runtime'
 check_contains tests/codegen/test_runtime_ai_bridge_link_build.sh 'runtime.infer(model_spec, input_buffer)'
+check_contains scripts/check_runtime_ai_bridge_execution_path.sh 'PASS runtime AI bridge execution path gate'
+check_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'
+check_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'ai_runtime_execution_attempted'
 check_contains tests/codegen/test_runtime_library_build.sh 'SHORTHAND_RUNTIME_NOT_EXECUTED'
 check_contains tests/codegen/test_runtime_library_build.sh 'shorthand.runtime.observability.v1'
 check_contains tests/codegen/test_runtime_library_build.sh 'compiled-infer bridge request'
@@ -231,6 +240,14 @@ if bash scripts/check_runtime_ai_bridge_link_build.sh >/tmp/shorthand_runtime_ai
 else
   fail_check "runtime AI bridge link build gate failed"
   cat /tmp/shorthand_runtime_ai_bridge_link_build.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_runtime_ai_bridge_execution_path.sh >/tmp/shorthand_runtime_ai_bridge_execution_path.out 2>&1; then
+  log "PASS runtime AI bridge execution path gate completed"
+  cat /tmp/shorthand_runtime_ai_bridge_execution_path.out | tee -a "${LOG_FILE}"
+else
+  fail_check "runtime AI bridge execution path gate failed"
+  cat /tmp/shorthand_runtime_ai_bridge_execution_path.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then

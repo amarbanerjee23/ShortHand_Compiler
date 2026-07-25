@@ -10,7 +10,11 @@ The current status is:
 
 `bridge_link_status: runtime_adapter_ai_core_link_checked`
 
-This means the adapter compiles and maps runtime-hook inputs into `AI_Runtime` data structures, and an isolated link-build gate proves that the runtime hook layer, adapter layer, and AI runtime core can be compiled together. The public C ABI still does not call `AIRuntime::infer` yet.
+`compiled_hook_execution_status: bridge_enabled_ai_runtime_infer_attempt`
+
+This means the adapter compiles and maps runtime-hook inputs into `AI_Runtime` data structures, an isolated link-build gate proves that the runtime hook layer, adapter layer, and AI runtime core can be compiled together, and bridge-enabled builds can route `short_ai_infer_f32` into `AIRuntime::infer`.
+
+The default standalone runtime library remains dependency-light and keeps the existing pending behavior unless it is compiled with `SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1` and linked with the AI runtime core.
 
 ## What the adapter owns
 
@@ -26,11 +30,26 @@ The adapter version marker is:
 
 `shorthand.runtime.ai_runtime_execution_adapter.v1`
 
-## What the adapter does not own yet
+## Bridge-enabled execution path
 
-The adapter does not yet perform SDK execution from the public runtime hook. It intentionally does not change `short_ai_infer_f32` return behavior.
+PR #47 wires the bridge-enabled runtime build path as follows:
 
-That boundary keeps the adapter and link-build steps separate from the backend execution PR. A later runtime PR can use this adapter to route `short_ai_infer_f32` into `AI_Runtime` behind optional backend gates.
+```text
+short_ai_infer_f32
+  -> runtime registry validation
+  -> AIRuntimeBridgeAdapter mapping
+  -> AIRuntime::infer
+  -> public ShortHandRuntimeStatus mapping
+  -> output copy only on successful backend execution
+```
+
+The path is enabled only when `ShorthandRuntime.cpp` is compiled with:
+
+```text
+SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1
+```
+
+When SDK backends are not enabled, `AIRuntime::infer` still falls back honestly to `NotExecuted`, so the public C ABI returns `SHORTHAND_RUNTIME_NOT_EXECUTED`, keeps `output_count` at `0`, and records `backend_not_available` instead of claiming inference succeeded.
 
 ## Status mapping contract
 
@@ -55,7 +74,7 @@ A request is only ready to be passed to `AI_Runtime` when:
 5. the input buffer element count matches the input tensor shape,
 6. output capacity is at least the declared output element count.
 
-If any of these are false, the future runtime execution path must not return `SHORTHAND_RUNTIME_OK`.
+If any of these are false, the runtime execution path must not return `SHORTHAND_RUNTIME_OK`.
 
 ## Runtime AI bridge link build
 
@@ -72,11 +91,20 @@ PR #46 adds an isolated link-build gate that compiles these pieces into one prob
 The probe validates that:
 
 - runtime-hook C ABI symbols and AI runtime C++ symbols can coexist,
-- `short_ai_infer_f32` still returns `SHORTHAND_RUNTIME_NOT_EXECUTED`,
 - adapter readiness checks pass for a valid typed request,
 - direct `AIRuntime::infer` fallback behavior remains `NotExecuted` when no SDK backend is enabled.
 
-This is a link-readiness check, not a public execution-behavior change.
+## Runtime AI bridge execution path
+
+PR #47 adds `scripts/check_runtime_ai_bridge_execution_path.sh`, which runs `tests/codegen/test_runtime_ai_bridge_execution_path.sh`.
+
+That probe compiles the same runtime bridge pieces with `SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1` and optional SDK macros disabled. It verifies that:
+
+- `short_ai_infer_f32` reaches `AIRuntime::infer`,
+- fallback behavior remains `SHORTHAND_RUNTIME_NOT_EXECUTED` when no SDK backend is enabled,
+- no output values are fabricated,
+- the bridge request records `ai_runtime_execution_attempted`,
+- `SHORTHAND_RUNTIME_OK` remains reserved for real backend success.
 
 ## Validation
 
@@ -84,6 +112,8 @@ The gate `scripts/check_ai_runtime_execution_adapter.sh` checks the adapter cont
 
 The gate `scripts/check_runtime_ai_bridge_link_build.sh` runs `tests/codegen/test_runtime_ai_bridge_link_build.sh`, which compiles the runtime hook layer, adapter, and AI runtime core together with optional SDK macros disabled.
 
+The gate `scripts/check_runtime_ai_bridge_execution_path.sh` runs the bridge-enabled execution probe and verifies the safe no-SDK fallback path.
+
 ## Next implementation step
 
-The next PR should connect `short_ai_infer_f32` to this adapter and then to `AIRuntime::infer` behind existing optional backend gates. It must continue returning `SHORTHAND_RUNTIME_NOT_EXECUTED` or `SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE` unless real backend execution succeeds and populates output values.
+The next runtime PR should add an optional SDK-backed success fixture for the compiled hook path. It must continue returning `SHORTHAND_RUNTIME_NOT_EXECUTED` or `SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE` unless real backend execution succeeds and populates output values.

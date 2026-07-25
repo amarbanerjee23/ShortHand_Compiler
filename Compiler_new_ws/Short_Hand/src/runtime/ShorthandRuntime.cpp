@@ -1,5 +1,14 @@
 #include "ShorthandRuntime.h"
 
+#ifndef SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+#define SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE 0
+#endif
+
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+#include "AIRuntimeBridgeAdapter.h"
+#include "ai_runtime/AI_Runtime.h"
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <map>
@@ -197,12 +206,19 @@ std::string build_typed_buffer_bridge_request(const ModelRecord &model,
                                               long long expected_input_elements,
                                               long long expected_output_elements,
                                               int output_count) {
+    const bool pending = reason == "ai_runtime_typed_buffer_bridge_pending";
+    const bool rejected = reason == "ai_runtime_adapter_request_not_execution_ready";
+    const bool execution_ready = !pending && !rejected;
+    const char *bridge_status = pending
+        ? "typed_buffer_received_execution_pending"
+        : (rejected ? "typed_buffer_received_execution_rejected" : (status == SHORTHAND_RUNTIME_OK ? "ai_runtime_execution_succeeded" : "ai_runtime_execution_attempted"));
+
     std::ostringstream out;
     out << "{\"schema\":\"shorthand.runtime.typed_infer_buffer_bridge_request.v1\""
         << ",\"parent_schema\":\"shorthand.runtime.compiled_infer_bridge_request.v1\""
         << ",\"status\":\"" << json_escape(status_name(status)) << "\""
-        << ",\"bridge_status\":\"typed_buffer_received_execution_pending\""
-        << ",\"execution_ready\":false"
+        << ",\"bridge_status\":\"" << bridge_status << "\""
+        << ",\"execution_ready\":" << (execution_ready ? "true" : "false")
         << ",\"runtime_target\":\"AI_Runtime\""
         << ",\"input_buffer_available\":true"
         << ",\"input_element_count\":" << input_count
@@ -225,6 +241,84 @@ std::string build_typed_buffer_bridge_request(const ModelRecord &model,
         << "\",\"shape\":\"" << json_escape(output.shape) << "\"}}";
     return out.str();
 }
+
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+shorthand::runtime_bridge::RuntimeBridgeModelInput bridge_model_input(const ModelRecord &model) {
+    return {model.name.c_str(), model.format.c_str(), model.path.c_str(), model.task.c_str(), model.precision.c_str(), model.input_shape.c_str(), model.output_shape.c_str(), model.backend_preference.c_str(), true};
+}
+
+shorthand::runtime_bridge::RuntimeBridgeTensorInput bridge_tensor_input(const TensorRecord &tensor) {
+    return {tensor.name.c_str(), tensor.element_type.c_str(), tensor.shape.c_str(), tensor.rank.c_str(), tensor.total_elements.c_str()};
+}
+
+void attach_ai_runtime_telemetry_if_available(int status,
+                                              const std::string &backend,
+                                              const std::string &reason,
+                                              const shorthand::ai::InferenceResult &result) {
+    if (result.telemetry_json_fragment.empty()) return;
+    last_infer_telemetry_json = std::string("{\"schema\":\"shorthand.runtime.infer_telemetry.v1\",\"status\":\"") +
+        json_escape(status_name(status)) + "\",\"backend\":\"" + json_escape(backend) +
+        "\",\"reason\":\"" + json_escape(reason) + "\",\"ai_runtime_telemetry\":" + result.telemetry_json_fragment + "}";
+}
+
+int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
+                                            const TensorRecord &input,
+                                            const TensorRecord &output,
+                                            const float *input_values,
+                                            int input_count,
+                                            float *output_values,
+                                            int output_capacity,
+                                            int *output_count,
+                                            long long expected_input,
+                                            long long expected_output) {
+    const auto bridge_model = bridge_model_input(model);
+    const auto bridge_input = bridge_tensor_input(input);
+    const auto bridge_output = bridge_tensor_input(output);
+
+    auto model_spec = shorthand::runtime_bridge::buildModelSpec(bridge_model, bridge_input, bridge_output);
+    auto input_buffer = shorthand::runtime_bridge::buildInputTensorBuffer(bridge_input, input_values, input_count);
+    const std::string requested_backend = model.backend_preference.empty() ? "fallback" : model.backend_preference;
+
+    if (!shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, output_capacity)) {
+        const int status = SHORTHAND_RUNTIME_INVALID_INPUT;
+        const std::string reason = "ai_runtime_adapter_request_not_execution_ready";
+        set_last_infer(status, requested_backend, reason);
+        *output_count = 0;
+        infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, requested_backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
+        std::fprintf(stderr,
+                     "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=invalid_input backend_preference=%s reason=%s ai_runtime_bridge=rejected\n",
+                     model.name.c_str(), input.name.c_str(), output.name.c_str(), requested_backend.c_str(), reason.c_str());
+        return status;
+    }
+
+    shorthand::ai::AIRuntime runtime;
+    auto result = runtime.infer(model_spec, input_buffer);
+    int status = shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status);
+    std::string backend = result.backend_name.empty() ? shorthand::ai::backendKindToString(result.backend) : result.backend_name;
+    std::string reason = result.reason.empty() ? shorthand::ai::inferenceStatusToString(result.status) : result.reason;
+
+    *output_count = 0;
+    if (status == SHORTHAND_RUNTIME_OK) {
+        if (result.output_f32.size() > static_cast<std::size_t>(output_capacity)) {
+            status = SHORTHAND_RUNTIME_RUNTIME_ERROR;
+            reason = "ai_runtime_output_exceeds_registered_capacity";
+        } else {
+            for (std::size_t i = 0; i < result.output_f32.size(); ++i) {
+                output_values[i] = result.output_f32[i];
+            }
+            *output_count = static_cast<int>(result.output_f32.size());
+        }
+    }
+
+    set_last_infer(status, backend, reason);
+    attach_ai_runtime_telemetry_if_available(status, backend, reason, result);
+    infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
+    std::fprintf(stderr,
+                 "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=%s backend=%s reason=%s ai_runtime_bridge=attempted output_count=%d\n",
+                 model.name.c_str(), input.name.c_str(), output.name.c_str(), status_name(status).c_str(), backend.c_str(), reason.c_str(), *output_count);
+    return status;
+}
+#endif
 
 void log_status(const char *operation, int status, const std::string &message) {
     std::fprintf(stderr, "[shorthand-runtime] %s status=%d %s\n", operation, status, message.c_str());
@@ -481,6 +575,18 @@ extern "C" int short_ai_infer_f32(const char *model_name,
         return status;
     }
 
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+    return execute_typed_buffer_through_ai_runtime(model_it->second,
+                                                  input_it->second,
+                                                  output_it->second,
+                                                  input_values,
+                                                  input_count,
+                                                  output_values,
+                                                  output_capacity,
+                                                  output_count,
+                                                  expected_input,
+                                                  expected_output);
+#else
     const int status = SHORTHAND_RUNTIME_NOT_EXECUTED;
     const std::string backend = model_it->second.backend_preference.empty() ? "fallback" : model_it->second.backend_preference;
     const std::string reason = "ai_runtime_typed_buffer_bridge_pending";
@@ -501,6 +607,7 @@ extern "C" int short_ai_infer_f32(const char *model_name,
                  "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=not_executed backend_preference=%s reason=%s typed_buffer_bridge=created\n",
                  model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str(), reason.c_str());
     return status;
+#endif
 }
 
 extern "C" int short_ai_infer_legacy(const char *model_path,
