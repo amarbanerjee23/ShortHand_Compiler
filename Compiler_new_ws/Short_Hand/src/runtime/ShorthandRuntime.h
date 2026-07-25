@@ -34,6 +34,8 @@ const char *short_runtime_last_infer_reason(void);
 const char *short_runtime_last_infer_telemetry_json(void);
 const char *short_runtime_infer_bridge_request_json(void);
 const char *short_runtime_observability_json(void);
+const char *short_runtime_prometheus_metrics(void);
+const char *short_runtime_otlp_spans_json(void);
 
 int short_ai_register_model(const char *name,
                             const char *format,
