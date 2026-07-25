@@ -75,12 +75,24 @@ std::string last_infer_reason = "not_run";
 std::string last_infer_telemetry_json = "{}";
 std::string infer_bridge_request_json_cache = "{}";
 std::string observability_json_cache = "{}";
+std::string prometheus_metrics_cache = "";
+std::string otlp_spans_json_cache = "{}";
 
 const char *safe(const char *value) { return value ? value : ""; }
 std::string s(const char *value) { return std::string(safe(value)); }
 bool blank(const char *value) { return s(value).empty(); }
 
 std::string json_escape(const std::string &value) {
+    std::string out;
+    for (char c : value) {
+        if (c == '"' || c == '\\') { out += '\\'; out += c; }
+        else if (c == '\n') out += "\\n";
+        else out += c;
+    }
+    return out;
+}
+
+std::string prometheus_label_escape(const std::string &value) {
     std::string out;
     for (char c : value) {
         if (c == '"' || c == '\\') { out += '\\'; out += c; }
@@ -337,6 +349,8 @@ extern "C" int short_runtime_reset(void) {
     last_infer_telemetry_json = "{}";
     infer_bridge_request_json_cache = "{}";
     observability_json_cache = "{}";
+    prometheus_metrics_cache.clear();
+    otlp_spans_json_cache = "{}";
     return SHORTHAND_RUNTIME_OK;
 }
 
@@ -373,6 +387,62 @@ extern "C" const char *short_runtime_observability_json(void) {
         << ",\"infer_bridge_request\":" << infer_bridge_request_json_cache << "}";
     observability_json_cache = out.str();
     return observability_json_cache.c_str();
+}
+
+extern "C" const char *short_runtime_prometheus_metrics(void) {
+    std::ostringstream out;
+    out << "# HELP shorthand_runtime_models Registered model count\n";
+    out << "# TYPE shorthand_runtime_models gauge\n";
+    out << "shorthand_runtime_models " << models.size() << "\n";
+    out << "# HELP shorthand_runtime_tensors Registered tensor count\n";
+    out << "# TYPE shorthand_runtime_tensors gauge\n";
+    out << "shorthand_runtime_tensors " << tensors.size() << "\n";
+    out << "# HELP shorthand_runtime_contracts Registered GreenAI contract count\n";
+    out << "# TYPE shorthand_runtime_contracts gauge\n";
+    out << "shorthand_runtime_contracts " << contracts.size() << "\n";
+    out << "# HELP shorthand_runtime_measurements Recorded GreenAI measurement count\n";
+    out << "# TYPE shorthand_runtime_measurements gauge\n";
+    out << "shorthand_runtime_measurements " << measurements.size() << "\n";
+    out << "# HELP shorthand_runtime_infer_total Total infer calls observed by the runtime hook\n";
+    out << "# TYPE shorthand_runtime_infer_total counter\n";
+    out << "shorthand_runtime_infer_total " << stats.infer_calls << "\n";
+    out << "shorthand_runtime_infer_success_total " << stats.infer_success << "\n";
+    out << "shorthand_runtime_infer_not_executed_total " << stats.infer_not_executed << "\n";
+    out << "shorthand_runtime_infer_backend_unavailable_total " << stats.infer_backend_unavailable << "\n";
+    out << "shorthand_runtime_infer_invalid_input_total " << stats.infer_invalid_input << "\n";
+    out << "# HELP shorthand_runtime_last_infer_info Last infer status labels; value is always 1\n";
+    out << "# TYPE shorthand_runtime_last_infer_info gauge\n";
+    out << "shorthand_runtime_last_infer_info{status=\"" << prometheus_label_escape(status_name(last_infer_status))
+        << "\",backend=\"" << prometheus_label_escape(last_infer_backend)
+        << "\",reason=\"" << prometheus_label_escape(last_infer_reason) << "\"} 1\n";
+    prometheus_metrics_cache = out.str();
+    return prometheus_metrics_cache.c_str();
+}
+
+extern "C" const char *short_runtime_otlp_spans_json(void) {
+    std::ostringstream out;
+    out << "{\"schema\":\"shorthand.runtime.otlp_spans.v1\""
+        << ",\"resource\":{\"service.name\":\"shorthand-runtime\"}"
+        << ",\"spans\":[{\"name\":\"short_ai_infer\""
+        << ",\"kind\":\"INTERNAL\""
+        << ",\"status\":\"" << json_escape(status_name(last_infer_status)) << "\""
+        << ",\"attributes\":{"
+        << "\"runtime.models\":" << models.size()
+        << ",\"runtime.tensors\":" << tensors.size()
+        << ",\"runtime.contracts\":" << contracts.size()
+        << ",\"runtime.measurements\":" << measurements.size()
+        << ",\"runtime.infer.calls\":" << stats.infer_calls
+        << ",\"runtime.infer.success\":" << stats.infer_success
+        << ",\"runtime.infer.not_executed\":" << stats.infer_not_executed
+        << ",\"runtime.infer.backend_unavailable\":" << stats.infer_backend_unavailable
+        << ",\"runtime.infer.invalid_input\":" << stats.infer_invalid_input
+        << ",\"runtime.last_backend\":\"" << json_escape(last_infer_backend) << "\""
+        << ",\"runtime.last_reason\":\"" << json_escape(last_infer_reason) << "\"}"
+        << ",\"last_infer_telemetry\":" << last_infer_telemetry_json
+        << ",\"infer_bridge_request\":" << infer_bridge_request_json_cache
+        << "}]}";
+    otlp_spans_json_cache = out.str();
+    return otlp_spans_json_cache.c_str();
 }
 
 extern "C" int short_ai_register_model(const char *name,
