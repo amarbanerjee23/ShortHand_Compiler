@@ -33,17 +33,22 @@ require_file scripts/check_feature_plan_status.sh
 require_file scripts/check_enterprise_hardening.sh
 require_file docs/feature_implementation_status.md
 require_file docs/pr_task_stability_strategy.md
+require_file docs/language_grammar_ebnf.md
+require_file docs/language_spec.md
+require_file docs/language_versioning_and_conformance.md
 require_file docs/compiled_infer_bridge.md
 require_file docs/backend_compatibility_matrix.md
 require_file docs/ai_runtime_bridge_linkage.md
 require_file docs/ai_runtime_execution_adapter.md
 require_file docs/runtime_observability_exports.md
+require_file tests/conformance/manifest.txt
 require_file tests/codegen/test_runtime_ai_bridge_link_build.sh
 require_file tests/codegen/test_runtime_ai_bridge_execution_path.sh
 require_file tests/codegen/test_runtime_observability_exports.sh
 require_file tests/integration/test_compiled_hook_onnxruntime_success.sh
 require_file scripts/check_compiled_hook_onnxruntime_success.sh
 require_file scripts/check_runtime_observability_exports.sh
+require_file scripts/check_language_versioning.sh
 
 # Preserve old task names and ordering anchors from the CI workflow.
 require_contains .github/workflows/ci.yml 'Strict language validation'
@@ -80,13 +85,20 @@ require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compil
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 
 # Keep guardrail scripts syntactically valid before they can block CI.
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_language_versioning.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
 # The strategy itself must explain the old-task contract so future changes do not silently rename CI anchors.
 require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
+require_contains docs/language_grammar_ebnf.md 'Language version: beta-0.1'
+require_contains docs/language_spec.md 'Language version: beta-0.1'
+require_contains docs/language_versioning_and_conformance.md 'shorthand.language.version: beta-0.1'
+require_contains docs/language_versioning_and_conformance.md 'shorthand.conformance.contract: beta-0.1'
+require_contains tests/conformance/manifest.txt 'version | shorthand.language.version | beta-0.1 | Current beta language contract marker.'
+require_contains scripts/check_language_versioning.sh 'PASS language versioning and conformance gate'
+require_contains scripts/check_language_correctness.sh 'check_language_versioning.sh'
 require_contains docs/compiled_infer_bridge.md 'input_buffer_required_for_ai_runtime_execution'
 require_contains docs/compiled_infer_bridge.md 'Typed tensor-buffer bridge'
 require_contains docs/compiled_infer_bridge.md 'AI_Runtime bridge linkage'
