@@ -129,20 +129,28 @@ run_existing_gate() {
 
 require_file "${MANIFEST}"
 require_file "${ROOT_DIR}/docs/language_grammar_ebnf.md"
+require_file "${ROOT_DIR}/docs/language_spec.md"
+require_file "${ROOT_DIR}/docs/language_versioning_and_conformance.md"
 require_file "${ROOT_DIR}/docs/semantic_ir_and_diagnostics_plan.md"
+require_file "${ROOT_DIR}/scripts/check_language_versioning.sh"
 require_file "${SRC_DIR}/semantic_ir/SemanticIR.h"
 
+require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'Language version: beta-0.1'
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'model_declaration'
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'tensor_declaration'
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'infer_statement'
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'greenai_contract'
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'greenai_measurement'
+require_contains "${ROOT_DIR}/docs/language_spec.md" 'Language version: beta-0.1'
+require_contains "${ROOT_DIR}/docs/language_versioning_and_conformance.md" 'shorthand.conformance.contract: beta-0.1'
 require_contains "${ROOT_DIR}/docs/semantic_ir_and_diagnostics_plan.md" 'ShortHand semantic IR'
 require_contains "${SRC_DIR}/semantic_ir/SemanticIR.h" 'struct ProgramIR'
+require_contains "${MANIFEST}" 'version | shorthand.language.version | beta-0.1'
 require_contains "${MANIFEST}" 'parser-valid'
 require_contains "${MANIFEST}" 'semantic-invalid'
 require_contains "${MANIFEST}" 'runtime | tests/codegen/test_external_runtime_native.sh'
 
+run_existing_gate 'language versioning and conformance' bash "${ROOT_DIR}/scripts/check_language_versioning.sh"
 compile_semantic_ir_probe
 ensure_compiler
 ensure_runtime_lib
