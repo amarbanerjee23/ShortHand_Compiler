@@ -25,6 +25,7 @@ require_contains() {
 require_file docs/backend_compatibility_matrix.md
 require_file docs/backend_live_sdk_matrix.md
 require_file docs/tensorrt_optional_fixture.md
+require_file docs/openvino_optional_fixture.md
 require_file docs/compiled_infer_bridge.md
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp
@@ -32,8 +33,10 @@ require_file Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
 require_file tests/integration/test_onnxruntime_sdk_gate.sh
 require_file tests/integration/test_backend_live_sdk_matrix.sh
 require_file tests/integration/test_tensorrt_optional_fixture.sh
+require_file tests/integration/test_openvino_optional_fixture.sh
 require_file scripts/check_backend_live_sdk_matrix.sh
 require_file scripts/check_tensorrt_optional_fixture.sh
+require_file scripts/check_openvino_optional_fixture.sh
 
 # Documentation must explicitly distinguish compatibility policy from real execution status.
 require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
@@ -45,9 +48,12 @@ require_contains docs/backend_compatibility_matrix.md 'fallback must report `not
 require_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
 require_contains docs/backend_compatibility_matrix.md 'typed buffer bridge'
 require_contains docs/backend_compatibility_matrix.md 'trt_optional_fixture_status: unavailable_path_proof_no_false_success'
+require_contains docs/backend_compatibility_matrix.md 'openvino_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/backend_live_sdk_matrix.md 'shorthand.backend_live_sdk_matrix.v1'
 require_contains docs/backend_live_sdk_matrix.md 'unavailable_path_proved'
 require_contains docs/tensorrt_optional_fixture.md 'must return non-success with no output copied'
+require_contains docs/openvino_optional_fixture.md 'must return non-success with no output copied'
+require_contains docs/openvino_optional_fixture.md 'production_claim_boundary: not production-executing yet'
 
 # All advertised formats and backend aliases must still be present in the parser/matrix contract.
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp 'ModelFormat::Onnx'
@@ -65,6 +71,7 @@ require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp 'backend
 # Runtime selection must preserve fallback honesty.
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<TensorRTBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<OnnxRuntimeBackend>());'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<OpenVINOBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<FallbackBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'r.status=InferenceStatus::NotExecuted'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'backend_not_available'
@@ -81,11 +88,13 @@ require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'SKIP onnxruntim
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'PASS onnxruntime_sdk_gate: real ONNX Runtime CPU execution succeeded'
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'fallback\|backend_unavailable\|not_executed'
 
-# Shared backend live SDK matrix and PR #53 TensorRT proof.
+# Shared backend live SDK matrix plus TensorRT and OpenVINO proofs.
 require_contains tests/integration/test_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix harness'
 require_contains scripts/check_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix gate'
 require_contains tests/integration/test_tensorrt_optional_fixture.sh 'PASS tensorrt optional fixture gate'
 require_contains scripts/check_tensorrt_optional_fixture.sh 'PASS TensorRT optional fixture gate'
+require_contains tests/integration/test_openvino_optional_fixture.sh 'PASS openvino optional fixture gate'
+require_contains scripts/check_openvino_optional_fixture.sh 'PASS OpenVINO optional fixture gate'
 bash scripts/check_backend_live_sdk_matrix.sh
 
 printf 'PASS backend compatibility matrix gate\n'
