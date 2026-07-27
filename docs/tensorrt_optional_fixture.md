@@ -2,6 +2,7 @@
 
 trt_optional_fixture_status: unavailable_path_proof_no_false_success
 schema: shorthand.backend_tensorrt_optional_fixture.v1
+production_claim_boundary: not production-executing yet
 full_backend_matrix_claim: false
 
 ## Purpose
