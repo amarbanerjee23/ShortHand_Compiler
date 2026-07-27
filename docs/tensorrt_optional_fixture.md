@@ -16,8 +16,8 @@ Therefore PR #53 adds an explicit unavailable-path proof rather than a false suc
 
 | Backend row | Format | Current PR #53 behavior | Production claim boundary |
 | --- | --- | --- | --- |
-| `tensorrt` | `engine` | Compiled-hook bridge attempts the TensorRT backend and must return non-success with no output copied. | Not production-executing yet. |
-| `onnxruntime_tensorrt` | `onnx` | Matrix row remains skip-safe because ONNX Runtime TensorRT EP execution is not implemented as a separate live fixture yet. | Not production-executing yet. |
+| `tensorrt` | `engine` | Compiled-hook bridge attempts the TensorRT backend and must return non-success with no output copied. | not production-executing yet. |
+| `onnxruntime_tensorrt` | `onnx` | Matrix row remains skip-safe because ONNX Runtime TensorRT EP execution is not implemented as a separate live fixture yet. | not production-executing yet. |
 
 ## Required behavior
 
@@ -46,7 +46,7 @@ A future PR may replace this unavailable-path proof with real TensorRT engine ex
 - real output validation,
 - no fallback or `not_executed` status during a claimed live run.
 
-Until then, TensorRT must remain explicitly non-production-executing.
+Until then, TensorRT must remain explicitly not production-executing yet.
 
 ## Evidence
 
