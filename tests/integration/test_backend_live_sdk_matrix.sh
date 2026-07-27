@@ -63,6 +63,27 @@ run_tensorrt_rows() {
   fi
 }
 
+run_openvino_row() {
+  if bash "${ROOT_DIR}/tests/integration/test_openvino_optional_fixture.sh" \
+      >/tmp/shorthand_backend_matrix_openvino.out \
+      2>/tmp/shorthand_backend_matrix_openvino.err; then
+    if grep -q 'PASS openvino optional fixture gate' /tmp/shorthand_backend_matrix_openvino.out && \
+       grep -q 'OPENVINO_FIXTURE backend=openvino status=unavailable_path_proved' /tmp/shorthand_backend_matrix_openvino.out; then
+      record "openvino" "openvino_ir" "skip_safe" "openvino_unavailable_path_proved_no_false_success" "openvino_optional_fixture"
+    else
+      echo "error: OpenVINO optional fixture completed without required proof markers" >&2
+      cat /tmp/shorthand_backend_matrix_openvino.out >&2 || true
+      cat /tmp/shorthand_backend_matrix_openvino.err >&2 || true
+      exit 1
+    fi
+  else
+    echo "error: OpenVINO optional fixture gate failed" >&2
+    cat /tmp/shorthand_backend_matrix_openvino.out >&2 || true
+    cat /tmp/shorthand_backend_matrix_openvino.err >&2 || true
+    exit 1
+  fi
+}
+
 planned_backend() {
   local backend="$1"
   local format="$2"
@@ -88,8 +109,8 @@ require_matrix_row() {
 
 run_onnxruntime_cpu
 run_tensorrt_rows
+run_openvino_row
 planned_backend "onnxruntime_cuda" "onnx" "ONNXRUNTIME_CUDA_ROOT" "PR57"
-planned_backend "openvino" "openvino_ir" "OPENVINO_ROOT" "PR54"
 planned_backend "libtorch" "torchscript" "LIBTORCH_ROOT" "PR55"
 planned_backend "llamacpp" "gguf" "LLAMACPP_ROOT" "PR56"
 
