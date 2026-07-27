@@ -41,6 +41,28 @@ run_onnxruntime_cpu() {
   fi
 }
 
+run_tensorrt_rows() {
+  if bash "${ROOT_DIR}/tests/integration/test_tensorrt_optional_fixture.sh" \
+      >/tmp/shorthand_backend_matrix_tensorrt.out \
+      2>/tmp/shorthand_backend_matrix_tensorrt.err; then
+    if grep -q 'PASS tensorrt optional fixture gate' /tmp/shorthand_backend_matrix_tensorrt.out && \
+       grep -q 'TENSORRT_FIXTURE backend=tensorrt status=unavailable_path_proved' /tmp/shorthand_backend_matrix_tensorrt.out; then
+      record "onnxruntime_tensorrt" "onnx" "skip_safe" "onnxruntime_tensorrt_ep_fixture_not_enabled_no_false_success" "tensorrt_optional_fixture"
+      record "tensorrt" "engine" "skip_safe" "tensorrt_unavailable_path_proved_no_false_success" "tensorrt_optional_fixture"
+    else
+      echo "error: TensorRT optional fixture completed without required proof markers" >&2
+      cat /tmp/shorthand_backend_matrix_tensorrt.out >&2 || true
+      cat /tmp/shorthand_backend_matrix_tensorrt.err >&2 || true
+      exit 1
+    fi
+  else
+    echo "error: TensorRT optional fixture gate failed" >&2
+    cat /tmp/shorthand_backend_matrix_tensorrt.out >&2 || true
+    cat /tmp/shorthand_backend_matrix_tensorrt.err >&2 || true
+    exit 1
+  fi
+}
+
 planned_backend() {
   local backend="$1"
   local format="$2"
@@ -65,9 +87,8 @@ require_matrix_row() {
 }
 
 run_onnxruntime_cpu
+run_tensorrt_rows
 planned_backend "onnxruntime_cuda" "onnx" "ONNXRUNTIME_CUDA_ROOT" "PR57"
-planned_backend "onnxruntime_tensorrt" "onnx" "ONNXRUNTIME_TENSORRT_ROOT" "PR53"
-planned_backend "tensorrt" "engine" "TENSORRT_ROOT" "PR53"
 planned_backend "openvino" "openvino_ir" "OPENVINO_ROOT" "PR54"
 planned_backend "libtorch" "torchscript" "LIBTORCH_ROOT" "PR55"
 planned_backend "llamacpp" "gguf" "LLAMACPP_ROOT" "PR56"
@@ -81,7 +102,7 @@ require_matrix_row "libtorch"
 require_matrix_row "llamacpp"
 
 if grep -E '"backend":"(onnxruntime_cuda|onnxruntime_tensorrt|tensorrt|openvino|libtorch|llamacpp)","format":"[^"]+","status":"live_success"' "${REPORT}" >/dev/null; then
-  echo "error: matrix harness must not claim live success for backends without dedicated fixtures" >&2
+  echo "error: matrix harness must not claim live success for backends without dedicated live fixtures" >&2
   cat "${REPORT}" >&2 || true
   exit 1
 fi
