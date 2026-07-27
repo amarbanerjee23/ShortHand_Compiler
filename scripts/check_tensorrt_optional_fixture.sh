@@ -30,7 +30,7 @@ require_file docs/backend_live_sdk_matrix.md
 
 require_contains docs/tensorrt_optional_fixture.md 'trt_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/tensorrt_optional_fixture.md 'shorthand.backend_tensorrt_optional_fixture.v1'
-require_contains docs/tensorrt_optional_fixture.md 'not production-executing yet'
+require_contains docs/tensorrt_optional_fixture.md 'production_claim_boundary: not production-executing yet'
 require_contains docs/tensorrt_optional_fixture.md 'must return non-success with no output copied'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/backends/TensorRTBackend.cpp 'TensorRT SDK detected but direct execution is not yet enabled'
 require_contains tests/integration/test_tensorrt_optional_fixture.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'
