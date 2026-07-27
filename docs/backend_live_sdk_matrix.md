@@ -15,7 +15,7 @@ The matrix is intentionally conservative. A backend row may report `live_success
 | Status | Meaning | Claim boundary |
 | --- | --- | --- |
 | `live_success` | The backend ran a real SDK-backed fixture and returned expected output. | This can support a backend-specific claim for the tested configuration only. |
-| `skip_safe` | The backend did not run because the SDK is absent, direct TensorRT support is unavailable, or the dedicated live fixture is not implemented yet. | This is not proof of live backend support. It is safe default-CI behavior. |
+| `skip_safe` | The backend did not run because the SDK is absent, direct backend support is unavailable, or the dedicated live fixture is not implemented yet. | This is not proof of live backend support. It is safe default-CI behavior. |
 | `policy_compatible_only` | The backend is understood by the compatibility policy, but has no live fixture yet. | Do not market this backend as production-supported. |
 | `dedicated_fixture_planned` | The SDK path was detected or named, but the backend-specific live fixture belongs to a later PR. | Do not claim live support before that later PR lands. |
 | `unavailable_path_proved` | A backend-specific fixture proved the backend path does not falsely report success while unavailable. | This is reliability evidence, not live support evidence. |
@@ -28,7 +28,7 @@ The matrix is intentionally conservative. A backend row may report `live_success
 | `onnxruntime_cuda` | `onnx` | Records `skip_safe` and `policy_compatible_only` until the matrix is finalized or a fixture is added. | PR57 decision or future split |
 | `onnxruntime_tensorrt` | `onnx` | Uses the PR53 TensorRT optional fixture path and records `skip_safe` with no false success until ONNX Runtime TensorRT EP support exists. | PR53 unavailable-path proof; future live EP fixture still open |
 | `tensorrt` | `engine` | Runs `tests/integration/test_tensorrt_optional_fixture.sh`; records `skip_safe` after proving the current TensorRT path is unavailable and does not copy outputs or report success. | PR53 TensorRT unavailable-path proof |
-| `openvino` | `openvino_ir` | Records `skip_safe` and `dedicated_fixture_planned`. | PR54 |
+| `openvino` | `openvino_ir` | Runs `tests/integration/test_openvino_optional_fixture.sh`; records `skip_safe` after proving the current OpenVINO path is unavailable and does not copy outputs or report success. | PR54 OpenVINO unavailable-path proof |
 | `libtorch` | `torchscript` | Records `skip_safe` and `dedicated_fixture_planned`. | PR55 |
 | `llamacpp` | `gguf` | Records `skip_safe` and `dedicated_fixture_planned`. | PR56 |
 
@@ -38,6 +38,12 @@ PR #53 adds a TensorRT-specific fixture gate. The gate compiles the bridge-enabl
 
 This proves claim safety for the current TensorRT path. It does not prove live TensorRT support.
 
+## OpenVINO unavailable-path proof
+
+PR #54 adds an OpenVINO-specific fixture gate. The gate compiles the bridge-enabled runtime path, registers an OpenVINO IR model, calls `short_ai_infer_f32`, and requires a non-success status with no output copy.
+
+This proves claim safety for the current OpenVINO path. It does not prove live OpenVINO support, and the OpenVINO row remains not production-executing yet.
+
 ## Default CI behavior
 
 Default CI must remain dependency-light. Therefore the matrix harness may skip SDK-backed checks when optional SDK roots are not configured.
@@ -46,7 +52,7 @@ A skip must still be explicit and machine-readable. The test writes `/tmp/shorth
 
 ## Claim-safety rule
 
-The matrix harness must not claim `live_success` for TensorRT, OpenVINO, LibTorch, Llama.cpp, ONNX Runtime CUDA, or ONNX Runtime TensorRT until the dedicated backend fixture actually exists and passes.
+The matrix harness must not claim `live_success` for TensorRT, OpenVINO, LibTorch, Llama.cpp, ONNX Runtime CUDA, or ONNX Runtime TensorRT until the dedicated backend fixture actually exists and passes real execution.
 
 The harness may only claim `live_success` for `onnxruntime_cpu` when the existing compiled-hook ONNX Runtime success fixture passes with `ONNXRUNTIME_ROOT` configured.
 
@@ -58,4 +64,7 @@ The harness may only claim `live_success` for `onnxruntime_cpu` when the existin
 - `tests/integration/test_tensorrt_optional_fixture.sh`
 - `scripts/check_tensorrt_optional_fixture.sh`
 - `docs/tensorrt_optional_fixture.md`
+- `tests/integration/test_openvino_optional_fixture.sh`
+- `scripts/check_openvino_optional_fixture.sh`
+- `docs/openvino_optional_fixture.md`
 - `docs/backend_compatibility_matrix.md`
