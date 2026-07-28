@@ -8,6 +8,8 @@ Backend live SDK matrix marker: `backend_live_sdk_matrix_status: optional_matrix
 
 TensorRT fixture marker: `trt_optional_fixture_status: unavailable_path_proof_no_false_success`.
 
+OpenVINO fixture marker: `openvino_optional_fixture_status: unavailable_path_proof_no_false_success`.
+
 ## Format to backend compatibility
 
 | Model format | Compatible production backends | Fallback allowed | Current execution status |
@@ -15,7 +17,7 @@ TensorRT fixture marker: `trt_optional_fixture_status: unavailable_path_proof_no
 | ONNX | `onnxruntime_cpu`, `onnxruntime_cuda`, `onnxruntime_tensorrt`, `tensorrt` | Yes, but fallback must report `not_executed` | `onnxruntime_cpu` has SDK-backed execution when `ONNXRUNTIME_ROOT` is configured; the matrix harness records row-level status. `onnxruntime_tensorrt` is skip-safe until live TensorRT EP support exists. |
 | TensorRT engine | `tensorrt`, `onnxruntime_tensorrt` | Yes, but fallback must report `not_executed` | PR #53 adds a TensorRT unavailable-path proof with no false success. This is not live TensorRT execution. |
 | TorchScript | `libtorch` | Yes, but fallback must report `not_executed` | Policy-compatible only until PR #55 adds an optional live fixture or explicit unavailable-path proof. |
-| OpenVINO IR | `openvino` | Yes, but fallback must report `not_executed` | Policy-compatible only until PR #54 adds an optional live fixture or explicit unavailable-path proof. |
+| OpenVINO IR | `openvino` | Yes, but fallback must report `not_executed` | PR #54 adds an OpenVINO unavailable-path proof with no false success. This is not live OpenVINO execution and remains not production-executing yet. |
 | GGUF | `llamacpp` | Yes, but fallback must report `not_executed` | Policy-compatible only until PR #56 adds an optional live fixture or explicit unavailable-path proof. |
 
 ## Backend execution validation tiers
@@ -31,16 +33,19 @@ The backend matrix has four separate validation tiers. These tiers must not be c
 
 ## Backend live SDK matrix harness
 
-PR #52 added the shared live SDK matrix harness. PR #53 adds the first non-ONNX backend-specific row proof for TensorRT.
+PR #52 added the shared live SDK matrix harness. PR #53 added the TensorRT unavailable-path proof. PR #54 adds the equivalent OpenVINO unavailable-path proof.
 
 Evidence:
 
 - `docs/backend_live_sdk_matrix.md`
 - `docs/tensorrt_optional_fixture.md`
+- `docs/openvino_optional_fixture.md`
 - `tests/integration/test_backend_live_sdk_matrix.sh`
 - `tests/integration/test_tensorrt_optional_fixture.sh`
+- `tests/integration/test_openvino_optional_fixture.sh`
 - `scripts/check_backend_live_sdk_matrix.sh`
 - `scripts/check_tensorrt_optional_fixture.sh`
+- `scripts/check_openvino_optional_fixture.sh`
 
 The harness records rows for:
 
@@ -52,7 +57,7 @@ The harness records rows for:
 - `libtorch`
 - `llamacpp`
 
-The harness must keep default CI skip-safe. It may report `live_success` only for `onnxruntime_cpu` when `ONNXRUNTIME_ROOT` is configured and the compiled-hook ONNX Runtime success fixture passes. TensorRT rows currently prove unavailable-path honesty only; they must not be marketed as live execution support.
+The harness must keep default CI skip-safe. It may report `live_success` only for `onnxruntime_cpu` when `ONNXRUNTIME_ROOT` is configured and the compiled-hook ONNX Runtime success fixture passes. TensorRT and OpenVINO rows currently prove unavailable-path honesty only; they must not be marketed as live execution support.
 
 ## Compiler behavior
 

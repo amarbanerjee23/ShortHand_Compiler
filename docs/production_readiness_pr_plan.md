@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-07-25-pr53
+production_readiness_plan_version: 2026-07-27-pr54
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 53
+LAST_COMPLETED_PR: 54
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -60,18 +60,19 @@ The update should change:
 
 A PR must not mark ShortHand as production ready unless all production-readiness rows are MERGED or intentionally DEFERRED with a clear reason.
 
-## Current baseline after PR #53
+## Current baseline after PR #54
 
-Current state after PR #53:
+Current state after PR #54:
 
 - Beta language contract is explicit as `beta-0.1`.
 - Conformance manifest has a version row and required categories.
-- Compiler, runtime, C3-ECO candidate evidence, MLIR scaffold, release supply-chain baseline, and runtime bridge paths are all guarded by CI.
+- Compiler, runtime, C3-ECO candidate evidence, MLIR scaffold, release supply-chain baseline, and runtime bridge paths are guarded by CI.
 - ONNX Runtime CPU execution exists when `ONNXRUNTIME_ROOT` is configured.
 - The compiled-hook path has an optional ONNX Runtime success fixture.
 - Runtime observability has JSON, Prometheus-style text, and OTLP-like span JSON exports.
 - A shared backend live SDK matrix harness records row-level `live_success`, `skip_safe`, `policy_compatible_only`, and `dedicated_fixture_planned` status without making unsupported backend claims.
-- TensorRT and ONNX Runtime TensorRT rows now have an explicit unavailable-path proof with no false success claim.
+- TensorRT and ONNX Runtime TensorRT rows have an explicit unavailable-path proof with no false success claim.
+- The OpenVINO row has an explicit unavailable-path proof with no output copy or false success claim.
 
 Important boundary:
 
@@ -83,15 +84,15 @@ Recommended path from PR #51 onward: 28 PRs total.
 
 That includes PR #51, the planning PR.
 
-After PR #53 is merged, the remaining implementation path is expected to be about 25 PRs. Some PRs may split further if SDK availability, MLIR build tooling, parser changes, or C3-ECO evidence generation becomes larger than expected.
+After PR #54 is merged, the remaining implementation path is expected to be about 24 PRs. Some PRs may split further if SDK availability, MLIR build tooling, parser changes, or C3-ECO evidence generation becomes larger than expected.
 
 ## Next recommended PR
 
-Next recommended PR after PR #53:
+Next recommended PR after PR #54:
 
-PR54 - OpenVINO optional live execution fixture.
+PR55 - LibTorch optional live execution fixture.
 
-Reason: PR #53 adds the first non-ONNX backend-specific unavailable-path proof. The next backend slice should apply the same claim-safe pattern to OpenVINO before moving to LibTorch and Llama.cpp.
+Reason: PR #54 applies the backend-specific unavailable-path proof to OpenVINO. The next planned backend slice should apply the same claim-safe pattern to LibTorch before Llama.cpp and the consolidated failure-mode matrix.
 
 ## PR roadmap table
 
@@ -100,7 +101,7 @@ Reason: PR #53 adds the first non-ONNX backend-specific unavailable-path proof. 
 | PR51 - Production readiness plan and tracking contract | MERGED | Planning and governance | Add this plan and a lightweight gate so future PRs update the roadmap instead of re-evaluating from scratch. | `docs/production_readiness_pr_plan.md`, `scripts/check_production_readiness_pr_plan.sh` |
 | PR52 - Backend live SDK matrix harness | MERGED | AI runtime backend coverage | Add one matrix runner that can execute or skip SDK-backed backend probes consistently. Keep default CI skip-safe. | `docs/backend_live_sdk_matrix.md`, `tests/integration/test_backend_live_sdk_matrix.sh`, `scripts/check_backend_live_sdk_matrix.sh`, updated `docs/backend_compatibility_matrix.md` |
 | PR53 - TensorRT optional live execution fixture | MERGED | AI runtime backend coverage | Add optional TensorRT execution fixture or explicit unavailable-path proof with no false success. | `docs/tensorrt_optional_fixture.md`, `tests/integration/test_tensorrt_optional_fixture.sh`, `scripts/check_tensorrt_optional_fixture.sh`, updated backend live matrix |
-| PR54 - OpenVINO optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional OpenVINO execution fixture or explicit unavailable-path proof with no false success. | OpenVINO gate and fixture docs |
+| PR54 - OpenVINO optional live execution fixture | MERGED | AI runtime backend coverage | Add optional OpenVINO execution fixture or explicit unavailable-path proof with no false success. | `docs/openvino_optional_fixture.md`, `tests/integration/test_openvino_optional_fixture.sh`, `scripts/check_openvino_optional_fixture.sh`, updated backend live matrix |
 | PR55 - LibTorch optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional LibTorch execution fixture or explicit unavailable-path proof with no false success. | LibTorch gate and fixture docs |
 | PR56 - Llama.cpp optional live execution fixture | PLANNED | AI runtime backend coverage | Add optional Llama.cpp execution fixture or mark the backend as policy-compatible only until a real fixture is available. | Llama.cpp gate or documented deferral |
 | PR57 - Backend failure-mode matrix finalization | PLANNED | AI runtime reliability | Cover invalid model format, missing SDK, wrong tensor shape, unsupported precision, capacity mismatch, and fallback honesty across backends. | failure matrix tests and docs |
@@ -189,4 +190,4 @@ When a planned PR is deferred:
 ## Current remaining PR count field
 
 remaining_planned_prs_total_from_pr51: 28
-remaining_planned_prs_after_pr53: 25
+remaining_planned_prs_after_pr54: 24
