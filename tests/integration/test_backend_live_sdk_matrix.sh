@@ -84,6 +84,27 @@ run_openvino_row() {
   fi
 }
 
+run_libtorch_row() {
+  if bash "${ROOT_DIR}/tests/integration/test_libtorch_optional_fixture.sh" \
+      >/tmp/shorthand_backend_matrix_libtorch.out \
+      2>/tmp/shorthand_backend_matrix_libtorch.err; then
+    if grep -q 'PASS libtorch optional fixture gate' /tmp/shorthand_backend_matrix_libtorch.out && \
+       grep -q 'LIBTORCH_FIXTURE backend=libtorch status=unavailable_path_proved' /tmp/shorthand_backend_matrix_libtorch.out; then
+      record "libtorch" "torchscript" "skip_safe" "libtorch_unavailable_path_proved_no_false_success" "libtorch_optional_fixture"
+    else
+      echo "error: LibTorch optional fixture completed without required proof markers" >&2
+      cat /tmp/shorthand_backend_matrix_libtorch.out >&2 || true
+      cat /tmp/shorthand_backend_matrix_libtorch.err >&2 || true
+      exit 1
+    fi
+  else
+    echo "error: LibTorch optional fixture gate failed" >&2
+    cat /tmp/shorthand_backend_matrix_libtorch.out >&2 || true
+    cat /tmp/shorthand_backend_matrix_libtorch.err >&2 || true
+    exit 1
+  fi
+}
+
 planned_backend() {
   local backend="$1"
   local format="$2"
@@ -110,9 +131,9 @@ require_matrix_row() {
 run_onnxruntime_cpu
 run_tensorrt_rows
 run_openvino_row
-planned_backend "onnxruntime_cuda" "onnx" "ONNXRUNTIME_CUDA_ROOT" "PR57"
-planned_backend "libtorch" "torchscript" "LIBTORCH_ROOT" "PR55"
-planned_backend "llamacpp" "gguf" "LLAMACPP_ROOT" "PR56"
+run_libtorch_row
+planned_backend "onnxruntime_cuda" "onnx" "ONNXRUNTIME_CUDA_ROOT" "PR58"
+planned_backend "llamacpp" "gguf" "LLAMACPP_ROOT" "PR57"
 
 require_matrix_row "onnxruntime_cpu"
 require_matrix_row "onnxruntime_cuda"
