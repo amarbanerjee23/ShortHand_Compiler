@@ -24,19 +24,23 @@ require_contains() {
 
 require_file docs/backend_compatibility_matrix.md
 require_file docs/backend_live_sdk_matrix.md
+require_file docs/hardware_capability_routing.md
 require_file docs/tensorrt_optional_fixture.md
 require_file docs/openvino_optional_fixture.md
 require_file docs/libtorch_optional_fixture.md
 require_file docs/compiled_infer_bridge.md
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp
 require_file Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp
+require_file Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h
 require_file Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
 require_file tests/integration/test_onnxruntime_sdk_gate.sh
 require_file tests/integration/test_backend_live_sdk_matrix.sh
+require_file tests/integration/test_hardware_capability_routing.sh
 require_file tests/integration/test_tensorrt_optional_fixture.sh
 require_file tests/integration/test_openvino_optional_fixture.sh
 require_file tests/integration/test_libtorch_optional_fixture.sh
 require_file scripts/check_backend_live_sdk_matrix.sh
+require_file scripts/check_hardware_capability_routing.sh
 require_file scripts/check_tensorrt_optional_fixture.sh
 require_file scripts/check_openvino_optional_fixture.sh
 require_file scripts/check_libtorch_optional_fixture.sh
@@ -56,6 +60,7 @@ require_contains docs/backend_compatibility_matrix.md 'libtorch_optional_fixture
 require_contains docs/backend_compatibility_matrix.md 'Hardware capability discovery boundary'
 require_contains docs/backend_live_sdk_matrix.md 'shorthand.backend_live_sdk_matrix.v1'
 require_contains docs/backend_live_sdk_matrix.md 'unavailable_path_proved'
+require_contains docs/hardware_capability_routing.md 'production_claim_boundary: detection_is_not_execution_readiness'
 require_contains docs/tensorrt_optional_fixture.md 'must return non-success with no output copied'
 require_contains docs/openvino_optional_fixture.md 'must return non-success with no output copied'
 require_contains docs/libtorch_optional_fixture.md 'must return non-success with no output copied'
@@ -74,14 +79,18 @@ require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp 'Backend
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp 'BackendKind::LlamaCpp'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Types.cpp 'backendSupportsFormat'
 
-# Runtime selection must preserve fallback honesty.
+# Runtime selection must preserve fallback honesty and require execution-ready hardware.
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<TensorRTBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<OnnxRuntimeBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<OpenVINOBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<LibTorchBackend>());'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'registry.registerBackend(std::make_unique<FallbackBackend>());'
-require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'r.status=InferenceStatus::NotExecuted'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'selectHardwareRoute'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'result.status = InferenceStatus::NotExecuted'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'backend_not_available'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'no_execution_ready_hardware_backend'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h 'shorthand.hardware.inventory.v1'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h 'shorthand.hardware.selection.v1'
 
 # The compiled hook bridge may validate metadata and typed buffers, but must remain honest unless SDK execution succeeds.
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
@@ -95,15 +104,19 @@ require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'SKIP onnxruntim
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'PASS onnxruntime_sdk_gate: real ONNX Runtime CPU execution succeeded'
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'fallback\|backend_unavailable\|not_executed'
 
-# Shared backend live SDK matrix plus TensorRT, OpenVINO, and LibTorch proofs.
+# Shared backend live SDK matrix plus backend claim-safety and hardware routing proofs.
 require_contains tests/integration/test_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix harness'
 require_contains scripts/check_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix gate'
+require_contains tests/integration/test_hardware_capability_routing.sh 'PASS hardware capability discovery and routing gate'
+require_contains scripts/check_hardware_capability_routing.sh 'PASS hardware capability discovery and routing gate'
 require_contains tests/integration/test_tensorrt_optional_fixture.sh 'PASS tensorrt optional fixture gate'
 require_contains scripts/check_tensorrt_optional_fixture.sh 'PASS TensorRT optional fixture gate'
 require_contains tests/integration/test_openvino_optional_fixture.sh 'PASS openvino optional fixture gate'
 require_contains scripts/check_openvino_optional_fixture.sh 'PASS OpenVINO optional fixture gate'
 require_contains tests/integration/test_libtorch_optional_fixture.sh 'PASS libtorch optional fixture gate'
 require_contains scripts/check_libtorch_optional_fixture.sh 'PASS LibTorch optional fixture gate'
+
+bash scripts/check_hardware_capability_routing.sh
 bash scripts/check_backend_live_sdk_matrix.sh
 
 printf 'PASS backend compatibility matrix gate\n'

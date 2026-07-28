@@ -6,11 +6,111 @@
 #include "backends/OpenVINOBackend.h"
 #include "backends/TensorRTBackend.h"
 
+#include <sstream>
+#include <utility>
+
 namespace shorthand::ai {
-AIRuntime::AIRuntime(){ registry.registerBackend(std::make_unique<TensorRTBackend>()); registry.registerBackend(std::make_unique<OnnxRuntimeBackend>()); registry.registerBackend(std::make_unique<OpenVINOBackend>()); registry.registerBackend(std::make_unique<LibTorchBackend>()); registry.registerBackend(std::make_unique<LlamaCppBackend>()); registry.registerBackend(std::make_unique<FallbackBackend>()); }
-std::vector<BackendCapabilities> AIRuntime::capabilities() const { return registry.capabilities(); }
-InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input){ if(!validateInputMatchesShape(input)){ InferenceResult r; r.status=InferenceStatus::InvalidInput; r.reason="input_shape_mismatch"; return r; } auto *b=registry.select(model); if(!b){ InferenceResult r; r.status=InferenceStatus::BackendUnavailable; r.reason="no_compatible_backend"; return r; } auto r=b->infer(model,input); if(b->kind()==BackendKind::Fallback){ r.status=InferenceStatus::NotExecuted; r.backend=BackendKind::Fallback; r.backend_name="fallback"; r.provider_name="none"; r.reason="backend_not_available"; r.output_f32.clear(); } return r; }
+namespace {
+
+void registerBackends(BackendRegistry &registry) {
+    registry.registerBackend(std::make_unique<TensorRTBackend>());
+    registry.registerBackend(std::make_unique<OnnxRuntimeBackend>());
+    registry.registerBackend(std::make_unique<OpenVINOBackend>());
+    registry.registerBackend(std::make_unique<LibTorchBackend>());
+    registry.registerBackend(std::make_unique<LlamaCppBackend>());
+    registry.registerBackend(std::make_unique<FallbackBackend>());
 }
+
+InferenceResult attachHardwareEvidence(InferenceResult result, const HardwareRoute &route) {
+    result.hardware_inventory_json = route.inventory_json;
+    result.hardware_selection_json = route.selection_json;
+    result.selected_device_class = route.selected ? deviceClassToString(route.device_class) : "none";
+    result.selected_device_id = route.selected ? route.device_id : "none";
+
+    std::ostringstream telemetry;
+    telemetry << "{\"schema\":\"shorthand.ai_runtime.telemetry.v2\""
+              << ",\"hardware_inventory\":" << route.inventory_json
+              << ",\"hardware_selection\":" << route.selection_json;
+    if (!result.telemetry_json_fragment.empty() && result.telemetry_json_fragment != "{}") {
+        telemetry << ",\"backend_telemetry\":" << result.telemetry_json_fragment;
+    }
+    telemetry << "}";
+    result.telemetry_json_fragment = telemetry.str();
+    return result;
+}
+
+InferenceResult unavailableResult(const std::string &reason) {
+    InferenceResult result;
+    result.status = InferenceStatus::BackendUnavailable;
+    result.backend = BackendKind::Fallback;
+    result.backend_name = "none";
+    result.provider_name = "none";
+    result.reason = reason;
+    result.output_f32.clear();
+    return result;
+}
+
+} // namespace
+
+AIRuntime::AIRuntime()
+    : AIRuntime(std::make_shared<SystemHardwareProbe>(), hardwareRoutingPolicyFromEnvironment()) {}
+
+AIRuntime::AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy)
+    : hardware_probe_(hardware_probe ? std::move(hardware_probe) : std::make_shared<SystemHardwareProbe>()),
+      hardware_policy_(std::move(hardware_policy)) {
+    registerBackends(registry);
+}
+
+std::vector<BackendCapabilities> AIRuntime::capabilities() const {
+    return registry.capabilities();
+}
+
+InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input) {
+    const auto devices = hardware_probe_->probe();
+    const auto route = selectHardwareRoute(devices, registry.capabilities(), model, hardware_policy_);
+
+    if (!validateInputMatchesShape(input)) {
+        InferenceResult result;
+        result.status = InferenceStatus::InvalidInput;
+        result.backend = BackendKind::Fallback;
+        result.backend_name = "none";
+        result.provider_name = "none";
+        result.reason = "input_shape_mismatch";
+        return attachHardwareEvidence(std::move(result), route);
+    }
+
+    if (route.selected) {
+        ModelSpec routed_model = model;
+        routed_model.backend_preference = {route.backend};
+        routed_model.allow_fallback = false;
+        auto *backend = registry.select(routed_model);
+        if (backend) {
+            auto result = backend->infer(routed_model, input);
+            return attachHardwareEvidence(std::move(result), route);
+        }
+    }
+
+    if (model.allow_fallback) {
+        ModelSpec fallback_model = model;
+        fallback_model.backend_preference = {BackendKind::Fallback};
+        fallback_model.allow_fallback = true;
+        auto *backend = registry.select(fallback_model);
+        if (backend) {
+            auto result = backend->infer(fallback_model, input);
+            result.status = InferenceStatus::NotExecuted;
+            result.backend = BackendKind::Fallback;
+            result.backend_name = "fallback";
+            result.provider_name = "none";
+            result.reason = "backend_not_available";
+            result.output_f32.clear();
+            return attachHardwareEvidence(std::move(result), route);
+        }
+    }
+
+    return attachHardwareEvidence(unavailableResult("no_execution_ready_hardware_backend"), route);
+}
+
+} // namespace shorthand::ai
 
 bool AI_Runtime::loadModel(const std::string &model_path){
     model_path_=model_path;

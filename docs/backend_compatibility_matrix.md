@@ -6,6 +6,8 @@ Matrix guardrail marker: `full_backend_matrix_claim: false`.
 
 Backend live SDK matrix marker: `backend_live_sdk_matrix_status: optional_matrix_harness`.
 
+Hardware routing marker: `hardware_capability_routing_status: inventory_and_execution_ready_selection`.
+
 TensorRT fixture marker: `trt_optional_fixture_status: unavailable_path_proof_no_false_success`.
 
 OpenVINO fixture marker: `openvino_optional_fixture_status: unavailable_path_proof_no_false_success`.
@@ -35,7 +37,7 @@ The backend matrix has four separate validation tiers. These tiers must not be c
 
 ## Backend live SDK matrix harness
 
-PR #52 added the shared live SDK matrix harness. PR #53 added the TensorRT unavailable-path proof, PR #54 added OpenVINO, and PR #55 adds LibTorch.
+PR #52 added the shared live SDK matrix harness. PR #53 added the TensorRT unavailable-path proof, PR #54 added OpenVINO, and PR #55 added LibTorch.
 
 Evidence:
 
@@ -52,23 +54,22 @@ Evidence:
 - `scripts/check_openvino_optional_fixture.sh`
 - `scripts/check_libtorch_optional_fixture.sh`
 
-The harness records rows for:
-
-- `onnxruntime_cpu`
-- `onnxruntime_cuda`
-- `onnxruntime_tensorrt`
-- `tensorrt`
-- `openvino`
-- `libtorch`
-- `llamacpp`
+The harness records rows for `onnxruntime_cpu`, `onnxruntime_cuda`, `onnxruntime_tensorrt`, `tensorrt`, `openvino`, `libtorch`, and `llamacpp`.
 
 The harness must keep default CI skip-safe. It may report `live_success` only for `onnxruntime_cpu` when `ONNXRUNTIME_ROOT` is configured and the compiled-hook ONNX Runtime success fixture passes. TensorRT, OpenVINO, and LibTorch rows currently prove unavailable-path honesty only; they must not be marketed as live execution support.
 
 ## Hardware capability discovery boundary
 
-PR #56 is reserved for automatic hardware capability discovery and accelerator-aware routing. It must detect CPU and available accelerator classes such as GPU, TPU, and NPU, expose a machine-readable inventory, and select an accelerator only when a compatible backend proves the device is executable for the requested model format and precision.
+PR #56 implements automatic CPU, GPU, TPU, and NPU capability inventory through `HardwareDiscovery.h`. `AIRuntime::infer` now routes to a backend only when the selected device is detected, accessible, policy-allowed, compatible with the model format and precision, and paired with a backend that reports itself available.
 
-Detection must not equal execution. A GPU, TPU, or NPU environment marker, shared library, or device node may identify a candidate device, but the runtime must not select it or claim execution until the corresponding backend completes a usable-device probe. Operator overrides and deny-lists must remain available.
+The inventory separates `detected`, `accessible`, `backend_compatible`, and `execution_ready`. Device presence, environment variables, SDKs, and device nodes do not by themselves create execution success. Operator preference, override, deny-list, minimum-memory, and CPU fallback controls are available.
+
+Evidence:
+
+- `docs/hardware_capability_routing.md`
+- `Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h`
+- `tests/integration/test_hardware_capability_routing.sh`
+- `scripts/check_hardware_capability_routing.sh`
 
 ## Compiler behavior
 
@@ -85,7 +86,6 @@ The ONNX Runtime CPU path is the first real backend execution path. Full enterpr
 1. SDK-enabled CI or local execution against the committed ONNX fixture.
 2. One shared backend live SDK matrix harness with skip-safe row reporting.
 3. Equivalent real execution gates for any backend marketed as supported.
-4. Hardware capability discovery that is separated from backend execution confirmation.
-5. Runtime telemetry for latency, input/output shape, backend, device class, execution status, and energy source.
-6. Certification evidence bundle linkage to measured execution.
-7. Compiled typed-buffer hook execution through `AI_Runtime`, returning success only when backend execution actually succeeds.
+4. Runtime telemetry for latency, input/output shape, backend, device class, execution status, and energy source.
+5. Certification evidence bundle linkage to measured execution.
+6. Compiled typed-buffer hook execution through `AI_Runtime`, returning success only when backend execution actually succeeds.
