@@ -24,6 +24,10 @@ struct InferenceResult {
     std::vector<float> output_f32;
     std::string evidence_json_fragment;
     std::string telemetry_json_fragment;
+    std::string hardware_inventory_json = "{}";
+    std::string hardware_selection_json = "{}";
+    std::string selected_device_class = "none";
+    std::string selected_device_id = "none";
     long long latency_ns = 0;
     size_t input_elements = 0;
     size_t output_elements = 0;
