@@ -131,8 +131,10 @@ require_file "${MANIFEST}"
 require_file "${ROOT_DIR}/docs/language_grammar_ebnf.md"
 require_file "${ROOT_DIR}/docs/language_spec.md"
 require_file "${ROOT_DIR}/docs/language_versioning_and_conformance.md"
+require_file "${ROOT_DIR}/docs/language_objectives.md"
 require_file "${ROOT_DIR}/docs/semantic_ir_and_diagnostics_plan.md"
 require_file "${ROOT_DIR}/scripts/check_language_versioning.sh"
+require_file "${ROOT_DIR}/scripts/check_language_objectives.sh"
 require_file "${SRC_DIR}/semantic_ir/SemanticIR.h"
 
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'Language version: beta-0.1'
@@ -143,6 +145,9 @@ require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'greenai_contract'
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'greenai_measurement'
 require_contains "${ROOT_DIR}/docs/language_spec.md" 'Language version: beta-0.1'
 require_contains "${ROOT_DIR}/docs/language_versioning_and_conformance.md" 'shorthand.conformance.contract: beta-0.1'
+require_contains "${ROOT_DIR}/docs/language_objectives.md" 'shorthand.language.objectives.version: 2026-07-29-v1'
+require_contains "${ROOT_DIR}/docs/language_objectives.md" 'production_claim: false'
+require_contains "${ROOT_DIR}/docs/language_objectives.md" 'Honest execution and fallback'
 require_contains "${ROOT_DIR}/docs/semantic_ir_and_diagnostics_plan.md" 'ShortHand semantic IR'
 require_contains "${SRC_DIR}/semantic_ir/SemanticIR.h" 'struct ProgramIR'
 require_contains "${MANIFEST}" 'version | shorthand.language.version | beta-0.1'
@@ -150,6 +155,7 @@ require_contains "${MANIFEST}" 'parser-valid'
 require_contains "${MANIFEST}" 'semantic-invalid'
 require_contains "${MANIFEST}" 'runtime | tests/codegen/test_external_runtime_native.sh'
 
+run_existing_gate 'language objectives' bash "${ROOT_DIR}/scripts/check_language_objectives.sh"
 run_existing_gate 'language versioning and conformance' bash "${ROOT_DIR}/scripts/check_language_versioning.sh"
 compile_semantic_ir_probe
 ensure_compiler
