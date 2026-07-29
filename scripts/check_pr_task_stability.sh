@@ -37,6 +37,7 @@ require_file docs/production_readiness_pr_plan.md
 require_file docs/language_grammar_ebnf.md
 require_file docs/language_spec.md
 require_file docs/language_versioning_and_conformance.md
+require_file docs/language_objectives.md
 require_file docs/compiled_infer_bridge.md
 require_file docs/backend_compatibility_matrix.md
 require_file docs/backend_live_sdk_matrix.md
@@ -44,6 +45,7 @@ require_file docs/hardware_capability_routing.md
 require_file docs/tensorrt_optional_fixture.md
 require_file docs/openvino_optional_fixture.md
 require_file docs/libtorch_optional_fixture.md
+require_file docs/llamacpp_optional_fixture.md
 require_file docs/ai_runtime_bridge_linkage.md
 require_file docs/ai_runtime_execution_adapter.md
 require_file docs/runtime_observability_exports.md
@@ -58,14 +60,17 @@ require_file tests/integration/test_hardware_capability_routing.sh
 require_file tests/integration/test_tensorrt_optional_fixture.sh
 require_file tests/integration/test_openvino_optional_fixture.sh
 require_file tests/integration/test_libtorch_optional_fixture.sh
+require_file tests/integration/test_llamacpp_optional_fixture.sh
 require_file scripts/check_compiled_hook_onnxruntime_success.sh
 require_file scripts/check_backend_live_sdk_matrix.sh
 require_file scripts/check_hardware_capability_routing.sh
 require_file scripts/check_tensorrt_optional_fixture.sh
 require_file scripts/check_openvino_optional_fixture.sh
 require_file scripts/check_libtorch_optional_fixture.sh
+require_file scripts/check_llamacpp_optional_fixture.sh
 require_file scripts/check_runtime_observability_exports.sh
 require_file scripts/check_language_versioning.sh
+require_file scripts/check_language_objectives.sh
 require_file scripts/check_production_readiness_pr_plan.sh
 
 # Preserve CI task names.
@@ -103,7 +108,7 @@ require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compil
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 require_contains scripts/check_backend_compatibility_matrix.sh 'check_hardware_capability_routing.sh'
 
-for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_language_versioning.sh scripts/check_production_readiness_pr_plan.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_backend_live_sdk_matrix.sh scripts/check_hardware_capability_routing.sh scripts/check_tensorrt_optional_fixture.sh scripts/check_openvino_optional_fixture.sh scripts/check_libtorch_optional_fixture.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
+for script in scripts/check_feature_plan_status.sh scripts/check_enterprise_hardening.sh scripts/check_pr_task_stability.sh scripts/check_language_correctness.sh scripts/check_language_versioning.sh scripts/check_language_objectives.sh scripts/check_production_readiness_pr_plan.sh scripts/check_c3eco_claims_and_schema.sh scripts/check_mlir_foundation.sh scripts/check_release_supply_chain.sh scripts/check_backend_compatibility_matrix.sh scripts/check_backend_live_sdk_matrix.sh scripts/check_hardware_capability_routing.sh scripts/check_tensorrt_optional_fixture.sh scripts/check_openvino_optional_fixture.sh scripts/check_libtorch_optional_fixture.sh scripts/check_llamacpp_optional_fixture.sh scripts/check_ai_runtime_bridge_linkage.sh scripts/check_ai_runtime_execution_adapter.sh scripts/check_runtime_ai_bridge_link_build.sh scripts/check_runtime_ai_bridge_execution_path.sh scripts/check_compiled_hook_onnxruntime_success.sh scripts/check_runtime_observability_exports.sh scripts/generate_release_sbom.sh; do
   require_bash_syntax "${script}"
 done
 
@@ -111,8 +116,9 @@ require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
 
 # Production roadmap anchors.
-require_contains docs/production_readiness_pr_plan.md 'production_readiness_plan_version: 2026-07-28-pr56'
-require_contains docs/production_readiness_pr_plan.md 'LAST_COMPLETED_PR: 56'
+require_contains docs/production_readiness_pr_plan.md 'production_readiness_plan_version: 2026-07-29-pr57'
+require_contains docs/production_readiness_pr_plan.md 'LAST_COMPLETED_PR: 57'
+require_contains docs/production_readiness_pr_plan.md 'Language objectives consolidation applied in PR #57'
 require_contains docs/production_readiness_pr_plan.md 'Recommended path from PR #51 onward: 29 PRs total.'
 require_contains docs/production_readiness_pr_plan.md 'PR51 - Production readiness plan and tracking contract | MERGED'
 require_contains docs/production_readiness_pr_plan.md 'PR52 - Backend live SDK matrix harness | MERGED'
@@ -120,21 +126,29 @@ require_contains docs/production_readiness_pr_plan.md 'PR53 - TensorRT optional 
 require_contains docs/production_readiness_pr_plan.md 'PR54 - OpenVINO optional live execution fixture | MERGED'
 require_contains docs/production_readiness_pr_plan.md 'PR55 - LibTorch optional live execution fixture | MERGED'
 require_contains docs/production_readiness_pr_plan.md 'PR56 - Hardware capability discovery and accelerator-aware routing | MERGED'
-require_contains docs/production_readiness_pr_plan.md 'PR57 - Llama.cpp optional live execution fixture.'
-require_contains docs/production_readiness_pr_plan.md 'remaining_planned_prs_after_pr56: 23'
+require_contains docs/production_readiness_pr_plan.md 'PR57 - Llama.cpp optional live execution fixture | MERGED'
+require_contains docs/production_readiness_pr_plan.md 'PR58 - Backend failure-mode matrix finalization.'
+require_contains docs/production_readiness_pr_plan.md 'remaining_planned_prs_after_pr57: 22'
 require_contains docs/production_readiness_pr_plan.md 'PR59 - Runtime ABI and API version stability gate'
 require_contains docs/production_readiness_pr_plan.md 'PR60 - Runtime state isolation and thread-safety policy'
 require_contains docs/production_readiness_pr_plan.md 'PR67 - Parser robustness and negative corpus hardening'
 require_contains docs/production_readiness_pr_plan.md 'PR79 - MLIR lowering passes and production RC gate'
 require_contains scripts/check_production_readiness_pr_plan.sh 'PASS production readiness PR plan gate'
 
-# Language contract anchors.
+# Language contract and objective anchors.
 require_contains docs/language_grammar_ebnf.md 'Language version: beta-0.1'
 require_contains docs/language_spec.md 'Language version: beta-0.1'
 require_contains docs/language_versioning_and_conformance.md 'shorthand.language.version: beta-0.1'
 require_contains docs/language_versioning_and_conformance.md 'shorthand.conformance.contract: beta-0.1'
+require_contains docs/language_objectives.md 'shorthand.language.objectives.version: 2026-07-29-v1'
+require_contains docs/language_objectives.md 'production_claim: false'
+require_contains docs/language_objectives.md 'Honest execution and fallback'
+require_contains docs/language_objectives.md 'First-class Green AI evidence'
+require_contains docs/language_objectives.md '## Explicit non-goals'
 require_contains tests/conformance/manifest.txt 'version | shorthand.language.version | beta-0.1 | Current beta language contract marker.'
 require_contains scripts/check_language_versioning.sh 'PASS language versioning and conformance gate'
+require_contains scripts/check_language_objectives.sh 'PASS language objectives gate'
+require_contains scripts/check_language_correctness.sh 'check_language_objectives.sh'
 require_contains scripts/check_language_correctness.sh 'check_language_versioning.sh'
 
 # Runtime bridge and backend anchors.
@@ -151,16 +165,22 @@ require_contains docs/backend_compatibility_matrix.md 'hardware_capability_routi
 require_contains docs/backend_compatibility_matrix.md 'trt_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/backend_compatibility_matrix.md 'openvino_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/backend_compatibility_matrix.md 'libtorch_optional_fixture_status: unavailable_path_proof_no_false_success'
+require_contains docs/backend_compatibility_matrix.md 'llamacpp_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/backend_compatibility_matrix.md 'Hardware capability discovery boundary'
 require_contains docs/backend_compatibility_matrix.md 'full_backend_matrix_claim: false'
 require_contains docs/backend_live_sdk_matrix.md 'shorthand.backend_live_sdk_matrix.v1'
+require_contains docs/backend_live_sdk_matrix.md 'Llama.cpp unavailable-path proof'
 require_contains docs/tensorrt_optional_fixture.md 'trt_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/openvino_optional_fixture.md 'openvino_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/libtorch_optional_fixture.md 'libtorch_optional_fixture_status: unavailable_path_proof_no_false_success'
+require_contains docs/llamacpp_optional_fixture.md 'llamacpp_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains scripts/check_backend_live_sdk_matrix.sh 'PASS backend live SDK matrix gate'
 require_contains scripts/check_tensorrt_optional_fixture.sh 'PASS TensorRT optional fixture gate'
 require_contains scripts/check_openvino_optional_fixture.sh 'PASS OpenVINO optional fixture gate'
 require_contains scripts/check_libtorch_optional_fixture.sh 'PASS LibTorch optional fixture gate'
+require_contains scripts/check_llamacpp_optional_fixture.sh 'PASS Llama.cpp optional fixture gate'
+require_contains tests/integration/test_llamacpp_optional_fixture.sh 'PASS llamacpp optional fixture gate'
+require_contains tests/integration/test_backend_live_sdk_matrix.sh 'llamacpp_unavailable_path_proved_no_false_success'
 
 # Hardware discovery and routing anchors.
 require_contains docs/hardware_capability_routing.md 'hardware_capability_routing_status: inventory_and_execution_ready_selection'
