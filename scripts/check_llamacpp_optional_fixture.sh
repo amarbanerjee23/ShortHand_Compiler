@@ -34,7 +34,7 @@ require_contains docs/llamacpp_optional_fixture.md 'Hardware inventory may detec
 require_contains tests/integration/test_llamacpp_optional_fixture.sh 'LLAMACPP_FIXTURE backend=llamacpp status=unavailable_path_proved'
 require_contains tests/integration/test_llamacpp_optional_fixture.sh 'PASS llamacpp optional fixture gate'
 require_contains tests/integration/test_llamacpp_optional_fixture.sh 'shorthand.hardware.inventory.v1'
-require_contains tests/integration/test_llamacpp_optional_fixture.sh '"selected":false'
+require_contains tests/integration/test_llamacpp_optional_fixture.sh '\"selected\":false'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/backends/LlamaCppBackend.cpp 'direct execution is not yet enabled'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h 'case BackendKind::LlamaCpp:'
 
