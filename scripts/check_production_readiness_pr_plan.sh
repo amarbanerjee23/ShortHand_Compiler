@@ -28,18 +28,21 @@ for file in \
   "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" \
   "${ROOT_DIR}/docs/runtime_abi_api_stability.md" \
   "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" \
+  "${ROOT_DIR}/docs/runtime_production_packaging.md" \
   "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" \
   "${ROOT_DIR}/abi/shorthand_runtime_abi_v1.h" \
   "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp" \
   "${ROOT_DIR}/tests/runtime/test_runtime_state_thread_safety.sh" \
-  "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh"; do
+  "${ROOT_DIR}/tests/packaging/test_runtime_production_packaging.sh" \
+  "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" \
+  "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh"; do
   require_file "${file}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-02-pr60' \
+  'production_readiness_plan_version: 2026-08-02-pr61' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 60' \
+  'LAST_COMPLETED_PR: 61' \
   'TARGET: enterprise production usage ready language' \
   'Desired outcome definition' \
   'Audit correction applied in PR #51' \
@@ -48,15 +51,16 @@ for anchor in \
   'Backend failure-mode finalization applied in PR #58' \
   'Runtime ABI and API stability applied in PR #59' \
   'Runtime state and thread-safety applied in PR #60' \
+  'Production build packaging applied in PR #61' \
   'shorthand.language.objectives.version: 2026-07-29-v1' \
   'shorthand.backend_failure_mode_matrix.v1' \
   'Runtime ABI `1.0.0` freezes exactly 25 external `short_*` symbols.' \
-  'runtime_thread_safety_status: serialized_public_abi' \
   'Thread-safe does not mean multi-tenant isolated.' \
+  'runtime_packaging_status: installable_static_shared_and_consumer_checked' \
   'Recommended path from PR #51 onward: 29 PRs total.' \
-  'After PR #60 is merged, approximately 19 implementation PRs remain.' \
-  'Next recommended PR after PR #60:' \
-  'PR61 - Production build packaging for runtime and AI bridge.' \
+  'After PR #61 is merged, approximately 18 implementation PRs remain.' \
+  'Next recommended PR after PR #61:' \
+  'PR62 - Prometheus scrape endpoint host adapter.' \
   'PR51 - Production readiness plan and tracking contract | MERGED' \
   'PR52 - Backend live SDK matrix harness | MERGED' \
   'PR53 - TensorRT optional live execution fixture | MERGED' \
@@ -67,9 +71,8 @@ for anchor in \
   'PR58 - Backend failure-mode matrix finalization | MERGED' \
   'PR59 - Runtime ABI and API version stability gate | MERGED' \
   'PR60 - Runtime state isolation and thread-safety policy | MERGED' \
-  'PR61 - Production build packaging for runtime and AI bridge | PLANNED' \
-  'shared-library packaging, SONAME/version evidence' \
-  'PR62 - Prometheus scrape endpoint host adapter' \
+  'PR61 - Production build packaging for runtime and AI bridge | MERGED' \
+  'PR62 - Prometheus scrape endpoint host adapter | PLANNED' \
   'PR63 - OTLP exporter adapter' \
   'PR64 - AST source ranges across parser nodes' \
   'PR65 - Diagnostics coverage matrix' \
@@ -88,9 +91,9 @@ for anchor in \
   'PR78 - MLIR generated dialect build integration' \
   'PR79 - MLIR lowering passes and production RC gate' \
   'Production readiness exit criteria' \
-  'Thread-safe process-wide state does not imply tenant isolation' \
+  'Installable artifacts and successful consumer linking do not imply deployment readiness' \
   'remaining_planned_prs_total_from_pr51: 29' \
-  'remaining_planned_prs_after_pr60: 19'; do
+  'remaining_planned_prs_after_pr61: 18'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
@@ -99,6 +102,9 @@ require_contains "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" 'backend_fail
 require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_abi_contract_status: frozen_v1_symbol_manifest'
 require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_state_model: single_process_wide_default_context'
 require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_multi_tenant_isolation: process_boundary_required'
+require_contains "${ROOT_DIR}/docs/runtime_production_packaging.md" 'runtime_shared_soversion: 1'
+require_contains "${ROOT_DIR}/docs/runtime_production_packaging.md" 'production_claim_boundary: packaging_gate_is_not_full_production_readiness'
 require_contains "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" 'PASS runtime state isolation and thread-safety guard'
+require_contains "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh" 'PASS runtime production packaging guard'
 
 printf 'PASS production readiness PR plan gate\n'
