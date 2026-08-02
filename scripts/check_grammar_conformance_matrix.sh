@@ -131,6 +131,6 @@ if "${SHORT}" "${ROOT_DIR}/tests/conformance/beta_0_2/ai_language.short" run >"$
   echo "error: parser-only fixture unexpectedly passed semantic validation" >&2
   exit 1
 fi
-grep -Fq '[SHD4003]' "${WORK_DIR}/semantic.out"
+grep -Fq '[SHD4011]' "${WORK_DIR}/semantic.out"
 
 printf 'PASS beta-0.2 grammar and conformance matrix gate\n'
