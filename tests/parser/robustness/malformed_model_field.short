@@ -1,0 +1,5 @@
+int x;
+model classifier {
+    format;
+};
+x = 1;
