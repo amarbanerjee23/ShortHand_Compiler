@@ -5,7 +5,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
 DOC="docs/runtime_abi_api_stability.md"
+STATE_DOC="docs/runtime_state_and_thread_safety.md"
 HEADER="Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h"
+FACADE="Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp"
 SNAPSHOT="abi/shorthand_runtime_abi_v1.h"
 MANIFEST="abi/runtime_public_symbols_v1.txt"
 TEST="tests/abi/test_runtime_abi_api_stability.sh"
@@ -28,11 +30,9 @@ require_contains() {
   fi
 }
 
-require_file "${DOC}"
-require_file "${HEADER}"
-require_file "${SNAPSHOT}"
-require_file "${MANIFEST}"
-require_file "${TEST}"
+for file in "${DOC}" "${STATE_DOC}" "${HEADER}" "${FACADE}" "${SNAPSHOT}" "${MANIFEST}" "${TEST}"; do
+  require_file "${file}"
+done
 
 require_contains "${DOC}" 'runtime_abi_contract_status: frozen_v1_symbol_manifest'
 require_contains "${DOC}" 'runtime_abi_version: 1.0.0'
@@ -42,7 +42,10 @@ require_contains "${DOC}" 'production_claim_boundary: abi_stability_gate_is_not_
 require_contains "${DOC}" 'Removing, renaming or changing the parameter or return type'
 require_contains "${DOC}" 'No ABI v1 symbol is deprecated in this release.'
 require_contains "${DOC}" 'retain the deprecated external symbol throughout the current ABI major'
-require_contains "${DOC}" 'ABI v1 does not claim that global runtime state is thread-safe'
+require_contains "${DOC}" 'The packaged ABI v1 library serializes all public calls'
+require_contains "${DOC}" 'Independent tenants require separate processes.'
+require_contains "${STATE_DOC}" 'runtime_thread_safety_status: serialized_public_abi'
+require_contains "${FACADE}" 'thread_local std::string snapshot'
 
 require_contains "${HEADER}" '#define SHORTHAND_RUNTIME_ABI_VERSION_MAJOR 1'
 require_contains "${HEADER}" '#define SHORTHAND_RUNTIME_ABI_VERSION_MINOR 0'
@@ -90,6 +93,7 @@ require_contains "${TEST}" 'diff -u'
 require_contains "${TEST}" 'SHORTHAND_RUNTIME_RUNTIME_ERROR != 8'
 require_contains "${TEST}" 'short_runtime_is_abi_compatible(1, 0)'
 require_contains "${TEST}" 'short_runtime_is_abi_compatible(2, 0)'
+require_contains "${TEST}" '${CXX:-g++} -pthread'
 
 bash -n "${TEST}"
 bash "${TEST}"
