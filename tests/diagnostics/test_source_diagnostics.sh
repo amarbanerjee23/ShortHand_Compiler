@@ -19,7 +19,7 @@ if "${SHORT}" "${CASE_FILE}" run >"${OUT}" 2>&1; then
   exit 1
 fi
 
-grep -E 'ai_shape_mismatch\.short:[0-9]+:[0-9]+: error:' "${OUT}" >/dev/null
+grep -E 'ai_shape_mismatch\.short:[0-9]+:[0-9]+: error: \[SHD4014\]' "${OUT}" >/dev/null
 grep -q 'infer input tensor shape' "${OUT}"
 grep -q '\[range [0-9][0-9]*:[0-9][0-9]*-[0-9][0-9]*:[0-9][0-9]*\]' "${OUT}"
 grep -q '^  \^' "${OUT}"
@@ -33,7 +33,7 @@ if "${SHORT}" "${WORK_DIR}/exact_range.short" run >"${WORK_DIR}/exact.out" 2>&1;
   echo "error: break outside loop unexpectedly succeeded" >&2
   exit 1
 fi
-grep -Fq 'exact_range.short:2:1: error: break outside loop [range 2:1-2:6]' "${WORK_DIR}/exact.out"
+grep -Fq 'exact_range.short:2:1: error: [SHD3001] break outside loop [range 2:1-2:6]' "${WORK_DIR}/exact.out"
 grep -Fq '  ^^^^^^' "${WORK_DIR}/exact.out"
 
 cat >"${WORK_DIR}/syntax_range.short" <<'SHORT'
@@ -45,6 +45,6 @@ if "${SHORT}" "${WORK_DIR}/syntax_range.short" run >"${WORK_DIR}/syntax.out" 2>&
   echo "error: malformed source unexpectedly parsed" >&2
   exit 1
 fi
-grep -Eq '[0-9]+:[0-9]+-[0-9]+:[0-9]+: syntax error' "${WORK_DIR}/syntax.out"
+grep -Eq 'syntax_range\.short:[0-9]+:[0-9]+: error: \[SHD2001\] syntax error \[range [0-9]+:[0-9]+-[0-9]+:[0-9]+\]' "${WORK_DIR}/syntax.out"
 
-echo "PASS source-aware diagnostics use exact AST and parser ranges"
+echo "PASS source-aware diagnostics use exact AST and parser ranges with stable codes"
