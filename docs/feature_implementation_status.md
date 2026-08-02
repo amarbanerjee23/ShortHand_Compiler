@@ -1,6 +1,6 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-02-pr66
+feature_status_version: 2026-08-02-pr67
 
 language_version: beta-0.2
 
@@ -12,9 +12,9 @@ This tracker records the current implementation state while preserving the contr
 
 ## Current maturity
 
-ShortHand has a compiled C++ and LLVM language foundation, AI and Green AI syntax, parser-accurate beta-0.2 grammar coverage, stable coded diagnostics, source ranges, an honest fallback-aware runtime, optional ONNX Runtime CPU execution, hardware capability routing, installable runtime artifacts, observability adapters and candidate C3-ECO evidence.
+ShortHand has a compiled C++ and LLVM language foundation, AI and Green AI syntax, parser-accurate beta-0.2 grammar coverage, bounded malformed-input handling, stable coded diagnostics, source ranges, an honest fallback-aware runtime, optional ONNX Runtime CPU execution, hardware capability routing, installable runtime artifacts, observability adapters and candidate C3-ECO evidence.
 
-Open work remains for parser robustness, modules, release security, deployment, developer tooling, full C3-ECO language and evidence, and production MLIR lowering.
+Open work remains for modules, release security, deployment, developer tooling, full C3-ECO language and evidence, and production MLIR lowering.
 
 ## Language feature status
 
@@ -23,10 +23,11 @@ Open work remains for parser robustness, modules, release security, deployment, 
 | L1 | AST metadata for model, tensor, contract, measurement and infer | Implemented | `Compiler_new_ws/Short_Hand/src/ast/AST.h` | Compiler passes can inspect AI and Green AI constructs. |
 | L2 | Versioned public language contract | Implemented for beta-0.2 | `docs/language_grammar_ebnf.md`, `docs/language_spec.md`, `docs/language_versioning_and_conformance.md` | The accepted parser surface is explicit and versioned. |
 | L3 | Full grammar and conformance matrix | Implemented for beta-0.2 | `tests/conformance/grammar_matrix_beta_0_2.tsv`, `tests/conformance/beta_0_2/`, `scripts/check_grammar_conformance_matrix.sh` | More than eighty obligations link syntax to implementation and fixtures. |
-| L4 | language versioning and conformance policy gate | Implemented | `scripts/check_language_versioning.sh`, `tests/conformance/manifest.txt` | Syntax changes cannot silently alter the active contract. |
+| L4 | Language versioning and conformance policy gate | Implemented | `scripts/check_language_versioning.sh`, `tests/conformance/manifest.txt` | Syntax changes cannot silently alter the active contract. |
 | L5 | Shape, model and backend semantic validation | Implemented for current AI syntax | `SemanticAnalyzer.cpp`, semantic-invalid fixtures | Invalid AI programs are rejected before lowering. |
 | L6 | Source-aware diagnostics | Implemented for the current coded matrix | `SourceRange.*`, `DiagnosticCodes.h`, diagnostics tests | Parser, semantic, AI, Green AI and lowering-preflight errors have stable codes and ranges. |
-| L7 | Semantic IR and MLIR architecture | Partial | `semantic_ir/SemanticIR.h`, MLIR dialect scaffold, lowering plan | Generated dialect integration and lowering passes remain open. |
+| L7 | Parser robustness and malformed-input handling | Implemented baseline | `ParserLimits.h`, `docs/parser_robustness.md`, malformed corpus, `scripts/check_parser_robustness.sh` | Oversized, deeply nested and malformed inputs fail within bounded execution with stable codes. |
+| L8 | Semantic IR and MLIR architecture | Partial | `semantic_ir/SemanticIR.h`, MLIR dialect scaffold, lowering plan | Generated dialect integration and lowering passes remain open. |
 
 ## Compiler and runtime status
 
@@ -68,9 +69,10 @@ Open work remains for parser robustness, modules, release security, deployment, 
 | Gate | Status |
 | --- | --- |
 | Build, strict validation, Makefile, sanitizer, CMake and CTest | Implemented |
-| Complete formal grammar | Implemented for beta-0.2 accepted syntax; parser robustness remains separate |
+| Complete formal grammar | Implemented for beta-0.2 accepted syntax |
 | Conformance tests for all syntax | Implemented through the beta-0.2 grammar matrix |
-| Stable diagnostics and source ranges | Implemented for the PR65 matrix |
+| Parser robustness and negative corpus | Implemented bounded fail-fast baseline |
+| Stable diagnostics and source ranges | Implemented for the expanded coded matrix |
 | Honest fallback and backend failure behavior | Implemented |
 | Full live backend execution matrix | Partial |
 | Release signing and external dependency scanning | Open |
@@ -82,16 +84,15 @@ Open work remains for parser robustness, modules, release security, deployment, 
 
 The following remain blockers to an enterprise production-ready language claim:
 
-1. Parser robustness, recovery, malformed-input expansion, resource limits and fuzzing.
-2. Module/import/package model implementation and multi-file code generation.
-3. Full backend compatibility with live success evidence for every production-supported backend.
-4. Signed release publication and external dependency vulnerability scanning.
-5. Container and Kubernetes hardening with deployment validation.
-6. Formatter, linter, syntax highlighting and LSP support.
-7. Complete C3-ECO language blocks, scoring, report generation and eco-regression.
-8. Authority-ready C3-ECO auditor handoff.
-9. Generated MLIR dialect build integration and production lowering passes.
-10. Final production release-candidate blocker gate.
+1. Module/import/package model implementation and multi-file code generation.
+2. Full backend compatibility with live success evidence for every production-supported backend.
+3. Signed release publication and external dependency vulnerability scanning.
+4. Container and Kubernetes hardening with deployment validation.
+5. Formatter, linter, syntax highlighting and LSP support.
+6. Complete C3-ECO language blocks, scoring, report generation and eco-regression.
+7. Authority-ready C3-ECO auditor handoff.
+8. Generated MLIR dialect build integration and production lowering passes.
+9. Final production release-candidate blocker gate.
 
 ## Review rule
 
