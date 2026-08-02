@@ -41,6 +41,7 @@ jobs:
           command -v cmake
           command -v ninja
           command -v base64
+          command -v timeout
           llvm-config --version
           llc --version
           clang --version
@@ -61,6 +62,9 @@ jobs:
 
       - name: Grammar and conformance matrix beta-0.2
         run: bash scripts/check_grammar_conformance_matrix.sh
+
+      - name: Parser robustness and negative corpus
+        run: bash scripts/check_parser_robustness.sh
 
       - name: Smoke tests
         run: bash scripts/smoke_test.sh
