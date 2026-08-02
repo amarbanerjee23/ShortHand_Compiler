@@ -1,0 +1,7 @@
+int value;
+# hash comment
+// line comment
+/* block
+   comment */
+value = 42;
+print "escaped \"text\"", value, 3.14;
