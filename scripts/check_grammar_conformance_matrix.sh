@@ -123,14 +123,15 @@ while IFS=$'\t' read -r id area source anchor fixture expectation rationale; do
   fi
 done <"${MATRIX}"
 
-# The AI fixture intentionally contains parser-supported precision tokens that are
-# not all semantically executable. This proves parse mode is syntax-only while
-# normal modes continue to enforce semantic correctness.
-"${SHORT}" "${ROOT_DIR}/tests/conformance/beta_0_2/ai_language.short" parse >"${WORK_DIR}/parse-only.out" 2>&1
-if "${SHORT}" "${ROOT_DIR}/tests/conformance/beta_0_2/ai_language.short" run >"${WORK_DIR}/semantic.out" 2>&1; then
-  echo "error: parser-only fixture unexpectedly passed semantic validation" >&2
+# Prove that parser-only acceptance is distinct from semantic conformance using a
+# focused, already-guarded semantic-invalid source. The aggregate AI grammar
+# catalogue above is intentionally syntax-focused and is not a coherent runtime program.
+SEMANTIC_BOUNDARY="${ROOT_DIR}/tests/semantic/invalid/ai_shape_mismatch.short"
+"${SHORT}" "${SEMANTIC_BOUNDARY}" parse >"${WORK_DIR}/parse-only.out" 2>&1
+if "${SHORT}" "${SEMANTIC_BOUNDARY}" run >"${WORK_DIR}/semantic.out" 2>&1; then
+  echo "error: semantic-invalid fixture unexpectedly passed normal validation" >&2
   exit 1
 fi
-grep -Fq '[SHD4011]' "${WORK_DIR}/semantic.out"
+grep -Fq '[SHD4014]' "${WORK_DIR}/semantic.out"
 
 printf 'PASS beta-0.2 grammar and conformance matrix gate\n'
