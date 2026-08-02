@@ -1,12 +1,17 @@
 %{
 #include "./ast/AST.h"
+#include "./parser/ParserLimits.h"
+#include "./visitors/DiagnosticCodes.h"
 #include "parser.tab.hh"
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include <vector>
 #define YY_DECL extern "C" int yylex()
 extern FILE * flex_output;
 extern union _NODE_ yylval;
+extern const char *shorthand_source_path;
 static std::vector<char *> shorthand_scanner_strings;
 static int shorthand_line = 1;
 static int shorthand_column = 1;
@@ -36,12 +41,44 @@ static void shorthand_update_location(const char *text, int length) {
     }
 }
 
-#define YY_USER_ACTION shorthand_update_location(yytext, yyleng);
+static void shorthand_emit_guard_failure() {
+    shorthand::parser::emitParserGuardFailure(shorthand_source_path,
+                                               yylloc.first_line,
+                                               yylloc.first_column,
+                                               yylloc.last_line,
+                                               yylloc.last_column);
+}
+
+static bool shorthand_accept_token_size() {
+    if (shorthand::parser::noteTokenBytes(static_cast<std::size_t>(yyleng))) {
+        return true;
+    }
+    shorthand_emit_guard_failure();
+    return false;
+}
+
+static int shorthand_scanner_failure(const char *code,
+                                     const std::string &message) {
+    shorthand::parser::recordParserGuardFailure(code, message);
+    shorthand_emit_guard_failure();
+    return ETOK;
+}
+
+#define YY_USER_ACTION                                                        \
+    do {                                                                      \
+        shorthand_update_location(yytext, yyleng);                            \
+        if (!shorthand::parser::noteScannerMatch(                             \
+                static_cast<std::size_t>(yyleng))) {                          \
+            shorthand_emit_guard_failure();                                  \
+            return ETOK;                                                      \
+        }                                                                     \
+    } while (0);
 
 extern "C" void shorthand_reset_scanner_location() {
     shorthand_line = 1;
     shorthand_column = 1;
     shorthand_offset = 0;
+    shorthand::parser::resetParserGuard();
 }
 
 extern "C" void shorthand_release_scanner_strings() {
@@ -136,19 +173,42 @@ extern "C" void shorthand_release_scanner_strings() {
 "//"[^\n]* ;
 "#"[^\n]* ;
 "/*"([^*]|\*+[^*/])*"*/" ;
+"/*"([^*]|\*+[^*/])* {
+    return shorthand_scanner_failure(
+        shorthand::diagnostics::ScannerUnterminatedComment,
+        "unterminated block comment");
+}
 "/" return '/';
 "%" return '%';
 ";" return ';';
 "," return ',';
 ":" return ':';
-"{" return '{';
-"}" return '}';
+"{" {
+    if (!shorthand::parser::enterDelimiter()) {
+        shorthand_emit_guard_failure();
+        return ETOK;
+    }
+    return '{';
+}
+"}" { shorthand::parser::leaveDelimiter(); return '}'; }
 "=" return '=';
-"[" return '[';
-"]" return ']';
+"[" {
+    if (!shorthand::parser::enterDelimiter()) {
+        shorthand_emit_guard_failure();
+        return ETOK;
+    }
+    return '[';
+}
+"]" { shorthand::parser::leaveDelimiter(); return ']'; }
 "->" { return ARROW; }
-"(" return '(';
-")" return ')';
+"(" {
+    if (!shorthand::parser::enterDelimiter()) {
+        shorthand_emit_guard_failure();
+        return ETOK;
+    }
+    return '(';
+}
+")" { shorthand::parser::leaveDelimiter(); return ')'; }
 "<" return LESS;
 ">" return GREATER;
 "<=" return LESS_OR_EQUAL;
@@ -158,24 +218,42 @@ extern "C" void shorthand_release_scanner_strings() {
 "||" return OR;
 "&&" return AND;
 
-[0-9]+"."[0-9]+ { yylval.float_val = atof(yytext); return FLOAT_LITERAL; }
+[0-9]+"."[0-9]+ {
+    if (!shorthand_accept_token_size()) return ETOK;
+    yylval.float_val = atof(yytext);
+    return FLOAT_LITERAL;
+}
 [0-9][0-9]* {
+    if (!shorthand_accept_token_size()) return ETOK;
     yylval.int_val = atoi(yytext);
     fprintf(flex_output, "integer literal: %s\n", yytext);
     return INT_LITERAL;
 }
 [a-zA-Z_][a-zA-Z0-9_]* {
+    if (!shorthand_accept_token_size()) return ETOK;
     yylval.string_val = shorthand_strdup_token(yytext);
     fprintf(flex_output, "identifier: %s\n", yytext);
     return IDENTIFIER;
 }
 \"(\.|[^\"])*\" {
+    if (!shorthand_accept_token_size()) return ETOK;
     yylval.string_val = shorthand_strdup_token(yytext);
     fprintf(flex_output, "string literal: %s\n", yytext);
     return STRING_LITERAL;
 }
-[ \t\r\n] { }
+\"(\.|[^\"\n])* {
+    if (!shorthand_accept_token_size()) return ETOK;
+    return shorthand_scanner_failure(
+        shorthand::diagnostics::ScannerUnterminatedString,
+        "unterminated string literal");
+}
+[ \t\r\n]+ { }
 . {
+    const unsigned int value = static_cast<unsigned char>(yytext[0]);
+    char message[64];
+    std::snprintf(message, sizeof(message), "unexpected byte 0x%02X", value);
     fprintf(flex_output, "Unexpected token encountered: %s\n", yytext);
-    return ETOK;
+    return shorthand_scanner_failure(
+        shorthand::diagnostics::ScannerUnexpectedCharacter,
+        message);
 }
