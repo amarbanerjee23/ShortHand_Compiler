@@ -1,15 +1,17 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-07-28-pr56
+production_readiness_plan_version: 2026-07-29-pr57
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 56
+LAST_COMPLETED_PR: 57
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
 ## Purpose
 
 This document is the single planning source for moving ShortHand from the controlled beta foundation to an enterprise production usage ready language. Every roadmap PR must update its status, evidence, next recommended PR, and remaining count in this file.
+
+The consolidated mission, priorities, non-goals, workload boundary, and production success criteria are maintained in `docs/language_objectives.md` and guarded by `scripts/check_language_objectives.sh`.
 
 ## Desired outcome definition
 
@@ -35,18 +37,33 @@ The original plan was too optimistic. PR #51 added dedicated milestones for runt
 
 PR #55 added PR #56 as a separate production-critical milestone and increased the roadmap from 28 to 29 PRs from PR #51 onward.
 
-PR #56 must and now does:
+PR #56 now:
 
-1. Detect CPU and candidate GPU, TPU, and NPU classes through non-destructive probes.
-2. Expose machine-readable inventory and selection JSON.
-3. Separate `detected`, `accessible`, `backend_compatible`, and `execution_ready`.
-4. Select a device only when model format, precision, policy, access, memory, and backend availability checks pass.
-5. Support preference, override, deny-list, minimum-memory, and CPU fallback policy.
-6. Provide injectable fake probes for deterministic CI.
-7. Record selected device class and backend in inference telemetry.
-8. Keep hardware detection separate from inference success.
+1. Detects CPU and candidate GPU, TPU, and NPU classes through non-destructive probes.
+2. Exposes machine-readable inventory and selection JSON.
+3. Separates `detected`, `accessible`, `backend_compatible`, and `execution_ready`.
+4. Selects a device only when model format, precision, policy, access, memory, and backend availability checks pass.
+5. Supports preference, override, deny-list, minimum-memory, and CPU fallback policy.
+6. Provides injectable fake probes for deterministic CI.
+7. Records selected device class and backend in inference telemetry.
+8. Keeps hardware detection separate from inference success.
 
 Hardware presence alone must not create a `live_success` claim.
+
+## Language objectives consolidation applied in PR #57
+
+PR #57 re-assembles the project objectives into `docs/language_objectives.md` and protects them through the language correctness gate.
+
+The objectives establish:
+
+1. a simple C++/LLVM-first compiled AI language,
+2. strict semantic and runtime correctness,
+3. honest backend, hardware, fallback, and evidence behavior,
+4. first-class Green AI and C3-ECO-aligned evidence,
+5. enterprise requirements for compatibility, packaging, security, observability, deployment, modules, tooling, and release governance,
+6. explicit non-goals and a priority order that keeps correctness and evidence integrity above performance or convenience.
+
+The objective contract is versioned as `shorthand.language.objectives.version: 2026-07-29-v1` and retains `production_claim: false` while production blockers remain.
 
 ## Status values
 
@@ -64,11 +81,12 @@ Every roadmap PR must update:
 
 A production-ready claim is blocked until all required rows are MERGED or intentionally DEFERRED with a clear production impact.
 
-## Current baseline after PR #56
+## Current baseline after PR #57
 
 - Language contract and conformance marker are `beta-0.1`.
+- Consolidated language objectives are versioned and guarded by CI.
 - ONNX Runtime CPU has an optional SDK-backed compiled-hook success fixture.
-- TensorRT, OpenVINO, and LibTorch have claim-safe unavailable-path proofs.
+- TensorRT, OpenVINO, LibTorch, and Llama.cpp have claim-safe unavailable-path proofs.
 - Backend live SDK matrix reporting is guarded by CI.
 - `HardwareDiscovery.h` inventories CPU/GPU/TPU/NPU and applies execution-ready routing.
 - Hardware inventory uses `shorthand.hardware.inventory.v1`.
@@ -76,23 +94,24 @@ A production-ready claim is blocked until all required rows are MERGED or intent
 - `AIRuntime::infer` routes only through accessible, compatible, available backend/device pairs.
 - Preference, override, deny-list, memory floor, CPU fallback, and fake probes are implemented.
 - Inference telemetry includes hardware inventory and selection evidence.
+- The Llama.cpp GGUF path explicitly proves that compatible CPU/GPU hardware does not imply an execution-ready backend.
 - Runtime observability exports JSON, Prometheus-style text, and OTLP-like span JSON.
 
-Important boundary: ShortHand is still not production ready. Live backend support beyond ONNX Runtime CPU, failure-mode finalization, runtime ABI/state work, packaging, operations exporters, diagnostics, parser robustness, modules, release security, developer tooling, C3-ECO completion, and MLIR integration remain open.
+Important boundary: ShortHand is still not production ready. Backend failure-mode finalization, runtime ABI/state work, packaging, operations exporters, diagnostics, parser robustness, modules, release security, developer tooling, C3-ECO completion, and MLIR integration remain open.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #56 is merged, approximately 23 implementation PRs remain. The count may split further only when implementation evidence identifies a concrete additional production blocker.
+After PR #57 is merged, approximately 22 implementation PRs remain. The count may split further only when implementation evidence identifies a concrete additional production blocker.
 
 ## Next recommended PR
 
-Next recommended PR after PR #56:
+Next recommended PR after PR #57:
 
-PR57 - Llama.cpp optional live execution fixture.
+PR58 - Backend failure-mode matrix finalization.
 
-Reason: hardware discovery and routing are now common infrastructure. The remaining backend-specific claim-safety slice is Llama.cpp before the consolidated backend failure-mode matrix.
+Reason: every currently marketed non-ONNX CPU backend now has an explicit claim-safe unavailable-path proof, and hardware discovery is implemented. The next reliability step is to consolidate invalid format, missing SDK, shape, precision, capacity, inaccessible hardware, failed probe, and fallback behavior into one failure-mode matrix.
 
 ## PR roadmap table
 
@@ -104,7 +123,7 @@ Reason: hardware discovery and routing are now common infrastructure. The remain
 | PR54 - OpenVINO optional live execution fixture | MERGED | Backend coverage | Prove OpenVINO unavailable paths cannot report false success. | OpenVINO fixture docs, test and gate |
 | PR55 - LibTorch optional live execution fixture | MERGED | Backend coverage | Prove LibTorch unavailable paths cannot report false success. | LibTorch fixture docs, test and gate |
 | PR56 - Hardware capability discovery and accelerator-aware routing | MERGED | Runtime hardware selection | Inventory CPU/GPU/TPU/NPU, select execution-ready hardware, support policy controls, and emit telemetry. | `docs/hardware_capability_routing.md`, `HardwareDiscovery.h`, routing test and gate |
-| PR57 - Llama.cpp optional live execution fixture | PLANNED | Backend coverage | Add a Llama.cpp live fixture or explicit claim-safe deferral. | Llama.cpp gate or documented deferral |
+| PR57 - Llama.cpp optional live execution fixture | MERGED | Backend coverage and objectives | Prove Llama.cpp unavailable paths cannot report false success and consolidate the language objectives contract. | `docs/llamacpp_optional_fixture.md`, Llama.cpp test and gate, `docs/language_objectives.md`, objectives gate |
 | PR58 - Backend failure-mode matrix finalization | PLANNED | Runtime reliability | Cover invalid format, missing SDK, shape, precision, capacity, hardware probe, access, and fallback failures. | failure matrix tests and docs |
 | PR59 - Runtime ABI and API version stability gate | PLANNED | Runtime contract | Version public hooks, symbols, compatibility, and deprecation policy. | ABI API, symbol checks and docs |
 | PR60 - Runtime state isolation and thread-safety policy | PLANNED | Runtime reliability | Enforce contexts/thread-safety or a tested explicit limitation. | isolation and concurrency tests |
@@ -156,4 +175,4 @@ C3-ECO output remains candidate-only unless an external certifier signs it.
 ## Current remaining PR count field
 
 remaining_planned_prs_total_from_pr51: 29
-remaining_planned_prs_after_pr56: 23
+remaining_planned_prs_after_pr57: 22

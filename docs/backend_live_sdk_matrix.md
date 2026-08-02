@@ -30,7 +30,7 @@ The matrix is intentionally conservative. A backend row may report `live_success
 | `tensorrt` | `engine` | Runs `tests/integration/test_tensorrt_optional_fixture.sh`; records `skip_safe` after proving the current TensorRT path is unavailable and does not copy outputs or report success. | PR53 TensorRT unavailable-path proof |
 | `openvino` | `openvino_ir` | Runs `tests/integration/test_openvino_optional_fixture.sh`; records `skip_safe` after proving the current OpenVINO path is unavailable and does not copy outputs or report success. | PR54 OpenVINO unavailable-path proof |
 | `libtorch` | `torchscript` | Runs `tests/integration/test_libtorch_optional_fixture.sh`; records `skip_safe` after proving the current LibTorch path is unavailable and does not copy outputs or report success. | PR55 LibTorch unavailable-path proof |
-| `llamacpp` | `gguf` | Records `skip_safe` and `dedicated_fixture_planned`. | PR57 |
+| `llamacpp` | `gguf` | Runs `tests/integration/test_llamacpp_optional_fixture.sh`; records `skip_safe` after proving the current Llama.cpp path is unavailable, hardware selection is not execution-ready, and no output or success is reported. | PR57 Llama.cpp unavailable-path proof |
 
 ## TensorRT unavailable-path proof
 
@@ -50,9 +50,15 @@ PR #55 adds a LibTorch-specific fixture gate. The gate compiles the bridge-enabl
 
 This proves claim safety for the current LibTorch path. It does not prove live LibTorch support, and the LibTorch row remains not production-executing yet.
 
+## Llama.cpp unavailable-path proof
+
+PR #57 adds a Llama.cpp-specific fixture gate. The gate compiles the bridge-enabled runtime path, registers a GGUF model, calls `short_ai_infer_f32`, and requires non-success, zero copied output, an unchanged caller buffer, and hardware selection evidence with no execution-ready device/backend pair.
+
+This proves claim safety for the current Llama.cpp path. It does not prove live GGUF execution, and the Llama.cpp row remains not production-executing yet.
+
 ## Hardware-aware routing boundary
 
-The planned PR #56 will add hardware capability discovery and accelerator-aware routing for CPU, GPU, TPU, and NPU classes. Hardware presence alone must not create a `live_success` claim. A device may be selected only when a compatible execution backend confirms that the device is usable for the requested model format, precision, and workload.
+PR #56 added hardware capability discovery and accelerator-aware routing for CPU, GPU, TPU, and NPU classes. Hardware presence alone must not create a `live_success` claim. A device may be selected only when a compatible execution backend confirms that the device is usable for the requested model format, precision, policy, access, and memory requirements.
 
 ## Default CI behavior
 
@@ -62,7 +68,9 @@ A skip must still be explicit and machine-readable. The test writes `/tmp/shorth
 
 ## Claim-safety rule
 
-The matrix harness must not claim `live_success` for TensorRT, OpenVINO, LibTorch, Llama.cpp, ONNX Runtime CUDA, or ONNX Runtime TensorRT until the dedicated backend fixture actually exists and passes real execution.
+The matrix harness must not claim `live_success` for TensorRT, OpenVINO, LibTorch, Llama.cpp, ONNX Runtime CUDA, or ONNX Runtime TensorRT until a dedicated real execution fixture exists and passes.
+
+Unavailable-path proofs for TensorRT, OpenVINO, LibTorch, and Llama.cpp show that those paths are honest, but they are not live backend support evidence.
 
 The harness may only claim `live_success` for `onnxruntime_cpu` when the existing compiled-hook ONNX Runtime success fixture passes with `ONNXRUNTIME_ROOT` configured.
 
@@ -80,4 +88,8 @@ The harness may only claim `live_success` for `onnxruntime_cpu` when the existin
 - `tests/integration/test_libtorch_optional_fixture.sh`
 - `scripts/check_libtorch_optional_fixture.sh`
 - `docs/libtorch_optional_fixture.md`
+- `tests/integration/test_llamacpp_optional_fixture.sh`
+- `scripts/check_llamacpp_optional_fixture.sh`
+- `docs/llamacpp_optional_fixture.md`
+- `docs/hardware_capability_routing.md`
 - `docs/backend_compatibility_matrix.md`

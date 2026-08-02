@@ -105,6 +105,27 @@ run_libtorch_row() {
   fi
 }
 
+run_llamacpp_row() {
+  if bash "${ROOT_DIR}/tests/integration/test_llamacpp_optional_fixture.sh" \
+      >/tmp/shorthand_backend_matrix_llamacpp.out \
+      2>/tmp/shorthand_backend_matrix_llamacpp.err; then
+    if grep -q 'PASS llamacpp optional fixture gate' /tmp/shorthand_backend_matrix_llamacpp.out && \
+       grep -q 'LLAMACPP_FIXTURE backend=llamacpp status=unavailable_path_proved' /tmp/shorthand_backend_matrix_llamacpp.out; then
+      record "llamacpp" "gguf" "skip_safe" "llamacpp_unavailable_path_proved_no_false_success" "llamacpp_optional_fixture"
+    else
+      echo "error: Llama.cpp optional fixture completed without required proof markers" >&2
+      cat /tmp/shorthand_backend_matrix_llamacpp.out >&2 || true
+      cat /tmp/shorthand_backend_matrix_llamacpp.err >&2 || true
+      exit 1
+    fi
+  else
+    echo "error: Llama.cpp optional fixture gate failed" >&2
+    cat /tmp/shorthand_backend_matrix_llamacpp.out >&2 || true
+    cat /tmp/shorthand_backend_matrix_llamacpp.err >&2 || true
+    exit 1
+  fi
+}
+
 planned_backend() {
   local backend="$1"
   local format="$2"
@@ -132,8 +153,8 @@ run_onnxruntime_cpu
 run_tensorrt_rows
 run_openvino_row
 run_libtorch_row
+run_llamacpp_row
 planned_backend "onnxruntime_cuda" "onnx" "ONNXRUNTIME_CUDA_ROOT" "PR58"
-planned_backend "llamacpp" "gguf" "LLAMACPP_ROOT" "PR57"
 
 require_matrix_row "onnxruntime_cpu"
 require_matrix_row "onnxruntime_cuda"
