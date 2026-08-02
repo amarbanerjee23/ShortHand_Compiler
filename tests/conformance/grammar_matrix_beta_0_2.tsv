@@ -1,0 +1,99 @@
+id	area	source	anchor	fixture	expectation	rationale
+LEX001	lexical	scanner	return IDENTIFIER;	tests/conformance/beta_0_2/core_declarations.short	accept	Identifier token.
+LEX002	lexical	scanner	return INT_LITERAL;	tests/conformance/beta_0_2/core_declarations.short	accept	Integer literal token.
+LEX003	lexical	scanner	return FLOAT_LITERAL;	tests/conformance/beta_0_2/comments_and_literals.short	accept	Floating literal token.
+LEX004	lexical	scanner	return STRING_LITERAL;	tests/conformance/beta_0_2/comments_and_literals.short	accept	String literal token.
+LEX005	lexical	scanner	"//"[^\n]*	tests/conformance/beta_0_2/comments_and_literals.short	accept	Line comments.
+LEX006	lexical	scanner	"#"[^\n]*	tests/conformance/beta_0_2/comments_and_literals.short	accept	Hash comments.
+LEX007	lexical	scanner	"/*"([^*]|\*+[^*/])*"*/"	tests/conformance/beta_0_2/comments_and_literals.short	accept	Block comments.
+PRG001	program	parser	PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/core_declarations.short	accept	Program ordering contract.
+DEC001	declarations	parser	ShortType: INT	tests/conformance/beta_0_2/core_declarations.short	accept	Integer declaration type.
+DEC002	declarations	parser	FLOAT {$$=ShortType::Float;}	tests/conformance/beta_0_2/core_declarations.short	accept	Float declaration type.
+DEC003	declarations	parser	DOUBLE {$$=ShortType::Float;}	tests/conformance/beta_0_2/core_declarations.short	accept	Double compatibility declaration type.
+DEC004	declarations	parser	STRING {$$=ShortType::String;}	tests/conformance/beta_0_2/core_declarations.short	accept	String declaration type.
+DEC005	declarations	parser	BOOL {$$=ShortType::Boolean;}	tests/conformance/beta_0_2/core_declarations.short	accept	Boolean declaration type.
+DEC006	declarations	parser	DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER	tests/conformance/beta_0_2/core_declarations.short	accept	Comma-separated declarations.
+DEC007	declarations	parser	IDENTIFIER '[' INT_LITERAL ']'	tests/conformance/beta_0_2/core_declarations.short	accept	Fixed-size array declaration.
+FUN001	functions	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER	tests/conformance/beta_0_2/core_control.short	accept	Typed function declaration.
+FUN002	functions	parser	FUNCTION_LIST_RULE FUNCTION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Function terminator.
+FUN003	functions	parser	RETURN EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Return with value.
+FUN004	functions	parser	IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';'	tests/conformance/beta_0_2/core_control.short	accept	Function call statement.
+STA001	statements	parser	VARIABLE_RULE '=' EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Assignment statement.
+STA002	statements	parser	EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Expression statement.
+STA003	statements	parser	STATEMENT_BLOCK_RULE	tests/conformance/beta_0_2/core_control.short	accept	Nested statement block.
+STA004	statements	parser	IF EXPRESSION_RULE STATEMENT_BLOCK_RULE	tests/conformance/beta_0_2/core_control.short	accept	Conditional statement.
+STA005	statements	parser	ELSE STATEMENT_BLOCK_RULE	tests/conformance/beta_0_2/core_control.short	accept	Conditional else branch.
+STA006	statements	parser	LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE	tests/conformance/beta_0_2/core_control.short	accept	Range loop without step.
+STA007	statements	parser	LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE	tests/conformance/beta_0_2/core_control.short	accept	Range loop with step.
+STA008	statements	parser	LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE	tests/conformance/beta_0_2/core_control.short	accept	Condition loop.
+STA009	statements	parser	GOTO IDENTIFIER ';'	tests/conformance/beta_0_2/core_control.short	accept	Unconditional goto.
+STA010	statements	parser	GOTO IDENTIFIER IF EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Conditional goto.
+STA011	statements	parser	READ READ_VARIABLE_LIST_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Read statement.
+STA012	statements	parser	BREAK ';'	tests/conformance/beta_0_2/core_control.short	accept	Break statement.
+STA013	statements	parser	CONTINUE ';'	tests/conformance/beta_0_2/core_control.short	accept	Continue statement.
+STA014	statements	parser	PRINT PRINT_VARIABLE_LIST_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Print statement.
+STA015	statements	parser	IDENTIFIER ':'	tests/conformance/beta_0_2/core_control.short	accept	Label statement.
+STA016	statements	parser	| ';' { $$=located	tests/conformance/beta_0_2/core_control.short	accept	Empty statement.
+EXP001	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"+")	tests/conformance/beta_0_2/core_control.short	accept	Addition expression.
+EXP002	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"-")	tests/conformance/beta_0_2/core_control.short	accept	Subtraction expression.
+EXP003	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"*")	tests/conformance/beta_0_2/core_control.short	accept	Multiplication expression.
+EXP004	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"/")	tests/conformance/beta_0_2/core_control.short	accept	Division expression.
+EXP005	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"%")	tests/conformance/beta_0_2/core_control.short	accept	Remainder expression.
+EXP006	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"<")	tests/conformance/beta_0_2/core_control.short	accept	Less-than expression.
+EXP007	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"<=")	tests/conformance/beta_0_2/core_control.short	accept	Less-or-equal expression.
+EXP008	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,">")	tests/conformance/beta_0_2/core_control.short	accept	Greater-than expression.
+EXP009	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,">=")	tests/conformance/beta_0_2/core_control.short	accept	Greater-or-equal expression.
+EXP010	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"==")	tests/conformance/beta_0_2/core_control.short	accept	Equality expression.
+EXP011	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"!=")	tests/conformance/beta_0_2/core_control.short	accept	Inequality expression.
+EXP012	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"||")	tests/conformance/beta_0_2/core_control.short	accept	Logical OR expression.
+EXP013	expressions	parser	AST_BINARY_EXPRESSION_RULE($1,$3,"&&")	tests/conformance/beta_0_2/core_control.short	accept	Logical AND expression.
+EXP014	expressions	parser	AST_UNARY_EXPRESSION_RULE($2,"-")	tests/conformance/beta_0_2/core_control.short	accept	Unary minus expression.
+EXP015	expressions	parser	'(' EXPRESSION_RULE ')'	tests/conformance/beta_0_2/core_control.short	accept	Parenthesized expression.
+EXP016	expressions	parser	new AST_BOOL_LITERAL(true)	tests/conformance/beta_0_2/core_control.short	accept	True literal.
+EXP017	expressions	parser	new AST_BOOL_LITERAL(false)	tests/conformance/beta_0_2/core_control.short	accept	False literal.
+EXP018	expressions	parser	new AST_FLOAT_LITERAL($1)	tests/conformance/beta_0_2/comments_and_literals.short	accept	Float literal expression.
+EXP019	expressions	parser	IDENTIFIER '[' EXPRESSION_RULE ']'	tests/conformance/beta_0_2/core_control.short	accept	Array variable expression.
+AI001	ai	parser	TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL	tests/conformance/beta_0_2/ai_language.short	accept	Tensor declaration.
+AI002	ai	parser	MODEL_DECLARATION: MODEL IDENTIFIER	tests/conformance/beta_0_2/ai_language.short	accept	Model declaration.
+AI003	ai	parser	FORMAT FORMAT_NAME ';'	tests/conformance/beta_0_2/ai_language.short	accept	Model format field.
+AI004	ai	parser	PATH STRING_LITERAL ';'	tests/conformance/beta_0_2/ai_language.short	accept	Model path field.
+AI005	ai	parser	TASK STRING_LITERAL ';'	tests/conformance/beta_0_2/ai_language.short	accept	Model task field.
+AI006	ai	parser	PRECISION PRECISION_NAME ';'	tests/conformance/beta_0_2/ai_language.short	accept	Model precision field.
+AI007	ai	parser	INPUT_SHAPE STRING_LITERAL ';'	tests/conformance/beta_0_2/ai_language.short	accept	Model input shape field.
+AI008	ai	parser	OUTPUT_SHAPE STRING_LITERAL ';'	tests/conformance/beta_0_2/ai_language.short	accept	Model output shape field.
+AI009	ai	parser	BACKEND_PREFERENCE BACKEND_LIST ';'	tests/conformance/beta_0_2/ai_language.short	accept	Ordered backend list.
+AI010	ai	parser	COMPACT TRUE ';'	tests/conformance/beta_0_2/ai_language.short	accept	Compact true field.
+AI011	ai	parser	COMPACT FALSE ';'	tests/conformance/beta_0_2/ai_language.short	accept	Compact false field.
+AI012	ai	parser	QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL	tests/conformance/beta_0_2/ai_language.short	accept	Integer greater-or-equal guardrail.
+AI013	ai	parser	FORMAT_NAME: ONNX	tests/conformance/beta_0_2/ai_language.short	accept	ONNX format.
+AI014	ai	parser	| ENGINE {$$=(char*)"engine";}	tests/conformance/beta_0_2/ai_language.short	accept	TensorRT engine format.
+AI015	ai	parser	| TORCHSCRIPT {$$=(char*)"torchscript";}	tests/conformance/beta_0_2/ai_language.short	accept	TorchScript format.
+AI016	ai	parser	| OPENVINO_IR {$$=(char*)"openvino_ir";}	tests/conformance/beta_0_2/ai_language.short	accept	OpenVINO IR format.
+AI017	ai	parser	| GGUF {$$=(char*)"gguf";}	tests/conformance/beta_0_2/ai_language.short	accept	GGUF format.
+AI018	ai	parser	PRECISION_NAME: INT8	tests/conformance/beta_0_2/ai_language.short	accept	All canonical precision tokens.
+AI019	ai	parser	BACKEND_NAME: TENSORRT	tests/conformance/beta_0_2/ai_language.short	accept	All canonical backend tokens.
+AI020	ai	parser	INFER IDENTIFIER '(' IDENTIFIER ')' ARROW IDENTIFIER	tests/conformance/beta_0_2/ai_language.short	accept	Canonical inference arrow.
+AI021	compatibility	parser	INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER	tests/conformance/beta_0_2/ai_language.short	accept	Legacy greater-than inference arrow.
+AI022	compatibility	parser	AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'	tests/conformance/beta_0_2/ai_language.short	accept	Legacy ai_infer and aiinfer calls.
+GRN001	greenai	parser	GREENAI_CONTRACT: GREENAI_CONTRACT_T IDENTIFIER	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI contract declaration.
+GRN002	greenai	parser	FUNCTIONAL_UNIT STRING_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Functional unit field.
+GRN003	greenai	parser	SUCCESS_CRITERIA STRING_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Success criteria field.
+GRN004	greenai	parser	BOUNDARY BOUNDARY_LIST ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Boundary list field.
+GRN005	greenai	parser	MEASUREMENT_QUALITY MQ_NAME ';'	tests/conformance/beta_0_2/greenai_language.short	accept	MQ1 through MQ4 tokens.
+GRN006	greenai	parser	DATA_QUALITY DQ_NAME ';'	tests/conformance/beta_0_2/greenai_language.short	accept	DQ1 through DQ4 tokens.
+GRN007	greenai	parser	CARBON_FACTOR LOCATION INT_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Location carbon factor.
+GRN008	greenai	parser	ENERGY_BUDGET_J INT_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Energy budget field.
+GRN009	greenai	parser	CARBON_BUDGET_GCO2E INT_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Carbon budget field.
+GRN010	greenai	parser	EVIDENCE_RETENTION STRING_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Evidence retention field.
+GRN011	greenai	parser	CLAIMS_MODE EVIDENCE_ONLY ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Claim-safe evidence-only mode.
+GRN012	greenai	parser	GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER	tests/conformance/beta_0_2/greenai_language.short	accept	Measurement declaration.
+GRN013	greenai	parser	MEASURE_FIELD: IDENTIFIER INT_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Numeric measurement fields.
+GRN014	greenai	parser	IDENTIFIER IDENTIFIER ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Measurement backend field.
+GRN015	greenai	parser	GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI report call.
+CLI001	program	cli	mode == "parse"	tests/conformance/beta_0_2/ai_language.short	accept	Parser-only conformance mode bypasses semantic validation.
+BND001	boundary	parser	PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/invalid_empty_program.short	reject	Empty programs are outside beta-0.2.
+BND002	boundary	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')'	tests/conformance/beta_0_2/invalid_zero_parameter_function.short	reject	Empty parameter lists are not accepted.
+BND003	boundary	parser	STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'	tests/conformance/beta_0_2/invalid_empty_block.short	reject	Blocks require at least one statement.
+BND004	boundary	parser	PRECISION_NAME: INT8	tests/conformance/beta_0_2/invalid_precision_alias.short	reject	float32 is not a canonical parser precision token.
+BND005	boundary	parser	QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL	tests/conformance/beta_0_2/invalid_guardrail_operator.short	reject	Guardrail operators other than greater-or-equal are not accepted.
+BND006	boundary	parser	DECLARATION_STATEMENT_RULE ';'	tests/parser/invalid/missing_semicolon.short	reject	Missing statement terminators are rejected.
