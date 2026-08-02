@@ -7,6 +7,13 @@ namespace diagnostics {
 inline constexpr const char *ParserSyntaxError = "SHD2001";
 inline constexpr const char *ParserExpectedAIInferBuiltin = "SHD2002";
 inline constexpr const char *ParserExpectedGreenAIReportBuiltin = "SHD2003";
+inline constexpr const char *ParserSourceLimitExceeded = "SHD2004";
+inline constexpr const char *ParserTokenLimitExceeded = "SHD2005";
+inline constexpr const char *ParserScannerBudgetExceeded = "SHD2006";
+inline constexpr const char *ParserNestingLimitExceeded = "SHD2007";
+inline constexpr const char *ScannerUnexpectedCharacter = "SHD2008";
+inline constexpr const char *ScannerUnterminatedComment = "SHD2009";
+inline constexpr const char *ScannerUnterminatedString = "SHD2010";
 
 inline constexpr const char *SemanticBreakOutsideLoop = "SHD3001";
 inline constexpr const char *SemanticContinueOutsideLoop = "SHD3002";
