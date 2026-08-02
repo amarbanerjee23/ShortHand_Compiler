@@ -6,6 +6,8 @@ Matrix guardrail marker: `full_backend_matrix_claim: false`.
 
 Backend live SDK matrix marker: `backend_live_sdk_matrix_status: optional_matrix_harness`.
 
+Backend failure-mode marker: `backend_failure_mode_matrix_status: finalized_v1`.
+
 Hardware routing marker: `hardware_capability_routing_status: inventory_and_execution_ready_selection`.
 
 TensorRT fixture marker: `trt_optional_fixture_status: unavailable_path_proof_no_false_success`.
@@ -63,6 +65,32 @@ The harness records rows for `onnxruntime_cpu`, `onnxruntime_cuda`, `onnxruntime
 
 It may report `live_success` only for `onnxruntime_cpu` when the compiled-hook ONNX Runtime success fixture passes. TensorRT, OpenVINO, LibTorch, and Llama.cpp currently prove unavailable-path honesty only and must not be marketed as live execution support.
 
+## Finalized backend failure-mode matrix
+
+PR #58 adds the shared deterministic failure contract and machine-readable report schema `shorthand.backend_failure_mode_matrix.v1`.
+
+The matrix covers:
+
+- invalid model format,
+- missing optional SDK,
+- input shape/count mismatch,
+- unsupported precision,
+- output capacity mismatch,
+- detected but inaccessible hardware,
+- empty or failed hardware probe results,
+- fallback honesty.
+
+Evidence:
+
+- `docs/backend_failure_mode_matrix.md`
+- `tests/integration/test_backend_failure_mode_matrix.sh`
+- `scripts/check_backend_failure_mode_matrix.sh`
+- `/tmp/shorthand_backend_failure_mode_matrix.jsonl` during gate execution
+
+Every row must preserve `false_success: false`. A pre-execution failure must leave caller output memory unchanged, report zero output elements, preserve a controlled status/reason, and avoid incrementing runtime success counters.
+
+Failure-matrix completion is reliability evidence. It is not a substitute for SDK-backed success fixtures for marketed backend configurations.
+
 ## Hardware capability discovery boundary
 
 PR #56 implements automatic CPU, GPU, TPU, and NPU capability inventory through `HardwareDiscovery.h`. `AIRuntime::infer` routes to a backend only when the selected device is detected, accessible, policy-allowed, compatible with the model format and precision, and paired with a backend that reports itself available.
@@ -93,6 +121,7 @@ The ONNX Runtime CPU path is the first real backend execution path. Full enterpr
 1. SDK-enabled CI or local execution against the committed ONNX fixture.
 2. One shared backend live SDK matrix harness with skip-safe row reporting.
 3. Equivalent real execution gates for any backend marketed as supported.
-4. Runtime telemetry for latency, input/output shape, backend, device class, execution status, and energy source.
-5. Certification evidence bundle linkage to measured execution.
-6. Compiled typed-buffer hook execution through `AI_Runtime`, returning success only when backend execution actually succeeds.
+4. A finalized common backend failure-mode matrix with no false success.
+5. Runtime telemetry for latency, input/output shape, backend, device class, execution status, and energy source.
+6. Certification evidence bundle linkage to measured execution.
+7. Compiled typed-buffer hook execution through `AI_Runtime`, returning success only when backend execution actually succeeds.
