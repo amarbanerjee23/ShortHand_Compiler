@@ -6,52 +6,46 @@ PLAN="${ROOT_DIR}/docs/production_readiness_pr_plan.md"
 
 require_file() {
   local file="$1"
-  if [[ ! -f "${file}" ]]; then
-    echo "error: missing required file: ${file}" >&2
-    exit 1
-  fi
+  [[ -f "${file}" ]] || { echo "error: missing required file: ${file}" >&2; exit 1; }
 }
 
 require_contains() {
   local file="$1"
   local needle="$2"
   require_file "${file}"
-  if ! grep -Fq "${needle}" "${file}"; then
+  grep -Fq "${needle}" "${file}" || {
     echo "error: ${file} missing required text: ${needle}" >&2
     exit 1
-  fi
+  }
 }
 
-for file in \
-  "${PLAN}" \
-  "${ROOT_DIR}/docs/language_objectives.md" \
-  "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" \
-  "${ROOT_DIR}/docs/runtime_abi_api_stability.md" \
-  "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" \
-  "${ROOT_DIR}/docs/runtime_production_packaging.md" \
-  "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" \
-  "${ROOT_DIR}/docs/otlp_exporter_adapter.md" \
-  "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" \
-  "${ROOT_DIR}/abi/shorthand_runtime_abi_v1.h" \
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp" \
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp" \
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/operations/OtlpExporterAdapter.cpp" \
-  "${ROOT_DIR}/tests/runtime/test_runtime_state_thread_safety.sh" \
-  "${ROOT_DIR}/tests/packaging/test_runtime_production_packaging.sh" \
-  "${ROOT_DIR}/tests/operations/test_prometheus_scrape_adapter.sh" \
-  "${ROOT_DIR}/tests/operations/test_otlp_exporter_adapter.sh" \
-  "${ROOT_DIR}/tests/operations/OtlpTestCollector.cpp" \
-  "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" \
-  "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh" \
-  "${ROOT_DIR}/scripts/check_prometheus_scrape_adapter.sh" \
-  "${ROOT_DIR}/scripts/check_otlp_exporter_adapter.sh"; do
-  require_file "${file}"
-done
+required_files=(
+  "${PLAN}"
+  "${ROOT_DIR}/docs/language_objectives.md"
+  "${ROOT_DIR}/docs/backend_failure_mode_matrix.md"
+  "${ROOT_DIR}/docs/runtime_abi_api_stability.md"
+  "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md"
+  "${ROOT_DIR}/docs/runtime_production_packaging.md"
+  "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md"
+  "${ROOT_DIR}/docs/otlp_exporter_adapter.md"
+  "${ROOT_DIR}/docs/ast_source_ranges.md"
+  "${ROOT_DIR}/docs/diagnostics_coverage_matrix.md"
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ast/SourceRange.h"
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ast/SourceRange.cpp"
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/visitors/DiagnosticCodes.h"
+  "${ROOT_DIR}/tests/diagnostics/diagnostics_coverage_matrix.tsv"
+  "${ROOT_DIR}/tests/diagnostics/test_source_diagnostics.sh"
+  "${ROOT_DIR}/tests/diagnostics/test_diagnostics_coverage_matrix.sh"
+  "${ROOT_DIR}/scripts/check_ast_source_ranges.sh"
+  "${ROOT_DIR}/scripts/check_diagnostics_coverage_matrix.sh"
+  "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt"
+)
+for file in "${required_files[@]}"; do require_file "${file}"; done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-02-pr63' \
+  'production_readiness_plan_version: 2026-08-02-pr65' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 63' \
+  'LAST_COMPLETED_PR: 65' \
   'TARGET: enterprise production usage ready language' \
   'Desired outcome definition' \
   'Audit correction applied in PR #51' \
@@ -63,49 +57,31 @@ for anchor in \
   'Production build packaging applied in PR #61' \
   'Prometheus scrape endpoint host adapter applied in PR #62' \
   'OTLP exporter adapter applied in PR #63' \
-  'shorthand.language.objectives.version: 2026-07-29-v1' \
-  'shorthand.backend_failure_mode_matrix.v1' \
-  'Runtime ABI `1.0.0` freezes exactly 25 external `short_*` symbols.' \
-  'Thread-safe does not mean multi-tenant isolated.' \
-  'runtime_packaging_status: installable_static_shared_and_consumer_checked' \
+  'AST source ranges applied in PR #64' \
+  'Diagnostics coverage matrix applied in PR #65' \
   'Recommended path from PR #51 onward: 29 PRs total.' \
-  'After PR #63 is merged, approximately 16 implementation PRs remain.' \
-  'Next recommended PR after PR #63:' \
-  'PR64 - AST source ranges across parser nodes.' \
-  'PR51 - Production readiness plan and tracking contract | MERGED' \
-  'PR52 - Backend live SDK matrix harness | MERGED' \
-  'PR53 - TensorRT optional live execution fixture | MERGED' \
-  'PR54 - OpenVINO optional live execution fixture | MERGED' \
-  'PR55 - LibTorch optional live execution fixture | MERGED' \
-  'PR56 - Hardware capability discovery and accelerator-aware routing | MERGED' \
-  'PR57 - Llama.cpp optional live execution fixture | MERGED' \
-  'PR58 - Backend failure-mode matrix finalization | MERGED' \
-  'PR59 - Runtime ABI and API version stability gate | MERGED' \
-  'PR60 - Runtime state isolation and thread-safety policy | MERGED' \
-  'PR61 - Production build packaging for runtime and AI bridge | MERGED' \
-  'PR62 - Prometheus scrape endpoint host adapter | MERGED' \
-  'PR63 - OTLP exporter adapter | MERGED' \
-  'PR64 - AST source ranges across parser nodes | PLANNED' \
-  'PR65 - Diagnostics coverage matrix' \
-  'PR66 - Full grammar and conformance matrix beta-0.2' \
-  'PR67 - Parser robustness and negative corpus hardening' \
-  'PR68 - Module/import/package design and parser scaffold' \
-  'PR69 - Module resolver and codegen integration' \
-  'PR70 - Signed release and protected release workflow' \
-  'PR71 - External dependency vulnerability scan gate' \
-  'PR72 - Container and Kubernetes hardening' \
-  'PR73 - Formatter and linter baseline' \
-  'PR74 - Syntax highlighting and LSP skeleton' \
-  'PR75 - C3-ECO certification language blocks' \
-  'PR76 - C3-ECO scoring, report generation, and eco-regression' \
-  'PR77 - Authority-ready C3-ECO auditor bundle' \
-  'PR78 - MLIR generated dialect build integration' \
-  'PR79 - MLIR lowering passes and production RC gate' \
-  'Production readiness exit criteria' \
-  'Installable artifacts and successful consumer linking do not imply deployment readiness' \
-  'A loopback-default metrics endpoint does not imply authenticated, TLS-enabled or public-ingress readiness.' \
-  'An OTLP endpoint returning HTTP 2xx proves transport acceptance only.' \
+  'After PR #65 is merged, approximately 14 implementation PRs remain.' \
+  'Next recommended PR after PR #65:' \
+  'PR66 - Full grammar and conformance matrix beta-0.2.' \
+  'PR64 - AST source ranges across parser nodes | MERGED' \
+  'PR65 - Diagnostics coverage matrix | MERGED' \
+  'PR66 - Full grammar and conformance matrix beta-0.2 | PLANNED' \
+  'PR67 - Parser robustness and negative corpus hardening | PLANNED' \
+  'PR79 - MLIR lowering passes and production RC gate | PLANNED' \
   'remaining_planned_prs_total_from_pr51: 29' \
+  'remaining_planned_prs_after_pr64: 15' \
+  'remaining_planned_prs_after_pr65: 14'; do
+  require_contains "${PLAN}" "${anchor}"
+done
+
+# Preserve previously guarded roadmap history.
+for anchor in \
+  'production_readiness_plan_version: 2026-08-02-pr62' \
+  'LAST_COMPLETED_PR: 62' \
+  'After PR #62 is merged, approximately 17 implementation PRs remain.' \
+  'Next recommended PR after PR #62:' \
+  'PR63 - OTLP exporter adapter.' \
+  'remaining_planned_prs_after_pr61: 18' \
   'remaining_planned_prs_after_pr62: 17' \
   'remaining_planned_prs_after_pr63: 16'; do
   require_contains "${PLAN}" "${anchor}"
@@ -113,20 +89,10 @@ done
 
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'production_claim: false'
 require_contains "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" 'backend_failure_mode_matrix_status: finalized_v1'
-require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_abi_contract_status: frozen_v1_symbol_manifest'
-require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_state_model: single_process_wide_default_context'
-require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_multi_tenant_isolation: process_boundary_required'
-require_contains "${ROOT_DIR}/docs/runtime_production_packaging.md" 'runtime_shared_soversion: 1'
-require_contains "${ROOT_DIR}/docs/runtime_production_packaging.md" 'production_claim_boundary: packaging_gate_is_not_full_production_readiness'
-require_contains "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" 'prometheus_scrape_adapter_status: loopback_default_bounded_http_metrics_host'
-require_contains "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" 'runtime_external_symbol_count: 25'
-require_contains "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" 'production_claim_boundary: scrape_adapter_is_not_hardened_public_ingress'
-require_contains "${ROOT_DIR}/docs/otlp_exporter_adapter.md" 'otlp_exporter_status: bounded_one_shot_otlp_http_trace_delivery'
-require_contains "${ROOT_DIR}/docs/otlp_exporter_adapter.md" 'runtime_external_symbol_count: 25'
-require_contains "${ROOT_DIR}/docs/otlp_exporter_adapter.md" 'delivery_claim_boundary: http_acceptance_is_not_end_to_end_trace_storage'
-require_contains "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" 'PASS runtime state isolation and thread-safety guard'
-require_contains "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh" 'PASS runtime production packaging guard'
-require_contains "${ROOT_DIR}/scripts/check_prometheus_scrape_adapter.sh" 'PASS Prometheus scrape endpoint host adapter guard'
-require_contains "${ROOT_DIR}/scripts/check_otlp_exporter_adapter.sh" 'PASS OTLP exporter adapter guard'
+require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_external_symbol_count: 25'
+require_contains "${ROOT_DIR}/docs/ast_source_ranges.md" 'ast_source_range_status: parser_propagated_line_column_ranges'
+require_contains "${ROOT_DIR}/docs/diagnostics_coverage_matrix.md" 'diagnostics_coverage_status: stable_coded_stage_matrix_guarded'
+require_contains "${ROOT_DIR}/scripts/check_ast_source_ranges.sh" 'PASS AST source range guard'
+require_contains "${ROOT_DIR}/scripts/check_diagnostics_coverage_matrix.sh" 'PASS diagnostics coverage matrix guard'
 
 printf 'PASS production readiness PR plan gate\n'

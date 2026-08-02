@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "./ast/AST.h"
 #include "./ast/SourceRange.h"
+#include "./visitors/DiagnosticCodes.h"
 #include <vector>
 #include <string>
 static ModelDeclarationData current_model;
@@ -17,6 +18,7 @@ extern "C" int yywrap(void){return 1;}
 extern "C" int yydebug;
 extern union _NODE_ yylval;
 extern class AST_PROGRAM * main_program;
+extern const char *shorthand_source_path;
 %}
 
 %locations
@@ -29,6 +31,24 @@ static SourceRange shorthand_range(const YYLTYPE &loc) {
     range.end.line = loc.last_line;
     range.end.column = loc.last_column;
     return range;
+}
+
+static void shorthand_parser_diagnostic(const char *code,
+                                        const char *message,
+                                        const YYLTYPE &loc) {
+    const char *path = shorthand_source_path == nullptr ? "<input>" : shorthand_source_path;
+    fprintf(stderr, "----------------ERROR----------------\n");
+    fprintf(stderr,
+            "%s:%d:%d: error: [%s] %s [range %d:%d-%d:%d]\n",
+            path,
+            loc.first_line,
+            loc.first_column,
+            code,
+            message,
+            loc.first_line,
+            loc.first_column,
+            loc.last_line,
+            loc.last_column);
 }
 
 template <typename T>
@@ -179,12 +199,24 @@ DQ_NAME: DQ1 {$$=(char*)"DQ1";} | DQ2 {$$=(char*)"DQ2";} | DQ3 {$$=(char*)"DQ3";
 BOUNDARY_NAME: COMPUTE {$$=(char*)"compute";} | ACCELERATOR {$$=(char*)"accelerator";} | STORAGE {$$=(char*)"storage";} | NETWORK {$$=(char*)"network";} | CI_CD {$$=(char*)"ci_cd";} | THIRDPARTY {$$=(char*)"thirdparty";};
 
 AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')' {
-    if ((string($1)!="ai_infer" && string($1)!="aiinfer")) { yyerror("expected ai_infer builtin"); YYERROR; }
+    if ((string($1)!="ai_infer" && string($1)!="aiinfer")) {
+        shorthand_parser_diagnostic(
+            shorthand::diagnostics::ParserExpectedAIInferBuiltin,
+            "expected ai_infer builtin",
+            @$);
+        YYERROR;
+    }
     $$=located(new AST_AI_INFER_RULE(string($3),string($5),string($7)), @$);
 };
 
 GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')' {
-    if (string($1)!="greenai") { yyerror("expected greenai report builtin"); YYERROR; }
+    if (string($1)!="greenai") {
+        shorthand_parser_diagnostic(
+            shorthand::diagnostics::ParserExpectedGreenAIReportBuiltin,
+            "expected greenai report builtin",
+            @$);
+        YYERROR;
+    }
     $$=located(new AST_GREENAI_REPORT_RULE(string($3),$5,$7,$9), @$);
 };
 
@@ -227,6 +259,8 @@ PRINT_VARIABLE_LIST_RULE:
 %%
 
 void yyerror(char const *s) {
-    fprintf(stderr, "----------------ERROR----------------\n");
-    fprintf(stderr, "%d:%d-%d:%d: %s\n", yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column, s);
+    shorthand_parser_diagnostic(
+        shorthand::diagnostics::ParserSyntaxError,
+        s,
+        yylloc);
 }

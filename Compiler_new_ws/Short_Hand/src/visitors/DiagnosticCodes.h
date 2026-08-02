@@ -1,0 +1,47 @@
+#ifndef SHORTHAND_DIAGNOSTIC_CODES_H
+#define SHORTHAND_DIAGNOSTIC_CODES_H
+
+namespace shorthand {
+namespace diagnostics {
+
+inline constexpr const char *ParserSyntaxError = "SHD2001";
+inline constexpr const char *ParserExpectedAIInferBuiltin = "SHD2002";
+inline constexpr const char *ParserExpectedGreenAIReportBuiltin = "SHD2003";
+
+inline constexpr const char *SemanticBreakOutsideLoop = "SHD3001";
+inline constexpr const char *SemanticContinueOutsideLoop = "SHD3002";
+
+inline constexpr const char *AIModelRedeclared = "SHD4001";
+inline constexpr const char *AIModelInvalidFormat = "SHD4002";
+inline constexpr const char *AIModelInvalidPrecision = "SHD4003";
+inline constexpr const char *AIModelInvalidInputShape = "SHD4004";
+inline constexpr const char *AIModelInvalidOutputShape = "SHD4005";
+inline constexpr const char *AIModelMissingQualityGuardrail = "SHD4006";
+inline constexpr const char *AIModelIncompatibleBackend = "SHD4007";
+inline constexpr const char *AIModelMissingBackendPreference = "SHD4008";
+inline constexpr const char *AIModelNoCompatibleBackend = "SHD4009";
+inline constexpr const char *AITensorRedeclared = "SHD4010";
+inline constexpr const char *AITensorInvalidShape = "SHD4011";
+inline constexpr const char *AIInferUnknownModel = "SHD4012";
+inline constexpr const char *AIInferUnknownInputTensor = "SHD4013";
+inline constexpr const char *AIInferInputShapeMismatch = "SHD4014";
+inline constexpr const char *AIInferOutputShapeMismatch = "SHD4015";
+inline constexpr const char *AIInferImplicitOutput = "SHD4016";
+
+inline constexpr const char *GreenAIMissingFunctionalUnit = "SHD5001";
+inline constexpr const char *GreenAIMissingSuccessCriteria = "SHD5002";
+inline constexpr const char *GreenAIMissingBoundary = "SHD5003";
+inline constexpr const char *GreenAIMissingMeasurementOrDataQuality = "SHD5004";
+inline constexpr const char *GreenAIInvalidCarbonFactor = "SHD5005";
+inline constexpr const char *GreenAIMissingQualityGuardrail = "SHD5006";
+inline constexpr const char *GreenAIInvalidClaimsMode = "SHD5007";
+inline constexpr const char *GreenAIInvalidBudget = "SHD5008";
+inline constexpr const char *GreenAIMeasureUnknownContract = "SHD5009";
+inline constexpr const char *GreenAIMeasureExternalBackend = "SHD5010";
+
+inline constexpr const char *LoweringUndefinedFunction = "SHD6001";
+
+}  // namespace diagnostics
+}  // namespace shorthand
+
+#endif

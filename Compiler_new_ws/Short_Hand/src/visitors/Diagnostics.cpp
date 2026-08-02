@@ -25,6 +25,10 @@ SourceRange pointRange(int line, int column) {
     range.end = range.begin;
     return range;
 }
+
+void printCode(const std::string &code) {
+    if (!code.empty()) std::cerr << '[' << code << "] ";
+}
 }
 
 void Diagnostics::setSourceFile(const std::string &path) {
@@ -35,37 +39,87 @@ void Diagnostics::setSourceFile(const std::string &path) {
     while (std::getline(in, line)) source_lines_.push_back(line);
 }
 
-void Diagnostics::add(Severity severity, const std::string &message, const SourceRange &range) {
-    records_.push_back({severity, message, range});
+void Diagnostics::add(Severity severity,
+                      const std::string &code,
+                      const std::string &message,
+                      const SourceRange &range) {
+    records_.push_back({severity, code, message, range});
     if (severity == Severity::Error) has_errors_ = true;
+    if (severity == Severity::Warning) has_warnings_ = true;
 }
 
-void Diagnostics::error(const std::string &message) { add(Severity::Error, message); }
-void Diagnostics::warning(const std::string &message) { add(Severity::Warning, message); }
+void Diagnostics::error(const std::string &message) { add(Severity::Error, "", message); }
+void Diagnostics::warning(const std::string &message) { add(Severity::Warning, "", message); }
+void Diagnostics::error(const std::string &code, const std::string &message) { add(Severity::Error, code, message); }
+void Diagnostics::warning(const std::string &code, const std::string &message) { add(Severity::Warning, code, message); }
 
-void Diagnostics::errorAt(const std::string &anchor_kind, const std::string &anchor_name, const std::string &message) {
+void Diagnostics::errorAt(const std::string &anchor_kind,
+                          const std::string &anchor_name,
+                          const std::string &message) {
     auto loc = locateAnchor(anchor_kind, anchor_name);
-    add(Severity::Error, message, pointRange(loc.first, loc.second));
+    add(Severity::Error, "", message, pointRange(loc.first, loc.second));
 }
 
-void Diagnostics::warningAt(const std::string &anchor_kind, const std::string &anchor_name, const std::string &message) {
+void Diagnostics::warningAt(const std::string &anchor_kind,
+                            const std::string &anchor_name,
+                            const std::string &message) {
     auto loc = locateAnchor(anchor_kind, anchor_name);
-    add(Severity::Warning, message, pointRange(loc.first, loc.second));
+    add(Severity::Warning, "", message, pointRange(loc.first, loc.second));
 }
 
-void Diagnostics::errorAtRange(const SourceRange &range, const std::string &message) { add(Severity::Error, message, range); }
-void Diagnostics::warningAtRange(const SourceRange &range, const std::string &message) { add(Severity::Warning, message, range); }
-void Diagnostics::errorAtNode(const void *node, const std::string &message) { errorAtRange(shorthand_get_ast_source_range(node), message); }
-void Diagnostics::warningAtNode(const void *node, const std::string &message) { warningAtRange(shorthand_get_ast_source_range(node), message); }
+void Diagnostics::errorAtRange(const SourceRange &range, const std::string &message) {
+    add(Severity::Error, "", message, range);
+}
+
+void Diagnostics::warningAtRange(const SourceRange &range, const std::string &message) {
+    add(Severity::Warning, "", message, range);
+}
+
+void Diagnostics::errorAtRange(const SourceRange &range,
+                               const std::string &code,
+                               const std::string &message) {
+    add(Severity::Error, code, message, range);
+}
+
+void Diagnostics::warningAtRange(const SourceRange &range,
+                                 const std::string &code,
+                                 const std::string &message) {
+    add(Severity::Warning, code, message, range);
+}
+
+void Diagnostics::errorAtNode(const void *node, const std::string &message) {
+    errorAtRange(shorthand_get_ast_source_range(node), message);
+}
+
+void Diagnostics::warningAtNode(const void *node, const std::string &message) {
+    warningAtRange(shorthand_get_ast_source_range(node), message);
+}
+
+void Diagnostics::errorAtNode(const void *node,
+                              const std::string &code,
+                              const std::string &message) {
+    errorAtRange(shorthand_get_ast_source_range(node), code, message);
+}
+
+void Diagnostics::warningAtNode(const void *node,
+                                const std::string &code,
+                                const std::string &message) {
+    warningAtRange(shorthand_get_ast_source_range(node), code, message);
+}
 
 bool Diagnostics::hasErrors() const { return has_errors_; }
+bool Diagnostics::hasWarnings() const { return has_warnings_; }
+bool Diagnostics::hasDiagnostics() const { return !records_.empty(); }
 
-std::pair<int, int> Diagnostics::locateAnchor(const std::string &anchor_kind, const std::string &anchor_name) const {
+std::pair<int, int> Diagnostics::locateAnchor(const std::string &anchor_kind,
+                                               const std::string &anchor_name) const {
     std::vector<std::string> patterns;
     if (anchor_kind == "model") patterns.push_back("model " + anchor_name);
     else if (anchor_kind == "tensor") patterns.push_back("tensor " + anchor_name);
-    else if (anchor_kind == "infer") { patterns.push_back("infer " + anchor_name + "("); patterns.push_back("infer "); }
-    else if (anchor_kind == "greenai_contract") patterns.push_back("greenai_contract " + anchor_name);
+    else if (anchor_kind == "infer") {
+        patterns.push_back("infer " + anchor_name + "(");
+        patterns.push_back("infer ");
+    } else if (anchor_kind == "greenai_contract") patterns.push_back("greenai_contract " + anchor_name);
     else if (anchor_kind == "greenai_measure") patterns.push_back("greenai_measure " + anchor_name);
     else if (anchor_kind == "keyword") patterns.push_back(anchor_name);
 
@@ -84,8 +138,9 @@ void Diagnostics::print() const {
         const SourceRange &range = record.range;
         if (!source_file_.empty() && range.valid()) {
             std::cerr << source_file_ << ':' << range.begin.line << ':' << range.begin.column
-                      << ": " << severity << ": " << record.message
-                      << " [range " << range.toString() << "]\n";
+                      << ": " << severity << ": ";
+            printCode(record.code);
+            std::cerr << record.message << " [range " << range.toString() << "]\n";
             if (range.begin.line <= static_cast<int>(source_lines_.size())) {
                 const std::string &line = source_lines_[range.begin.line - 1];
                 std::cerr << "  " << line << "\n  ";
@@ -97,7 +152,9 @@ void Diagnostics::print() const {
                 std::cerr << "\n";
             }
         } else {
-            std::cerr << severity << ": " << record.message << "\n";
+            std::cerr << severity << ": ";
+            printCode(record.code);
+            std::cerr << record.message << "\n";
         }
     }
 }

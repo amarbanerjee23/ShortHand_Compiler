@@ -1,0 +1,11 @@
+int seed;
+model warn_model {
+  format onnx;
+  path "model.onnx";
+  task "classification";
+  precision int8;
+  input_shape "1,4";
+  output_shape "1,2";
+  backend_preference libtorch, fallback;
+  quality_guardrail accuracy >= 1;
+};

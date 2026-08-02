@@ -25,8 +25,8 @@ The end coordinate is inclusive. For example, `break;` on line 2 occupies `2:1-2
 
 Semantic diagnostics use `errorAtNode` and `warningAtNode`. This prevents the earlier anchor-search ambiguity where repeated names could point to the first textual occurrence instead of the AST node that caused the diagnostic.
 
-Legacy anchor lookup remains available for code not yet migrated, but PR 65 must finish the diagnostics coverage matrix and remove remaining avoidable anchor-based reporting.
+PR 65 adds the stable diagnostics coverage matrix and coded parser, semantic, AI, Green AI and lowering-preflight diagnostics. Legacy anchor lookup remains available only as compatibility support for code outside the guarded matrix.
 
 ## Boundaries
 
-This PR does not claim complete parser recovery, Unicode display-column handling, macro expansion provenance, imported-module source ownership or full diagnostics coverage. Those remain later roadmap work.
+Source ranges and the PR65 matrix do not claim complete parser recovery, Unicode display-column handling, macro expansion provenance, imported-module source ownership, localization, fix-it suggestions or LSP publication. Those remain later roadmap work.

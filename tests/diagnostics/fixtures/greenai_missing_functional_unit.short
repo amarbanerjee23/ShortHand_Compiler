@@ -1,0 +1,10 @@
+int seed;
+greenai_contract eco {
+  success_criteria "accuracy";
+  boundary compute;
+  measurement_quality MQ1;
+  data_quality DQ1;
+  carbon_factor location 1;
+  quality_guardrail accuracy >= 1;
+  claims_mode evidence_only;
+};

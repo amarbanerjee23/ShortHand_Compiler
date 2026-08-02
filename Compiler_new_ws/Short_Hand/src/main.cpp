@@ -12,6 +12,7 @@
 
 FILE * flex_output;
 FILE * bison_output;
+const char *shorthand_source_path = nullptr;
 
 extern "C" FILE *yyin;
 extern "C" int yyparse();
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
     bison_output = fopen("/dev/null", "w");
 
     std::string path(argv[1]);
+    shorthand_source_path = argv[1];
     std::string base_filename = path.substr(path.find_last_of("/\\") + 1);
     std::string::size_type const p(base_filename.find_last_of('.'));
     std::string file_without_extension = base_filename.substr(0, p);
@@ -62,8 +64,8 @@ int main(int argc, char *argv[])
     SemanticAnalyzer semantic;
     semantic.diagnostics.setSourceFile(argv[1]);
     main_program->accept(semantic);
+    if (semantic.diagnostics.hasDiagnostics()) semantic.diagnostics.print();
     if (semantic.diagnostics.hasErrors()) {
-        semantic.diagnostics.print();
         shorthand_release_scanner_strings();
         fclose(flex_output);
         fclose(bison_output);

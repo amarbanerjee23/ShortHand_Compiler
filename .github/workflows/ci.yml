@@ -53,6 +53,12 @@ jobs:
       - name: Strict language validation
         run: source ./shorthand_env.sh && bash scripts/validate_language.sh --strict
 
+      - name: AST source range guard
+        run: bash scripts/check_ast_source_ranges.sh
+
+      - name: Diagnostics coverage matrix
+        run: bash scripts/check_diagnostics_coverage_matrix.sh
+
       - name: Smoke tests
         run: bash scripts/smoke_test.sh
 
