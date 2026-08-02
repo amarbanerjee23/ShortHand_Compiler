@@ -18,6 +18,8 @@ Open work remains for modules, release security, deployment, developer tooling, 
 
 ## Language feature status
 
+The language versioning and conformance policy gate remains an active compatibility contract for beta-0.2.
+
 | ID | Requirement | Status | Evidence | Production impact |
 | --- | --- | --- | --- | --- |
 | L1 | AST metadata for model, tensor, contract, measurement and infer | Implemented | `Compiler_new_ws/Short_Hand/src/ast/AST.h` | Compiler passes can inspect AI and Green AI constructs. |
