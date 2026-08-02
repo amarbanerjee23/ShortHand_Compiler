@@ -60,20 +60,20 @@ int SemanticAnalyzer::visit(AST_STATEMENTS_BLOCK *b) {
 
 int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
     auto &d = n->data;
-    if (models.count(d.name)) diagnostics.errorAt("model", d.name, "model redeclared: " + d.name);
+    if (models.count(d.name)) diagnostics.errorAtNode(n, "model redeclared: " + d.name);
     models[d.name] = d;
 
     auto format = shorthand::ai::parseModelFormat(d.format);
     if (d.format.empty() || format == shorthand::ai::ModelFormat::Unknown)
-        diagnostics.errorAt("model", d.name, "model " + d.name + " missing or invalid format");
+        diagnostics.errorAtNode(n, "model " + d.name + " missing or invalid format");
     if (shorthand::ai::parseElementType(d.precision) == shorthand::ai::ElementType::Unknown)
-        diagnostics.errorAt("model", d.name, "model " + d.name + " has invalid precision");
+        diagnostics.errorAtNode(n, "model " + d.name + " has invalid precision");
     if (d.input_shape.empty() || !validShape(d.input_shape))
-        diagnostics.errorAt("model", d.name, "model " + d.name + " has invalid input_shape");
+        diagnostics.errorAtNode(n, "model " + d.name + " has invalid input_shape");
     if (!d.output_shape.empty() && !validShape(d.output_shape))
-        diagnostics.errorAt("model", d.name, "model " + d.name + " has invalid output_shape");
+        diagnostics.errorAtNode(n, "model " + d.name + " has invalid output_shape");
     if (!d.has_quality_guardrail)
-        diagnostics.errorAt("model", d.name, "model " + d.name + " requires quality_guardrail");
+        diagnostics.errorAtNode(n, "model " + d.name + " requires quality_guardrail");
 
     bool hasFallback = false;
     bool hasCompatibleRealBackend = false;
@@ -84,66 +84,66 @@ int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
         if (backendCompatibleWithFormat(format, kind)) {
             hasCompatibleRealBackend = true;
         } else {
-            diagnostics.warningAt("model", d.name, "model " + d.name + " backend_preference " + b + " is not compatible with format " + d.format);
+            diagnostics.warningAtNode(n, "model " + d.name + " backend_preference " + b + " is not compatible with format " + d.format);
         }
     }
     if (d.backend_preference.empty())
-        diagnostics.warningAt("model", d.name, "model " + d.name + " has no backend_preference; fallback will be used if allowed");
+        diagnostics.warningAtNode(n, "model " + d.name + " has no backend_preference; fallback will be used if allowed");
     if (!d.backend_preference.empty() && !hasCompatibleRealBackend && !hasFallback)
-        diagnostics.errorAt("model", d.name, "model " + d.name + " has no compatible backend_preference for format " + d.format);
+        diagnostics.errorAtNode(n, "model " + d.name + " has no compatible backend_preference for format " + d.format);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_TENSOR_DECLARATION *n) {
-    if (tensors.count(n->data.name)) diagnostics.errorAt("tensor", n->data.name, "tensor redeclared: " + n->data.name);
+    if (tensors.count(n->data.name)) diagnostics.errorAtNode(n, "tensor redeclared: " + n->data.name);
     tensors[n->data.name] = n->data;
-    if (!validShape(n->data.shape_csv)) diagnostics.errorAt("tensor", n->data.name, "invalid tensor shape for " + n->data.name);
+    if (!validShape(n->data.shape_csv)) diagnostics.errorAtNode(n, "invalid tensor shape for " + n->data.name);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_GREENAI_CONTRACT *n) {
     auto &d = n->data;
     contracts[d.name] = d;
-    if (!d.has_functional_unit) diagnostics.errorAt("greenai_contract", d.name, "greenai_contract " + d.name + " missing functional_unit");
-    if (!d.has_success_criteria) diagnostics.errorAt("greenai_contract", d.name, "greenai_contract " + d.name + " missing success_criteria");
-    if (!d.has_boundary) diagnostics.errorAt("greenai_contract", d.name, "greenai_contract " + d.name + " missing boundary");
-    if (!d.has_mq || !d.has_dq) diagnostics.errorAt("greenai_contract", d.name, "greenai_contract " + d.name + " requires MQ/DQ");
-    if (!d.has_carbon_factor || d.carbon_factor <= 0) diagnostics.errorAt("greenai_contract", d.name, "greenai_contract " + d.name + " requires positive carbon_factor");
-    if (!d.has_quality_guardrail) diagnostics.errorAt("greenai_contract", d.name, "greenai_contract " + d.name + " requires quality_guardrail");
-    if (d.claims_mode != "evidence_only") diagnostics.errorAt("greenai_contract", d.name, "claims_mode must be evidence_only");
-    if (d.energy_budget_j < 0 || d.carbon_budget_gco2e < 0) diagnostics.errorAt("greenai_contract", d.name, "budgets must be non-negative");
+    if (!d.has_functional_unit) diagnostics.errorAtNode(n, "greenai_contract " + d.name + " missing functional_unit");
+    if (!d.has_success_criteria) diagnostics.errorAtNode(n, "greenai_contract " + d.name + " missing success_criteria");
+    if (!d.has_boundary) diagnostics.errorAtNode(n, "greenai_contract " + d.name + " missing boundary");
+    if (!d.has_mq || !d.has_dq) diagnostics.errorAtNode(n, "greenai_contract " + d.name + " requires MQ/DQ");
+    if (!d.has_carbon_factor || d.carbon_factor <= 0) diagnostics.errorAtNode(n, "greenai_contract " + d.name + " requires positive carbon_factor");
+    if (!d.has_quality_guardrail) diagnostics.errorAtNode(n, "greenai_contract " + d.name + " requires quality_guardrail");
+    if (d.claims_mode != "evidence_only") diagnostics.errorAtNode(n, "claims_mode must be evidence_only");
+    if (d.energy_budget_j < 0 || d.carbon_budget_gco2e < 0) diagnostics.errorAtNode(n, "budgets must be non-negative");
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_GREENAI_MEASUREMENT *n) {
     if (!contracts.empty() && !contracts.count(n->data.workload))
-        diagnostics.errorAt("greenai_measure", n->data.workload, "greenai_measure references unknown contract: " + n->data.workload);
+        diagnostics.errorAtNode(n, "greenai_measure references unknown contract: " + n->data.workload);
     if (!models.empty() && !models.count(n->data.backend))
-        diagnostics.warningAt("greenai_measure", n->data.workload, "greenai_measure backend " + n->data.backend + " is not a declared model; treating as external measurement source");
+        diagnostics.warningAtNode(n, "greenai_measure backend " + n->data.backend + " is not a declared model; treating as external measurement source");
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_INFER_STATEMENT *n) {
-    if (!models.count(n->model_name)) diagnostics.errorAt("infer", n->model_name, "infer references unknown model: " + n->model_name);
-    if (!tensors.empty() && !tensors.count(n->input_name)) diagnostics.errorAt("infer", n->model_name, "infer references unknown input tensor: " + n->input_name);
+    if (!models.count(n->model_name)) diagnostics.errorAtNode(n, "infer references unknown model: " + n->model_name);
+    if (!tensors.empty() && !tensors.count(n->input_name)) diagnostics.errorAtNode(n, "infer references unknown input tensor: " + n->input_name);
     if (models.count(n->model_name) && tensors.count(n->input_name)) {
         const auto &model = models[n->model_name];
         const auto &tensor = tensors[n->input_name];
         if (!shapeCompatible(model.input_shape, tensor.shape_csv))
-            diagnostics.errorAt("infer", n->model_name, "infer input tensor shape " + tensor.shape_csv + " does not match model " + model.name + " input_shape " + model.input_shape);
+            diagnostics.errorAtNode(n, "infer input tensor shape " + tensor.shape_csv + " does not match model " + model.name + " input_shape " + model.input_shape);
         if (tensors.count(n->output_name)) {
             const auto &outTensor = tensors[n->output_name];
             if (!model.output_shape.empty() && !shapeCompatible(model.output_shape, outTensor.shape_csv))
-                diagnostics.errorAt("infer", n->model_name, "infer output tensor shape " + outTensor.shape_csv + " does not match model " + model.name + " output_shape " + model.output_shape);
+                diagnostics.errorAtNode(n, "infer output tensor shape " + outTensor.shape_csv + " does not match model " + model.name + " output_shape " + model.output_shape);
         } else {
-            diagnostics.warningAt("infer", n->model_name, "infer output " + n->output_name + " is implicit; declare a tensor to enable output_shape validation");
+            diagnostics.warningAtNode(n, "infer output " + n->output_name + " is implicit; declare a tensor to enable output_shape validation");
         }
     }
     return 0;
 }
 
-int SemanticAnalyzer::visit(AST_BREAK*) { if (loopDepth == 0) diagnostics.errorAt("keyword", "break", "break outside loop"); return 0; }
-int SemanticAnalyzer::visit(AST_CONTINUE*) { if (loopDepth == 0) diagnostics.errorAt("keyword", "continue", "continue outside loop"); return 0; }
+int SemanticAnalyzer::visit(AST_BREAK *n) { if (loopDepth == 0) diagnostics.errorAtNode(n, "break outside loop"); return 0; }
+int SemanticAnalyzer::visit(AST_CONTINUE *n) { if (loopDepth == 0) diagnostics.errorAtNode(n, "continue outside loop"); return 0; }
 
 #define STUB(T) int SemanticAnalyzer::visit(T*){ return 0; }
 STUB(AST_EXPRESSION_STATEMENT_RULE) STUB(AST_FUNCTION_RULE) STUB(AST_FUNCTION_CALL_RULE) STUB(AST_ASSIGNMENT_RULE) STUB(AST_IF_STATEMENT) STUB(AST_IF_ELSE_STATEMENT) STUB(AST_GOTO_STATEMENT_RULE) STUB(AST_READ_RULE) STUB(AST_PRINT_RULE) STUB(AST_LABEL_RULE) STUB(AST_GREENAI_REPORT_RULE) STUB(AST_AI_INFER_RULE) STUB(AST_RETURN_STATEMENT) STUB(AST_BINARY_EXPRESSION_RULE) STUB(AST_UNARY_EXPRESSION_RULE) STUB(AST_SIMPLE_VARIABLE) STUB(AST_ARRAY_VARIABLE) STUB(AST_LITERAL) STUB(AST_STRING_LITERAL) STUB(AST_BOOL_LITERAL) STUB(AST_FLOAT_LITERAL) STUB(AST_FUNCTION_CALL_EXPRESSION)
