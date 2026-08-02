@@ -59,8 +59,8 @@ require_contains "${SEMANTIC}" 'diagnostics.errorAtNode('
 require_contains "${MAIN}" 'semantic.diagnostics.hasDiagnostics()'
 require_contains "${TEST}" 'PASS diagnostics coverage matrix gate'
 
-printf '%s\n' 'parser' 'semantic' 'ai' 'greenai' 'lowering' >"${WORK_DIR}/required-stages.txt"
-printf '%s\n' 'error' 'warning' >"${WORK_DIR}/required-severities.txt"
+printf '%s\n' 'parser' 'semantic' 'ai' 'greenai' 'lowering' | sort >"${WORK_DIR}/required-stages.txt"
+printf '%s\n' 'error' 'warning' | sort >"${WORK_DIR}/required-severities.txt"
 
 grep -Eo 'SHD[0-9]{4}' "${HEADER}" | sort >"${WORK_DIR}/header-codes-all.txt"
 sort -u "${WORK_DIR}/header-codes-all.txt" >"${WORK_DIR}/header-codes.txt"
