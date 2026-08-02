@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "../ast/AST.h"
-#include "Diagnostics.h"
 
 class IR_Generator;
 
@@ -60,8 +59,6 @@ private:
     static const int AND = 13;
     static const int UMINUS = 1;
 public:
-    Diagnostics diagnostics;
-
     IR_Generator();
     virtual ~IR_Generator();
     void dump();
