@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
-project(ShortHand LANGUAGES CXX)
+project(ShortHand VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 option(SHORTHAND_ENABLE_ONNXRUNTIME "Enable ONNX Runtime backend" OFF)
@@ -13,6 +16,7 @@ option(SHORTHAND_ENABLE_LIBTORCH "Enable LibTorch backend" OFF)
 option(SHORTHAND_ENABLE_LLAMACPP "Enable llama.cpp backend" OFF)
 option(SHORTHAND_ENABLE_OPENBLAS "Enable OpenBLAS backend" OFF)
 option(SHORTHAND_STRICT_OPTIONAL_BACKENDS "Fail when an enabled optional backend root is missing" OFF)
+option(SHORTHAND_BUILD_TESTING "Build and register ShortHand tests" ON)
 set(ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime root")
 set(TENSORRT_ROOT "" CACHE PATH "TensorRT root")
 set(CUDA_ROOT "" CACHE PATH "CUDA root")
@@ -134,6 +138,11 @@ set(SHORTHAND_AI_RUNTIME_SOURCES
   ${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp
 )
 
+set(SHORTHAND_RUNTIME_ABI_VERSION "1.0.0")
+set(SHORTHAND_RUNTIME_API_VERSION "1.0.0")
+set(SHORTHAND_RUNTIME_ABI_VERSION_MAJOR 1)
+set(SHORTHAND_AI_BRIDGE_CONTRACT_VERSION "shorthand.runtime.ai_runtime_execution_adapter.v1")
+
 set(SHORTHAND_RUNTIME_ABI_RENAMES
   short_runtime_reset=shimpl_runtime_reset
   short_runtime_model_count=shimpl_runtime_model_count
@@ -166,12 +175,62 @@ set_source_files_properties(
   PROPERTIES COMPILE_DEFINITIONS "${SHORTHAND_RUNTIME_ABI_RENAMES}"
 )
 
-add_library(shorthand_runtime STATIC
+set(SHORTHAND_RUNTIME_SOURCES
   ${SRC_DIR}/runtime/ShorthandRuntime.cpp
   ${SRC_DIR}/runtime/RuntimeThreadSafeFacade.cpp
 )
-target_include_directories(shorthand_runtime PUBLIC ${SRC_DIR}/runtime)
+set(SHORTHAND_AI_BRIDGE_SOURCES
+  ${SRC_DIR}/runtime/AIRuntimeBridgeAdapter.cpp
+  ${SRC_DIR}/ai_runtime/AI_Types.cpp
+)
+
+function(shorthand_configure_installable_target target export_name)
+  target_compile_features(${target} PUBLIC cxx_std_17)
+  target_include_directories(${target}
+    PUBLIC
+      $<BUILD_INTERFACE:${SRC_DIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/shorthand>
+  )
+  set_target_properties(${target} PROPERTIES EXPORT_NAME ${export_name})
+endfunction()
+
+add_library(shorthand_runtime STATIC ${SHORTHAND_RUNTIME_SOURCES})
+shorthand_configure_installable_target(shorthand_runtime runtime)
 target_link_libraries(shorthand_runtime PUBLIC Threads::Threads)
+set_target_properties(shorthand_runtime PROPERTIES OUTPUT_NAME shorthand_runtime)
+
+add_library(shorthand_runtime_shared SHARED ${SHORTHAND_RUNTIME_SOURCES})
+shorthand_configure_installable_target(shorthand_runtime_shared runtime_shared)
+target_link_libraries(shorthand_runtime_shared PUBLIC Threads::Threads)
+target_compile_definitions(shorthand_runtime_shared PRIVATE
+  SHORTHAND_RUNTIME_SHARED=1
+  SHORTHAND_RUNTIME_BUILDING_LIBRARY=1
+)
+set_target_properties(shorthand_runtime_shared PROPERTIES
+  OUTPUT_NAME shorthand_runtime
+  VERSION ${SHORTHAND_RUNTIME_ABI_VERSION}
+  SOVERSION ${SHORTHAND_RUNTIME_ABI_VERSION_MAJOR}
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES
+)
+if(WIN32)
+  set_target_properties(shorthand_runtime_shared PROPERTIES OUTPUT_NAME shorthand_runtime_shared)
+endif()
+
+add_library(shorthand_ai_bridge STATIC ${SHORTHAND_AI_BRIDGE_SOURCES})
+shorthand_configure_installable_target(shorthand_ai_bridge ai_bridge)
+set_target_properties(shorthand_ai_bridge PROPERTIES OUTPUT_NAME shorthand_ai_bridge)
+
+add_library(shorthand_ai_bridge_shared SHARED ${SHORTHAND_AI_BRIDGE_SOURCES})
+shorthand_configure_installable_target(shorthand_ai_bridge_shared ai_bridge_shared)
+set_target_properties(shorthand_ai_bridge_shared PROPERTIES
+  OUTPUT_NAME shorthand_ai_bridge
+  VERSION ${SHORTHAND_RUNTIME_ABI_VERSION}
+  SOVERSION ${SHORTHAND_RUNTIME_ABI_VERSION_MAJOR}
+)
+if(WIN32)
+  set_target_properties(shorthand_ai_bridge_shared PROPERTIES OUTPUT_NAME shorthand_ai_bridge_shared)
+endif()
 
 add_executable(short_hand
   ${SRC_DIR}/main.cpp
@@ -218,24 +277,96 @@ else()
   message(STATUS "LIBTORCH_ROOT not set; optional training demo is not built by CMake")
 endif()
 
-enable_testing()
-
-add_test(
-  NAME green_ai_tool_tests
-  COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/green_ai/test_green_ai_tool.sh
-)
-set_tests_properties(green_ai_tool_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_test(
-  NAME cmake_short_hand_greenai_run
-  COMMAND $<TARGET_FILE:short_hand> ${CMAKE_CURRENT_SOURCE_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short run
-)
-set_tests_properties(cmake_short_hand_greenai_run PROPERTIES
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  PASS_REGULAR_EXPRESSION "GreenAI workload"
+install(TARGETS
+  shorthand_runtime
+  shorthand_runtime_shared
+  shorthand_ai_bridge
+  shorthand_ai_bridge_shared
+  EXPORT ShortHandTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-add_test(
-  NAME cmake_shorthand_runtime_builds
-  COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_runtime>"
+install(FILES
+  ${SRC_DIR}/runtime/ShorthandRuntime.h
+  ${SRC_DIR}/runtime/AIRuntimeBridgeAdapter.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/runtime
 )
+install(FILES
+  ${SRC_DIR}/ai_runtime/AI_Types.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/ai_runtime
+)
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/abi/shorthand_runtime_abi_v1.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/abi
+)
+
+set(SHORTHAND_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/ShortHand)
+configure_package_config_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ShortHandConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/ShortHandConfig.cmake
+  INSTALL_DESTINATION ${SHORTHAND_INSTALL_CMAKEDIR}
+)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/ShortHandConfigVersion.cmake
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/shorthand-runtime.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/shorthand-runtime.pc
+  @ONLY
+)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/shorthand-ai-bridge.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/shorthand-ai-bridge.pc
+  @ONLY
+)
+
+install(EXPORT ShortHandTargets
+  FILE ShortHandTargets.cmake
+  NAMESPACE ShortHand::
+  DESTINATION ${SHORTHAND_INSTALL_CMAKEDIR}
+)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/ShortHandConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/ShortHandConfigVersion.cmake
+  DESTINATION ${SHORTHAND_INSTALL_CMAKEDIR}
+)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/shorthand-runtime.pc
+  ${CMAKE_CURRENT_BINARY_DIR}/shorthand-ai-bridge.pc
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
+
+if(SHORTHAND_BUILD_TESTING)
+  enable_testing()
+
+  add_test(
+    NAME green_ai_tool_tests
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/green_ai/test_green_ai_tool.sh
+  )
+  set_tests_properties(green_ai_tool_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_test(
+    NAME cmake_short_hand_greenai_run
+    COMMAND $<TARGET_FILE:short_hand> ${CMAKE_CURRENT_SOURCE_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short run
+  )
+  set_tests_properties(cmake_short_hand_greenai_run PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    PASS_REGULAR_EXPRESSION "GreenAI workload"
+  )
+
+  add_test(
+    NAME cmake_shorthand_runtime_builds
+    COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_runtime>"
+  )
+
+  add_test(
+    NAME runtime_production_packaging
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_runtime_production_packaging.sh
+  )
+  set_tests_properties(runtime_production_packaging PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
