@@ -102,7 +102,7 @@ C
 
 ${CC:-cc} -std=c11 -Wall -Wextra -Werror -I"${ROOT_DIR}" \
   -c "${WORK_DIR}/frozen_v1_consumer.c" -o "${WORK_DIR}/frozen_v1_consumer.o"
-${CXX:-g++} "${WORK_DIR}/frozen_v1_consumer.o" "${LIB}" -o "${WORK_DIR}/frozen_v1_consumer"
+${CXX:-g++} -pthread "${WORK_DIR}/frozen_v1_consumer.o" "${LIB}" -o "${WORK_DIR}/frozen_v1_consumer"
 "${WORK_DIR}/frozen_v1_consumer"
 
 cat >"${WORK_DIR}/current_api_consumer.c" <<'C'
@@ -127,7 +127,7 @@ C
 
 ${CC:-cc} -std=c11 -Wall -Wextra -Werror -I"${ROOT_DIR}" \
   -c "${WORK_DIR}/current_api_consumer.c" -o "${WORK_DIR}/current_api_consumer.o"
-${CXX:-g++} "${WORK_DIR}/current_api_consumer.o" "${LIB}" -o "${WORK_DIR}/current_api_consumer"
+${CXX:-g++} -pthread "${WORK_DIR}/current_api_consumer.o" "${LIB}" -o "${WORK_DIR}/current_api_consumer"
 "${WORK_DIR}/current_api_consumer"
 
 printf 'ABI_SYMBOL_COUNT %s\n' "${symbol_count}"

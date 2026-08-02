@@ -48,6 +48,7 @@ endif()
 
 find_package(BISON REQUIRED)
 find_package(FLEX QUIET)
+find_package(Threads REQUIRED)
 find_program(LLVM_CONFIG llvm-config)
 find_program(BASH_EXECUTABLE bash REQUIRED)
 
@@ -133,10 +134,44 @@ set(SHORTHAND_AI_RUNTIME_SOURCES
   ${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp
 )
 
+set(SHORTHAND_RUNTIME_ABI_RENAMES
+  short_runtime_reset=shimpl_runtime_reset
+  short_runtime_model_count=shimpl_runtime_model_count
+  short_runtime_tensor_count=shimpl_runtime_tensor_count
+  short_runtime_contract_count=shimpl_runtime_contract_count
+  short_runtime_measurement_count=shimpl_runtime_measurement_count
+  short_runtime_infer_count=shimpl_runtime_infer_count
+  short_runtime_infer_success_count=shimpl_runtime_infer_success_count
+  short_runtime_infer_not_executed_count=shimpl_runtime_infer_not_executed_count
+  short_runtime_infer_backend_unavailable_count=shimpl_runtime_infer_backend_unavailable_count
+  short_runtime_infer_invalid_input_count=shimpl_runtime_infer_invalid_input_count
+  short_runtime_last_infer_status=shimpl_runtime_last_infer_status
+  short_runtime_last_infer_backend=shimpl_runtime_last_infer_backend
+  short_runtime_last_infer_reason=shimpl_runtime_last_infer_reason
+  short_runtime_last_infer_telemetry_json=shimpl_runtime_last_infer_telemetry_json
+  short_runtime_infer_bridge_request_json=shimpl_runtime_infer_bridge_request_json
+  short_runtime_observability_json=shimpl_runtime_observability_json
+  short_runtime_prometheus_metrics=shimpl_runtime_prometheus_metrics
+  short_runtime_otlp_spans_json=shimpl_runtime_otlp_spans_json
+  short_ai_register_model=shimpl_ai_register_model
+  short_ai_register_tensor=shimpl_ai_register_tensor
+  short_greenai_register_contract=shimpl_greenai_register_contract
+  short_greenai_record_measurement=shimpl_greenai_record_measurement
+  short_ai_infer=shimpl_ai_infer
+  short_ai_infer_f32=shimpl_ai_infer_f32
+  short_ai_infer_legacy=shimpl_ai_infer_legacy
+)
+set_source_files_properties(
+  ${SRC_DIR}/runtime/ShorthandRuntime.cpp
+  PROPERTIES COMPILE_DEFINITIONS "${SHORTHAND_RUNTIME_ABI_RENAMES}"
+)
+
 add_library(shorthand_runtime STATIC
   ${SRC_DIR}/runtime/ShorthandRuntime.cpp
+  ${SRC_DIR}/runtime/RuntimeThreadSafeFacade.cpp
 )
 target_include_directories(shorthand_runtime PUBLIC ${SRC_DIR}/runtime)
+target_link_libraries(shorthand_runtime PUBLIC Threads::Threads)
 
 add_executable(short_hand
   ${SRC_DIR}/main.cpp

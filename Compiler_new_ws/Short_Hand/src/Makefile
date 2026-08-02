@@ -70,8 +70,36 @@ AI_TRAIN_BIN := ../build/short_ai_train
 GREEN_AI_TOOL_BIN := ../build/green_ai_tool
 GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
 SHORTHAND_RUNTIME_SRC := runtime/ShorthandRuntime.cpp
-SHORTHAND_RUNTIME_OBJ := ../build/ShorthandRuntime.o
+SHORTHAND_RUNTIME_FACADE_SRC := runtime/RuntimeThreadSafeFacade.cpp
+SHORTHAND_RUNTIME_OBJ := ../build/ShorthandRuntimeImpl.o
+SHORTHAND_RUNTIME_FACADE_OBJ := ../build/RuntimeThreadSafeFacade.o
 SHORTHAND_RUNTIME_LIB := ../build/libshorthand_runtime.a
+RUNTIME_ABI_RENAME_DEFS := \
+	-Dshort_runtime_reset=shimpl_runtime_reset \
+	-Dshort_runtime_model_count=shimpl_runtime_model_count \
+	-Dshort_runtime_tensor_count=shimpl_runtime_tensor_count \
+	-Dshort_runtime_contract_count=shimpl_runtime_contract_count \
+	-Dshort_runtime_measurement_count=shimpl_runtime_measurement_count \
+	-Dshort_runtime_infer_count=shimpl_runtime_infer_count \
+	-Dshort_runtime_infer_success_count=shimpl_runtime_infer_success_count \
+	-Dshort_runtime_infer_not_executed_count=shimpl_runtime_infer_not_executed_count \
+	-Dshort_runtime_infer_backend_unavailable_count=shimpl_runtime_infer_backend_unavailable_count \
+	-Dshort_runtime_infer_invalid_input_count=shimpl_runtime_infer_invalid_input_count \
+	-Dshort_runtime_last_infer_status=shimpl_runtime_last_infer_status \
+	-Dshort_runtime_last_infer_backend=shimpl_runtime_last_infer_backend \
+	-Dshort_runtime_last_infer_reason=shimpl_runtime_last_infer_reason \
+	-Dshort_runtime_last_infer_telemetry_json=shimpl_runtime_last_infer_telemetry_json \
+	-Dshort_runtime_infer_bridge_request_json=shimpl_runtime_infer_bridge_request_json \
+	-Dshort_runtime_observability_json=shimpl_runtime_observability_json \
+	-Dshort_runtime_prometheus_metrics=shimpl_runtime_prometheus_metrics \
+	-Dshort_runtime_otlp_spans_json=shimpl_runtime_otlp_spans_json \
+	-Dshort_ai_register_model=shimpl_ai_register_model \
+	-Dshort_ai_register_tensor=shimpl_ai_register_tensor \
+	-Dshort_greenai_register_contract=shimpl_greenai_register_contract \
+	-Dshort_greenai_record_measurement=shimpl_greenai_record_measurement \
+	-Dshort_ai_infer=shimpl_ai_infer \
+	-Dshort_ai_infer_f32=shimpl_ai_infer_f32 \
+	-Dshort_ai_infer_legacy=shimpl_ai_infer_legacy
 
 all: compiler
 
@@ -107,10 +135,11 @@ short_hand: patch-generated-parser runtime-source-lowering $(SRC)
 
 runtime_lib: $(SHORTHAND_RUNTIME_LIB)
 
-$(SHORTHAND_RUNTIME_LIB): $(SHORTHAND_RUNTIME_SRC) runtime/ShorthandRuntime.h
+$(SHORTHAND_RUNTIME_LIB): $(SHORTHAND_RUNTIME_SRC) $(SHORTHAND_RUNTIME_FACADE_SRC) runtime/ShorthandRuntime.h
 	@mkdir -p ../build
-	$(CXX) $(CXXFLAGS) -c $(SHORTHAND_RUNTIME_SRC) -o $(SHORTHAND_RUNTIME_OBJ)
-	ar rcs $(SHORTHAND_RUNTIME_LIB) $(SHORTHAND_RUNTIME_OBJ)
+	$(CXX) $(CXXFLAGS) $(RUNTIME_ABI_RENAME_DEFS) -c $(SHORTHAND_RUNTIME_SRC) -o $(SHORTHAND_RUNTIME_OBJ)
+	$(CXX) $(CXXFLAGS) -c $(SHORTHAND_RUNTIME_FACADE_SRC) -o $(SHORTHAND_RUNTIME_FACADE_OBJ)
+	ar rcs $(SHORTHAND_RUNTIME_LIB) $(SHORTHAND_RUNTIME_OBJ) $(SHORTHAND_RUNTIME_FACADE_OBJ)
 
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build
@@ -141,7 +170,7 @@ regen:
 
 .PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o *.bc *.ir *.o
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output

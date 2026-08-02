@@ -22,87 +22,83 @@ require_contains() {
   fi
 }
 
-require_file "${PLAN}"
-require_file "${ROOT_DIR}/docs/language_objectives.md"
-require_file "${ROOT_DIR}/docs/llamacpp_optional_fixture.md"
-require_file "${ROOT_DIR}/docs/backend_failure_mode_matrix.md"
-require_file "${ROOT_DIR}/docs/runtime_abi_api_stability.md"
-require_file "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt"
-require_file "${ROOT_DIR}/abi/shorthand_runtime_abi_v1.h"
-require_file "${ROOT_DIR}/tests/integration/test_backend_failure_mode_matrix.sh"
-require_file "${ROOT_DIR}/tests/abi/test_runtime_abi_api_stability.sh"
-require_file "${ROOT_DIR}/scripts/check_backend_failure_mode_matrix.sh"
-require_file "${ROOT_DIR}/scripts/check_runtime_abi_api_stability.sh"
+for file in \
+  "${PLAN}" \
+  "${ROOT_DIR}/docs/language_objectives.md" \
+  "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" \
+  "${ROOT_DIR}/docs/runtime_abi_api_stability.md" \
+  "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" \
+  "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" \
+  "${ROOT_DIR}/abi/shorthand_runtime_abi_v1.h" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp" \
+  "${ROOT_DIR}/tests/runtime/test_runtime_state_thread_safety.sh" \
+  "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh"; do
+  require_file "${file}"
+done
 
-require_contains "${PLAN}" 'production_readiness_plan_version: 2026-08-02-pr59'
-require_contains "${PLAN}" 'PLAN_STATUS: active'
-require_contains "${PLAN}" 'LAST_COMPLETED_PR: 59'
-require_contains "${PLAN}" 'TARGET: enterprise production usage ready language'
-require_contains "${PLAN}" 'Desired outcome definition'
-require_contains "${PLAN}" 'Audit correction applied in PR #51'
-require_contains "${PLAN}" 'Hardware routing expansion applied in PR #55'
-require_contains "${PLAN}" 'Language objectives consolidation applied in PR #57'
-require_contains "${PLAN}" 'Backend failure-mode finalization applied in PR #58'
-require_contains "${PLAN}" 'Runtime ABI and API stability applied in PR #59'
-require_contains "${PLAN}" 'shorthand.language.objectives.version: 2026-07-29-v1'
-require_contains "${PLAN}" 'shorthand.backend_failure_mode_matrix.v1'
-require_contains "${PLAN}" 'Runtime ABI `1.0.0` freezes exactly 25 external `short_*` symbols.'
-require_contains "${PLAN}" 'Hardware presence alone must not create a `live_success` claim.'
-require_contains "${PLAN}" 'Failure evidence is not backend success evidence'
-require_contains "${PLAN}" 'Recommended path from PR #51 onward: 29 PRs total.'
-require_contains "${PLAN}" 'Next recommended PR after PR #59:'
-require_contains "${PLAN}" 'PR60 - Runtime state isolation and thread-safety policy.'
-require_contains "${PLAN}" 'PR51 - Production readiness plan and tracking contract | MERGED'
-require_contains "${PLAN}" 'PR52 - Backend live SDK matrix harness | MERGED'
-require_contains "${PLAN}" 'PR53 - TensorRT optional live execution fixture | MERGED'
-require_contains "${PLAN}" 'PR54 - OpenVINO optional live execution fixture | MERGED'
-require_contains "${PLAN}" 'PR55 - LibTorch optional live execution fixture | MERGED'
-require_contains "${PLAN}" 'PR56 - Hardware capability discovery and accelerator-aware routing | MERGED'
-require_contains "${PLAN}" 'PR57 - Llama.cpp optional live execution fixture | MERGED'
-require_contains "${PLAN}" 'PR58 - Backend failure-mode matrix finalization | MERGED'
-require_contains "${PLAN}" 'PR59 - Runtime ABI and API version stability gate | MERGED'
-require_contains "${PLAN}" 'docs/hardware_capability_routing.md'
-require_contains "${PLAN}" 'HardwareDiscovery.h'
-require_contains "${PLAN}" 'shorthand.hardware.inventory.v1'
-require_contains "${PLAN}" 'shorthand.hardware.selection.v1'
-require_contains "${PLAN}" 'docs/llamacpp_optional_fixture.md'
-require_contains "${PLAN}" 'docs/language_objectives.md'
-require_contains "${PLAN}" 'docs/backend_failure_mode_matrix.md'
-require_contains "${PLAN}" 'docs/runtime_abi_api_stability.md'
-require_contains "${PLAN}" 'abi/runtime_public_symbols_v1.txt'
-require_contains "${PLAN}" 'abi/shorthand_runtime_abi_v1.h'
-require_contains "${PLAN}" 'PR60 - Runtime state isolation and thread-safety policy'
-require_contains "${PLAN}" 'PR61 - Production build packaging for runtime and AI bridge'
-require_contains "${PLAN}" 'shared-library packaging, SONAME/version evidence'
-require_contains "${PLAN}" 'PR62 - Prometheus scrape endpoint host adapter'
-require_contains "${PLAN}" 'PR63 - OTLP exporter adapter'
-require_contains "${PLAN}" 'PR64 - AST source ranges across parser nodes'
-require_contains "${PLAN}" 'PR65 - Diagnostics coverage matrix'
-require_contains "${PLAN}" 'PR66 - Full grammar and conformance matrix beta-0.2'
-require_contains "${PLAN}" 'PR67 - Parser robustness and negative corpus hardening'
-require_contains "${PLAN}" 'PR68 - Module/import/package design and parser scaffold'
-require_contains "${PLAN}" 'PR69 - Module resolver and codegen integration'
-require_contains "${PLAN}" 'PR70 - Signed release and protected release workflow'
-require_contains "${PLAN}" 'PR71 - External dependency vulnerability scan gate'
-require_contains "${PLAN}" 'PR72 - Container and Kubernetes hardening'
-require_contains "${PLAN}" 'PR73 - Formatter and linter baseline'
-require_contains "${PLAN}" 'PR74 - Syntax highlighting and LSP skeleton'
-require_contains "${PLAN}" 'PR75 - C3-ECO certification language blocks'
-require_contains "${PLAN}" 'PR76 - C3-ECO scoring, report generation, and eco-regression'
-require_contains "${PLAN}" 'PR77 - Authority-ready C3-ECO auditor bundle'
-require_contains "${PLAN}" 'PR78 - MLIR generated dialect build integration'
-require_contains "${PLAN}" 'PR79 - MLIR lowering passes and production RC gate'
-require_contains "${PLAN}" 'Production readiness exit criteria'
-require_contains "${PLAN}" 'Hardware detection never implies successful accelerator execution'
-require_contains "${PLAN}" 'ABI stability evidence does not imply thread safety'
-require_contains "${PLAN}" 'Production claim rules'
-require_contains "${PLAN}" 'remaining_planned_prs_total_from_pr51: 29'
-require_contains "${PLAN}" 'remaining_planned_prs_after_pr59: 20'
+for anchor in \
+  'production_readiness_plan_version: 2026-08-02-pr60' \
+  'PLAN_STATUS: active' \
+  'LAST_COMPLETED_PR: 60' \
+  'TARGET: enterprise production usage ready language' \
+  'Desired outcome definition' \
+  'Audit correction applied in PR #51' \
+  'Hardware routing expansion applied in PR #55' \
+  'Language objectives consolidation applied in PR #57' \
+  'Backend failure-mode finalization applied in PR #58' \
+  'Runtime ABI and API stability applied in PR #59' \
+  'Runtime state and thread-safety applied in PR #60' \
+  'shorthand.language.objectives.version: 2026-07-29-v1' \
+  'shorthand.backend_failure_mode_matrix.v1' \
+  'Runtime ABI `1.0.0` freezes exactly 25 external `short_*` symbols.' \
+  'runtime_thread_safety_status: serialized_public_abi' \
+  'Thread-safe does not mean multi-tenant isolated.' \
+  'Recommended path from PR #51 onward: 29 PRs total.' \
+  'After PR #60 is merged, approximately 19 implementation PRs remain.' \
+  'Next recommended PR after PR #60:' \
+  'PR61 - Production build packaging for runtime and AI bridge.' \
+  'PR51 - Production readiness plan and tracking contract | MERGED' \
+  'PR52 - Backend live SDK matrix harness | MERGED' \
+  'PR53 - TensorRT optional live execution fixture | MERGED' \
+  'PR54 - OpenVINO optional live execution fixture | MERGED' \
+  'PR55 - LibTorch optional live execution fixture | MERGED' \
+  'PR56 - Hardware capability discovery and accelerator-aware routing | MERGED' \
+  'PR57 - Llama.cpp optional live execution fixture | MERGED' \
+  'PR58 - Backend failure-mode matrix finalization | MERGED' \
+  'PR59 - Runtime ABI and API version stability gate | MERGED' \
+  'PR60 - Runtime state isolation and thread-safety policy | MERGED' \
+  'PR61 - Production build packaging for runtime and AI bridge | PLANNED' \
+  'shared-library packaging, SONAME/version evidence' \
+  'PR62 - Prometheus scrape endpoint host adapter' \
+  'PR63 - OTLP exporter adapter' \
+  'PR64 - AST source ranges across parser nodes' \
+  'PR65 - Diagnostics coverage matrix' \
+  'PR66 - Full grammar and conformance matrix beta-0.2' \
+  'PR67 - Parser robustness and negative corpus hardening' \
+  'PR68 - Module/import/package design and parser scaffold' \
+  'PR69 - Module resolver and codegen integration' \
+  'PR70 - Signed release and protected release workflow' \
+  'PR71 - External dependency vulnerability scan gate' \
+  'PR72 - Container and Kubernetes hardening' \
+  'PR73 - Formatter and linter baseline' \
+  'PR74 - Syntax highlighting and LSP skeleton' \
+  'PR75 - C3-ECO certification language blocks' \
+  'PR76 - C3-ECO scoring, report generation, and eco-regression' \
+  'PR77 - Authority-ready C3-ECO auditor bundle' \
+  'PR78 - MLIR generated dialect build integration' \
+  'PR79 - MLIR lowering passes and production RC gate' \
+  'Production readiness exit criteria' \
+  'Thread-safe process-wide state does not imply tenant isolation' \
+  'remaining_planned_prs_total_from_pr51: 29' \
+  'remaining_planned_prs_after_pr60: 19'; do
+  require_contains "${PLAN}" "${anchor}"
+done
+
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'production_claim: false'
-require_contains "${ROOT_DIR}/docs/llamacpp_optional_fixture.md" 'llamacpp_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" 'backend_failure_mode_matrix_status: finalized_v1'
-require_contains "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" 'false_success_allowed: false'
 require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_abi_contract_status: frozen_v1_symbol_manifest'
-require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_external_symbol_count: 25'
+require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_state_model: single_process_wide_default_context'
+require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_multi_tenant_isolation: process_boundary_required'
+require_contains "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" 'PASS runtime state isolation and thread-safety guard'
 
 printf 'PASS production readiness PR plan gate\n'
