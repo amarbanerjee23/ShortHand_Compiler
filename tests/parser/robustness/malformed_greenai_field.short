@@ -1,0 +1,5 @@
+int x;
+greenai_contract efficiency {
+    boundary;
+};
+x = 1;
