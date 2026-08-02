@@ -17,6 +17,7 @@ option(SHORTHAND_ENABLE_LLAMACPP "Enable llama.cpp backend" OFF)
 option(SHORTHAND_ENABLE_OPENBLAS "Enable OpenBLAS backend" OFF)
 option(SHORTHAND_STRICT_OPTIONAL_BACKENDS "Fail when an enabled optional backend root is missing" OFF)
 option(SHORTHAND_BUILD_TESTING "Build and register ShortHand tests" ON)
+option(SHORTHAND_BUILD_PROMETHEUS_ADAPTER "Build the Prometheus scrape endpoint host adapter" ON)
 set(ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime root")
 set(TENSORRT_ROOT "" CACHE PATH "TensorRT root")
 set(CUDA_ROOT "" CACHE PATH "CUDA root")
@@ -232,6 +233,14 @@ if(WIN32)
   set_target_properties(shorthand_ai_bridge_shared PROPERTIES OUTPUT_NAME shorthand_ai_bridge_shared)
 endif()
 
+if(SHORTHAND_BUILD_PROMETHEUS_ADAPTER)
+  add_executable(shorthand_prometheus_adapter
+    ${SRC_DIR}/operations/PrometheusScrapeAdapter.cpp
+  )
+  target_include_directories(shorthand_prometheus_adapter PRIVATE ${SRC_DIR})
+  target_link_libraries(shorthand_prometheus_adapter PRIVATE shorthand_runtime)
+endif()
+
 add_executable(short_hand
   ${SRC_DIR}/main.cpp
   ${PARSER_SRC}
@@ -288,6 +297,12 @@ install(TARGETS
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
+
+if(TARGET shorthand_prometheus_adapter)
+  install(TARGETS shorthand_prometheus_adapter
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+endif()
 
 install(FILES
   ${SRC_DIR}/runtime/ShorthandRuntime.h
@@ -369,4 +384,12 @@ if(SHORTHAND_BUILD_TESTING)
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_runtime_production_packaging.sh
   )
   set_tests_properties(runtime_production_packaging PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  if(TARGET shorthand_prometheus_adapter)
+    add_test(
+      NAME prometheus_scrape_adapter
+      COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_prometheus_scrape_adapter.sh
+    )
+    set_tests_properties(prometheus_scrape_adapter PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
 endif()

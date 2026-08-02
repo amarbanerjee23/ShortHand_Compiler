@@ -39,6 +39,7 @@ required_files=(
   scripts/check_runtime_abi_api_stability.sh
   scripts/check_runtime_state_thread_safety.sh
   scripts/check_runtime_production_packaging.sh
+  scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
@@ -68,6 +69,7 @@ required_files=(
   docs/runtime_abi_api_stability.md
   docs/runtime_state_and_thread_safety.md
   docs/runtime_production_packaging.md
+  docs/prometheus_scrape_host_adapter.md
   docs/compiled_infer_bridge.md
   docs/backend_compatibility_matrix.md
   docs/backend_live_sdk_matrix.md
@@ -88,6 +90,7 @@ required_files=(
   Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h
   Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
   Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp
+  Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp
   Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h
   Compiler_new_ws/Short_Hand/src/Makefile
   CMakeLists.txt
@@ -95,6 +98,7 @@ required_files=(
   tests/abi/test_runtime_abi_api_stability.sh
   tests/runtime/test_runtime_state_thread_safety.sh
   tests/packaging/test_runtime_production_packaging.sh
+  tests/operations/test_prometheus_scrape_adapter.sh
   tests/codegen/test_runtime_ai_bridge_link_build.sh
   tests/codegen/test_runtime_ai_bridge_execution_path.sh
   tests/codegen/test_runtime_observability_exports.sh
@@ -143,7 +147,8 @@ for gate in \
   check_ai_runtime_execution_adapter.sh \
   check_runtime_ai_bridge_link_build.sh \
   check_runtime_ai_bridge_execution_path.sh \
-  check_runtime_observability_exports.sh; do
+  check_runtime_observability_exports.sh \
+  check_prometheus_scrape_adapter.sh; do
   require_contains scripts/check_enterprise_hardening.sh "${gate}"
 done
 
@@ -162,6 +167,7 @@ shell_files=(
   scripts/check_runtime_abi_api_stability.sh
   scripts/check_runtime_state_thread_safety.sh
   scripts/check_runtime_production_packaging.sh
+  scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_c3eco_claims_and_schema.sh
   scripts/check_mlir_foundation.sh
@@ -184,6 +190,7 @@ shell_files=(
   tests/abi/test_runtime_abi_api_stability.sh
   tests/runtime/test_runtime_state_thread_safety.sh
   tests/packaging/test_runtime_production_packaging.sh
+  tests/operations/test_prometheus_scrape_adapter.sh
   tests/integration/test_backend_failure_mode_matrix.sh
 )
 for script in "${shell_files[@]}"; do require_bash_syntax "${script}"; done
@@ -192,20 +199,23 @@ require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-02-pr61' \
-  'LAST_COMPLETED_PR: 61' \
+  'production_readiness_plan_version: 2026-08-02-pr62' \
+  'LAST_COMPLETED_PR: 62' \
   'Language objectives consolidation applied in PR #57' \
   'Backend failure-mode finalization applied in PR #58' \
   'Runtime ABI and API stability applied in PR #59' \
   'Runtime state and thread-safety applied in PR #60' \
   'Production build packaging applied in PR #61' \
+  'Prometheus scrape endpoint host adapter applied in PR #62' \
   'Recommended path from PR #51 onward: 29 PRs total.' \
   'PR59 - Runtime ABI and API version stability gate | MERGED' \
   'PR60 - Runtime state isolation and thread-safety policy | MERGED' \
   'PR61 - Production build packaging for runtime and AI bridge | MERGED' \
-  'Next recommended PR after PR #61:' \
-  'PR62 - Prometheus scrape endpoint host adapter.' \
+  'PR62 - Prometheus scrape endpoint host adapter | MERGED' \
+  'Next recommended PR after PR #62:' \
+  'PR63 - OTLP exporter adapter.' \
   'remaining_planned_prs_after_pr61: 18' \
+  'remaining_planned_prs_after_pr62: 17' \
   'PR67 - Parser robustness and negative corpus hardening' \
   'PR79 - MLIR lowering passes and production RC gate'; do
   require_contains docs/production_readiness_pr_plan.md "${anchor}"
@@ -274,6 +284,25 @@ require_contains CMakeLists.txt 'write_basic_package_version_file('
 require_contains tests/packaging/test_runtime_production_packaging.sh 'find_package(ShortHand 1 CONFIG REQUIRED)'
 require_contains tests/packaging/test_runtime_production_packaging.sh 'PASS production runtime and AI bridge packaging consumer gate'
 require_contains scripts/check_runtime_production_packaging.sh 'PASS runtime production packaging guard'
+
+for anchor in \
+  'prometheus_scrape_adapter_contract_version: 1.0.0' \
+  'prometheus_scrape_adapter_status: loopback_default_bounded_http_metrics_host' \
+  'prometheus_metrics_source: frozen_runtime_short_runtime_prometheus_metrics' \
+  'runtime_abi_change: none' \
+  'runtime_external_symbol_count: 25' \
+  'production_claim_boundary: scrape_adapter_is_not_hardened_public_ingress'; do
+  require_contains docs/prometheus_scrape_host_adapter.md "${anchor}"
+done
+require_contains Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp 'listen_address = "127.0.0.1"'
+require_contains Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp 'short_runtime_prometheus_metrics()'
+require_contains Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp 'PROMETHEUS_ADAPTER_LISTENING'
+require_contains CMakeLists.txt 'add_executable(shorthand_prometheus_adapter'
+require_contains CMakeLists.txt 'target_link_libraries(shorthand_prometheus_adapter PRIVATE shorthand_runtime)'
+require_contains CMakeLists.txt 'install(TARGETS shorthand_prometheus_adapter'
+require_contains CMakeLists.txt 'NAME prometheus_scrape_adapter'
+require_contains tests/operations/test_prometheus_scrape_adapter.sh 'PASS Prometheus scrape endpoint host adapter gate'
+require_contains scripts/check_prometheus_scrape_adapter.sh 'PASS Prometheus scrape endpoint host adapter guard'
 
 require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
 require_contains docs/backend_compatibility_matrix.md 'backend_failure_mode_matrix_status: finalized_v1'

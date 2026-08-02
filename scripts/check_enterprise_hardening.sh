@@ -117,6 +117,15 @@ check_contains docs/runtime_observability_exports.md 'Prometheus-style metrics'
 check_contains docs/runtime_observability_exports.md 'OTLP-like span JSON'
 check_contains scripts/check_runtime_observability_exports.sh 'PASS runtime observability export gate'
 check_contains tests/codegen/test_runtime_observability_exports.sh 'PASS runtime observability export gate'
+check_contains docs/prometheus_scrape_host_adapter.md 'prometheus_scrape_adapter_status: loopback_default_bounded_http_metrics_host'
+check_contains docs/prometheus_scrape_host_adapter.md 'production_claim_boundary: scrape_adapter_is_not_hardened_public_ingress'
+check_contains Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp 'short_runtime_prometheus_metrics()'
+check_contains Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp 'listen_address = "127.0.0.1"'
+check_contains Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp 'Request Header Fields Too Large'
+check_contains CMakeLists.txt 'add_executable(shorthand_prometheus_adapter'
+check_contains CMakeLists.txt 'install(TARGETS shorthand_prometheus_adapter'
+check_contains tests/operations/test_prometheus_scrape_adapter.sh 'PASS Prometheus scrape endpoint host adapter gate'
+check_contains scripts/check_prometheus_scrape_adapter.sh 'PASS Prometheus scrape endpoint host adapter guard'
 check_contains docs/ai_runtime_bridge_linkage.md 'runtime-hook ABI ownership'
 check_contains scripts/check_ai_runtime_bridge_linkage.sh 'PASS AI runtime bridge linkage gate'
 check_not_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'extern "C" int short_ai_infer'
@@ -264,6 +273,14 @@ if bash scripts/check_runtime_observability_exports.sh >/tmp/shorthand_runtime_o
 else
   fail_check "runtime observability export gate failed"
   cat /tmp/shorthand_runtime_observability_exports.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_prometheus_scrape_adapter.sh >/tmp/shorthand_prometheus_scrape_adapter.out 2>&1; then
+  log "PASS Prometheus scrape endpoint host adapter gate completed"
+  cat /tmp/shorthand_prometheus_scrape_adapter.out | tee -a "${LOG_FILE}"
+else
+  fail_check "Prometheus scrape endpoint host adapter gate failed"
+  cat /tmp/shorthand_prometheus_scrape_adapter.out | tee -a "${LOG_FILE}" || true
 fi
 
 if [[ "${fail}" -ne 0 ]]; then

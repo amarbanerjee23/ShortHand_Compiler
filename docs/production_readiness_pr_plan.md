@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-02-pr61
+production_readiness_plan_version: 2026-08-02-pr62
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 61
+LAST_COMPLETED_PR: 62
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -103,6 +103,32 @@ Evidence:
 
 Packaging does not claim third-party backend SDK execution, tenant isolation, deployment readiness, signed releases or full production readiness.
 
+## Prometheus scrape endpoint host adapter applied in PR #62
+
+PR #62 exposes the runtime's existing Prometheus text through an optional installed host executable without changing the frozen runtime ABI.
+
+The adapter contract now provides:
+
+1. `GET /metrics` backed by `short_runtime_prometheus_metrics()`,
+2. `GET /healthz` for local process health,
+3. loopback-only default binding on `127.0.0.1:9464`,
+4. bounded request headers and socket timeouts,
+5. deterministic maximum-request shutdown for tests and supervised jobs,
+6. explicit 400, 404, 405 and 431 behavior,
+7. a clean CMake build and installed executable,
+8. real socket-level response validation,
+9. an unchanged runtime ABI v1 manifest of exactly 25 public symbols.
+
+Evidence:
+
+- `docs/prometheus_scrape_host_adapter.md`
+- `Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp`
+- `tests/operations/test_prometheus_scrape_adapter.sh`
+- `scripts/check_prometheus_scrape_adapter.sh`
+- `CMakeLists.txt`
+
+The adapter is not authenticated or TLS-enabled public ingress. Non-loopback exposure requires an external reverse proxy, service mesh and network policy. It does not aggregate metrics across ShortHand processes.
+
 ## Status values
 
 STATUS values: PLANNED, IN_PROGRESS, MERGED, BLOCKED, DEFERRED
@@ -119,7 +145,7 @@ Every roadmap PR must update:
 
 A production claim is blocked until every required row is MERGED or intentionally DEFERRED with a documented production impact.
 
-## Current baseline after PR #61
+## Current baseline after PR #62
 
 - Language and conformance remain guarded at `beta-0.1`.
 - Consolidated language objectives are versioned and guarded.
@@ -136,22 +162,24 @@ A production claim is blocked until every required row is MERGED or intentionall
 - Shared artifacts carry version `1.0.0` and SOVERSION `1`.
 - CMake and pkg-config downstream consumers are guarded.
 - Current and frozen ABI headers are installed from the package prefix.
+- An installed loopback-default Prometheus scrape host exposes `/metrics` and `/healthz` with bounded HTTP handling.
+- Real socket tests prove status, content-type, representative metrics, method policy and deterministic shutdown.
 
-Important boundary: ShortHand is still not production ready. Operations exporters, diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion and MLIR integration remain open.
+Important boundary: ShortHand is still not production ready. OTLP export, diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion and MLIR integration remain open.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #61 is merged, approximately 18 implementation PRs remain. No additional PR was discovered during the production packaging implementation.
+After PR #62 is merged, approximately 17 implementation PRs remain. No additional PR was discovered during the Prometheus scrape adapter implementation.
 
 ## Next recommended PR
 
-Next recommended PR after PR #61:
+Next recommended PR after PR #62:
 
-PR62 - Prometheus scrape endpoint host adapter.
+PR63 - OTLP exporter adapter.
 
-Reason: runtime metrics text is already generated and the installable runtime boundary is now guarded. The next production gap is an optional host adapter that serves the metrics through a scrapeable endpoint without changing the frozen runtime ABI.
+Reason: Prometheus pull-based operations exposure is now guarded without changing the runtime ABI. The next observability gap is an optional OTLP exporter that can deliver runtime span evidence to a collector with bounded retries, timeouts and honest delivery status.
 
 ## PR roadmap table
 
@@ -168,7 +196,7 @@ Reason: runtime metrics text is already generated and the installable runtime bo
 | PR59 - Runtime ABI and API version stability gate | MERGED | Runtime contract | Freeze symbols, status values, compatibility and deprecation rules. | ABI docs, manifest, frozen header and tests |
 | PR60 - Runtime state isolation and thread-safety policy | MERGED | Runtime reliability | Serialize ABI v1, protect snapshots and document process isolation. | state/thread-safety docs, façade, stress test and gate |
 | PR61 - Production build packaging for runtime and AI bridge | MERGED | Build | Add repeatable installable static/shared artifacts, shared-library packaging, SONAME/version evidence, exported headers, package metadata and consumer link tests. | `docs/runtime_production_packaging.md`, CMake/pkg-config exports, install-consumer gate |
-| PR62 - Prometheus scrape endpoint host adapter | PLANNED | Operations | Expose metrics through a host adapter. | adapter tests and docs |
+| PR62 - Prometheus scrape endpoint host adapter | MERGED | Operations | Expose metrics through a bounded, loopback-default installed host adapter without changing the runtime ABI. | adapter source, real socket tests and docs |
 | PR63 - OTLP exporter adapter | PLANNED | Operations | Add optional OTLP exporter and collector integration. | exporter tests and docs |
 | PR64 - AST source ranges across parser nodes | PLANNED | Diagnostics | Store consistent source spans across AST nodes. | source-span tests |
 | PR65 - Diagnostics coverage matrix | PLANNED | Diagnostics | Cover parser, semantic, AI, GreenAI and lowering diagnostics. | diagnostics matrix and tests |
@@ -213,6 +241,8 @@ Thread-safe process-wide state does not imply tenant isolation or parallel backe
 
 Installable artifacts and successful consumer linking do not imply deployment readiness or successful third-party backend execution.
 
+A loopback-default metrics endpoint does not imply authenticated, TLS-enabled or public-ingress readiness.
+
 The project may claim a full production backend matrix only when every marketed backend has a live success fixture or is removed from production-supported claims.
 
 C3-ECO output remains candidate-only unless an external certifier signs it.
@@ -221,3 +251,4 @@ C3-ECO output remains candidate-only unless an external certifier signs it.
 
 remaining_planned_prs_total_from_pr51: 29
 remaining_planned_prs_after_pr61: 18
+remaining_planned_prs_after_pr62: 17

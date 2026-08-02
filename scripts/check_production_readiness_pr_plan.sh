@@ -29,20 +29,24 @@ for file in \
   "${ROOT_DIR}/docs/runtime_abi_api_stability.md" \
   "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" \
   "${ROOT_DIR}/docs/runtime_production_packaging.md" \
+  "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" \
   "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" \
   "${ROOT_DIR}/abi/shorthand_runtime_abi_v1.h" \
   "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp" \
   "${ROOT_DIR}/tests/runtime/test_runtime_state_thread_safety.sh" \
   "${ROOT_DIR}/tests/packaging/test_runtime_production_packaging.sh" \
+  "${ROOT_DIR}/tests/operations/test_prometheus_scrape_adapter.sh" \
   "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" \
-  "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh"; do
+  "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh" \
+  "${ROOT_DIR}/scripts/check_prometheus_scrape_adapter.sh"; do
   require_file "${file}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-02-pr61' \
+  'production_readiness_plan_version: 2026-08-02-pr62' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 61' \
+  'LAST_COMPLETED_PR: 62' \
   'TARGET: enterprise production usage ready language' \
   'Desired outcome definition' \
   'Audit correction applied in PR #51' \
@@ -52,15 +56,16 @@ for anchor in \
   'Runtime ABI and API stability applied in PR #59' \
   'Runtime state and thread-safety applied in PR #60' \
   'Production build packaging applied in PR #61' \
+  'Prometheus scrape endpoint host adapter applied in PR #62' \
   'shorthand.language.objectives.version: 2026-07-29-v1' \
   'shorthand.backend_failure_mode_matrix.v1' \
   'Runtime ABI `1.0.0` freezes exactly 25 external `short_*` symbols.' \
   'Thread-safe does not mean multi-tenant isolated.' \
   'runtime_packaging_status: installable_static_shared_and_consumer_checked' \
   'Recommended path from PR #51 onward: 29 PRs total.' \
-  'After PR #61 is merged, approximately 18 implementation PRs remain.' \
-  'Next recommended PR after PR #61:' \
-  'PR62 - Prometheus scrape endpoint host adapter.' \
+  'After PR #62 is merged, approximately 17 implementation PRs remain.' \
+  'Next recommended PR after PR #62:' \
+  'PR63 - OTLP exporter adapter.' \
   'PR51 - Production readiness plan and tracking contract | MERGED' \
   'PR52 - Backend live SDK matrix harness | MERGED' \
   'PR53 - TensorRT optional live execution fixture | MERGED' \
@@ -72,8 +77,8 @@ for anchor in \
   'PR59 - Runtime ABI and API version stability gate | MERGED' \
   'PR60 - Runtime state isolation and thread-safety policy | MERGED' \
   'PR61 - Production build packaging for runtime and AI bridge | MERGED' \
-  'PR62 - Prometheus scrape endpoint host adapter | PLANNED' \
-  'PR63 - OTLP exporter adapter' \
+  'PR62 - Prometheus scrape endpoint host adapter | MERGED' \
+  'PR63 - OTLP exporter adapter | PLANNED' \
   'PR64 - AST source ranges across parser nodes' \
   'PR65 - Diagnostics coverage matrix' \
   'PR66 - Full grammar and conformance matrix beta-0.2' \
@@ -92,8 +97,10 @@ for anchor in \
   'PR79 - MLIR lowering passes and production RC gate' \
   'Production readiness exit criteria' \
   'Installable artifacts and successful consumer linking do not imply deployment readiness' \
+  'A loopback-default metrics endpoint does not imply authenticated, TLS-enabled or public-ingress readiness.' \
   'remaining_planned_prs_total_from_pr51: 29' \
-  'remaining_planned_prs_after_pr61: 18'; do
+  'remaining_planned_prs_after_pr61: 18' \
+  'remaining_planned_prs_after_pr62: 17'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
@@ -104,7 +111,11 @@ require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_
 require_contains "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md" 'runtime_multi_tenant_isolation: process_boundary_required'
 require_contains "${ROOT_DIR}/docs/runtime_production_packaging.md" 'runtime_shared_soversion: 1'
 require_contains "${ROOT_DIR}/docs/runtime_production_packaging.md" 'production_claim_boundary: packaging_gate_is_not_full_production_readiness'
+require_contains "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" 'prometheus_scrape_adapter_status: loopback_default_bounded_http_metrics_host'
+require_contains "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" 'runtime_external_symbol_count: 25'
+require_contains "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md" 'production_claim_boundary: scrape_adapter_is_not_hardened_public_ingress'
 require_contains "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh" 'PASS runtime state isolation and thread-safety guard'
 require_contains "${ROOT_DIR}/scripts/check_runtime_production_packaging.sh" 'PASS runtime production packaging guard'
+require_contains "${ROOT_DIR}/scripts/check_prometheus_scrape_adapter.sh" 'PASS Prometheus scrape endpoint host adapter guard'
 
 printf 'PASS production readiness PR plan gate\n'
