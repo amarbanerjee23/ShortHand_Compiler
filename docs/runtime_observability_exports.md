@@ -8,6 +8,10 @@ The current status is:
 
 `runtime_observability_export_status: dependency_free_exports_plus_optional_host_adapters`
 
+The previously guarded PR62 status was:
+
+`previous_runtime_observability_export_status: dependency_free_prometheus_and_otlp_like_exports`
+
 The runtime library exposes in-memory hook counters and latest inference telemetry as stable text/JSON strings without linking a Prometheus client, OpenTelemetry SDK, collector, or network transport. Separate installed host executables can expose or deliver those strings without changing the frozen runtime ABI.
 
 ## Public C ABI
