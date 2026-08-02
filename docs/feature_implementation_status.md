@@ -8,7 +8,7 @@ current_maturity: controlled_beta
 
 production_claim: false
 
-This tracker records the current implementation state without claiming that ShortHand is fully production-ready. `docs/production_readiness_pr_plan.md` remains the authoritative PR sequence.
+This tracker records the current implementation state while preserving the controlled-beta boundary. `docs/production_readiness_pr_plan.md` remains the authoritative PR sequence.
 
 ## Current maturity
 
