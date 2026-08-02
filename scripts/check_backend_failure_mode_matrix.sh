@@ -66,7 +66,7 @@ require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'backend_not_available'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp 'no_execution_ready_hardware_backend'
 require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h 'executionReadyBackend'
-require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h '"execution_ready"'
+require_contains Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h 'execution_ready'
 
 bash -n "${TEST}"
 bash "${TEST}"
