@@ -36,6 +36,7 @@ required_files=(
   scripts/check_language_correctness.sh
   scripts/check_language_versioning.sh
   scripts/check_language_objectives.sh
+  scripts/check_runtime_abi_api_stability.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
@@ -62,6 +63,7 @@ required_files=(
   docs/language_spec.md
   docs/language_versioning_and_conformance.md
   docs/language_objectives.md
+  docs/runtime_abi_api_stability.md
   docs/compiled_infer_bridge.md
   docs/backend_compatibility_matrix.md
   docs/backend_live_sdk_matrix.md
@@ -74,8 +76,12 @@ required_files=(
   docs/ai_runtime_bridge_linkage.md
   docs/ai_runtime_execution_adapter.md
   docs/runtime_observability_exports.md
+  abi/runtime_public_symbols_v1.txt
+  abi/shorthand_runtime_abi_v1.h
+  Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h
   Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h
   tests/conformance/manifest.txt
+  tests/abi/test_runtime_abi_api_stability.sh
   tests/codegen/test_runtime_ai_bridge_link_build.sh
   tests/codegen/test_runtime_ai_bridge_execution_path.sh
   tests/codegen/test_runtime_observability_exports.sh
@@ -133,6 +139,7 @@ require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.compil
 require_contains scripts/check_enterprise_hardening.sh 'shorthand.runtime.typed_infer_buffer_bridge_request.v1'
 require_contains scripts/check_backend_compatibility_matrix.sh 'check_hardware_capability_routing.sh'
 require_contains scripts/check_backend_compatibility_matrix.sh 'check_backend_failure_mode_matrix.sh'
+require_contains scripts/check_language_correctness.sh 'check_runtime_abi_api_stability.sh'
 
 # Keep every shell guard syntactically valid.
 for script in \
@@ -142,6 +149,7 @@ for script in \
   scripts/check_language_correctness.sh \
   scripts/check_language_versioning.sh \
   scripts/check_language_objectives.sh \
+  scripts/check_runtime_abi_api_stability.sh \
   scripts/check_production_readiness_pr_plan.sh \
   scripts/check_c3eco_claims_and_schema.sh \
   scripts/check_mlir_foundation.sh \
@@ -161,6 +169,7 @@ for script in \
   scripts/check_compiled_hook_onnxruntime_success.sh \
   scripts/check_runtime_observability_exports.sh \
   scripts/generate_release_sbom.sh \
+  tests/abi/test_runtime_abi_api_stability.sh \
   tests/integration/test_backend_failure_mode_matrix.sh; do
   require_bash_syntax "${script}"
 done
@@ -170,10 +179,11 @@ require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
 
 # Production roadmap anchors.
 for anchor in \
-  'production_readiness_plan_version: 2026-08-02-pr58' \
-  'LAST_COMPLETED_PR: 58' \
+  'production_readiness_plan_version: 2026-08-02-pr59' \
+  'LAST_COMPLETED_PR: 59' \
   'Language objectives consolidation applied in PR #57' \
   'Backend failure-mode finalization applied in PR #58' \
+  'Runtime ABI and API stability applied in PR #59' \
   'Recommended path from PR #51 onward: 29 PRs total.' \
   'PR51 - Production readiness plan and tracking contract | MERGED' \
   'PR52 - Backend live SDK matrix harness | MERGED' \
@@ -183,10 +193,11 @@ for anchor in \
   'PR56 - Hardware capability discovery and accelerator-aware routing | MERGED' \
   'PR57 - Llama.cpp optional live execution fixture | MERGED' \
   'PR58 - Backend failure-mode matrix finalization | MERGED' \
-  'Next recommended PR after PR #58:' \
-  'PR59 - Runtime ABI and API version stability gate.' \
-  'remaining_planned_prs_after_pr58: 21' \
-  'PR60 - Runtime state isolation and thread-safety policy' \
+  'PR59 - Runtime ABI and API version stability gate | MERGED' \
+  'Next recommended PR after PR #59:' \
+  'PR60 - Runtime state isolation and thread-safety policy.' \
+  'remaining_planned_prs_after_pr59: 20' \
+  'PR61 - Production build packaging for runtime and AI bridge' \
   'PR67 - Parser robustness and negative corpus hardening' \
   'PR79 - MLIR lowering passes and production RC gate'; do
   require_contains docs/production_readiness_pr_plan.md "${anchor}"
@@ -211,6 +222,29 @@ require_contains scripts/check_language_versioning.sh 'PASS language versioning 
 require_contains scripts/check_language_objectives.sh 'PASS language objectives gate'
 require_contains scripts/check_language_correctness.sh 'check_language_objectives.sh'
 require_contains scripts/check_language_correctness.sh 'check_language_versioning.sh'
+
+# Runtime ABI and API anchors.
+for anchor in \
+  'runtime_abi_contract_status: frozen_v1_symbol_manifest' \
+  'runtime_abi_version: 1.0.0' \
+  'runtime_api_version: 1.0.0' \
+  'runtime_external_symbol_count: 25' \
+  'production_claim_boundary: abi_stability_gate_is_not_full_production_readiness' \
+  'No ABI v1 symbol is deprecated in this release.' \
+  'ABI v1 does not claim that global runtime state is thread-safe'; do
+  require_contains docs/runtime_abi_api_stability.md "${anchor}"
+done
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h '#define SHORTHAND_RUNTIME_ABI_VERSION_STRING "1.0.0"'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h '#define SHORTHAND_RUNTIME_API_VERSION_STRING "1.0.0"'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_is_abi_compatible'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'SHORTHAND_RUNTIME_API int short_runtime_reset(void);'
+require_contains abi/shorthand_runtime_abi_v1.h 'Frozen consumer snapshot for ShortHand runtime ABI 1.0.0.'
+require_contains abi/shorthand_runtime_abi_v1.h 'SHORTHAND_RUNTIME_RUNTIME_ERROR = 8'
+require_contains abi/runtime_public_symbols_v1.txt 'short_runtime_reset'
+require_contains abi/runtime_public_symbols_v1.txt 'short_ai_infer_f32'
+require_contains tests/abi/test_runtime_abi_api_stability.sh 'ABI_SYMBOL_COUNT'
+require_contains tests/abi/test_runtime_abi_api_stability.sh 'PASS frozen runtime ABI v1 consumer'
+require_contains scripts/check_runtime_abi_api_stability.sh 'PASS runtime ABI and API stability gate'
 
 # Runtime bridge, backend, failure-mode, and hardware anchors.
 for anchor in \
