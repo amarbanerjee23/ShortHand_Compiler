@@ -2,6 +2,13 @@ code	stage	severity	range	fixture	mode	expectation
 SHD2001	parser	error	required	tests/parser/invalid/missing_semicolon.short	run	representative
 SHD2002	parser	error	required	catalogued	parse	expected_ai_infer_builtin
 SHD2003	parser	error	required	catalogued	parse	expected_greenai_report_builtin
+SHD2004	parser	error	required	generated_source_limit	parse	parser_robustness_gate
+SHD2005	parser	error	required	generated_token_limit	parse	parser_robustness_gate
+SHD2006	parser	error	required	generated_scanner_budget	parse	parser_robustness_gate
+SHD2007	parser	error	required	generated_nesting_limit	parse	parser_robustness_gate
+SHD2008	parser	error	required	tests/parser/robustness/unexpected_character.short	parse	parser_robustness_gate
+SHD2009	parser	error	required	tests/parser/robustness/unterminated_comment.short	parse	parser_robustness_gate
+SHD2010	parser	error	required	tests/parser/robustness/unterminated_string.short	parse	parser_robustness_gate
 SHD3001	semantic	error	required	tests/diagnostics/fixtures/break_outside_loop.short	run	representative
 SHD3002	semantic	error	required	catalogued	run	continue_outside_loop
 SHD4001	ai	error	required	catalogued	run	model_redeclared
