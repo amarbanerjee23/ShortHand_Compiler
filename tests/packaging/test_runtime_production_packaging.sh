@@ -56,6 +56,16 @@ if command -v readelf >/dev/null 2>&1 && [[ "${RUNTIME_SHARED}" == *.so.* ]]; th
   readelf -d "${BRIDGE_SHARED}" | grep -Eq 'SONAME.*libshorthand_ai_bridge\.so\.1'
 fi
 
+if command -v nm >/dev/null 2>&1 && [[ "${RUNTIME_SHARED}" == *.so.* ]]; then
+  nm -D --defined-only "${RUNTIME_SHARED}" | awk '{print $3}' | grep '^short_' | sort -u \
+    > "${WORK_DIR}/shared-runtime-symbols.txt"
+  diff -u "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" "${WORK_DIR}/shared-runtime-symbols.txt"
+  if nm -D --defined-only "${RUNTIME_SHARED}" | awk '{print $3}' | grep -q '^shimpl_'; then
+    echo "error: private shimpl symbols leaked from the shared runtime" >&2
+    exit 1
+  fi
+fi
+
 mkdir -p "${CONSUMER_DIR}"
 cat > "${CONSUMER_DIR}/runtime_consumer.cpp" <<'CPP'
 #include <runtime/ShorthandRuntime.h>
