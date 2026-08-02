@@ -132,9 +132,13 @@ require_file "${ROOT_DIR}/docs/language_grammar_ebnf.md"
 require_file "${ROOT_DIR}/docs/language_spec.md"
 require_file "${ROOT_DIR}/docs/language_versioning_and_conformance.md"
 require_file "${ROOT_DIR}/docs/language_objectives.md"
+require_file "${ROOT_DIR}/docs/runtime_abi_api_stability.md"
 require_file "${ROOT_DIR}/docs/semantic_ir_and_diagnostics_plan.md"
+require_file "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt"
+require_file "${ROOT_DIR}/abi/shorthand_runtime_abi_v1.h"
 require_file "${ROOT_DIR}/scripts/check_language_versioning.sh"
 require_file "${ROOT_DIR}/scripts/check_language_objectives.sh"
+require_file "${ROOT_DIR}/scripts/check_runtime_abi_api_stability.sh"
 require_file "${SRC_DIR}/semantic_ir/SemanticIR.h"
 
 require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'Language version: beta-0.1'
@@ -148,6 +152,9 @@ require_contains "${ROOT_DIR}/docs/language_versioning_and_conformance.md" 'shor
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'shorthand.language.objectives.version: 2026-07-29-v1'
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'production_claim: false'
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'Honest execution and fallback'
+require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_abi_contract_status: frozen_v1_symbol_manifest'
+require_contains "${SRC_DIR}/runtime/ShorthandRuntime.h" 'SHORTHAND_RUNTIME_ABI_VERSION_STRING "1.0.0"'
+require_contains "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" 'short_ai_infer_f32'
 require_contains "${ROOT_DIR}/docs/semantic_ir_and_diagnostics_plan.md" 'ShortHand semantic IR'
 require_contains "${SRC_DIR}/semantic_ir/SemanticIR.h" 'struct ProgramIR'
 require_contains "${MANIFEST}" 'version | shorthand.language.version | beta-0.1'
@@ -157,6 +164,7 @@ require_contains "${MANIFEST}" 'runtime | tests/codegen/test_external_runtime_na
 
 run_existing_gate 'language objectives' bash "${ROOT_DIR}/scripts/check_language_objectives.sh"
 run_existing_gate 'language versioning and conformance' bash "${ROOT_DIR}/scripts/check_language_versioning.sh"
+run_existing_gate 'runtime ABI and API stability' bash "${ROOT_DIR}/scripts/check_runtime_abi_api_stability.sh"
 compile_semantic_ir_probe
 ensure_compiler
 ensure_runtime_lib
