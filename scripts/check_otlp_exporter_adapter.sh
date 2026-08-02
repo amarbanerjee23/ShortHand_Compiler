@@ -42,7 +42,7 @@ for anchor in \
   'port = 4318' \
   'path = "/v1/traces"' \
   'short_runtime_otlp_spans_json()' \
-  '"resourceSpans"' \
+  'resourceSpans' \
   'Authorization: ' \
   'connect_failed_or_timed_out' \
   'response_limit_exceeded' \
