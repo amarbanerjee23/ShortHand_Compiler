@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-07-29-pr57
+production_readiness_plan_version: 2026-08-02-pr58
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 57
+LAST_COMPLETED_PR: 58
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -65,6 +65,23 @@ The objectives establish:
 
 The objective contract is versioned as `shorthand.language.objectives.version: 2026-07-29-v1` and retains `production_claim: false` while production blockers remain.
 
+## Backend failure-mode finalization applied in PR #58
+
+PR #58 adds a deterministic cross-layer matrix for eight required failure classes and protects it through the backend compatibility and enterprise hardening chain.
+
+The matrix now proves:
+
+1. invalid model formats are rejected before execution,
+2. missing SDKs use honest `not_executed` fallback,
+3. input shape/count mismatch is rejected without output copy,
+4. unsupported precision cannot produce an execution-ready route,
+5. output capacity mismatch preserves caller memory,
+6. detected but inaccessible hardware is not execution-ready,
+7. empty hardware probe results remain claim-safe,
+8. fallback never reports success or returns inferred output.
+
+The machine-readable report uses `shorthand.backend_failure_mode_matrix.v1`. Failure evidence is not backend success evidence, and `false_success` must remain false for every row.
+
 ## Status values
 
 STATUS values: PLANNED, IN_PROGRESS, MERGED, BLOCKED, DEFERRED
@@ -81,37 +98,38 @@ Every roadmap PR must update:
 
 A production-ready claim is blocked until all required rows are MERGED or intentionally DEFERRED with a clear production impact.
 
-## Current baseline after PR #57
+## Current baseline after PR #58
 
 - Language contract and conformance marker are `beta-0.1`.
 - Consolidated language objectives are versioned and guarded by CI.
 - ONNX Runtime CPU has an optional SDK-backed compiled-hook success fixture.
 - TensorRT, OpenVINO, LibTorch, and Llama.cpp have claim-safe unavailable-path proofs.
 - Backend live SDK matrix reporting is guarded by CI.
+- The common backend failure-mode matrix is finalized as `shorthand.backend_failure_mode_matrix.v1`.
+- The matrix covers invalid format, missing SDK, shape, precision, capacity, hardware access, empty probe, and fallback honesty cases.
 - `HardwareDiscovery.h` inventories CPU/GPU/TPU/NPU and applies execution-ready routing.
 - Hardware inventory uses `shorthand.hardware.inventory.v1`.
 - Hardware selection uses `shorthand.hardware.selection.v1`.
 - `AIRuntime::infer` routes only through accessible, compatible, available backend/device pairs.
 - Preference, override, deny-list, memory floor, CPU fallback, and fake probes are implemented.
 - Inference telemetry includes hardware inventory and selection evidence.
-- The Llama.cpp GGUF path explicitly proves that compatible CPU/GPU hardware does not imply an execution-ready backend.
 - Runtime observability exports JSON, Prometheus-style text, and OTLP-like span JSON.
 
-Important boundary: ShortHand is still not production ready. Backend failure-mode finalization, runtime ABI/state work, packaging, operations exporters, diagnostics, parser robustness, modules, release security, developer tooling, C3-ECO completion, and MLIR integration remain open.
+Important boundary: ShortHand is still not production ready. Runtime ABI/state work, packaging, operations exporters, diagnostics, parser robustness, modules, release security, developer tooling, C3-ECO completion, and MLIR integration remain open.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #57 is merged, approximately 22 implementation PRs remain. The count may split further only when implementation evidence identifies a concrete additional production blocker.
+After PR #58 is merged, approximately 21 implementation PRs remain. The count may split further only when implementation evidence identifies a concrete additional production blocker.
 
 ## Next recommended PR
 
-Next recommended PR after PR #57:
+Next recommended PR after PR #58:
 
-PR58 - Backend failure-mode matrix finalization.
+PR59 - Runtime ABI and API version stability gate.
 
-Reason: every currently marketed non-ONNX CPU backend now has an explicit claim-safe unavailable-path proof, and hardware discovery is implemented. The next reliability step is to consolidate invalid format, missing SDK, shape, precision, capacity, inaccessible hardware, failed probe, and fallback behavior into one failure-mode matrix.
+Reason: backend compatibility, hardware routing, backend-specific unavailable paths, and the common failure contract are now guarded. The next production-critical boundary is a stable public runtime ABI with version exports, symbol ownership, compatibility rules, and deprecation controls.
 
 ## PR roadmap table
 
@@ -124,7 +142,7 @@ Reason: every currently marketed non-ONNX CPU backend now has an explicit claim-
 | PR55 - LibTorch optional live execution fixture | MERGED | Backend coverage | Prove LibTorch unavailable paths cannot report false success. | LibTorch fixture docs, test and gate |
 | PR56 - Hardware capability discovery and accelerator-aware routing | MERGED | Runtime hardware selection | Inventory CPU/GPU/TPU/NPU, select execution-ready hardware, support policy controls, and emit telemetry. | `docs/hardware_capability_routing.md`, `HardwareDiscovery.h`, routing test and gate |
 | PR57 - Llama.cpp optional live execution fixture | MERGED | Backend coverage and objectives | Prove Llama.cpp unavailable paths cannot report false success and consolidate the language objectives contract. | `docs/llamacpp_optional_fixture.md`, Llama.cpp test and gate, `docs/language_objectives.md`, objectives gate |
-| PR58 - Backend failure-mode matrix finalization | PLANNED | Runtime reliability | Cover invalid format, missing SDK, shape, precision, capacity, hardware probe, access, and fallback failures. | failure matrix tests and docs |
+| PR58 - Backend failure-mode matrix finalization | MERGED | Runtime reliability | Cover invalid format, missing SDK, shape, precision, capacity, hardware probe, access, and fallback failures. | `docs/backend_failure_mode_matrix.md`, `tests/integration/test_backend_failure_mode_matrix.sh`, `scripts/check_backend_failure_mode_matrix.sh` |
 | PR59 - Runtime ABI and API version stability gate | PLANNED | Runtime contract | Version public hooks, symbols, compatibility, and deprecation policy. | ABI API, symbol checks and docs |
 | PR60 - Runtime state isolation and thread-safety policy | PLANNED | Runtime reliability | Enforce contexts/thread-safety or a tested explicit limitation. | isolation and concurrency tests |
 | PR61 - Production build packaging for runtime and AI bridge | PLANNED | Build | Add repeatable production Make/CMake targets and link tests. | build targets and packaging evidence |
@@ -154,11 +172,12 @@ ShortHand can be considered enterprise production usage ready only when:
 1. Core protected-branch CI passes.
 2. Language compatibility, deprecation, grammar, and conformance are complete.
 3. Fallback never claims execution.
-4. Marketed backends are live-tested or removed from production claims.
-5. Hardware inventory and routing separate detection from execution readiness.
-6. ABI, runtime state, packaging, observability, diagnostics, parser robustness, modules, release security, deployment and tooling gates pass.
-7. C3-ECO evidence is authority-ready and claim-safe.
-8. MLIR lowering and the final production RC gate pass.
+4. The common backend failure-mode matrix passes without false success.
+5. Marketed backends are live-tested or removed from production claims.
+6. Hardware inventory and routing separate detection from execution readiness.
+7. ABI, runtime state, packaging, observability, diagnostics, parser robustness, modules, release security, deployment and tooling gates pass.
+8. C3-ECO evidence is authority-ready and claim-safe.
+9. MLIR lowering and the final production RC gate pass.
 
 ## Production claim rules
 
@@ -168,6 +187,8 @@ The project may claim production-ready core language only if core grammar, diagn
 
 Hardware detection never implies successful accelerator execution without backend execution-ready evidence and final inference success.
 
+Failure-mode evidence never implies backend execution success.
+
 The project may claim a full production backend matrix only when every marketed backend has a live success fixture or is removed from production-supported claims.
 
 C3-ECO output remains candidate-only unless an external certifier signs it.
@@ -175,4 +196,4 @@ C3-ECO output remains candidate-only unless an external certifier signs it.
 ## Current remaining PR count field
 
 remaining_planned_prs_total_from_pr51: 29
-remaining_planned_prs_after_pr57: 22
+remaining_planned_prs_after_pr58: 21
