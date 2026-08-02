@@ -19,6 +19,7 @@ parser-invalid | tests/conformance/beta_0_2/invalid_empty_block.short | reject |
 parser-invalid | tests/conformance/beta_0_2/invalid_precision_alias.short | reject | Runtime aliases such as float32 are not scanner keywords.
 parser-invalid | tests/conformance/beta_0_2/invalid_guardrail_operator.short | reject | Quality guardrails currently accept only integer greater-or-equal syntax.
 parser-invalid | tests/parser/invalid/missing_semicolon.short | reject | Parser must reject incomplete statements.
+parser-robustness | tests/parser/robustness/malformed_cases.tsv | reject-bounded | Malformed and generated adversarial inputs must terminate deterministically with stable parser codes.
 semantic-invalid | tests/semantic/invalid/ai_shape_mismatch.short | reject | Semantic analyzer must reject model and input tensor shape mismatch.
 semantic-invalid | tests/semantic/invalid/ai_backend_mismatch.short | reject | Semantic analyzer must reject declarations without a compatible backend or fallback.
 semantic-invalid | tests/semantic/invalid/ai_output_shape_mismatch.short | reject | Semantic analyzer must reject model and declared output tensor shape mismatch.
