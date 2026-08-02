@@ -1,139 +1,251 @@
-# ShortHand beta language grammar, EBNF draft
+# ShortHand beta-0.2 language grammar
 
-Status: beta grammar draft for conformance and review.
+Language version: beta-0.2
 
-Language version: beta-0.1
+Conformance contract: beta-0.2
 
-Conformance contract: beta-0.1
+grammar_conformance_status: parser_accurate_matrix_guarded
 
-This document records the current accepted AI, GreenAI, and core statement surface used by the compiler tests. It is not yet a full language standard. The goal is to create a stable contract that parser tests, semantic tests, diagnostics, and future MLIR lowering can reference.
+grammar_matrix: tests/conformance/grammar_matrix_beta_0_2.tsv
 
-## Lexical conventions
+parser_only_validation_mode: short_hand source.short parse
+
+production_claim: false
+
+Historical stability marker retained for earlier gates: Language version: beta-0.1
+
+This document describes the syntax accepted by `scanner.ll` and `parser.yy`. It deliberately does not advertise aliases that only the runtime type parser understands. Semantic acceptance is a separate contract enforced after parsing.
+
+## Notation
 
 ```ebnf
-identifier      = letter , { letter | digit | "_" } ;
-integer         = digit , { digit } ;
-number          = integer | integer , "." , integer ;
-string          = '"' , { character - '"' } , '"' ;
-shape_string    = string ;
-boolean         = "true" | "false" ;
-element_type    = "float" | "float32" | "f32" | "float16" | "fp16" | "f16" | "bfloat16" | "bf16" | "int8" | "int4" | "int32" | "int" ;
-model_format    = "onnx" | "engine" | "tensorrt" | "torchscript" | "torch" | "openvino_ir" | "openvino" | "gguf" ;
-backend_kind    = "fallback" | "onnxruntime" | "onnxruntime_cpu" | "onnxruntime_cuda" | "onnxruntime_tensorrt" | "tensorrt" | "openvino" | "libtorch" | "llamacpp" | "llama_cpp" | "llama.cpp" ;
-quality_metric  = identifier ;
-quality_op      = ">=" | ">" | "<=" | "<" | "==" ;
+A , B        sequence
+A | B        alternative
+[ A ]        optional
+{ A }        zero or more
 ```
 
-## Program structure
+## Lexical grammar
 
 ```ebnf
-program         = { declaration | function | statement } ;
-declaration     = data_declaration | tensor_declaration | model_declaration | greenai_contract | greenai_measurement ;
+letter          = "A"…"Z" | "a"…"z" | "_" ;
+digit           = "0"…"9" ;
+identifier      = letter , { letter | digit } ;
+integer_literal = digit , { digit } ;
+float_literal   = digit , { digit } , "." , digit , { digit } ;
+string_literal  = '"' , { escaped_character | character - '"' } , '"' ;
+line_comment    = "//" , { character - newline }
+                | "#" , { character - newline } ;
+block_comment   = "/*" , { character } , "*/" ;
 ```
 
-## Core statements
+Whitespace and comments are discarded by the scanner. Identifiers and keywords are case-sensitive.
+
+## Program shape
+
+The current parser has an ordered top-level shape. Primitive declarations come first, then function definitions, then a non-empty logic statement list.
 
 ```ebnf
-statement       = assignment
-                | expression_statement
-                | print_statement
-                | read_statement
-                | if_statement
-                | loop_statement
-                | infer_statement
-                | greenai_report
-                | break_statement
-                | continue_statement
-                | return_statement
-                | block ;
+program             = global_declarations , function_definitions , logic_block ;
+global_declarations = declaration_statement , ";" ,
+                      { declaration_statement , ";" } ;
+function_definitions = { function_definition , ";" } ;
+logic_block          = statement_list ;
+statement_list       = statement , { statement } ;
+```
 
-block           = "{" , { statement } , "}" ;
-assignment      = variable , "=" , expression , ";" ;
+An empty program is not conforming. AI and Green AI declarations are statements in the logic block, not members of the initial primitive declaration section.
+
+## Primitive declarations and functions
+
+```ebnf
+short_type            = "int" | "float" | "double" | "string"
+                      | "void" | "bool" ;
+declaration_statement = short_type , [ declarator_list ] ;
+declarator_list       = declarator , { "," , declarator } ;
+declarator            = identifier | identifier , "[" , integer_literal , "]" ;
+
+function_definition   = "def" , short_type , identifier , "(" ,
+                        parameter_declarations , ")" , block ;
+parameter_declarations = declaration_statement , ";" ,
+                         { declaration_statement , ";" } ;
+```
+
+Parameter declarations are semicolon-terminated. The current parser does not accept an empty `()` parameter list. This limitation is explicit in the beta-0.2 boundary corpus and is not presented as an ideal final-language design.
+
+## Blocks and core statements
+
+```ebnf
+block                = "{" , statement_list , "}" ;
+statement            = model_declaration
+                     | tensor_declaration
+                     | greenai_contract
+                     | greenai_measurement
+                     | infer_statement
+                     | return_statement
+                     | continue_statement
+                     | expression_statement
+                     | assignment
+                     | function_call
+                     | block
+                     | if_statement
+                     | loop_statement
+                     | goto_statement
+                     | read_statement
+                     | break_statement
+                     | print_statement
+                     | greenai_report
+                     | legacy_ai_infer
+                     | label_statement
+                     | empty_statement ;
+
+assignment           = variable , "=" , expression , ";" ;
 expression_statement = expression , ";" ;
-break_statement = "break" , ";" ;
-continue_statement = "continue" , ";" ;
-return_statement = "return" , [ expression ] , ";" ;
+function_call        = identifier , "(" , variable_list , ")" , ";" ;
+if_statement         = "if" , expression , block , [ "else" , block ] ;
+loop_statement       = "loop" , variable , "=" , expression , "," , expression , block
+                     | "loop" , variable , "=" , expression , "," , expression ,
+                       "," , expression , block
+                     | "loop" , expression , block ;
+goto_statement       = "goto" , identifier , [ "if" , expression ] , ";" ;
+read_statement       = "read" , variable_list , ";" ;
+break_statement      = "break" , ";" ;
+continue_statement   = "continue" , ";" ;
+return_statement     = "return" , [ expression ] , ";" ;
+print_statement      = "print" , printable , { "," , printable } , ";" ;
+printable            = string_literal | expression ;
+label_statement      = identifier , ":" ;
+empty_statement      = ";" ;
+variable_list        = variable , { "," , variable } ;
 ```
 
-## Tensor declaration
+Blocks are non-empty in beta-0.2. `loop condition { ... }` is the accepted condition-loop spelling. The scanner reserves `while`, but the parser has no `while` production. `for` is not a keyword.
+
+Function-call arguments are variables, not arbitrary expressions, in the current grammar.
+
+## Expressions
+
+Precedence, from lowest to highest, is assignment, logical OR, logical AND, equality, relational, addition/subtraction, multiplication/division/remainder, and unary minus.
 
 ```ebnf
-tensor_declaration = "tensor" , identifier , element_type , shape_string , ";" ;
+expression       = variable
+                 | integer_literal
+                 | float_literal
+                 | "true"
+                 | "false"
+                 | "-" , expression
+                 | "(" , expression , ")"
+                 | expression , binary_operator , expression ;
+binary_operator  = "+" | "-" | "*" | "/" | "%"
+                 | "<" | "<=" | ">" | ">="
+                 | "==" | "!=" | "||" | "&&" ;
+variable         = identifier | identifier , "[" , expression , "]" ;
 ```
 
-Example:
+String literals and function calls are not general expressions in beta-0.2.
 
-```short
- tensor input float "1,4";
-```
-
-## Model declaration
+## Tensor declarations
 
 ```ebnf
+precision_name     = "int8" | "int4" | "fp16" | "fp32"
+                   | "bf16" | "fp64" | "float" ;
+tensor_declaration = "tensor" , identifier , precision_name ,
+                     string_literal , ";" ;
+```
+
+The shape is syntactically a string. Shape validity and element-type support are semantic concerns. Aliases such as `float32`, `f32`, `float16`, `f16`, `bfloat16`, and `int32` are not scanner tokens in this contract.
+
+## Model declarations
+
+```ebnf
+model_format      = "onnx" | "engine" | "torchscript"
+                  | "openvino_ir" | "gguf" ;
+backend_name      = "tensorrt" | "onnxruntime_tensorrt"
+                  | "onnxruntime_cuda" | "onnxruntime_cpu"
+                  | "openvino" | "libtorch" | "llamacpp"
+                  | "fallback" ;
 model_declaration = "model" , identifier , "{" ,
-                    model_field , { model_field } ,
-                    "}" , ";" ;
-
+                    { model_field } , "}" , ";" ;
 model_field       = "format" , model_format , ";"
-                  | "path" , string , ";"
-                  | "task" , string , ";"
-                  | "precision" , element_type , ";"
-                  | "input_shape" , shape_string , ";"
-                  | "output_shape" , shape_string , ";"
-                  | "backend_preference" , backend_kind , { "," , backend_kind } , ";"
-                  | "compact" , boolean , ";"
-                  | "quality_guardrail" , quality_metric , quality_op , number , ";" ;
+                  | "path" , string_literal , ";"
+                  | "task" , string_literal , ";"
+                  | "precision" , precision_name , ";"
+                  | "input_shape" , string_literal , ";"
+                  | "output_shape" , string_literal , ";"
+                  | "backend_preference" , backend_name ,
+                    { "," , backend_name } , ";"
+                  | "compact" , ( "true" | "false" ) , ";"
+                  | "quality_guardrail" , identifier , ">=" ,
+                    integer_literal , ";" ;
 ```
 
-## Inference statement
+The grammar permits fields in any order and permits an empty model block. Semantic validation defines required fields, valid formats, shape validity, precision support, backend compatibility and guardrail requirements. Only an integer `>=` quality guardrail is syntactically accepted in beta-0.2.
+
+## Inference and legacy AI compatibility
 
 ```ebnf
-infer_statement = "infer" , identifier , "(" , identifier , ")" , "->" , identifier , ";" ;
+infer_statement = "infer" , identifier , "(" , identifier , ")" ,
+                  ( "->" | ">" ) , identifier , ";" ;
+legacy_ai_infer = ( "ai_infer" | "aiinfer" ) , "(" ,
+                  string_literal , "," , string_literal , "," ,
+                  string_literal , ")" , ";" ;
 ```
 
-The model and tensor names are validated semantically after parsing.
+`->` is canonical. `>` is retained as a compatibility form. The parser validates the legacy builtin name and emits a stable parser diagnostic for other identifiers using that shape.
 
-## GreenAI contract
+## Green AI contracts
 
 ```ebnf
+boundary_name    = "compute" | "accelerator" | "storage"
+                 | "network" | "ci_cd" | "thirdparty" ;
+mq_name          = "MQ1" | "MQ2" | "MQ3" | "MQ4" ;
+dq_name          = "DQ1" | "DQ2" | "DQ3" | "DQ4" ;
+
 greenai_contract = "greenai_contract" , identifier , "{" ,
-                   contract_field , { contract_field } ,
-                   "}" , ";" ;
-
-contract_field   = "functional_unit" , string , ";"
-                 | "success_criteria" , string , ";"
-                 | "boundary" , identifier , { "," , identifier } , ";"
-                 | "measurement_quality" , identifier , ";"
-                 | "data_quality" , identifier , ";"
-                 | "carbon_factor" , identifier , number , ";"
-                 | "energy_budget_j" , number , ";"
-                 | "carbon_budget_gco2e" , number , ";"
-                 | "quality_guardrail" , quality_metric , quality_op , number , ";"
-                 | "evidence_retention" , string , ";"
-                 | "claims_mode" , identifier , ";" ;
+                   { contract_field } , "}" , ";" ;
+contract_field   = "functional_unit" , string_literal , ";"
+                 | "success_criteria" , string_literal , ";"
+                 | "boundary" , boundary_name ,
+                   { "," , boundary_name } , ";"
+                 | "measurement_quality" , mq_name , ";"
+                 | "data_quality" , dq_name , ";"
+                 | "carbon_factor" , "location" , integer_literal , ";"
+                 | "energy_budget_j" , integer_literal , ";"
+                 | "carbon_budget_gco2e" , integer_literal , ";"
+                 | "quality_guardrail" , identifier , ">=" ,
+                   integer_literal , ";"
+                 | "evidence_retention" , string_literal , ";"
+                 | "claims_mode" , "evidence_only" , ";" ;
 ```
 
-## GreenAI measurement
+Semantic validation determines which contract fields are mandatory and preserves the claim-safe `evidence_only` boundary.
+
+## Green AI measurements and reports
 
 ```ebnf
 greenai_measurement = "greenai_measure" , identifier , "{" ,
-                      "inferences" , integer , ";" ,
-                      "watts" , number , ";" ,
-                      "seconds" , number , ";" ,
-                      "backend" , identifier , ";" ,
-                      "}" , ";" ;
+                      { measurement_field } , "}" , ";" ;
+measurement_field   = identifier , integer_literal , ";"
+                    | identifier , identifier , ";" ;
+greenai_report      = "greenai" , "(" , string_literal , "," ,
+                      expression , "," , expression , "," ,
+                      expression , ")" , ";" ;
 ```
 
-## Legacy AI inference statement
+The parser accepts generic measurement field identifiers. The current AST recognizes `inferences`, `watts`, `seconds`, and `backend`. The Green AI report production validates that the call identifier is exactly `greenai`.
 
-The legacy statement remains supported for compatibility.
+## Conformance rules
 
-```ebnf
-legacy_ai_infer = "ai_infer" , string , string , string , ";" ;
-```
+The authoritative executable mapping is `tests/conformance/grammar_matrix_beta_0_2.tsv`.
 
-## Conformance rule
+Every matrix row records:
 
-Every new syntax addition must add at least one parser-positive fixture, one parser-negative or semantic-negative fixture when applicable, and a conformance manifest entry. Production claims must not be added merely because a grammar rule exists.
+1. a stable coverage ID,
+2. language area,
+3. scanner, parser or CLI source,
+4. an implementation anchor,
+5. a fixture,
+6. accept or reject expectation,
+7. rationale.
 
-The beta-0.1 conformance rules and compatibility policy are defined in `docs/language_versioning_and_conformance.md`.
+`short_hand source.short parse` validates syntax without semantic analysis. Normal run, print, compile and evidence modes continue to apply semantic validation. PR67 remains responsible for malformed-input corpus expansion, parser recovery and robustness testing.
