@@ -10,7 +10,9 @@
 #define SHORTHAND_RUNTIME_API_VERSION_PATCH 0
 #define SHORTHAND_RUNTIME_API_VERSION_STRING "1.0.0"
 
-#if defined(_WIN32) && defined(SHORTHAND_RUNTIME_SHARED)
+#if defined(SHORTHAND_RUNTIME_PRIVATE_IMPLEMENTATION) || defined(short_runtime_reset)
+#  define SHORTHAND_RUNTIME_API
+#elif defined(_WIN32) && defined(SHORTHAND_RUNTIME_SHARED)
 #  if defined(SHORTHAND_RUNTIME_BUILDING_LIBRARY)
 #    define SHORTHAND_RUNTIME_API __declspec(dllexport)
 #  else

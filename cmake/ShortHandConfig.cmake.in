@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
+
+include("${CMAKE_CURRENT_LIST_DIR}/ShortHandTargets.cmake")
+
+set(ShortHand_RUNTIME_ABI_VERSION "@SHORTHAND_RUNTIME_ABI_VERSION@")
+set(ShortHand_RUNTIME_API_VERSION "@SHORTHAND_RUNTIME_API_VERSION@")
+set(ShortHand_AI_BRIDGE_CONTRACT_VERSION "@SHORTHAND_AI_BRIDGE_CONTRACT_VERSION@")
+
+check_required_components(ShortHand)

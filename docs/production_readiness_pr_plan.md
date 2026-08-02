@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-02-pr60
+production_readiness_plan_version: 2026-08-02-pr61
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 60
+LAST_COMPLETED_PR: 61
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -76,6 +76,33 @@ Evidence:
 
 Thread-safe does not mean multi-tenant isolated. ABI v1 has no public context handles.
 
+## Production build packaging applied in PR #61
+
+PR #61 turns the frozen runtime and dependency-light C++ AI bridge adapter into repeatable installable artifacts.
+
+The packaging contract now provides:
+
+1. static and shared runtime libraries,
+2. static and shared AI bridge adapter libraries,
+3. shared-library version `1.0.0` and SOVERSION `1`,
+4. hidden private runtime implementation symbols with the frozen public façade exported,
+5. installed current and frozen ABI headers,
+6. relocatable CMake package exports,
+7. pkg-config metadata,
+8. clean downstream static and shared consumer builds,
+9. SONAME and package-discovery evidence.
+
+Evidence:
+
+- `docs/runtime_production_packaging.md`
+- `cmake/ShortHandConfig.cmake.in`
+- `cmake/shorthand-runtime.pc.in`
+- `cmake/shorthand-ai-bridge.pc.in`
+- `tests/packaging/test_runtime_production_packaging.sh`
+- `scripts/check_runtime_production_packaging.sh`
+
+Packaging does not claim third-party backend SDK execution, tenant isolation, deployment readiness, signed releases or full production readiness.
+
 ## Status values
 
 STATUS values: PLANNED, IN_PROGRESS, MERGED, BLOCKED, DEFERRED
@@ -92,7 +119,7 @@ Every roadmap PR must update:
 
 A production claim is blocked until every required row is MERGED or intentionally DEFERRED with a documented production impact.
 
-## Current baseline after PR #60
+## Current baseline after PR #61
 
 - Language and conformance remain guarded at `beta-0.1`.
 - Consolidated language objectives are versioned and guarded.
@@ -105,22 +132,26 @@ A production claim is blocked until every required row is MERGED or intentionall
 - String-returning APIs provide thread-local snapshots.
 - Reset, registration, inference counters and evidence queries have deterministic concurrency coverage.
 - Runtime observability exports JSON, Prometheus-style text and OTLP-like span JSON.
+- Runtime and AI bridge adapter static/shared artifacts are installable.
+- Shared artifacts carry version `1.0.0` and SOVERSION `1`.
+- CMake and pkg-config downstream consumers are guarded.
+- Current and frozen ABI headers are installed from the package prefix.
 
-Important boundary: ShortHand is still not production ready. Packaging, operations exporters, diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion and MLIR integration remain open.
+Important boundary: ShortHand is still not production ready. Operations exporters, diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion and MLIR integration remain open.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #60 is merged, approximately 19 implementation PRs remain. No additional PR was discovered during the state/thread-safety implementation.
+After PR #61 is merged, approximately 18 implementation PRs remain. No additional PR was discovered during the production packaging implementation.
 
 ## Next recommended PR
 
-Next recommended PR after PR #60:
+Next recommended PR after PR #61:
 
-PR61 - Production build packaging for runtime and AI bridge.
+PR62 - Prometheus scrape endpoint host adapter.
 
-Reason: the runtime ABI and concurrency contract are now guarded. The next production boundary is repeatable installable artifacts, shared-library packaging, SONAME/version evidence, exported headers, package metadata and consumer link tests.
+Reason: runtime metrics text is already generated and the installable runtime boundary is now guarded. The next production gap is an optional host adapter that serves the metrics through a scrapeable endpoint without changing the frozen runtime ABI.
 
 ## PR roadmap table
 
@@ -136,7 +167,7 @@ Reason: the runtime ABI and concurrency contract are now guarded. The next produ
 | PR58 - Backend failure-mode matrix finalization | MERGED | Runtime reliability | Finalize deterministic common failure contract. | `docs/backend_failure_mode_matrix.md`, matrix test and gate |
 | PR59 - Runtime ABI and API version stability gate | MERGED | Runtime contract | Freeze symbols, status values, compatibility and deprecation rules. | ABI docs, manifest, frozen header and tests |
 | PR60 - Runtime state isolation and thread-safety policy | MERGED | Runtime reliability | Serialize ABI v1, protect snapshots and document process isolation. | state/thread-safety docs, façade, stress test and gate |
-| PR61 - Production build packaging for runtime and AI bridge | PLANNED | Build | Add repeatable installable static/shared artifacts, shared-library packaging, SONAME/version evidence, exported headers, package metadata and consumer link tests. | build targets and packaging evidence |
+| PR61 - Production build packaging for runtime and AI bridge | MERGED | Build | Add repeatable installable static/shared artifacts, shared-library packaging, SONAME/version evidence, exported headers, package metadata and consumer link tests. | `docs/runtime_production_packaging.md`, CMake/pkg-config exports, install-consumer gate |
 | PR62 - Prometheus scrape endpoint host adapter | PLANNED | Operations | Expose metrics through a host adapter. | adapter tests and docs |
 | PR63 - OTLP exporter adapter | PLANNED | Operations | Add optional OTLP exporter and collector integration. | exporter tests and docs |
 | PR64 - AST source ranges across parser nodes | PLANNED | Diagnostics | Store consistent source spans across AST nodes. | source-span tests |
@@ -180,6 +211,8 @@ Failure-mode evidence never implies backend execution success.
 
 Thread-safe process-wide state does not imply tenant isolation or parallel backend execution.
 
+Installable artifacts and successful consumer linking do not imply deployment readiness or successful third-party backend execution.
+
 The project may claim a full production backend matrix only when every marketed backend has a live success fixture or is removed from production-supported claims.
 
 C3-ECO output remains candidate-only unless an external certifier signs it.
@@ -187,4 +220,4 @@ C3-ECO output remains candidate-only unless an external certifier signs it.
 ## Current remaining PR count field
 
 remaining_planned_prs_total_from_pr51: 29
-remaining_planned_prs_after_pr60: 19
+remaining_planned_prs_after_pr61: 18
