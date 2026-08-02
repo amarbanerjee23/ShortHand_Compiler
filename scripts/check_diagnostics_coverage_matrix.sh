@@ -80,8 +80,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 32 ]] || {
-  echo "error: expected 32 stable diagnostics in the PR65 contract" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 39 ]] || {
+  echo "error: expected 39 stable diagnostics after the PR67 parser guard expansion" >&2
   exit 1
 }
 
@@ -95,7 +95,7 @@ awk -F '\t' '
   $2 !~ /^(parser|semantic|ai|greenai|lowering)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 33) exit 16 }
+  END { if (NR != 40) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1
@@ -107,7 +107,7 @@ diff -u "${WORK_DIR}/required-stages.txt" "${WORK_DIR}/matrix-stages.txt"
 diff -u "${WORK_DIR}/required-severities.txt" "${WORK_DIR}/matrix-severities.txt"
 
 [[ "$(awk -F '\t' 'NR > 1 && $7 == "representative" { count++ } END { print count + 0 }' "${MATRIX}")" -eq 6 ]] || {
-  echo "error: expected six live representative diagnostic rows" >&2
+  echo "error: expected six live representative diagnostic rows"
   exit 1
 }
 
