@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DOC="${ROOT_DIR}/docs/runtime_production_packaging.md"
 TEST="${ROOT_DIR}/tests/packaging/test_runtime_production_packaging.sh"
 CMAKE_FILE="${ROOT_DIR}/CMakeLists.txt"
+SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 
 require_contains() {
   local file="$1"
@@ -61,6 +62,16 @@ require_contains "${TEST}" 'pkg-config --modversion shorthand-runtime'
 require_contains "${TEST}" 'PASS production runtime and AI bridge packaging consumer gate'
 
 bash "${TEST}"
+
+# CI runs sanitizer builds before CTest. The Makefile sanitizer target leaves an
+# ASan/UBSan-instrumented runtime archive in the shared workspace. Force a clean
+# non-sanitized ABI artifact before the ABI consumer gate so validation never
+# depends on stale objects produced by an earlier build mode.
+make -C "${SRC_DIR}" -B runtime_lib \
+  >/tmp/shorthand_runtime_packaging_abi_rebuild.out 2>&1 || {
+    cat /tmp/shorthand_runtime_packaging_abi_rebuild.out >&2 || true
+    exit 1
+  }
 
 bash "${ROOT_DIR}/scripts/check_runtime_abi_api_stability.sh"
 
