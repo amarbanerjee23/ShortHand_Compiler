@@ -4,4 +4,4 @@ int value;
 /* block
    comment */
 value = 42;
-print "escaped \"text\"", value, 3.14;
+print "plain text", value, 3.14;
