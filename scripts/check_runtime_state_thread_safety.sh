@@ -23,7 +23,7 @@ require_contains() {
   local file="$1"
   local needle="$2"
   require_file "${file}"
-  if ! grep -Fq "${needle}" "${file}"; then
+  if ! grep -Fq -- "${needle}" "${file}"; then
     echo "error: ${file} missing required runtime state text: ${needle}" >&2
     exit 1
   fi
