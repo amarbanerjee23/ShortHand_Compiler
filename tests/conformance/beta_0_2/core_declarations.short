@@ -1,0 +1,6 @@
+int i, j, values[4];
+float ratio;
+double score;
+string name;
+bool ready;
+;

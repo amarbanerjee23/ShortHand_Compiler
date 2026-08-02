@@ -1,0 +1,64 @@
+int seed;
+tensor t_float float "1,4";
+tensor t_fp16 fp16 "1,4";
+tensor t_fp32 fp32 "1,4";
+tensor t_bf16 bf16 "1,4";
+tensor t_int8 int8 "1,4";
+tensor t_int4 int4 "1,4";
+tensor t_fp64 fp64 "1,4";
+model onnx_model {
+  format onnx;
+  path "model.onnx";
+  task "classification";
+  precision float;
+  input_shape "1,4";
+  output_shape "1,2";
+  backend_preference onnxruntime_cpu, onnxruntime_cuda, onnxruntime_tensorrt, tensorrt, fallback;
+  compact true;
+  quality_guardrail accuracy >= 90;
+};
+model engine_model {
+  format engine;
+  path "model.engine";
+  task "classification";
+  precision int8;
+  input_shape "1,4";
+  output_shape "1,2";
+  backend_preference tensorrt, onnxruntime_tensorrt, fallback;
+  compact false;
+  quality_guardrail accuracy >= 90;
+};
+model torch_model {
+  format torchscript;
+  path "model.pt";
+  task "classification";
+  precision fp16;
+  input_shape "1,4";
+  output_shape "1,2";
+  backend_preference libtorch, fallback;
+  quality_guardrail accuracy >= 90;
+};
+model openvino_model {
+  format openvino_ir;
+  path "model.xml";
+  task "classification";
+  precision bf16;
+  input_shape "1,4";
+  output_shape "1,2";
+  backend_preference openvino, fallback;
+  quality_guardrail accuracy >= 90;
+};
+model gguf_model {
+  format gguf;
+  path "model.gguf";
+  task "generation";
+  precision int4;
+  input_shape "dynamic";
+  output_shape "dynamic";
+  backend_preference llamacpp, fallback;
+  quality_guardrail quality >= 1;
+};
+infer onnx_model(t_float) -> output;
+infer onnx_model(t_float) > output_legacy_arrow;
+ai_infer("model.onnx", "input.bin", "output.bin");
+aiinfer("model.onnx", "input.bin", "output.bin");

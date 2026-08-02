@@ -1,15 +1,29 @@
 # ShortHand language conformance manifest
 # Format: category | path | expectation | rationale
 
+# Historical row retained for the old-task stability gate. It is not active.
 version | shorthand.language.version | beta-0.1 | Current beta language contract marker.
-parser-valid | tests/fixtures/external_runtime_ai.short | accept | AI/GreenAI declarations plus infer statement should parse and pass semantic validation.
-parser-valid | Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short | accept | Current beta AI syntax used by runtime and evidence paths should remain accepted.
-parser-valid | Compiler_new_ws/Short_Hand/examples/greenai_report.short | accept | Core GreenAI report example should remain accepted.
+current-version | shorthand.language.version | beta-0.2 | Current executable language contract marker.
+grammar-matrix | tests/conformance/grammar_matrix_beta_0_2.tsv | accept | Every beta-0.2 grammar obligation must map to implementation and an executable fixture.
+parser-valid | tests/conformance/beta_0_2/core_declarations.short | accept | Primitive declarations, arrays and the required non-empty logic section must parse.
+parser-valid | tests/conformance/beta_0_2/core_control.short | accept | Functions, statements, control flow, variables and expressions must parse.
+parser-valid | tests/conformance/beta_0_2/ai_language.short | accept | All canonical AI grammar tokens and legacy inference forms must parse independently of semantic support.
+parser-valid | tests/conformance/beta_0_2/greenai_language.short | accept | Green AI contract, measurement, enum and report syntax must parse.
+parser-valid | tests/conformance/beta_0_2/comments_and_literals.short | accept | Comments, strings, integers and floating literals must parse.
+parser-valid | tests/fixtures/external_runtime_ai.short | accept | Existing beta-0.1 AI and Green AI syntax must remain accepted.
+parser-valid | Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short | accept | Existing runtime and evidence AI syntax must remain accepted.
+parser-valid | Compiler_new_ws/Short_Hand/examples/greenai_report.short | accept | Existing Green AI report syntax must remain accepted.
+parser-invalid | tests/conformance/beta_0_2/invalid_empty_program.short | reject | Empty programs remain outside beta-0.2.
+parser-invalid | tests/conformance/beta_0_2/invalid_zero_parameter_function.short | reject | Empty function parameter lists are not accepted by the current parser.
+parser-invalid | tests/conformance/beta_0_2/invalid_empty_block.short | reject | Blocks require at least one statement.
+parser-invalid | tests/conformance/beta_0_2/invalid_precision_alias.short | reject | Runtime aliases such as float32 are not scanner keywords.
+parser-invalid | tests/conformance/beta_0_2/invalid_guardrail_operator.short | reject | Quality guardrails currently accept only integer greater-or-equal syntax.
 parser-invalid | tests/parser/invalid/missing_semicolon.short | reject | Parser must reject incomplete statements.
-semantic-invalid | tests/semantic/invalid/ai_shape_mismatch.short | reject | Semantic analyzer must reject model/input tensor shape mismatch.
-semantic-invalid | tests/semantic/invalid/ai_backend_mismatch.short | reject | Semantic analyzer must reject incompatible backend and model format declarations.
-semantic-invalid | tests/semantic/invalid/ai_output_shape_mismatch.short | reject | Semantic analyzer must reject model/output tensor shape mismatch.
-diagnostics | tests/diagnostics/test_source_diagnostics.sh | accept | Source diagnostics must include file, line, column and caret.
-codegen | tests/codegen/test_ai_metadata_ir.sh | accept | LLVM metadata for AI/GreenAI constructs must remain emitted.
+semantic-invalid | tests/semantic/invalid/ai_shape_mismatch.short | reject | Semantic analyzer must reject model and input tensor shape mismatch.
+semantic-invalid | tests/semantic/invalid/ai_backend_mismatch.short | reject | Semantic analyzer must reject declarations without a compatible backend or fallback.
+semantic-invalid | tests/semantic/invalid/ai_output_shape_mismatch.short | reject | Semantic analyzer must reject model and declared output tensor shape mismatch.
+diagnostics | tests/diagnostics/test_source_diagnostics.sh | accept | Source diagnostics must include file, range, stable code and caret.
+diagnostics | tests/diagnostics/test_diagnostics_coverage_matrix.sh | accept | Parser, semantic, AI, Green AI and lowering diagnostics remain covered.
+codegen | tests/codegen/test_ai_metadata_ir.sh | accept | LLVM metadata for AI and Green AI constructs must remain emitted.
 runtime | tests/codegen/test_external_runtime_native.sh | accept | Native runtime-linking path must remain valid.
 evidence | tests/evidence/test_ai_evidence.sh | accept | Evidence output must retain backend and fallback honesty fields.

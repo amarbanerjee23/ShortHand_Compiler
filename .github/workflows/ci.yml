@@ -59,6 +59,9 @@ jobs:
       - name: Diagnostics coverage matrix
         run: bash scripts/check_diagnostics_coverage_matrix.sh
 
+      - name: Grammar and conformance matrix beta-0.2
+        run: bash scripts/check_grammar_conformance_matrix.sh
+
       - name: Smoke tests
         run: bash scripts/smoke_test.sh
 

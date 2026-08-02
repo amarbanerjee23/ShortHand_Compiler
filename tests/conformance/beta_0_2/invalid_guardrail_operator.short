@@ -1,0 +1,11 @@
+int seed;
+model classifier {
+  format onnx;
+  path "model.onnx";
+  task "classification";
+  precision float;
+  input_shape "1,4";
+  output_shape "1,2";
+  backend_preference onnxruntime_cpu, fallback;
+  quality_guardrail accuracy < 90;
+};
