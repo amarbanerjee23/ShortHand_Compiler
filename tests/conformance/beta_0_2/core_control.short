@@ -5,7 +5,8 @@ def int add(int a; int b;) {
 };
 i = 0;
 j = 1;
-total = add(i, j);
+add(i, j);
+total = i + j;
 values[0] = total;
 total = (i + j) * 2 - 1 / 1 % 2;
 ready = (i < j) || (i <= j) && (i > j) || (i >= j) || (i == j) || (i != j);
