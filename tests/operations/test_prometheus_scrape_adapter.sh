@@ -86,8 +86,9 @@ grep -Fq 'HTTP/1.1 200 OK' "${WORK_DIR}/metrics.response"
 grep -Fqi 'Content-Type: text/plain; version=0.0.4; charset=utf-8' "${WORK_DIR}/metrics.response"
 grep -Fq 'Cache-Control: no-store' "${WORK_DIR}/metrics.response"
 grep -Fq 'X-Content-Type-Options: nosniff' "${WORK_DIR}/metrics.response"
-grep -Fq 'shorthand_runtime_infer_total' "${WORK_DIR}/metrics.response"
-grep -Fq 'shorthand_runtime_model_count' "${WORK_DIR}/metrics.response"
+grep -Fq 'shorthand_runtime_infer_total 0' "${WORK_DIR}/metrics.response"
+grep -Fq 'shorthand_runtime_models 0' "${WORK_DIR}/metrics.response"
+grep -Fq 'shorthand_runtime_last_infer_info{status="not_executed",backend="none",reason="not_run"} 1' "${WORK_DIR}/metrics.response"
 
 stage health-endpoint
 http_request 'GET /healthz HTTP/1.1\r\nHost: localhost\r\n\r\n' "${WORK_DIR}/health.response"
