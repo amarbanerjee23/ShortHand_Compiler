@@ -33,13 +33,13 @@ digit           = "0"…"9" ;
 identifier      = letter , { letter | digit } ;
 integer_literal = digit , { digit } ;
 float_literal   = digit , { digit } , "." , digit , { digit } ;
-string_literal  = '"' , { escaped_character | character - '"' } , '"' ;
+string_literal  = '"' , { character - '"' } , '"' ;
 line_comment    = "//" , { character - newline }
                 | "#" , { character - newline } ;
 block_comment   = "/*" , { character } , "*/" ;
 ```
 
-Whitespace and comments are discarded by the scanner. Identifiers and keywords are case-sensitive.
+Whitespace and comments are discarded by the scanner. Identifiers and keywords are case-sensitive. Backslash escape processing, including escaped quotes, is not part of the beta-0.2 string-literal contract.
 
 ## Program shape
 
