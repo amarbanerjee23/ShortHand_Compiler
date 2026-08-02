@@ -1,0 +1,2 @@
+int seed;
+tensor input float32 "1,4";
