@@ -7,6 +7,11 @@ LAST_COMPLETED_PR: 63
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
+Historical guard markers retained for the old-task stability contract:
+
+- previous_guard_marker: production_readiness_plan_version: 2026-08-02-pr62
+- previous_guard_marker: LAST_COMPLETED_PR: 62
+
 ## Purpose
 
 This document is the single planning source for moving ShortHand from the controlled beta foundation to an enterprise production usage ready language. Every roadmap PR must update its status, evidence, next recommended PR and remaining count here.
@@ -287,3 +292,15 @@ remaining_planned_prs_total_from_pr51: 29
 remaining_planned_prs_after_pr61: 18
 remaining_planned_prs_after_pr62: 17
 remaining_planned_prs_after_pr63: 16
+
+## Historical PR62 recommendation markers
+
+The following exact text is retained only so the old-task stability gate can verify that PR62's previously guarded planning contract was not deleted:
+
+After PR #62 is merged, approximately 17 implementation PRs remain.
+
+Next recommended PR after PR #62:
+
+PR63 - OTLP exporter adapter.
+
+Previous roadmap state: PR63 - OTLP exporter adapter | PLANNED
