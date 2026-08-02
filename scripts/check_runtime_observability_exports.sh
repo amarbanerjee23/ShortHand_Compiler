@@ -26,6 +26,8 @@ require_file Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h
 require_file Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
 require_file tests/codegen/test_runtime_observability_exports.sh
 require_file docs/runtime_observability_exports.md
+require_file docs/otlp_exporter_adapter.md
+require_file scripts/check_otlp_exporter_adapter.sh
 
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_prometheus_metrics'
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'short_runtime_otlp_spans_json'
@@ -37,7 +39,10 @@ require_contains tests/codegen/test_runtime_observability_exports.sh 'PASS runti
 require_contains tests/codegen/test_runtime_observability_exports.sh 'shorthand.runtime.otlp_spans.v1'
 require_contains docs/runtime_observability_exports.md 'Prometheus-style metrics'
 require_contains docs/runtime_observability_exports.md 'OTLP-like span JSON'
+require_contains docs/otlp_exporter_adapter.md 'bounded_one_shot_otlp_http_trace_delivery'
+require_contains scripts/check_otlp_exporter_adapter.sh 'PASS OTLP exporter adapter guard'
 
 bash tests/codegen/test_runtime_observability_exports.sh
+bash scripts/check_otlp_exporter_adapter.sh
 
 echo "PASS runtime observability export gate"
