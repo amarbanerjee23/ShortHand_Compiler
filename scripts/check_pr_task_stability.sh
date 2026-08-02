@@ -38,6 +38,7 @@ required_files=(
   scripts/check_language_objectives.sh
   scripts/check_runtime_abi_api_stability.sh
   scripts/check_runtime_state_thread_safety.sh
+  scripts/check_runtime_production_packaging.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
@@ -66,6 +67,7 @@ required_files=(
   docs/language_objectives.md
   docs/runtime_abi_api_stability.md
   docs/runtime_state_and_thread_safety.md
+  docs/runtime_production_packaging.md
   docs/compiled_infer_bridge.md
   docs/backend_compatibility_matrix.md
   docs/backend_live_sdk_matrix.md
@@ -80,6 +82,9 @@ required_files=(
   docs/runtime_observability_exports.md
   abi/runtime_public_symbols_v1.txt
   abi/shorthand_runtime_abi_v1.h
+  cmake/ShortHandConfig.cmake.in
+  cmake/shorthand-runtime.pc.in
+  cmake/shorthand-ai-bridge.pc.in
   Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h
   Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
   Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp
@@ -89,6 +94,7 @@ required_files=(
   tests/conformance/manifest.txt
   tests/abi/test_runtime_abi_api_stability.sh
   tests/runtime/test_runtime_state_thread_safety.sh
+  tests/packaging/test_runtime_production_packaging.sh
   tests/codegen/test_runtime_ai_bridge_link_build.sh
   tests/codegen/test_runtime_ai_bridge_execution_path.sh
   tests/codegen/test_runtime_observability_exports.sh
@@ -155,6 +161,7 @@ shell_files=(
   scripts/check_language_objectives.sh
   scripts/check_runtime_abi_api_stability.sh
   scripts/check_runtime_state_thread_safety.sh
+  scripts/check_runtime_production_packaging.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_c3eco_claims_and_schema.sh
   scripts/check_mlir_foundation.sh
@@ -176,6 +183,7 @@ shell_files=(
   scripts/generate_release_sbom.sh
   tests/abi/test_runtime_abi_api_stability.sh
   tests/runtime/test_runtime_state_thread_safety.sh
+  tests/packaging/test_runtime_production_packaging.sh
   tests/integration/test_backend_failure_mode_matrix.sh
 )
 for script in "${shell_files[@]}"; do require_bash_syntax "${script}"; done
@@ -184,18 +192,20 @@ require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-02-pr60' \
-  'LAST_COMPLETED_PR: 60' \
+  'production_readiness_plan_version: 2026-08-02-pr61' \
+  'LAST_COMPLETED_PR: 61' \
   'Language objectives consolidation applied in PR #57' \
   'Backend failure-mode finalization applied in PR #58' \
   'Runtime ABI and API stability applied in PR #59' \
   'Runtime state and thread-safety applied in PR #60' \
+  'Production build packaging applied in PR #61' \
   'Recommended path from PR #51 onward: 29 PRs total.' \
   'PR59 - Runtime ABI and API version stability gate | MERGED' \
   'PR60 - Runtime state isolation and thread-safety policy | MERGED' \
-  'Next recommended PR after PR #60:' \
-  'PR61 - Production build packaging for runtime and AI bridge.' \
-  'remaining_planned_prs_after_pr60: 19' \
+  'PR61 - Production build packaging for runtime and AI bridge | MERGED' \
+  'Next recommended PR after PR #61:' \
+  'PR62 - Prometheus scrape endpoint host adapter.' \
+  'remaining_planned_prs_after_pr61: 18' \
   'PR67 - Parser robustness and negative corpus hardening' \
   'PR79 - MLIR lowering passes and production RC gate'; do
   require_contains docs/production_readiness_pr_plan.md "${anchor}"
@@ -245,6 +255,25 @@ require_contains CMakeLists.txt 'RuntimeThreadSafeFacade.cpp'
 require_contains CMakeLists.txt 'Threads::Threads'
 require_contains tests/runtime/test_runtime_state_thread_safety.sh 'PASS runtime state isolation and thread-safety gate'
 require_contains scripts/check_runtime_state_thread_safety.sh 'PASS runtime state isolation and thread-safety guard'
+
+for anchor in \
+  'runtime_packaging_contract_version: 1.0.0' \
+  'runtime_packaging_status: installable_static_shared_and_consumer_checked' \
+  'runtime_shared_soversion: 1' \
+  'ai_bridge_packaging_status: adapter_static_shared_and_consumer_checked' \
+  'production_claim_boundary: packaging_gate_is_not_full_production_readiness'; do
+  require_contains docs/runtime_production_packaging.md "${anchor}"
+done
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h 'defined(short_runtime_reset)'
+require_contains CMakeLists.txt 'add_library(shorthand_runtime_shared SHARED'
+require_contains CMakeLists.txt 'CXX_VISIBILITY_PRESET hidden'
+require_contains CMakeLists.txt 'add_library(shorthand_ai_bridge_shared SHARED'
+require_contains CMakeLists.txt 'install(EXPORT ShortHandTargets'
+require_contains CMakeLists.txt 'configure_package_config_file('
+require_contains CMakeLists.txt 'write_basic_package_version_file('
+require_contains tests/packaging/test_runtime_production_packaging.sh 'find_package(ShortHand 1 CONFIG REQUIRED)'
+require_contains tests/packaging/test_runtime_production_packaging.sh 'PASS production runtime and AI bridge packaging consumer gate'
+require_contains scripts/check_runtime_production_packaging.sh 'PASS runtime production packaging guard'
 
 require_contains docs/backend_compatibility_matrix.md 'Backend execution validation tiers'
 require_contains docs/backend_compatibility_matrix.md 'backend_failure_mode_matrix_status: finalized_v1'
