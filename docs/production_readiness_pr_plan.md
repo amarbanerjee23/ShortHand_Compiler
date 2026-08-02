@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-02-pr58
+production_readiness_plan_version: 2026-08-02-pr59
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 58
+LAST_COMPLETED_PR: 59
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -82,6 +82,23 @@ The matrix now proves:
 
 The machine-readable report uses `shorthand.backend_failure_mode_matrix.v1`. Failure evidence is not backend success evidence, and `false_success` must remain false for every row.
 
+## Runtime ABI and API stability applied in PR #59
+
+PR #59 freezes the runtime C ABI as version `1.0.0` and the source API as version `1.0.0`.
+
+The contract now provides:
+
+1. an exact 25-symbol external C ABI manifest,
+2. a frozen ABI v1 consumer header snapshot,
+3. stable numeric values for all existing runtime status codes,
+4. header-level ABI/API version and compatibility negotiation,
+5. an additive-minor and breaking-major versioning policy,
+6. a deprecation rule that retains deprecated symbols for the complete ABI major,
+7. a C11 consumer compile, link, and runtime compatibility test,
+8. exact `nm` comparison between the built archive and the frozen manifest.
+
+The ABI gate does not claim thread safety, state isolation, shared-library packaging, SONAME support, or full production readiness. State and concurrency belong to PR #60. Shared-library packaging and release form belong to PR #61.
+
 ## Status values
 
 STATUS values: PLANNED, IN_PROGRESS, MERGED, BLOCKED, DEFERRED
@@ -98,7 +115,7 @@ Every roadmap PR must update:
 
 A production-ready claim is blocked until all required rows are MERGED or intentionally DEFERRED with a clear production impact.
 
-## Current baseline after PR #58
+## Current baseline after PR #59
 
 - Language contract and conformance marker are `beta-0.1`.
 - Consolidated language objectives are versioned and guarded by CI.
@@ -112,24 +129,30 @@ A production-ready claim is blocked until all required rows are MERGED or intent
 - Hardware selection uses `shorthand.hardware.selection.v1`.
 - `AIRuntime::infer` routes only through accessible, compatible, available backend/device pairs.
 - Preference, override, deny-list, memory floor, CPU fallback, and fake probes are implemented.
+- Runtime ABI `1.0.0` freezes exactly 25 external `short_*` symbols.
+- Runtime API `1.0.0` exposes header-level version and compatibility helpers.
+- A frozen C11 ABI consumer links and runs against the current runtime archive.
+- Runtime status numeric values `0` through `8` are frozen for ABI v1.
 - Inference telemetry includes hardware inventory and selection evidence.
 - Runtime observability exports JSON, Prometheus-style text, and OTLP-like span JSON.
 
-Important boundary: ShortHand is still not production ready. Runtime ABI/state work, packaging, operations exporters, diagnostics, parser robustness, modules, release security, developer tooling, C3-ECO completion, and MLIR integration remain open.
+Important boundary: ShortHand is still not production ready. Runtime state isolation, packaging, operations exporters, diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion, and MLIR integration remain open.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #58 is merged, approximately 21 implementation PRs remain. The count may split further only when implementation evidence identifies a concrete additional production blocker.
+From the merged PR #58 baseline, 21 roadmap PRs remain including PR #59.
+
+After PR #59 is merged, approximately 20 implementation PRs remain. No new PR is added because shared-library packaging and SONAME handling remain within PR #61.
 
 ## Next recommended PR
 
-Next recommended PR after PR #58:
+Next recommended PR after PR #59:
 
-PR59 - Runtime ABI and API version stability gate.
+PR60 - Runtime state isolation and thread-safety policy.
 
-Reason: backend compatibility, hardware routing, backend-specific unavailable paths, and the common failure contract are now guarded. The next production-critical boundary is a stable public runtime ABI with version exports, symbol ownership, compatibility rules, and deprecation controls.
+Reason: the external ABI is now versioned and frozen, but the runtime still uses process-global registries and cached state. The next production-critical boundary is deterministic isolation, concurrency behavior, lifecycle ownership, and an explicit thread-safety contract.
 
 ## PR roadmap table
 
@@ -143,9 +166,9 @@ Reason: backend compatibility, hardware routing, backend-specific unavailable pa
 | PR56 - Hardware capability discovery and accelerator-aware routing | MERGED | Runtime hardware selection | Inventory CPU/GPU/TPU/NPU, select execution-ready hardware, support policy controls, and emit telemetry. | `docs/hardware_capability_routing.md`, `HardwareDiscovery.h`, routing test and gate |
 | PR57 - Llama.cpp optional live execution fixture | MERGED | Backend coverage and objectives | Prove Llama.cpp unavailable paths cannot report false success and consolidate the language objectives contract. | `docs/llamacpp_optional_fixture.md`, Llama.cpp test and gate, `docs/language_objectives.md`, objectives gate |
 | PR58 - Backend failure-mode matrix finalization | MERGED | Runtime reliability | Cover invalid format, missing SDK, shape, precision, capacity, hardware probe, access, and fallback failures. | `docs/backend_failure_mode_matrix.md`, `tests/integration/test_backend_failure_mode_matrix.sh`, `scripts/check_backend_failure_mode_matrix.sh` |
-| PR59 - Runtime ABI and API version stability gate | PLANNED | Runtime contract | Version public hooks, symbols, compatibility, and deprecation policy. | ABI API, symbol checks and docs |
+| PR59 - Runtime ABI and API version stability gate | MERGED | Runtime contract | Freeze public hooks, symbols, compatibility, versioning, status values, and deprecation policy. | `docs/runtime_abi_api_stability.md`, `abi/runtime_public_symbols_v1.txt`, `abi/shorthand_runtime_abi_v1.h`, ABI test and gate |
 | PR60 - Runtime state isolation and thread-safety policy | PLANNED | Runtime reliability | Enforce contexts/thread-safety or a tested explicit limitation. | isolation and concurrency tests |
-| PR61 - Production build packaging for runtime and AI bridge | PLANNED | Build | Add repeatable production Make/CMake targets and link tests. | build targets and packaging evidence |
+| PR61 - Production build packaging for runtime and AI bridge | PLANNED | Build | Add repeatable production Make/CMake targets, shared-library packaging, SONAME/version evidence, and link tests. | build targets and packaging evidence |
 | PR62 - Prometheus scrape endpoint host adapter | PLANNED | Operations | Expose metrics through a host adapter. | adapter tests and docs |
 | PR63 - OTLP exporter adapter | PLANNED | Operations | Add optional OTLP exporter/collector integration. | exporter tests and docs |
 | PR64 - AST source ranges across parser nodes | PLANNED | Diagnostics | Store consistent source spans across AST nodes. | source-span tests |
@@ -175,7 +198,7 @@ ShortHand can be considered enterprise production usage ready only when:
 4. The common backend failure-mode matrix passes without false success.
 5. Marketed backends are live-tested or removed from production claims.
 6. Hardware inventory and routing separate detection from execution readiness.
-7. ABI, runtime state, packaging, observability, diagnostics, parser robustness, modules, release security, deployment and tooling gates pass.
+7. Runtime ABI/API compatibility, state isolation, packaging, observability, diagnostics, parser robustness, modules, release security, deployment and tooling gates pass.
 8. C3-ECO evidence is authority-ready and claim-safe.
 9. MLIR lowering and the final production RC gate pass.
 
@@ -189,6 +212,8 @@ Hardware detection never implies successful accelerator execution without backen
 
 Failure-mode evidence never implies backend execution success.
 
+ABI stability evidence does not imply thread safety, shared-library packaging, deployment readiness, or complete production readiness.
+
 The project may claim a full production backend matrix only when every marketed backend has a live success fixture or is removed from production-supported claims.
 
 C3-ECO output remains candidate-only unless an external certifier signs it.
@@ -196,4 +221,4 @@ C3-ECO output remains candidate-only unless an external certifier signs it.
 ## Current remaining PR count field
 
 remaining_planned_prs_total_from_pr51: 29
-remaining_planned_prs_after_pr58: 21
+remaining_planned_prs_after_pr59: 20
