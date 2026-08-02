@@ -39,11 +39,14 @@ stage configure
 cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
-  -DSHORTHAND_BUILD_TESTING=OFF
+  -DSHORTHAND_BUILD_TESTING=OFF \
+  -DSHORTHAND_BUILD_PROMETHEUS_ADAPTER=OFF
 
 stage build
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
-  shorthand_runtime shorthand_otlp_exporter
+  shorthand_runtime shorthand_runtime_shared \
+  shorthand_ai_bridge shorthand_ai_bridge_shared \
+  shorthand_otlp_exporter
 EXPORTER="${BUILD_DIR}/shorthand_otlp_exporter"
 [[ -x "${EXPORTER}" ]] || { echo "error: OTLP exporter executable was not produced" >&2; exit 1; }
 
