@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-02-pr62
+production_readiness_plan_version: 2026-08-02-pr63
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 62
+LAST_COMPLETED_PR: 63
 BASELINE_LANGUAGE_VERSION: beta-0.1
 TARGET: enterprise production usage ready language
 
@@ -129,6 +129,35 @@ Evidence:
 
 The adapter is not authenticated or TLS-enabled public ingress. Non-loopback exposure requires an external reverse proxy, service mesh and network policy. It does not aggregate metrics across ShortHand processes.
 
+## OTLP exporter adapter applied in PR #63
+
+PR #63 adds bounded one-shot OTLP/HTTP trace delivery through an optional installed executable while preserving the frozen runtime ABI.
+
+The exporter contract now provides:
+
+1. a standards-shaped OTLP/HTTP JSON `resourceSpans` request,
+2. default collector delivery to `127.0.0.1:4318/v1/traces`,
+3. local runtime, bounded file and bounded stdin snapshot sources,
+4. schema validation for `shorthand.runtime.otlp_spans.v1`,
+5. bounded connect, send, receive, snapshot and response handling,
+6. bounded exponential retries for transport failures, HTTP 408, HTTP 429 and HTTP 5xx,
+7. no retry for permanent HTTP 4xx rejection,
+8. optional Authorization header loading from an environment variable rather than command-line secret text,
+9. explicit `delivered=true`, `delivered=false` and dry-run status contracts,
+10. real loopback collector integration tests and installed executable validation,
+11. an unchanged runtime ABI v1 manifest of exactly 25 public symbols.
+
+Evidence:
+
+- `docs/otlp_exporter_adapter.md`
+- `Compiler_new_ws/Short_Hand/src/operations/OtlpExporterAdapter.cpp`
+- `tests/operations/OtlpTestCollector.cpp`
+- `tests/operations/test_otlp_exporter_adapter.sh`
+- `scripts/check_otlp_exporter_adapter.sh`
+- `CMakeLists.txt`
+
+HTTP 2xx proves only that the configured endpoint accepted the request. It does not prove collector processing or trace persistence. Native TLS, mTLS, disk queues, continuous batching and multi-tenant export remain outside this PR.
+
 ## Status values
 
 STATUS values: PLANNED, IN_PROGRESS, MERGED, BLOCKED, DEFERRED
@@ -145,7 +174,7 @@ Every roadmap PR must update:
 
 A production claim is blocked until every required row is MERGED or intentionally DEFERRED with a documented production impact.
 
-## Current baseline after PR #62
+## Current baseline after PR #63
 
 - Language and conformance remain guarded at `beta-0.1`.
 - Consolidated language objectives are versioned and guarded.
@@ -163,23 +192,26 @@ A production claim is blocked until every required row is MERGED or intentionall
 - CMake and pkg-config downstream consumers are guarded.
 - Current and frozen ABI headers are installed from the package prefix.
 - An installed loopback-default Prometheus scrape host exposes `/metrics` and `/healthz` with bounded HTTP handling.
-- Real socket tests prove status, content-type, representative metrics, method policy and deterministic shutdown.
+- Real socket tests prove Prometheus status, content type, representative metrics, method policy and deterministic shutdown.
+- An installed OTLP/HTTP exporter delivers bounded `resourceSpans` requests to a collector.
+- Collector tests prove accepted delivery, retryable 503 recovery, permanent 400 rejection and honest delivery status.
+- File and stdin handoff explicitly address process-local runtime state without expanding ABI v1.
 
-Important boundary: ShortHand is still not production ready. OTLP export, diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion and MLIR integration remain open.
+Important boundary: ShortHand is still not production ready. Diagnostics, parser robustness, modules, release security, deployment, developer tooling, C3-ECO completion and MLIR integration remain open. The OTLP adapter also does not provide TLS, continuous batching, disk queues or end-to-end persistence guarantees.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #62 is merged, approximately 17 implementation PRs remain. No additional PR was discovered during the Prometheus scrape adapter implementation.
+After PR #63 is merged, approximately 16 implementation PRs remain. No additional roadmap PR was discovered during the OTLP exporter implementation.
 
 ## Next recommended PR
 
-Next recommended PR after PR #62:
+Next recommended PR after PR #63:
 
-PR63 - OTLP exporter adapter.
+PR64 - AST source ranges across parser nodes.
 
-Reason: Prometheus pull-based operations exposure is now guarded without changing the runtime ABI. The next observability gap is an optional OTLP exporter that can deliver runtime span evidence to a collector with bounded retries, timeouts and honest delivery status.
+Reason: Basic pull and push observability adapters are now guarded without changing the runtime ABI. The next production-critical gap is consistent source location ownership across AST nodes, which is required before a complete diagnostics coverage matrix can be reliable.
 
 ## PR roadmap table
 
@@ -197,7 +229,7 @@ Reason: Prometheus pull-based operations exposure is now guarded without changin
 | PR60 - Runtime state isolation and thread-safety policy | MERGED | Runtime reliability | Serialize ABI v1, protect snapshots and document process isolation. | state/thread-safety docs, façade, stress test and gate |
 | PR61 - Production build packaging for runtime and AI bridge | MERGED | Build | Add repeatable installable static/shared artifacts, shared-library packaging, SONAME/version evidence, exported headers, package metadata and consumer link tests. | `docs/runtime_production_packaging.md`, CMake/pkg-config exports, install-consumer gate |
 | PR62 - Prometheus scrape endpoint host adapter | MERGED | Operations | Expose metrics through a bounded, loopback-default installed host adapter without changing the runtime ABI. | adapter source, real socket tests and docs |
-| PR63 - OTLP exporter adapter | PLANNED | Operations | Add optional OTLP exporter and collector integration. | exporter tests and docs |
+| PR63 - OTLP exporter adapter | MERGED | Operations | Deliver bounded OTLP/HTTP trace requests with honest retry and rejection behavior. | `docs/otlp_exporter_adapter.md`, exporter, collector fixture, tests and gate |
 | PR64 - AST source ranges across parser nodes | PLANNED | Diagnostics | Store consistent source spans across AST nodes. | source-span tests |
 | PR65 - Diagnostics coverage matrix | PLANNED | Diagnostics | Cover parser, semantic, AI, GreenAI and lowering diagnostics. | diagnostics matrix and tests |
 | PR66 - Full grammar and conformance matrix beta-0.2 | PLANNED | Language contract | Expand syntax coverage and version with compatibility evidence. | grammar, manifest and version gate |
@@ -243,6 +275,8 @@ Installable artifacts and successful consumer linking do not imply deployment re
 
 A loopback-default metrics endpoint does not imply authenticated, TLS-enabled or public-ingress readiness.
 
+An OTLP endpoint returning HTTP 2xx proves transport acceptance only. It does not prove collector processing, trace persistence, indexing or query availability.
+
 The project may claim a full production backend matrix only when every marketed backend has a live success fixture or is removed from production-supported claims.
 
 C3-ECO output remains candidate-only unless an external certifier signs it.
@@ -252,3 +286,4 @@ C3-ECO output remains candidate-only unless an external certifier signs it.
 remaining_planned_prs_total_from_pr51: 29
 remaining_planned_prs_after_pr61: 18
 remaining_planned_prs_after_pr62: 17
+remaining_planned_prs_after_pr63: 16
