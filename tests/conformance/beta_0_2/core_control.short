@@ -1,0 +1,23 @@
+int i, j, total, values[4];
+bool ready;
+def int add(int a; int b;) {
+  return a + b;
+};
+i = 0;
+j = 1;
+total = add(i, j);
+values[0] = total;
+total = (i + j) * 2 - 1 / 1 % 2;
+ready = (i < j) || (i <= j) && (i > j) || (i >= j) || (i == j) || (i != j);
+print "start", total, true, false, 1.5;
+read i, values[1];
+if i < j { total = total + 1; }
+if i == j { total = 0; } else { total = total - 1; }
+loop i = 0, 3 { if i == 2 { break; } continue; }
+loop i = 0, 3, 1 { total = total + i; }
+loop i < 3 { i = i + 1; }
+goto done if total > 0;
+goto done;
+{ total = -total; ; }
+done:
+total;
