@@ -1,7 +1,6 @@
 #include "SemanticAnalyzer.h"
 #include "DiagnosticCodes.h"
 #include "../ai_runtime/AI_Types.h"
-#include <set>
 
 namespace diag = shorthand::diagnostics;
 
@@ -47,7 +46,17 @@ int SemanticAnalyzer::visit(AST_PROGRAM *p) {
 int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK*) { return 0; }
 
 int SemanticAnalyzer::visit(AST_FUNCTION_LIST_RULE *f) {
-    for (auto x : f->functions) x->accept(*this);
+    for (auto *function : f->functions) {
+        if (function && function->function_name) functions.insert(function->function_name);
+    }
+    for (auto *function : f->functions) {
+        if (function) function->accept(*this);
+    }
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_FUNCTION_RULE *n) {
+    if (n->block_statement) n->block_statement->accept(*this);
     return 0;
 }
 
@@ -57,7 +66,41 @@ int SemanticAnalyzer::visit(AST_LOGIC_BLOCK *b) {
 }
 
 int SemanticAnalyzer::visit(AST_STATEMENTS_BLOCK *b) {
-    for (auto s : b->statements) s->accept(*this);
+    for (auto *statement : b->statements) {
+        if (statement) statement->accept(*this);
+    }
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_EXPRESSION_STATEMENT_RULE *n) {
+    if (n->expression) n->expression->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_FUNCTION_CALL_RULE *n) {
+    const std::string name = n->function_name == nullptr ? std::string() : std::string(n->function_name);
+    if (name.empty() || !functions.count(name))
+        diagnostics.errorAtNode(n, diag::LoweringUndefinedFunction, "lowering cannot resolve function: " + name);
+    if (n->parameters) n->parameters->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_ASSIGNMENT_RULE *n) {
+    if (n->variable) n->variable->accept(*this);
+    if (n->expression) n->expression->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_IF_STATEMENT *n) {
+    if (n->condition) n->condition->accept(*this);
+    if (n->if_block) n->if_block->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_IF_ELSE_STATEMENT *n) {
+    if (n->condition) n->condition->accept(*this);
+    if (n->if_block) n->if_block->accept(*this);
+    if (n->else_block) n->else_block->accept(*this);
     return 0;
 }
 
@@ -81,8 +124,8 @@ int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
 
     bool hasFallback = false;
     bool hasCompatibleRealBackend = false;
-    for (const auto &b : d.backend_preference) {
-        auto kind = shorthand::ai::parseBackendKind(b);
+    for (const auto &backend : d.backend_preference) {
+        auto kind = shorthand::ai::parseBackendKind(backend);
         hasFallback = hasFallback || kind == shorthand::ai::BackendKind::Fallback;
         if (kind == shorthand::ai::BackendKind::Fallback) continue;
         if (backendCompatibleWithFormat(format, kind)) {
@@ -91,7 +134,7 @@ int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
             diagnostics.warningAtNode(
                 n,
                 diag::AIModelIncompatibleBackend,
-                "model " + d.name + " backend_preference " + b + " is not compatible with format " + d.format);
+                "model " + d.name + " backend_preference " + backend + " is not compatible with format " + d.format);
         }
     }
     if (d.backend_preference.empty())
@@ -194,10 +237,11 @@ int SemanticAnalyzer::visit(AST_CONTINUE *n) {
     return 0;
 }
 
-#define STUB(T) int SemanticAnalyzer::visit(T*){ return 0; }
-STUB(AST_EXPRESSION_STATEMENT_RULE) STUB(AST_FUNCTION_RULE) STUB(AST_FUNCTION_CALL_RULE) STUB(AST_ASSIGNMENT_RULE) STUB(AST_IF_STATEMENT) STUB(AST_IF_ELSE_STATEMENT) STUB(AST_GOTO_STATEMENT_RULE) STUB(AST_READ_RULE) STUB(AST_PRINT_RULE) STUB(AST_LABEL_RULE) STUB(AST_GREENAI_REPORT_RULE) STUB(AST_AI_INFER_RULE) STUB(AST_RETURN_STATEMENT) STUB(AST_BINARY_EXPRESSION_RULE) STUB(AST_UNARY_EXPRESSION_RULE) STUB(AST_SIMPLE_VARIABLE) STUB(AST_ARRAY_VARIABLE) STUB(AST_LITERAL) STUB(AST_STRING_LITERAL) STUB(AST_BOOL_LITERAL) STUB(AST_FLOAT_LITERAL) STUB(AST_FUNCTION_CALL_EXPRESSION)
-
 int SemanticAnalyzer::visit(AST_FOR_LOOP_STATEMENT_RULE *n) {
+    if (n->variable) n->variable->accept(*this);
+    if (n->from) n->from->accept(*this);
+    if (n->step) n->step->accept(*this);
+    if (n->to) n->to->accept(*this);
     loopDepth++;
     if (n->for_block) n->for_block->accept(*this);
     loopDepth--;
@@ -205,8 +249,70 @@ int SemanticAnalyzer::visit(AST_FOR_LOOP_STATEMENT_RULE *n) {
 }
 
 int SemanticAnalyzer::visit(AST_WHILE_LOOP_STATEMENT_RULE *n) {
+    if (n->condition) n->condition->accept(*this);
     loopDepth++;
     if (n->while_block) n->while_block->accept(*this);
     loopDepth--;
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_GOTO_STATEMENT_RULE *n) {
+    if (n->condition) n->condition->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_READ_RULE *n) {
+    for (auto *variable : n->variables) {
+        if (variable) variable->accept(*this);
+    }
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_PRINT_RULE*) { return 0; }
+int SemanticAnalyzer::visit(AST_LABEL_RULE*) { return 0; }
+
+int SemanticAnalyzer::visit(AST_GREENAI_REPORT_RULE *n) {
+    if (n->inferences) n->inferences->accept(*this);
+    if (n->watts) n->watts->accept(*this);
+    if (n->seconds) n->seconds->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_AI_INFER_RULE*) { return 0; }
+
+int SemanticAnalyzer::visit(AST_RETURN_STATEMENT *n) {
+    if (n->expression) n->expression->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_BINARY_EXPRESSION_RULE *n) {
+    if (n->left) n->left->accept(*this);
+    if (n->right) n->right->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_UNARY_EXPRESSION_RULE *n) {
+    if (n->expression) n->expression->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_SIMPLE_VARIABLE*) { return 0; }
+
+int SemanticAnalyzer::visit(AST_ARRAY_VARIABLE *n) {
+    if (n->index) n->index->accept(*this);
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_LITERAL*) { return 0; }
+int SemanticAnalyzer::visit(AST_STRING_LITERAL*) { return 0; }
+int SemanticAnalyzer::visit(AST_BOOL_LITERAL*) { return 0; }
+int SemanticAnalyzer::visit(AST_FLOAT_LITERAL*) { return 0; }
+
+int SemanticAnalyzer::visit(AST_FUNCTION_CALL_EXPRESSION *n) {
+    if (!functions.count(n->function_name))
+        diagnostics.errorAtNode(n, diag::LoweringUndefinedFunction, "lowering cannot resolve function: " + n->function_name);
+    for (auto *argument : n->arguments) {
+        if (argument) argument->accept(*this);
+    }
     return 0;
 }
