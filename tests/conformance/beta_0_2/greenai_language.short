@@ -1,0 +1,33 @@
+int seed;
+greenai_contract workload {
+  functional_unit "1000 inferences";
+  success_criteria "accuracy >= 90";
+  boundary compute, accelerator, storage, network, ci_cd, thirdparty;
+  measurement_quality MQ1;
+  data_quality DQ1;
+  carbon_factor location 475;
+  energy_budget_j 500;
+  carbon_budget_gco2e 100;
+  quality_guardrail accuracy >= 90;
+  evidence_retention "90 days";
+  claims_mode evidence_only;
+};
+greenai_contract quality_levels {
+  measurement_quality MQ2;
+  data_quality DQ2;
+};
+greenai_contract higher_quality {
+  measurement_quality MQ3;
+  data_quality DQ3;
+};
+greenai_contract highest_quality {
+  measurement_quality MQ4;
+  data_quality DQ4;
+};
+greenai_measure workload {
+  inferences 1000;
+  watts 5;
+  seconds 100;
+  backend external_meter;
+};
+greenai("workload", 1000, 5, 100);
