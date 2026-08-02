@@ -1,6 +1,8 @@
 #ifndef SHORTHAND_DIAGNOSTICS_H
 #define SHORTHAND_DIAGNOSTICS_H
 
+#include "../ast/SourceRange.h"
+
 #include <string>
 #include <vector>
 
@@ -12,6 +14,10 @@ public:
     void warning(const std::string &message);
     void errorAt(const std::string &anchor_kind, const std::string &anchor_name, const std::string &message);
     void warningAt(const std::string &anchor_kind, const std::string &anchor_name, const std::string &message);
+    void errorAtRange(const SourceRange &range, const std::string &message);
+    void warningAtRange(const SourceRange &range, const std::string &message);
+    void errorAtNode(const void *node, const std::string &message);
+    void warningAtNode(const void *node, const std::string &message);
 
     bool hasErrors() const;
     void print() const;
@@ -21,8 +27,7 @@ private:
     struct DiagnosticRecord {
         Severity severity;
         std::string message;
-        int line = 0;
-        int column = 0;
+        SourceRange range;
     };
 
     std::string source_file_;
@@ -30,7 +35,7 @@ private:
     std::vector<DiagnosticRecord> records_;
     bool has_errors_ = false;
 
-    void add(Severity severity, const std::string &message, int line = 0, int column = 0);
+    void add(Severity severity, const std::string &message, const SourceRange &range = {});
     std::pair<int, int> locateAnchor(const std::string &anchor_kind, const std::string &anchor_name) const;
 };
 
