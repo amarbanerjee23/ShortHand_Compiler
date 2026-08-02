@@ -37,7 +37,7 @@ stage build-artifacts
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_runtime shorthand_runtime_shared \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
-  shorthand_prometheus_adapter
+  shorthand_prometheus_adapter shorthand_otlp_exporter
 
 stage install-artifacts
 cmake --install "${BUILD_DIR}"
@@ -62,6 +62,7 @@ require_installed '*/include/shorthand/abi/shorthand_runtime_abi_v1.h'
 require_installed '*/libshorthand_runtime.a'
 require_installed '*/libshorthand_ai_bridge.a'
 require_installed '*/bin/shorthand_prometheus_adapter'
+require_installed '*/bin/shorthand_otlp_exporter'
 require_installed '*/ShortHandConfig.cmake'
 require_installed '*/ShortHandConfigVersion.cmake'
 require_installed '*/ShortHandTargets.cmake'
@@ -180,10 +181,13 @@ stage run-cmake-consumers
 "${CONSUMER_BUILD_DIR}/bridge_static"
 "${CONSUMER_BUILD_DIR}/bridge_shared"
 
-stage verify-installed-adapter
-"${INSTALL_DIR}/bin/shorthand_prometheus_adapter" --help >"${WORK_DIR}/adapter-help.txt"
-grep -Fq -- '--listen ADDRESS' "${WORK_DIR}/adapter-help.txt"
-grep -Fq -- '--request-limit-bytes BYTES' "${WORK_DIR}/adapter-help.txt"
+stage verify-installed-adapters
+"${INSTALL_DIR}/bin/shorthand_prometheus_adapter" --help >"${WORK_DIR}/prometheus-help.txt"
+grep -Fq -- '--listen ADDRESS' "${WORK_DIR}/prometheus-help.txt"
+grep -Fq -- '--request-limit-bytes BYTES' "${WORK_DIR}/prometheus-help.txt"
+"${INSTALL_DIR}/bin/shorthand_otlp_exporter" --help >"${WORK_DIR}/otlp-help.txt"
+grep -Fq -- '--authorization-env NAME' "${WORK_DIR}/otlp-help.txt"
+grep -Fq -- '--snapshot-limit-bytes BYTES' "${WORK_DIR}/otlp-help.txt"
 
 stage verify-pkg-config-consumers
 if command -v pkg-config >/dev/null 2>&1; then

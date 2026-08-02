@@ -36,7 +36,8 @@ stage configure
 cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
-  -DSHORTHAND_BUILD_TESTING=OFF
+  -DSHORTHAND_BUILD_TESTING=OFF \
+  -DSHORTHAND_BUILD_OTLP_EXPORTER=OFF
 
 stage build
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
