@@ -10,7 +10,7 @@ production_claim_boundary: abi_stability_gate_is_not_full_production_readiness
 
 This contract freezes the public ShortHand runtime C ABI used by generated programs, native applications and integration adapters. It separates the stable external C surface from internal C++ implementation types.
 
-ABI stability is necessary for enterprise usage, but it is not sufficient for a production-ready claim. Runtime state isolation, packaging, deployment, security, observability exporters and release governance remain separate roadmap gates.
+ABI stability is necessary for enterprise usage, but it is not sufficient for a production-ready claim. Tenant isolation, packaging, deployment, security, observability exporters and release governance remain separate roadmap gates.
 
 ## Stable ABI surface
 
@@ -104,13 +104,17 @@ Deprecation is not permission to silently weaken fallback honesty, output-buffer
 
 Caller-provided input and output buffers remain owned by the caller. Failure paths must not copy outputs.
 
-Strings returned by runtime query functions point to runtime-owned memory. Consumers should copy returned text before making later runtime calls that may refresh cached JSON or status strings.
+The synchronized ABI façade copies every string-returning query into thread-local storage. A returned pointer belongs to the calling thread and remains valid until the same query function is called again on that thread or the thread exits. Consumers should still copy returned text when it must be retained for longer.
 
 The runtime does not expose C++ standard-library types in the public C ABI.
 
 ## Thread-safety boundary
 
-ABI v1 does not claim that global runtime state is thread-safe or isolated between independent consumers. Runtime state isolation and concurrency behavior belong to PR #60 and must not be inferred from this ABI gate.
+The packaged ABI v1 library serializes all public calls through one process-wide recursive mutex. This protects the process-wide registries, counters, cached evidence and reset lifecycle from concurrent data races while preserving the exact 25-symbol ABI.
+
+This contract does not provide tenant-level or session-level contexts. Independent tenants require separate processes. It also does not claim parallel backend execution because ABI v1 deliberately serializes complete public operations.
+
+Detailed evidence is maintained in `docs/runtime_state_and_thread_safety.md` and `scripts/check_runtime_state_thread_safety.sh`.
 
 ## Gate behavior
 
@@ -123,5 +127,7 @@ The ABI/API gate:
 5. links and runs that consumer against the current runtime library,
 6. verifies every frozen status numeric value,
 7. compiles a current-header consumer that tests ABI/API version negotiation.
+
+The state/thread-safety gate additionally verifies concurrent registration, inference-failure accounting, evidence reads, reset ordering and thread-local string lifetime.
 
 A symbol addition, removal or rename fails the gate until the versioning decision and manifest update are reviewed.
