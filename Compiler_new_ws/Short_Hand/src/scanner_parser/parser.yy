@@ -30,52 +30,46 @@ struct ShorthandParserAllocation {
     void (*destroy)(void *);
 };
 
-static vector<ShorthandParserAllocation> &shorthand_parser_allocations() {
-    static vector<ShorthandParserAllocation> allocations;
-    return allocations;
-}
+class ShorthandParserAllocationRegistry {
+private:
+    vector<ShorthandParserAllocation> allocations;
+    unordered_set<void *> tracked;
 
-static unordered_set<void *> &shorthand_parser_allocation_set() {
-    static unordered_set<void *> allocations;
-    return allocations;
-}
-
-static void shorthand_release_parser_nodes() {
-    vector<ShorthandParserAllocation> &allocations = shorthand_parser_allocations();
-    for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
-         it != allocations.rend();
-         ++it) {
-        it->destroy(it->pointer);
+public:
+    template <typename T>
+    T *track(T *node) {
+        if (node == nullptr) {
+            return node;
+        }
+        if (tracked.insert(static_cast<void *>(node)).second) {
+            allocations.push_back(
+                ShorthandParserAllocation{
+                    static_cast<void *>(node),
+                    [](void *pointer) {
+                        delete static_cast<T *>(pointer);
+                    }});
+        }
+        return node;
     }
-    allocations.clear();
-    shorthand_parser_allocation_set().clear();
-    main_program = nullptr;
-}
 
-template <typename T>
-static void shorthand_delete_parser_node(void *pointer) {
-    delete static_cast<T *>(pointer);
+    ~ShorthandParserAllocationRegistry() {
+        for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
+             it != allocations.rend();
+             ++it) {
+            it->destroy(it->pointer);
+        }
+        main_program = nullptr;
+    }
+};
+
+static ShorthandParserAllocationRegistry &shorthand_parser_allocation_registry() {
+    static ShorthandParserAllocationRegistry registry;
+    return registry;
 }
 
 template <typename T>
 static T *shorthand_track_parser_node(T *node) {
-    if (node == nullptr) {
-        return node;
-    }
-
-    unordered_set<void *> &tracked = shorthand_parser_allocation_set();
-    if (tracked.insert(static_cast<void *>(node)).second) {
-        static bool cleanup_registered = false;
-        if (!cleanup_registered) {
-            atexit(shorthand_release_parser_nodes);
-            cleanup_registered = true;
-        }
-        shorthand_parser_allocations().push_back(
-            ShorthandParserAllocation{
-                static_cast<void *>(node),
-                &shorthand_delete_parser_node<T>});
-    }
-    return node;
+    return shorthand_parser_allocation_registry().track(node);
 }
 
 static SourceRange shorthand_range(const YYLTYPE &loc) {
