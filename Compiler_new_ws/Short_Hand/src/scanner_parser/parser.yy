@@ -7,6 +7,7 @@
 #include "./visitors/DiagnosticCodes.h"
 #include <vector>
 #include <string>
+#include <unordered_set>
 static ModelDeclarationData current_model;
 static GreenAIContractData current_contract;
 static GreenAIMeasurementData current_measure;
@@ -24,6 +25,59 @@ extern const char *shorthand_source_path;
 %locations
 
 %code {
+struct ShorthandParserAllocation {
+    void *pointer;
+    void (*destroy)(void *);
+};
+
+static vector<ShorthandParserAllocation> &shorthand_parser_allocations() {
+    static vector<ShorthandParserAllocation> allocations;
+    return allocations;
+}
+
+static unordered_set<void *> &shorthand_parser_allocation_set() {
+    static unordered_set<void *> allocations;
+    return allocations;
+}
+
+static void shorthand_release_parser_nodes() {
+    vector<ShorthandParserAllocation> &allocations = shorthand_parser_allocations();
+    for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
+         it != allocations.rend();
+         ++it) {
+        it->destroy(it->pointer);
+    }
+    allocations.clear();
+    shorthand_parser_allocation_set().clear();
+    main_program = nullptr;
+}
+
+template <typename T>
+static void shorthand_delete_parser_node(void *pointer) {
+    delete static_cast<T *>(pointer);
+}
+
+template <typename T>
+static T *shorthand_track_parser_node(T *node) {
+    if (node == nullptr) {
+        return node;
+    }
+
+    unordered_set<void *> &tracked = shorthand_parser_allocation_set();
+    if (tracked.insert(static_cast<void *>(node)).second) {
+        static bool cleanup_registered = false;
+        if (!cleanup_registered) {
+            atexit(shorthand_release_parser_nodes);
+            cleanup_registered = true;
+        }
+        shorthand_parser_allocations().push_back(
+            ShorthandParserAllocation{
+                static_cast<void *>(node),
+                &shorthand_delete_parser_node<T>});
+    }
+    return node;
+}
+
 static SourceRange shorthand_range(const YYLTYPE &loc) {
     SourceRange range;
     range.begin.line = loc.first_line;
@@ -53,6 +107,7 @@ static void shorthand_parser_diagnostic(const char *code,
 
 template <typename T>
 static T *located(T *node, const YYLTYPE &loc) {
+    shorthand_track_parser_node(node);
     shorthand_set_ast_source_range(node, shorthand_range(loc));
     return node;
 }
@@ -113,7 +168,7 @@ FUNCTION_LIST_RULE:
     | %empty { $$=located(new AST_FUNCTION_LIST_RULE(), @$); };
 
 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
-    { $$=new AST_FUNCTION_RULE($2,$3,$5,$7); shorthand_set_ast_source_range($$, shorthand_range(@$)); };
+    { $$=located(new AST_FUNCTION_RULE($2,$3,$5,$7), @$); };
 
 DECLARATION_STATEMENT_LIST_RULE:
       DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';' { $$=$1; $$->push_back($2); located($$, @$); }
