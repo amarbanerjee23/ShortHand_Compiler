@@ -1,0 +1,3 @@
+int x;
+/* comment never closes
+x = 1;

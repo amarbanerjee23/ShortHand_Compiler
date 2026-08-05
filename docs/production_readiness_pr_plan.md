@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-02-pr66
+production_readiness_plan_version: 2026-08-02-pr67
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 66
+LAST_COMPLETED_PR: 67
 BASELINE_LANGUAGE_VERSION: beta-0.2
 TARGET: enterprise production usage ready language
 
@@ -13,8 +13,10 @@ Historical guard markers retained for old-task stability:
 - LAST_COMPLETED_PR: 62
 - production_readiness_plan_version: 2026-08-02-pr63
 - LAST_COMPLETED_PR: 63
+- production_readiness_plan_version: 2026-08-02-pr66
 - LAST_COMPLETED_PR: 64
 - LAST_COMPLETED_PR: 65
+- LAST_COMPLETED_PR: 66
 
 ## Purpose
 
@@ -70,7 +72,7 @@ Bounded OTLP/HTTP delivery, retries and rejection behavior are collector-tested.
 
 Parser-produced AST nodes carry one-based inclusive ranges. Evidence includes `docs/ast_source_ranges.md`, `SourceRange.h`, `SourceRange.cpp`, parser/scanner location propagation, `tests/diagnostics/test_source_diagnostics.sh` and `scripts/check_ast_source_ranges.sh`.
 
-Source ranges do not complete parser recovery, Unicode columns or imported-module provenance.
+Source ranges do not complete Unicode columns or imported-module provenance.
 
 ### Diagnostics coverage matrix applied in PR #65
 
@@ -85,20 +87,7 @@ Evidence:
 
 ### Full grammar and conformance matrix beta-0.2 applied in PR #66
 
-Beta-0.2 replaces the draft grammar with a parser-accurate executable contract.
-
-The contract now provides:
-
-1. a stable parser-only `parse` mode,
-2. scanner, parser and CLI implementation anchors,
-3. more than eighty grammar obligations across ten language areas,
-4. positive core, AI, Green AI and lexical fixtures,
-5. explicit rejection fixtures for current parser boundaries,
-6. stable `SHD2001` diagnostics for grammar rejection,
-7. Bison and Flex regeneration with conflicts treated as errors,
-8. separation of syntax acceptance from semantic and execution readiness,
-9. retention of all valid beta-0.1 fixtures,
-10. an unchanged runtime ABI of 25 public symbols.
+Beta-0.2 replaced the draft grammar with a parser-accurate executable contract. It added parser-only validation, implementation-linked coverage, positive and negative fixtures, stable grammar rejection codes and Bison/Flex conflict checks while preserving the runtime ABI.
 
 Evidence:
 
@@ -107,39 +96,71 @@ Evidence:
 - `docs/language_versioning_and_conformance.md`
 - `tests/conformance/grammar_matrix_beta_0_2.tsv`
 - `tests/conformance/beta_0_2/`
-- `tests/conformance/manifest.txt`
 - `scripts/check_grammar_conformance_matrix.sh`
-- `scripts/check_language_versioning.sh`
 - `Compiler_new_ws/Short_Hand/src/main.cpp`
 
-Parser-accurate does not mean parser-robust. Recovery, malformed-input expansion, fuzzing, resource limits and crash resistance remain PR67.
+### Parser robustness and negative corpus hardening applied in PR #67
 
-## Current baseline after PR #66
+The beta-0.2 parser is now guarded by bounded fail-fast handling without changing accepted syntax.
 
-- Language and conformance contracts are `beta-0.2`.
+The contract provides:
+
+1. a 4 MiB regular-source ceiling,
+2. a 250,000 scanner-match ceiling,
+3. a 16 KiB identifier, number and string-token ceiling,
+4. a delimiter-nesting ceiling of 256,
+5. lower-only environment overrides for constrained testing,
+6. stable `SHD2004` through `SHD2010` resource and lexical codes,
+7. explicit unterminated comment, unterminated string and unexpected-byte diagnostics,
+8. a versioned malformed-input corpus,
+9. repeated-output determinism checks,
+10. wall-clock and virtual-memory bounds,
+11. signal and sanitizer-marker rejection,
+12. generated resource attacks and deterministic mutation smoke tests,
+13. execution in normal negative tests and ASan/UBSan tests,
+14. an unchanged beta-0.2 accepted grammar and runtime ABI.
+
+Evidence:
+
+- `docs/parser_robustness.md`
+- `Compiler_new_ws/Short_Hand/src/parser/ParserLimits.h`
+- `Compiler_new_ws/Short_Hand/src/scanner_parser/scanner.ll`
+- `Compiler_new_ws/Short_Hand/src/main.cpp`
+- `tests/parser/robustness/malformed_cases.tsv`
+- `tests/parser/robustness/`
+- `scripts/check_parser_robustness.sh`
+- `tests/run_language_tests.sh`
+- `.github/workflows/ci.yml`
+
+The parser remains intentionally fail-fast. IDE-style multi-error recovery, Unicode display columns and module provenance remain outside this milestone.
+
+## Current baseline after PR #67
+
+- Language and conformance contracts remain `beta-0.2`.
 - Backend availability, hardware routing and failure honesty are guarded.
 - Runtime ABI remains 25 public symbols.
 - Runtime state, packaging, Prometheus and OTLP evidence are guarded.
 - AST source ownership is parser-propagated.
 - Compiler diagnostics have stable codes, stages, severities and ranges.
 - Every beta-0.2 grammar area has implementation-linked executable coverage.
-- Parser-only validation is distinct from semantic validation.
+- Malformed and adversarial parser inputs have bounded, deterministic failure behavior.
+- Parser guardrails execute in normal and sanitizer-backed test paths.
 
-ShortHand is still not production ready. Parser robustness, modules, release security, deployment, tooling, C3-ECO completion and MLIR integration remain open.
+ShortHand is still not production ready. Modules, release security, deployment, tooling, C3-ECO completion and MLIR integration remain open.
 
 ## Recommended remaining PR count
 
 Recommended path from PR #51 onward: 29 PRs total.
 
-After PR #66 is merged, approximately 13 implementation PRs remain.
+After PR #67 is merged, approximately 12 implementation PRs remain.
 
 ## Next recommended PR
 
-Next recommended PR after PR #66:
+Next recommended PR after PR #67:
 
-PR67 - Parser robustness and negative corpus hardening.
+PR68 - Module/import/package design and parser scaffold.
 
-Reason: the accepted grammar is now versioned and exhaustively mapped. The next production-critical requirement is proving bounded, deterministic rejection of malformed and adversarial input without crashes or hangs.
+Reason: the single-file beta grammar and parser are now versioned and bounded. Enterprise-scale applications next require an explicit module identity, import syntax, package boundary and source-provenance design before resolver and code-generation integration in PR69.
 
 ## PR roadmap table
 
@@ -161,7 +182,7 @@ Reason: the accepted grammar is now versioned and exhaustively mapped. The next 
 | PR64 - AST source ranges across parser nodes | MERGED | Diagnostics |
 | PR65 - Diagnostics coverage matrix | MERGED | Diagnostics |
 | PR66 - Full grammar and conformance matrix beta-0.2 | MERGED | Language contract |
-| PR67 - Parser robustness and negative corpus hardening | PLANNED | Language robustness |
+| PR67 - Parser robustness and negative corpus hardening | MERGED | Language robustness |
 | PR68 - Module/import/package design and parser scaffold | PLANNED | Language scale |
 | PR69 - Module resolver and codegen integration | PLANNED | Language scale |
 | PR70 - Signed release and protected release workflow | PLANNED | Release |
@@ -188,6 +209,7 @@ remaining_planned_prs_after_pr63: 16
 remaining_planned_prs_after_pr64: 15
 remaining_planned_prs_after_pr65: 14
 remaining_planned_prs_after_pr66: 13
+remaining_planned_prs_after_pr67: 12
 
 ## Historical PR62 recommendation markers
 
@@ -214,3 +236,11 @@ After PR #65 is merged, approximately 14 implementation PRs remain.
 Next recommended PR after PR #65:
 
 PR66 - Full grammar and conformance matrix beta-0.2.
+
+## Historical PR66 recommendation markers
+
+After PR #66 is merged, approximately 13 implementation PRs remain.
+
+Next recommended PR after PR #66:
+
+PR67 - Parser robustness and negative corpus hardening.

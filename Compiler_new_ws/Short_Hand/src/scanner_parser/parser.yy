@@ -7,6 +7,7 @@
 #include "./visitors/DiagnosticCodes.h"
 #include <vector>
 #include <string>
+#include <unordered_set>
 static ModelDeclarationData current_model;
 static GreenAIContractData current_contract;
 static GreenAIMeasurementData current_measure;
@@ -24,6 +25,53 @@ extern const char *shorthand_source_path;
 %locations
 
 %code {
+struct ShorthandParserAllocation {
+    void *pointer;
+    void (*destroy)(void *);
+};
+
+class ShorthandParserAllocationRegistry {
+private:
+    vector<ShorthandParserAllocation> allocations;
+    unordered_set<void *> tracked;
+
+public:
+    template <typename T>
+    T *track(T *node) {
+        if (node == nullptr) {
+            return node;
+        }
+        if (tracked.insert(static_cast<void *>(node)).second) {
+            allocations.push_back(
+                ShorthandParserAllocation{
+                    static_cast<void *>(node),
+                    [](void *pointer) {
+                        delete static_cast<T *>(pointer);
+                    }});
+        }
+        return node;
+    }
+
+    ~ShorthandParserAllocationRegistry() {
+        for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
+             it != allocations.rend();
+             ++it) {
+            it->destroy(it->pointer);
+        }
+        main_program = nullptr;
+    }
+};
+
+static ShorthandParserAllocationRegistry &shorthand_parser_allocation_registry() {
+    static ShorthandParserAllocationRegistry registry;
+    return registry;
+}
+
+template <typename T>
+static T *shorthand_track_parser_node(T *node) {
+    return shorthand_parser_allocation_registry().track(node);
+}
+
 static SourceRange shorthand_range(const YYLTYPE &loc) {
     SourceRange range;
     range.begin.line = loc.first_line;
@@ -53,6 +101,7 @@ static void shorthand_parser_diagnostic(const char *code,
 
 template <typename T>
 static T *located(T *node, const YYLTYPE &loc) {
+    shorthand_track_parser_node(node);
     shorthand_set_ast_source_range(node, shorthand_range(loc));
     return node;
 }
@@ -113,7 +162,7 @@ FUNCTION_LIST_RULE:
     | %empty { $$=located(new AST_FUNCTION_LIST_RULE(), @$); };
 
 FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
-    { $$=new AST_FUNCTION_RULE($2,$3,$5,$7); shorthand_set_ast_source_range($$, shorthand_range(@$)); };
+    { $$=located(new AST_FUNCTION_RULE($2,$3,$5,$7), @$); };
 
 DECLARATION_STATEMENT_LIST_RULE:
       DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';' { $$=$1; $$->push_back($2); located($$, @$); }
