@@ -3,11 +3,69 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
+PARSER="${SRC_DIR}/scanner_parser/parser.yy"
+SCANNER="${SRC_DIR}/scanner_parser/scanner.ll"
+CLI="${SRC_DIR}/main.cpp"
+MATRIX="${ROOT_DIR}/tests/conformance/module_matrix_beta_0_3.tsv"
+DOC="${ROOT_DIR}/docs/module_import_package_syntax.md"
 SHORT="${SHORTHAND_BIN:-${ROOT_DIR}/Compiler_new_ws/Short_Hand/build/short_hand}"
 VALID="${ROOT_DIR}/tests/modules/valid/module_preamble.short"
 LEGACY="${ROOT_DIR}/tests/conformance/beta_0_2/core_declarations.short"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
+
+for file in "${PARSER}" "${SCANNER}" "${CLI}" "${MATRIX}" "${DOC}"; do
+  [[ -f "${file}" ]] || { echo "error: missing module contract file: ${file}" >&2; exit 1; }
+done
+
+grep -Fq 'module_syntax_contract_version: beta-0.3' "${DOC}"
+grep -Fq 'module_resolution_status: parser_and_ast_scaffold_only' "${DOC}"
+grep -Fq 'multi_file_execution_status: deferred_to_pr70' "${DOC}"
+grep -Fq 'production_claim: false' "${DOC}"
+
+awk -F '\t' '
+  NR == 1 {
+    if ($0 != "id\tarea\tsource\tanchor\tfixture\texpectation\trationale") exit 10
+    next
+  }
+  NF != 7 { exit 11 }
+  $1 !~ /^MOD[0-9][0-9][0-9]$/ { exit 12 }
+  $2 !~ /^(module|boundary)$/ { exit 13 }
+  $3 !~ /^(parser|scanner|cli)$/ { exit 14 }
+  $6 !~ /^(accept|reject)$/ { exit 15 }
+  $4 == "" || $5 == "" || $7 == "" { exit 16 }
+  END { if (NR != 18) exit 17 }
+' "${MATRIX}" || {
+  echo "error: malformed beta-0.3 module conformance matrix" >&2
+  exit 1
+}
+
+if [[ "$(tail -n +2 "${MATRIX}" | cut -f1 | sort | uniq -d | wc -l | tr -d ' ')" != "0" ]]; then
+  echo "error: duplicate beta-0.3 module matrix ID" >&2
+  exit 1
+fi
+
+while IFS=$'\t' read -r id area source anchor fixture expectation rationale; do
+  [[ "${id}" == "id" ]] && continue
+  case "${source}" in
+    parser) source_file="${PARSER}" ;;
+    scanner) source_file="${SCANNER}" ;;
+    cli) source_file="${CLI}" ;;
+  esac
+  grep -Fq "${anchor}" "${source_file}" || {
+    echo "error: matrix ${id} anchor not found: ${anchor}" >&2
+    exit 1
+  }
+  [[ -f "${ROOT_DIR}/${fixture}" ]] || {
+    echo "error: matrix ${id} fixture missing: ${fixture}" >&2
+    exit 1
+  }
+done <"${MATRIX}"
+
+command -v bison >/dev/null 2>&1 || { echo "error: bison is required" >&2; exit 1; }
+command -v flex >/dev/null 2>&1 || { echo "error: flex is required" >&2; exit 1; }
+bison -Werror=conflicts-sr -Werror=conflicts-rr -d "${PARSER}" -o "${WORK_DIR}/parser.tab.cc"
+flex -o "${WORK_DIR}/lex.yy.c" "${SCANNER}"
 
 if [[ ! -x "${SHORT}" ]]; then
   make -C "${SRC_DIR}" short_hand >/tmp/shorthand_module_ast_build.out 2>&1 || {
