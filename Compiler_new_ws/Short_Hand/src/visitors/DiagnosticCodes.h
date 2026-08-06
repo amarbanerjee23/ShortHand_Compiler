@@ -14,6 +14,12 @@ inline constexpr const char *ParserNestingLimitExceeded = "SHD2007";
 inline constexpr const char *ScannerUnexpectedCharacter = "SHD2008";
 inline constexpr const char *ScannerUnterminatedComment = "SHD2009";
 inline constexpr const char *ScannerUnterminatedString = "SHD2010";
+inline constexpr const char *ParserDuplicatePackageDeclaration = "SHD2011";
+inline constexpr const char *ParserDuplicateModuleDeclaration = "SHD2012";
+inline constexpr const char *ParserDuplicateImportAlias = "SHD2013";
+inline constexpr const char *ParserDuplicateImportPath = "SHD2014";
+inline constexpr const char *ParserModuleDeclarationOrder = "SHD2015";
+inline constexpr const char *ParserModuleRequired = "SHD2016";
 
 inline constexpr const char *SemanticBreakOutsideLoop = "SHD3001";
 inline constexpr const char *SemanticContinueOutsideLoop = "SHD3002";
