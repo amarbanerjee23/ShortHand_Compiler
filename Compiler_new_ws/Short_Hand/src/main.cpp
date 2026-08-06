@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "./ast/AST.h"
+#include "./ast/ModuleAST.h"
 #include "./parser/ParserLimits.h"
 #include "./visitors/AST_Printer.h"
 #include "./visitors/Interpreter.h"
@@ -21,9 +22,10 @@ extern "C" int yyparse();
 extern "C" void shorthand_release_scanner_strings();
 extern "C" void shorthand_reset_scanner_location();
 AST_PROGRAM * main_program;
+AST_MODULE_PREAMBLE * main_module_preamble;
 
 static void print_usage() {
-    fprintf(stderr, "Correct usage: short_hand filename [parse|run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook] [--output file]\n");
+    fprintf(stderr, "Correct usage: short_hand filename [parse|module-info|run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook] [--output file]\n");
 }
 
 static bool has_output_arg(int argc, char *argv[]) {
@@ -31,7 +33,7 @@ static bool has_output_arg(int argc, char *argv[]) {
 }
 
 static bool supported_mode(const std::string &mode) {
-    return mode == "parse" || mode == "run" || mode == "print" ||
+    return mode == "parse" || mode == "module-info" || mode == "run" || mode == "print" ||
            mode == "compile" || mode == "compile-bc" ||
            mode == "compile-native" || mode == "evidence" ||
            mode == "c3eco-report" || mode == "c3eco-check" ||
@@ -122,6 +124,18 @@ int main(int argc, char *argv[])
     }
 
     if (mode == "parse") {
+        cleanup_parser_resources();
+        return 0;
+    }
+
+    if (mode == "module-info") {
+        if (main_module_preamble == nullptr) {
+            fprintf(stderr, "Module AST scaffold was not initialized.\n");
+            cleanup_parser_resources();
+            exit(1);
+        }
+        main_module_preamble->writeJson(std::cout);
+        std::cout << '\n';
         cleanup_parser_resources();
         return 0;
     }
