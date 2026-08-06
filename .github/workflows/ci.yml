@@ -8,6 +8,10 @@ permissions:
   contents: read
   statuses: write
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ubuntu:
     runs-on: ubuntu-24.04
