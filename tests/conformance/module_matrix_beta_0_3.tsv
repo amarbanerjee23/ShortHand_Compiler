@@ -1,0 +1,18 @@
+id	area	source	anchor	fixture	expectation	rationale
+MOD001	module	scanner	"package" return PACKAGE;	tests/modules/valid/module_preamble.short	accept	Package keyword is recognized before identifiers.
+MOD002	module	scanner	"module" return MODULE;	tests/modules/valid/module_preamble.short	accept	Module keyword is recognized before identifiers.
+MOD003	module	scanner	"import" return IMPORT;	tests/modules/valid/module_preamble.short	accept	Import keyword is recognized before identifiers.
+MOD004	module	scanner	"as" return AS;	tests/modules/valid/module_preamble.short	accept	Import aliases use the as keyword.
+MOD005	module	scanner	"." return '.';	tests/modules/valid/module_preamble.short	accept	Dotted module paths are tokenized explicitly.
+MOD006	module	parser	PROGRAMME_RULE: MODULE_PREAMBLE_RULE	tests/modules/valid/module_preamble.short	accept	The optional preamble precedes the unchanged beta-0.2 program body.
+MOD007	module	parser	PACKAGE_DECLARATION: PACKAGE MODULE_PATH ';'	tests/modules/valid/module_preamble.short	accept	A package identity may precede the module declaration.
+MOD008	module	parser	MODULE_DECLARATION: MODULE MODULE_PATH ';'	tests/modules/valid/module_preamble.short	accept	A module identity is represented in the AST scaffold.
+MOD009	module	parser	IMPORT_DECLARATION: IMPORT MODULE_PATH IMPORT_ALIAS_OPT ';'	tests/modules/valid/module_preamble.short	accept	Imports may be unaliased or aliased.
+MOD010	module	cli	mode == "module-info"	tests/modules/valid/module_preamble.short	accept	The deterministic AST inspection mode exposes provenance without resolving imports.
+MOD011	boundary	parser	ParserDuplicatePackageDeclaration	tests/modules/invalid/duplicate_package.short	reject	Only one package declaration is permitted.
+MOD012	boundary	parser	ParserDuplicateModuleDeclaration	tests/modules/invalid/duplicate_module.short	reject	Only one module declaration is permitted.
+MOD013	boundary	parser	ParserDuplicateImportAlias	tests/modules/invalid/duplicate_import_alias.short	reject	Import aliases must be unique within a source unit.
+MOD014	boundary	parser	ParserDuplicateImportPath	tests/modules/invalid/duplicate_import_path.short	reject	An import path may appear only once.
+MOD015	boundary	parser	ParserModuleDeclarationOrder	tests/modules/invalid/import_before_module.short	reject	Imports require a preceding module declaration.
+MOD016	boundary	parser	ParserModuleRequired	tests/modules/invalid/package_without_module.short	reject	Package usage requires a module declaration.
+MOD017	boundary	parser	MODULE_PATH '.' IDENTIFIER	tests/modules/invalid/malformed_module_path.short	reject	Empty path segments are rejected by the grammar.
