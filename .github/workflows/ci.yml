@@ -66,6 +66,9 @@ jobs:
       - name: Parser robustness and negative corpus
         run: bash scripts/check_parser_robustness.sh
 
+      - name: Compiler test strategy and coverage audit
+        run: bash scripts/check_compiler_test_strategy.sh
+
       - name: Smoke tests
         run: bash scripts/smoke_test.sh
 
