@@ -6,6 +6,7 @@
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 struct AST_IMPORT_DECLARATION {
