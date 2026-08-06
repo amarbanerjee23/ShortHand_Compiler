@@ -1,24 +1,34 @@
 # ShortHand language conformance manifest
 # Format: category | path | expectation | rationale
 
-# Historical row retained for the old-task stability gate. It is not active.
+# Historical rows retained for old-task stability. They are not active.
 version | shorthand.language.version | beta-0.1 | Current beta language contract marker.
-current-version | shorthand.language.version | beta-0.2 | Current executable language contract marker.
-grammar-matrix | tests/conformance/grammar_matrix_beta_0_2.tsv | accept | Every beta-0.2 grammar obligation must map to implementation and an executable fixture.
+version | shorthand.language.version | beta-0.2 | Previous executable base language contract marker.
+current-version | shorthand.language.version | beta-0.3 | Current executable language contract marker.
+grammar-matrix | tests/conformance/grammar_matrix_beta_0_2.tsv | accept | Every beta-0.2 base grammar obligation must remain implemented and executable.
+grammar-extension | tests/conformance/module_matrix_beta_0_3.tsv | accept | Every beta-0.3 package, module and import obligation maps to implementation and a fixture.
 parser-valid | tests/conformance/beta_0_2/core_declarations.short | accept | Primitive declarations, arrays and the required non-empty logic section must parse.
 parser-valid | tests/conformance/beta_0_2/core_control.short | accept | Functions, statements, control flow, variables and expressions must parse.
 parser-valid | tests/conformance/beta_0_2/ai_language.short | accept | All canonical AI grammar tokens and legacy inference forms must parse independently of semantic support.
 parser-valid | tests/conformance/beta_0_2/greenai_language.short | accept | Green AI contract, measurement, enum and report syntax must parse.
 parser-valid | tests/conformance/beta_0_2/comments_and_literals.short | accept | Comments, strings, integers and floating literals must parse.
+parser-valid | tests/modules/valid/module_preamble.short | accept | Package, module, dotted import and alias syntax must parse and produce provenance-aware AST metadata.
 parser-valid | tests/fixtures/external_runtime_ai.short | accept | Existing beta-0.1 AI and Green AI syntax must remain accepted.
 parser-valid | Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short | accept | Existing runtime and evidence AI syntax must remain accepted.
 parser-valid | Compiler_new_ws/Short_Hand/examples/greenai_report.short | accept | Existing Green AI report syntax must remain accepted.
-parser-invalid | tests/conformance/beta_0_2/invalid_empty_program.short | reject | Empty programs remain outside beta-0.2.
+parser-invalid | tests/conformance/beta_0_2/invalid_empty_program.short | reject | Empty programs remain outside the current contract.
 parser-invalid | tests/conformance/beta_0_2/invalid_zero_parameter_function.short | reject | Empty function parameter lists are not accepted by the current parser.
 parser-invalid | tests/conformance/beta_0_2/invalid_empty_block.short | reject | Blocks require at least one statement.
 parser-invalid | tests/conformance/beta_0_2/invalid_precision_alias.short | reject | Runtime aliases such as float32 are not scanner keywords.
 parser-invalid | tests/conformance/beta_0_2/invalid_guardrail_operator.short | reject | Quality guardrails currently accept only integer greater-or-equal syntax.
 parser-invalid | tests/parser/invalid/missing_semicolon.short | reject | Parser must reject incomplete statements.
+parser-invalid | tests/modules/invalid/duplicate_package.short | reject | Package declarations are unique and ordered.
+parser-invalid | tests/modules/invalid/duplicate_module.short | reject | Module declarations are unique.
+parser-invalid | tests/modules/invalid/duplicate_import_alias.short | reject | Import aliases are unique within a source unit.
+parser-invalid | tests/modules/invalid/duplicate_import_path.short | reject | Import paths are unique within a source unit.
+parser-invalid | tests/modules/invalid/import_before_module.short | reject | Imports require a preceding module declaration.
+parser-invalid | tests/modules/invalid/package_without_module.short | reject | Package usage requires a module declaration.
+parser-invalid | tests/modules/invalid/malformed_module_path.short | reject | Dotted paths cannot contain empty segments.
 parser-robustness | tests/parser/robustness/malformed_cases.tsv | reject-bounded | Malformed and generated adversarial inputs must terminate deterministically with stable parser codes.
 semantic-invalid | tests/semantic/invalid/ai_shape_mismatch.short | reject | Semantic analyzer must reject model and input tensor shape mismatch.
 semantic-invalid | tests/semantic/invalid/ai_backend_mismatch.short | reject | Semantic analyzer must reject declarations without a compatible backend or fallback.
