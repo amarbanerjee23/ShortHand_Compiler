@@ -36,10 +36,11 @@ done
 
 require_contains "${GRAMMAR_DOC}" 'Language version: beta-0.2'
 require_contains "${GRAMMAR_DOC}" 'grammar_conformance_status: parser_accurate_matrix_guarded'
+require_contains "${VERSION_DOC}" 'shorthand.language.version: beta-0.3'
 require_contains "${VERSION_DOC}" 'shorthand.language.version: beta-0.2'
-require_contains "${VERSION_DOC}" 'shorthand.conformance.contract: beta-0.2'
 require_contains "${SPEC_DOC}" 'Language version: beta-0.2'
-require_contains "${MANIFEST}" 'current-version | shorthand.language.version | beta-0.2 | Current executable language contract marker.'
+require_contains "${MANIFEST}" 'current-version | shorthand.language.version | beta-0.3 | Current executable language contract marker.'
+require_contains "${MANIFEST}" 'version | shorthand.language.version | beta-0.2 | Previous executable base language contract marker.'
 require_contains "${CLI}" 'mode == "parse"'
 
 awk -F '\t' '
@@ -123,9 +124,6 @@ while IFS=$'\t' read -r id area source anchor fixture expectation rationale; do
   fi
 done <"${MATRIX}"
 
-# Prove that parser-only acceptance is distinct from semantic conformance using a
-# focused, already-guarded semantic-invalid source. The aggregate AI grammar
-# catalogue above is intentionally syntax-focused and is not a coherent runtime program.
 SEMANTIC_BOUNDARY="${ROOT_DIR}/tests/semantic/invalid/ai_shape_mismatch.short"
 "${SHORT}" "${SEMANTIC_BOUNDARY}" parse >"${WORK_DIR}/parse-only.out" 2>&1
 if "${SHORT}" "${SEMANTIC_BOUNDARY}" run >"${WORK_DIR}/semantic.out" 2>&1; then
