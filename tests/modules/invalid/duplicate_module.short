@@ -1,0 +1,4 @@
+module acme.app;
+module acme.other;
+int value;
+value = 1;
