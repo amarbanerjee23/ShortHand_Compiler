@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+  statuses: write
+
 jobs:
   ubuntu:
     runs-on: ubuntu-24.04
@@ -42,6 +46,7 @@ jobs:
           command -v ninja
           command -v base64
           command -v timeout
+          command -v curl
           llvm-config --version
           llc --version
           clang --version
@@ -111,3 +116,27 @@ jobs:
             /tmp/shorthand_c3eco_bundle/
             Compiler_new_ws/Short_Hand/build/
             build/
+
+      - name: Publish event-specific CI status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          state=failure
+          if [[ "${JOB_STATUS}" == "success" ]]; then
+            state=success
+          fi
+          payload="$(printf '{\"state\":\"%s\",\"target_url\":\"%s\",\"description\":\"Ubuntu CI %s for %s\",\"context\":\"ci / ubuntu (%s)\"}' \
+            "${state}" "${RUN_URL}" "${state}" "${EVENT_NAME}" "${EVENT_NAME}")"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
+            --data "${payload}"
