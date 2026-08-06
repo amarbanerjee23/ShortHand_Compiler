@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "./ast/AST.h"
+#include "./ast/ModuleAST.h"
 #include "./ast/SourceRange.h"
 #include "./visitors/DiagnosticCodes.h"
 #include <vector>
@@ -11,6 +12,8 @@
 static ModelDeclarationData current_model;
 static GreenAIContractData current_contract;
 static GreenAIMeasurementData current_measure;
+static std::string current_module_path;
+static std::string current_import_alias;
 using namespace std;
 extern "C" int yylex();
 extern "C" int yyparse();
@@ -19,6 +22,7 @@ extern "C" int yywrap(void){return 1;}
 extern "C" int yydebug;
 extern union _NODE_ yylval;
 extern class AST_PROGRAM * main_program;
+extern class AST_MODULE_PREAMBLE * main_module_preamble;
 extern const char *shorthand_source_path;
 %}
 
@@ -59,6 +63,7 @@ public:
             it->destroy(it->pointer);
         }
         main_program = nullptr;
+        main_module_preamble = nullptr;
     }
 };
 
@@ -105,6 +110,15 @@ static T *located(T *node, const YYLTYPE &loc) {
     shorthand_set_ast_source_range(node, shorthand_range(loc));
     return node;
 }
+
+static AST_MODULE_PREAMBLE *shorthand_ensure_module_preamble(const YYLTYPE &loc) {
+    if (main_module_preamble == nullptr) {
+        const char *path = shorthand_source_path == nullptr ? "<input>" : shorthand_source_path;
+        main_module_preamble = shorthand_track_parser_node(new AST_MODULE_PREAMBLE(path));
+        shorthand_set_ast_source_range(main_module_preamble, shorthand_range(loc));
+    }
+    return main_module_preamble;
+}
 }
 
 %start PROGRAMME_RULE
@@ -147,6 +161,7 @@ static T *located(T *node, const YYLTYPE &loc) {
 %token <float_val> FLOAT_LITERAL
 %token READ PRINT GOTO BREAK WHILE LOOP ELSE IF DEF
 %token INT FLOAT STRING VOID BOOL DOUBLE RETURN CONTINUE TRUE FALSE
+%token PACKAGE MODULE IMPORT AS
 %token MODEL FORMAT PATH TASK PRECISION INPUT_SHAPE OUTPUT_SHAPE BACKEND_PREFERENCE COMPACT QUALITY_GUARDRAIL
 %token GREENAI_CONTRACT_T FUNCTIONAL_UNIT SUCCESS_CRITERIA BOUNDARY MEASUREMENT_QUALITY DATA_QUALITY CARBON_FACTOR ENERGY_BUDGET_J CARBON_BUDGET_GCO2E EVIDENCE_RETENTION CLAIMS_MODE EVIDENCE_ONLY GREENAI_MEASURE INFER TENSOR
 %token INT8 FP16 FP32 BF16 INT4 FP64 ONNX ENGINE TORCHSCRIPT OPENVINO_IR GGUF TENSORRT ONNXRUNTIME_TENSORRT ONNXRUNTIME_CUDA ONNXRUNTIME_CPU OPENVINO LIBTORCH LLAMACPP FALLBACK
@@ -154,8 +169,100 @@ static T *located(T *node, const YYLTYPE &loc) {
 
 %%
 
-PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK
-    { $$ = located(new AST_PROGRAM($1,$2,$3), @$); main_program = $$; };
+PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK
+    {
+        AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@1);
+        if (preamble->hasAnyDeclaration() && !preamble->hasModule()) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserModuleRequired,
+                "a module declaration is required when package or import declarations are present",
+                @1);
+            YYERROR;
+        }
+        $$ = located(new AST_PROGRAM($2,$3,$4), @$);
+        main_program = $$;
+    };
+
+MODULE_PREAMBLE_RULE:
+      %empty { shorthand_ensure_module_preamble(@$); }
+    | MODULE_PREAMBLE_RULE PACKAGE_DECLARATION
+    | MODULE_PREAMBLE_RULE MODULE_DECLARATION
+    | MODULE_PREAMBLE_RULE IMPORT_DECLARATION;
+
+PACKAGE_DECLARATION: PACKAGE MODULE_PATH ';'
+    {
+        AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@$);
+        if (preamble->hasPackage()) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserDuplicatePackageDeclaration,
+                "duplicate package declaration",
+                @$);
+            YYERROR;
+        }
+        if (preamble->hasModule() || preamble->hasImports()) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserModuleDeclarationOrder,
+                "package declaration must precede module and import declarations",
+                @$);
+            YYERROR;
+        }
+        preamble->setPackage(current_module_path, shorthand_range(@$));
+    };
+
+MODULE_DECLARATION: MODULE MODULE_PATH ';'
+    {
+        AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@$);
+        if (preamble->hasModule()) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserDuplicateModuleDeclaration,
+                "duplicate module declaration",
+                @$);
+            YYERROR;
+        }
+        if (preamble->hasImports()) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserModuleDeclarationOrder,
+                "module declaration must precede import declarations",
+                @$);
+            YYERROR;
+        }
+        preamble->setModule(current_module_path, shorthand_range(@$));
+    };
+
+IMPORT_DECLARATION: IMPORT MODULE_PATH IMPORT_ALIAS_OPT ';'
+    {
+        AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@$);
+        if (!preamble->hasModule()) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserModuleDeclarationOrder,
+                "import declaration requires a preceding module declaration",
+                @$);
+            YYERROR;
+        }
+        if (preamble->hasImportPath(current_module_path)) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserDuplicateImportPath,
+                "duplicate import path",
+                @$);
+            YYERROR;
+        }
+        if (preamble->hasImportAlias(current_import_alias)) {
+            shorthand_parser_diagnostic(
+                shorthand::diagnostics::ParserDuplicateImportAlias,
+                "duplicate import alias",
+                @$);
+            YYERROR;
+        }
+        preamble->addImport(current_module_path, current_import_alias, shorthand_range(@$));
+    };
+
+MODULE_PATH:
+      IDENTIFIER { current_module_path = string($1); }
+    | MODULE_PATH '.' IDENTIFIER { current_module_path += "."; current_module_path += string($3); };
+
+IMPORT_ALIAS_OPT:
+      %empty { current_import_alias.clear(); }
+    | AS IDENTIFIER { current_import_alias = string($2); };
 
 FUNCTION_LIST_RULE:
       FUNCTION_LIST_RULE FUNCTION_RULE ';' { $$=$1; $$->push_back($2); located($$, @$); }
