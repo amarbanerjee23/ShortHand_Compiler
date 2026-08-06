@@ -22,17 +22,32 @@ Historical guard markers retained for old-task stability:
 
 ## Goal
 
-ShortHand must become a production-grade compiled AI language that lets engineers build and deploy AI software without Python. It must provide predictable language semantics, honest hardware-aware execution, lower runtime overhead, measurable energy efficiency, portable release artifacts, enterprise security, and auditable Green AI evidence.
+ShortHand must become a production-grade compiled AI language that lets engineers build and deploy AI software without Python. It must provide predictable language semantics, honest hardware-aware execution, lower runtime overhead, measurable energy efficiency, portable release artifacts, enterprise security and auditable Green AI evidence.
 
-Unsupported or unavailable execution paths must never report success. A skipped dependency, absent accelerator, source-pattern check, or transport acceptance response is not production execution evidence.
+Unsupported or unavailable execution paths must never report success. A skipped dependency, absent accelerator, source-pattern check or transport acceptance response is not production execution evidence.
 
-## Purpose
+## Current baseline
 
-This is the single planning source for moving ShortHand from controlled beta to enterprise production usage readiness. Every roadmap PR must update status, test evidence, next work and remaining count. The language mission remains versioned in `docs/language_objectives.md` with `production_claim: false` until the final release-candidate gate succeeds.
+The current controlled-beta implementation has:
+
+- a parser-accurate beta-0.2 grammar and executable conformance matrix,
+- bounded malformed-input handling and parser resource ceilings,
+- stable coded diagnostics and source ranges,
+- selected AI semantic rejection cases,
+- LLVM metadata and native runtime-linking paths,
+- honest fallback and backend-unavailable behavior,
+- hardware discovery and execution-ready routing policy,
+- runtime ABI 1.0.0 with exactly 25 public symbols,
+- serialized public runtime calls and thread-local evidence snapshots,
+- Linux packaging, Prometheus and OTLP adapters,
+- candidate C3-ECO schemas and claim-safety evidence,
+- ASan, LSan and UBSan parser smoke coverage.
+
+ShortHand remains `controlled_beta` with `production_claim: false`.
 
 ## Test audit correction applied in PR #68
 
-The PR67 roadmap estimated 12 remaining PRs. A full compiler and CI audit found that this omitted six production-critical workstreams:
+The PR67 roadmap estimated 12 remaining PRs. A full compiler and CI audit found six omitted production-critical workstreams:
 
 1. governed compiler test coverage and a mandatory per-PR test contract,
 2. interpreter, LLVM and native differential semantic correctness,
@@ -45,452 +60,46 @@ After PR #67, 18 production-readiness PRs are required.
 
 PR68 establishes the test strategy and coverage matrix. After PR #68 is merged, 17 implementation PRs remain.
 
-The revised path contains 35 PRs from PR51 through PR85. The extra work is necessary because green Linux CI alone cannot prove enterprise language correctness, portability, backend execution or energy reduction.
-
-## Current baseline after PR #68
-
-Implemented or strongly guarded:
-
-- beta-0.2 parser-accurate grammar and conformance matrix,
-- bounded malformed-input behavior and parser resource ceilings,
-- stable coded diagnostics and source ranges,
-- selected AI semantic rejection fixtures,
-- LLVM metadata and external runtime-linking paths,
-- honest fallback and unavailable-backend behavior,
-- hardware discovery and execution-ready routing policy,
-- runtime ABI 1.0.0 with 25 public symbols,
-- serialized public ABI and thread-local snapshots,
-- Linux runtime packaging consumers,
-- Prometheus and OTLP host adapters,
-- candidate C3-ECO schema and claim-safety evidence,
-- ASan, LSan and UBSan parser smoke coverage,
-- compiler test strategy, coverage matrix and PR test template.
-
-Still open or partial:
-
-- multi-file modules, packages and deterministic dependency resolution,
-- language-wide semantic equivalence across interpreter and compiled outputs,
-- full-corpus sanitizer, fuzzing and ThreadSanitizer coverage,
-- multi-platform and reproducible release builds,
-- signed releases and external vulnerability enforcement,
-- hardened deployment,
-- formatter, linter and LSP support,
-- live execution qualification for each production-supported backend,
-- complete C3-ECO measurement and authority evidence,
-- generated MLIR dialect and production lowering,
-- measured energy reduction against equivalent Python workloads,
-- final zero-skip release-candidate gate.
-
-ShortHand remains `controlled_beta` and `production_claim: false`.
+The revised path contains 35 PRs from PR51 through PR85. Green Linux CI alone cannot prove enterprise language correctness, portability, backend execution or energy reduction.
 
 ## Mandatory rule for every remaining PR
 
-Every PR from PR69 through PR85 must include applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability and performance tests. The PR must update:
+Every PR from PR69 through PR85 must include all applicable test layers:
 
-- `docs/feature_implementation_status.md`,
-- this roadmap,
-- `tests/coverage/compiler_test_coverage_matrix.tsv`,
-- conformance or compatibility contracts affected by the change.
+- unit tests,
+- positive end-to-end integration tests,
+- negative and boundary tests,
+- a regression fixture for every corrected defect,
+- sanitizer or race-detector execution for new native paths,
+- security misuse tests for untrusted inputs and privileges,
+- portability checks for platform-sensitive work,
+- performance or energy evidence for hot paths,
+- roadmap, feature-status and coverage-matrix updates.
 
-No mandatory test may be replaced by an unconditional skip.
+No mandatory production test may be replaced by an unconditional skip.
 
 ## Detailed implementation strategy
 
-### PR68 - Production test strategy, coverage audit and per-PR test contract
-
-Status: MERGED in the planned post-merge state.
-
-Implementation:
-
-- versioned compiler test strategy,
-- 27-area coverage matrix,
-- PR template requiring explicit test evidence,
-- CI and enterprise guard for matrix integrity,
-- corrected remaining-PR count.
-
-Tests:
-
-- matrix schema and unique-ID validation,
-- exact implemented, partial and open counts,
-- roadmap PR69 through PR85 anchors,
-- CI integration and unsupported-claim checks.
-
-Exit evidence:
-
-- `docs/compiler_test_strategy.md`,
-- `tests/coverage/compiler_test_coverage_matrix.tsv`,
-- `scripts/check_compiler_test_strategy.sh`.
-
-### PR69 - Module, import and package syntax with AST scaffold
-
-Implementation:
-
-- versioned `module`, `import` and package identity grammar,
-- AST nodes carrying source provenance,
-- stable diagnostics for malformed and duplicate declarations,
-- beta language-version update only if syntax compatibility policy requires it.
-
-Required tests:
-
-- grammar matrix rows for every syntax form,
-- positive single-module and import fixtures,
-- malformed path, duplicate module, invalid alias and misplaced import negatives,
-- source-range and diagnostic-code checks,
-- parser resource and sanitizer execution for import-heavy files.
-
-Exit condition: parser and AST represent module boundaries without resolving files or claiming multi-file execution.
-
-### PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen
-
-Implementation:
-
-- canonical module resolution,
-- package manifest and deterministic lockfile,
-- cycle and ambiguity detection,
-- hermetic search roots and path traversal prevention,
-- symbol visibility and multi-file LLVM/native integration.
-
-Required tests:
-
-- resolver unit tests for canonicalization and graph order,
-- multi-file parse, compile, run and native fixtures,
-- cycle, missing import, ambiguous symbol, duplicate package and path-escape negatives,
-- lockfile determinism and cache invalidation tests,
-- large module graph stress and sanitizer coverage.
-
-Exit condition: a clean checkout builds deterministic multi-file applications without undeclared host-path dependencies.
-
-### PR71 - Cross-mode semantic correctness and differential execution suite
-
-Implementation:
-
-- table-driven semantic obligations for core types, expressions, functions and control flow,
-- normalized output comparison across interpreter, LLVM bitcode and native binaries,
-- positive semantic matrix complementing existing negative cases,
-- golden diagnostic and exit-status contract.
-
-Required tests:
-
-- every beta language construct executes in at least one positive fixture,
-- interpreter, bitcode and native outputs match,
-- arithmetic, comparison, branching, loops, arrays, calls and returns cover boundary values,
-- undefined behavior is rejected before lowering,
-- code coverage baseline for parser, semantic analyzer and codegen.
-
-Exit condition: accepted source has equivalent observable behavior in every supported execution mode.
-
-### PR72 - Continuous fuzzing, full sanitizer and concurrency race hardening
-
-Implementation:
-
-- coverage-guided scanner, parser, semantic and IR-lowering fuzz targets,
-- persisted seed corpus from conformance and bug fixtures,
-- full-corpus ASan, LSan and UBSan execution,
-- ThreadSanitizer runtime tests,
-- bounded OOM, deep graph and long-token stress.
-
-Required tests:
-
-- fuzz target smoke in pull-request CI,
-- scheduled extended fuzz jobs with artifacted corpora,
-- all conformance, semantic, codegen, runtime and evidence fixtures under sanitizers,
-- prolonged concurrent reset, registration, inference and snapshot stress under TSan,
-- regression fixture for every discovered crash or leak.
-
-Exit condition: zero known sanitizer findings, races, hangs or reproducible fuzz crashes.
-
-### PR73 - Cross-platform toolchain matrix, CTest parity and reproducible builds
-
-Implementation:
-
-- GCC and Clang matrix,
-- Linux x86-64 and arm64, macOS arm64 and x86-64 where supported, Windows x86-64,
-- LLVM version support policy,
-- CTest parity with mandatory Makefile tests,
-- deterministic generated parser and reproducible artifact controls,
-- install, upgrade, uninstall and downstream consumer workflows.
-
-Required tests:
-
-- platform build, conformance and installed-consumer matrix,
-- independent clean-build checksum comparison,
-- `SOURCE_DATE_EPOCH` and normalized archive metadata checks,
-- static and shared library ABI consumer tests,
-- generated Bison/Flex output consistency.
-
-Exit condition: declared release platforms build and consume equivalent artifacts from clean environments.
-
-### PR74 - Signed release and protected publication workflow
-
-Implementation:
-
-- protected release environment,
-- tag and version consistency checks,
-- OIDC-based artifact signing,
-- checksums, SBOM, provenance and SLSA-style attestations,
-- release dry-run and rollback procedure.
-
-Required tests:
-
-- unsigned or mismatched artifacts are rejected,
-- signature and checksum verification tests,
-- tag/version mismatch negative fixtures,
-- release dry-run without publication,
-- immutable artifact manifest comparison.
-
-Exit condition: release artifacts are verifiable, traceable and cannot be published through an unprotected path.
-
-### PR75 - External vulnerability, SAST, dependency and license policy gate
-
-Implementation:
-
-- CodeQL or equivalent C++ SAST,
-- OSV/Trivy or equivalent dependency and artifact scanning,
-- license allowlist and prohibited-license policy,
-- pinned action and dependency versions,
-- vulnerability exception format with expiry and ownership.
-
-Required tests:
-
-- intentionally vulnerable dependency fixture is detected,
-- secret and private-key negative fixtures,
-- prohibited license fixture,
-- SBOM-to-scanner package reconciliation,
-- expired exception rejection.
-
-Exit condition: high and critical unresolved findings block merge and release.
-
-### PR76 - Container and Kubernetes production hardening
-
-Implementation:
-
-- minimal multi-architecture non-root image,
-- read-only filesystem and dropped capabilities,
-- resource requests, limits, probes and graceful shutdown,
-- network policies and secure observability defaults,
-- Helm or Kustomize deployment contract.
-
-Required tests:
-
-- image build and vulnerability scan,
-- non-root and read-only enforcement,
-- kind or equivalent ephemeral-cluster deployment,
-- health, metrics, shutdown and restart tests,
-- oversized request, malformed telemetry and denied-network negatives.
-
-Exit condition: hardened deployment passes isolated cluster validation without privileged execution.
-
-### PR77 - Formatter and linter baseline
-
-Implementation:
-
-- deterministic formatter for accepted syntax,
-- semantic-preserving lint rules,
-- machine-readable diagnostics and safe-fix boundaries,
-- strict repository formatting enforcement.
-
-Required tests:
-
-- formatter idempotence,
-- format then parse round trip for the full conformance corpus,
-- comments and string literal preservation,
-- lint positive, negative and autofix fixtures,
-- malformed input bounded failure.
-
-Exit condition: formatting never changes program meaning and lint output is stable.
-
-### PR78 - Syntax highlighting and LSP implementation
-
-Implementation:
-
-- editor grammar,
-- incremental document parsing,
-- coded diagnostics, hover, completion, definition and module navigation,
-- cancellation, bounded requests and versioned protocol behavior.
-
-Required tests:
-
-- golden semantic-token and protocol JSON,
-- malformed and partially typed documents,
-- cancellation and stale-document version tests,
-- module import navigation and source provenance,
-- large-document latency budget.
-
-Exit condition: editor tooling consumes the compiler contracts without implementing a divergent language parser.
-
-### PR79 - Production backend and hardware qualification matrix
-
-Implementation:
-
-- explicit list of production-supported backends,
-- real ONNX Runtime, TensorRT, OpenVINO, LibTorch and llama.cpp execution where declared,
-- CPU, GPU and available NPU qualification,
-- model fixture hashes, numerical tolerances and telemetry evidence,
-- self-hosted or controlled hardware-runner policy.
-
-Required tests:
-
-- real model execution and numerical-output validation per supported backend,
-- hardware detection-to-selection verification,
-- incompatible format, unavailable SDK, device loss and OOM negatives,
-- no-output-copy and no-false-success assertions,
-- skips reported as unresolved evidence, never success.
-
-Exit condition: every backend marketed as supported has current live success evidence on declared hardware.
-
-### PR80 - Complete C3-ECO language blocks
-
-Implementation:
-
-- complete certification-oriented language constructs,
-- AST, semantic validation and stable diagnostics,
-- versioned boundary, functional unit, measurement quality, data quality and evidence declarations.
-
-Required tests:
-
-- grammar and AST matrix,
-- valid Bronze through Diamond evidence examples without granting certification,
-- missing functional unit, invalid boundary, unsupported claim and inconsistent unit negatives,
-- source ranges and sanitizer coverage.
-
-Exit condition: the language can express complete auditable measurement intent without overclaiming certification.
-
-### PR81 - Measured scoring, reports and eco-regression
-
-Implementation:
-
-- measured energy, carbon and cost pipeline,
-- provenance for factors and units,
-- uncertainty and data-quality handling,
-- baseline comparison and regression budgets,
-- deterministic report and workbook generation.
-
-Required tests:
-
-- equation unit tests and independent reference calculations,
-- deterministic golden reports,
-- threshold pass and fail fixtures,
-- missing sensor, stale factor, invalid unit and low-quality data negatives,
-- schema compatibility and numerical precision tests.
-
-Exit condition: reports distinguish measured, estimated and declared values and reproduce their calculations.
-
-### PR82 - Authority-ready C3-ECO auditor bundle
-
-Implementation:
-
-- signed evidence manifest,
-- source, binary, model and measurement lineage,
-- redaction and retention policy,
-- auditor verification command and tamper detection.
-
-Required tests:
-
-- complete bundle validation,
-- modified file, missing lineage, invalid signature and schema mismatch negatives,
-- deterministic manifest and checksum tests,
-- redaction leakage tests,
-- clean-room auditor replay.
-
-Exit condition: an independent auditor can verify evidence without trusting the build workspace.
-
-### PR83 - Generated MLIR dialect build integration
-
-Implementation:
-
-- TableGen-generated dialect, operations, types and verifiers,
-- CMake installation and downstream consumption,
-- parser and printer support.
-
-Required tests:
-
-- MLIR lit and FileCheck tests,
-- operation verifier positive and negative cases,
-- parse-print-parse round trip,
-- installed dialect consumer build,
-- generated-file freshness guard.
-
-Exit condition: the generated dialect is the authoritative intermediate representation interface.
-
-### PR84 - Semantic IR to MLIR lowering and production backend handoff
-
-Implementation:
-
-- AST and SemanticIR lowering into ShortHand MLIR,
-- canonicalization and verification passes,
-- LLVM lowering for core language operations,
-- AI runtime and Green AI operation handoff,
-- stable lowering diagnostics.
-
-Required tests:
-
-- pass-level lit tests,
-- invalid operation and shape verifier tests,
-- interpreter versus MLIR/native differential suite,
-- AI runtime metadata and typed-buffer bridge tests,
-- optimization semantic-preservation tests.
-
-Exit condition: production compilation uses verified MLIR lowering without changing observable behavior.
-
-### PR85 - Measured energy, performance and production RC gate
-
-Implementation:
-
-- representative equivalent ShortHand and Python AI workloads,
-- compiler time, runtime latency, throughput, memory and energy measurement,
-- RAPL, NVML, platform sensor or laboratory adapter policy,
-- statistical repetition, hardware metadata and uncertainty,
-- release scorecard aggregation and zero-skip blocker gate.
-
-Required tests:
-
-- benchmark harness correctness and calibration fixtures,
-- equivalent input, model and output validation across ShortHand and Python,
-- regression thresholds with noise handling,
-- unsupported-sensor and insufficient-sample negatives,
-- complete clean-checkout build, install, conformance, backend, security, deployment, tooling, C3-ECO and MLIR matrix.
-
-Exit condition: all mandatory tests pass with zero unresolved production blockers, and any published lower-energy claim is supported by reproducible evidence rather than assumption.
-
-## PR roadmap table
-
-| Planned PR | Status | Area |
-| --- | --- | --- |
-| PR51 - Production readiness plan and tracking contract | MERGED | Planning |
-| PR52 - Backend live SDK matrix harness | MERGED | Backend coverage |
-| PR53 - TensorRT optional live execution fixture | MERGED | Backend coverage |
-| PR54 - OpenVINO optional live execution fixture | MERGED | Backend coverage |
-| PR55 - LibTorch optional live execution fixture | MERGED | Backend coverage |
-| PR56 - Hardware capability discovery and accelerator-aware routing | MERGED | Runtime hardware |
-| PR57 - Llama.cpp optional live execution fixture and objectives | MERGED | Backend and objectives |
-| PR58 - Backend failure-mode matrix finalization | MERGED | Runtime reliability |
-| PR59 - Runtime ABI and API version stability gate | MERGED | Runtime contract |
-| PR60 - Runtime state isolation and thread-safety policy | MERGED | Runtime reliability |
-| PR61 - Production build packaging for runtime and AI bridge | MERGED | Build |
-| PR62 - Prometheus scrape endpoint host adapter | MERGED | Operations |
-| PR63 - OTLP exporter adapter | MERGED | Operations |
-| PR64 - AST source ranges across parser nodes | MERGED | Diagnostics |
-| PR65 - Diagnostics coverage matrix | MERGED | Diagnostics |
-| PR66 - Full grammar and conformance matrix beta-0.2 | MERGED | Language contract |
-| PR67 - Parser robustness and negative corpus hardening | MERGED | Language robustness |
-| PR68 - Production test strategy, coverage audit and PR test contract | MERGED | Quality governance |
-| PR69 - Module, import and package syntax with AST scaffold | PLANNED | Language scale |
-| PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | PLANNED | Language scale |
-| PR71 - Cross-mode semantic correctness and differential execution suite | PLANNED | Compiler correctness |
-| PR72 - Continuous fuzzing, full sanitizer and concurrency race hardening | PLANNED | Compiler robustness |
-| PR73 - Cross-platform toolchain matrix, CTest parity and reproducible builds | PLANNED | Portability |
-| PR74 - Signed release and protected publication workflow | PLANNED | Release |
-| PR75 - External vulnerability, SAST, dependency and license policy gate | PLANNED | Security |
-| PR76 - Container and Kubernetes production hardening | PLANNED | Deployment |
-| PR77 - Formatter and linter baseline | PLANNED | Developer experience |
-| PR78 - Syntax highlighting and LSP implementation | PLANNED | Developer experience |
-| PR79 - Production backend and hardware qualification matrix | PLANNED | AI execution |
-| PR80 - Complete C3-ECO language blocks | PLANNED | C3-ECO language |
-| PR81 - Measured scoring, reports and eco-regression | PLANNED | C3-ECO evidence |
-| PR82 - Authority-ready C3-ECO auditor bundle | PLANNED | C3-ECO evidence |
-| PR83 - Generated MLIR dialect build integration | PLANNED | MLIR |
-| PR84 - Semantic IR to MLIR lowering and production backend handoff | PLANNED | MLIR and codegen |
-| PR85 - Measured energy, performance and production RC gate | PLANNED | Evidence and release |
+| Planned PR | Status | Implementation scope | Mandatory tests and exit evidence |
+| --- | --- | --- | --- |
+| PR68 - Production test strategy, coverage audit and per-PR test contract | MERGED | Add the versioned test strategy, 27-area coverage matrix, PR template, CI guard and corrected roadmap count. | Validate matrix schema, unique IDs, status counts, PR69-PR85 mapping, CI integration and unsupported-claim boundaries. |
+| PR69 - Module, import and package syntax with AST scaffold | PLANNED | Add versioned module, import, alias and package identity grammar; AST nodes; source provenance; stable diagnostics. Resolver behavior remains out of scope. | Positive grammar fixtures; malformed path, duplicate module, invalid alias and misplaced import negatives; source ranges; parser robustness and sanitizer tests. Exit: parser and AST represent module boundaries without claiming multi-file execution. |
+| PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | PLANNED | Add canonical resolution, hermetic roots, package manifests, deterministic lockfiles, graph ordering, cycle detection, visibility and multi-file LLVM/native codegen. | Resolver unit tests; multi-file compile, run and native fixtures; cycles, missing imports, ambiguity, duplicate package and path-escape negatives; lockfile determinism; large graph stress. Exit: clean-checkout deterministic multi-file applications. |
+| PR71 - Cross-mode semantic correctness and differential execution suite | PLANNED | Build a table-driven positive semantic matrix and normalized comparison across interpreter, bitcode and native binaries. | Cover all core types, expressions, calls, returns, branches, loops and arrays; compare output and exit status across modes; reject undefined behavior before lowering; establish code-coverage baseline. Exit: equivalent observable behavior across execution modes. |
+| PR72 - Continuous fuzzing, full sanitizer and concurrency race hardening | PLANNED | Add scanner, parser, semantic and lowering fuzz targets; persisted corpora; full ASan, LSan and UBSan corpus; TSan runtime stress. | Pull-request fuzz smoke; scheduled extended fuzzing; all conformance, semantic, codegen, runtime and evidence fixtures under sanitizers; prolonged concurrent reset, registration, inference and snapshot stress. Exit: zero known sanitizer, race, hang or reproducible fuzz failures. |
+| PR73 - Cross-platform toolchain matrix, CTest parity and reproducible builds | PLANNED | Qualify GCC and Clang, Linux x86-64 and arm64, macOS, Windows, supported LLVM versions, CTest parity, deterministic generation and install lifecycle. | Platform conformance and installed-consumer matrix; independent clean-build checksum comparison; normalized archive metadata; shared/static ABI consumers; generated Bison/Flex consistency. Exit: declared platforms produce equivalent consumable artifacts. |
+| PR74 - Signed release and protected publication workflow | PLANNED | Add protected release environments, tag/version checks, OIDC signing, checksums, SBOM, provenance and attestations. | Reject unsigned, mismatched or mutated artifacts; signature and checksum verification; release dry-run; rollback and immutable manifest tests. Exit: verifiable releases cannot use an unprotected publication path. |
+| PR75 - External vulnerability, SAST, dependency and license policy gate | PLANNED | Add C++ SAST, dependency and image CVE scanning, license policy, pinned actions and expiring vulnerability exceptions. | Detect intentionally vulnerable dependencies, secrets and prohibited licenses; reconcile SBOM packages; reject expired exceptions. Exit: unresolved high or critical findings block merge and release. |
+| PR76 - Container and Kubernetes production hardening | PLANNED | Build minimal multi-arch non-root images with read-only filesystem, dropped capabilities, probes, resource policy, network policy and secure observability defaults. | Image build and CVE scan; non-root/read-only enforcement; ephemeral cluster deployment; health, metrics, shutdown and restart tests; malformed request and denied-network negatives. Exit: no privileged runtime requirement. |
+| PR77 - Formatter and linter baseline | PLANNED | Add deterministic formatting, semantic-preserving lint rules, machine-readable diagnostics and strict repository enforcement. | Formatter idempotence; format-parse round trip for the full corpus; comment and string preservation; lint positive, negative and safe-fix fixtures; malformed input bounds. Exit: formatting never changes meaning. |
+| PR78 - Syntax highlighting and LSP implementation | PLANNED | Add editor grammar and compiler-backed incremental diagnostics, hover, completion, definition and module navigation with bounded cancellation-aware requests. | Golden semantic-token and protocol JSON; partially typed documents; cancellation and stale-version tests; import navigation; large-document latency budget. Exit: tooling does not implement a divergent parser. |
+| PR79 - Production backend and hardware qualification matrix | PLANNED | Declare production-supported backends and qualify real ONNX Runtime, TensorRT, OpenVINO, LibTorch and llama.cpp execution on declared CPU, GPU and available NPU hardware. | Real model execution with numerical tolerances; hardware selection; incompatible format, unavailable SDK, device loss and OOM negatives; no-output-copy and no-false-success checks. Skips remain unresolved evidence. Exit: every marketed backend has current live success evidence. |
+| PR80 - Complete C3-ECO language blocks | PLANNED | Complete certification-oriented language constructs, AST, semantic validation, stable diagnostics and evidence declarations without granting certification. | Grammar and AST matrix; valid level-oriented examples; missing functional unit, invalid boundary, unsupported claim and inconsistent unit negatives; source-range and sanitizer tests. Exit: complete auditable measurement intent is expressible. |
+| PR81 - Measured scoring, reports and eco-regression | PLANNED | Implement measured energy, carbon and cost calculations with factor provenance, uncertainty, data quality, baselines and deterministic reports. | Equation unit tests and independent calculations; golden reports; threshold pass/fail; missing sensor, stale factor, invalid unit and low-quality data negatives; numerical precision. Exit: measured, estimated and declared values are distinguished and reproducible. |
+| PR82 - Authority-ready C3-ECO auditor bundle | PLANNED | Add signed manifests, source/binary/model/measurement lineage, retention, redaction, auditor verification and tamper detection. | Complete bundle validation; modified file, missing lineage, invalid signature and schema mismatch negatives; deterministic checksums; redaction leakage; clean-room replay. Exit: independent verification without trusting the build workspace. |
+| PR83 - Generated MLIR dialect build integration | PLANNED | Generate dialect, operations, types and verifiers through TableGen; add parser/printer, installation and downstream consumption. | MLIR lit and FileCheck tests; verifier positive/negative cases; parse-print-parse round trip; installed consumer; generated-file freshness. Exit: generated dialect is the authoritative IR interface. |
+| PR84 - Semantic IR to MLIR lowering and production backend handoff | PLANNED | Lower AST and SemanticIR into ShortHand MLIR, canonicalize and verify, lower core operations to LLVM and hand AI/Green AI operations to runtime contracts. | Pass-level lit tests; invalid shape and operation verifiers; interpreter-versus-MLIR/native differential suite; bridge metadata and typed-buffer tests; optimization semantic preservation. Exit: verified MLIR production compilation preserves behavior. |
+| PR85 - Measured energy, performance and production RC gate | PLANNED | Add equivalent ShortHand and Python AI benchmarks, latency, throughput, memory and energy measurement, hardware metadata, uncertainty and final blocker aggregation. | Calibrate harness; validate identical input, model and output; repeat statistically; apply noise-aware thresholds; reject unsupported sensors or insufficient samples; run the complete clean-checkout release matrix with zero mandatory skips. Exit: zero production blockers and evidence-backed energy claims only. |
 
 ## Recommended next PR
 
@@ -498,11 +107,11 @@ Next recommended PR after PR #68:
 
 PR69 - Module, import and package syntax with AST scaffold.
 
-Reason: the parser, grammar, robustness and test-governance foundations are now explicit. Enterprise-scale applications next require versioned multi-file syntax and source provenance before deterministic resolution and code generation in PR70.
+Reason: grammar, parser robustness and test governance are now explicit. Enterprise-scale programs next require versioned multi-file syntax and source provenance before deterministic resolution and code generation in PR70.
 
 ## Production readiness exit criteria
 
-Protected CI, language compatibility, semantic equivalence, parser and compiler robustness, backend honesty, live hardware execution, ABI and concurrency, portability, reproducibility, signed releases, vulnerability policy, deployment, tooling, C3-ECO, MLIR, performance and measured energy gates must all pass.
+The final release gate must pass language compatibility, semantic equivalence, fuzzing and sanitizers, live backends, hardware routing, ABI, concurrency, portability, reproducibility, signing, security, deployment, tooling, C3-ECO, MLIR, performance and measured energy checks with zero mandatory skips.
 
 ## Remaining PR count fields
 
@@ -518,9 +127,31 @@ remaining_planned_prs_after_pr67_original_estimate: 12
 remaining_planned_prs_after_pr67_reaudited: 18
 remaining_planned_prs_after_pr68: 17
 
-## Historical recommendation markers
+## Historical compatibility record
+
+The following exact milestones and recommendations are retained so earlier PR guards remain stable:
+
+Language objectives consolidation applied in PR #57
+
+Backend failure-mode finalization applied in PR #58
+
+Runtime ABI and API stability applied in PR #59
+
+Runtime state and thread-safety applied in PR #60
+
+Production build packaging applied in PR #61
+
+Prometheus scrape endpoint host adapter applied in PR #62
 
 Recommended path from PR #51 onward: 29 PRs total.
+
+PR59 - Runtime ABI and API version stability gate | MERGED
+
+PR60 - Runtime state isolation and thread-safety policy | MERGED
+
+PR61 - Production build packaging for runtime and AI bridge | MERGED
+
+PR62 - Prometheus scrape endpoint host adapter | MERGED
 
 After PR #62 is merged, approximately 17 implementation PRs remain.
 
@@ -552,4 +183,8 @@ Next recommended PR after PR #67:
 
 PR68 - Module/import/package design and parser scaffold.
 
-The historical PR67 recommendation is superseded by the 2026-08-06 test re-audit. The new PR68 is the production test strategy and the module work moves to PR69.
+PR67 - Parser robustness and negative corpus hardening
+
+PR79 - MLIR lowering passes and production RC gate
+
+The historical PR67 recommendation is superseded by the 2026-08-06 test re-audit. The new PR68 is the production test strategy and module work moves to PR69.
