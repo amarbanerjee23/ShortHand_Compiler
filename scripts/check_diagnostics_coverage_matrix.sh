@@ -32,7 +32,13 @@ for file in \
   "${ROOT_DIR}/tests/diagnostics/fixtures/break_outside_loop.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/ai_incompatible_backend_warning.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/greenai_missing_functional_unit.short" \
-  "${ROOT_DIR}/tests/diagnostics/fixtures/lowering_undefined_function.short"; do
+  "${ROOT_DIR}/tests/diagnostics/fixtures/lowering_undefined_function.short" \
+  "${ROOT_DIR}/tests/modules/invalid/duplicate_package.short" \
+  "${ROOT_DIR}/tests/modules/invalid/duplicate_module.short" \
+  "${ROOT_DIR}/tests/modules/invalid/duplicate_import_alias.short" \
+  "${ROOT_DIR}/tests/modules/invalid/duplicate_import_path.short" \
+  "${ROOT_DIR}/tests/modules/invalid/import_before_module.short" \
+  "${ROOT_DIR}/tests/modules/invalid/package_without_module.short"; do
   [[ -f "${file}" ]] || { echo "error: missing required file: ${file}" >&2; exit 1; }
 done
 
@@ -54,6 +60,8 @@ require_contains "${DIAGNOSTICS_HEADER}" 'std::string code;'
 require_contains "${DIAGNOSTICS_SOURCE}" 'printCode(record.code);'
 require_contains "${PARSER}" 'ParserSyntaxError'
 require_contains "${PARSER}" 'ParserExpectedAIInferBuiltin'
+require_contains "${PARSER}" 'ParserDuplicatePackageDeclaration'
+require_contains "${PARSER}" 'ParserModuleRequired'
 require_contains "${SEMANTIC}" 'LoweringUndefinedFunction'
 require_contains "${SEMANTIC}" 'diagnostics.errorAtNode('
 require_contains "${MAIN}" 'semantic.diagnostics.hasDiagnostics()'
@@ -80,8 +88,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 39 ]] || {
-  echo "error: expected 39 stable diagnostics after the PR67 parser guard expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 45 ]] || {
+  echo "error: expected 45 stable diagnostics after the PR69 module syntax expansion" >&2
   exit 1
 }
 
@@ -95,7 +103,7 @@ awk -F '\t' '
   $2 !~ /^(parser|semantic|ai|greenai|lowering)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 40) exit 16 }
+  END { if (NR != 46) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1
@@ -119,5 +127,6 @@ if [[ ! -x "${SHORT}" ]]; then
 fi
 
 SHORTHAND_BIN="${SHORT}" bash "${TEST}"
+SHORTHAND_BIN="${SHORT}" bash "${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
 
 echo "PASS diagnostics coverage matrix guard"
