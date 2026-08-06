@@ -28,3 +28,5 @@ diagnostics | tests/diagnostics/test_diagnostics_coverage_matrix.sh | accept | P
 codegen | tests/codegen/test_ai_metadata_ir.sh | accept | LLVM metadata for AI and Green AI constructs must remain emitted.
 runtime | tests/codegen/test_external_runtime_native.sh | accept | Native runtime-linking path must remain valid.
 evidence | tests/evidence/test_ai_evidence.sh | accept | Evidence output must retain backend and fallback honesty fields.
+test-strategy | docs/compiler_test_strategy.md | accept | Production test layers and claim-safety rules must remain versioned.
+test-coverage | tests/coverage/compiler_test_coverage_matrix.tsv | audit | Implemented, partial and open production test areas must remain explicit and mapped to closure PRs.
