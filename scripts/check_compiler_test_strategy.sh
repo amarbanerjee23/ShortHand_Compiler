@@ -60,8 +60,9 @@ duplicate_ids="$(tail -n +2 "${MATRIX}" | cut -f1 | sort | uniq -d)"
   exit 1
 }
 
-for id in $(seq -w 1 27); do
-  require_contains "${MATRIX}" "TST${id}"
+for number in $(seq 1 27); do
+  id="$(printf 'TST%03d' "${number}")"
+  require_contains "${MATRIX}" "${id}"
 done
 
 for pr in $(seq 68 85); do
