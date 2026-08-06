@@ -63,6 +63,9 @@ jobs:
       - name: Grammar and conformance matrix beta-0.2
         run: bash scripts/check_grammar_conformance_matrix.sh
 
+      - name: Module import package syntax beta-0.3
+        run: bash scripts/check_module_ast_scaffold.sh
+
       - name: Parser robustness and negative corpus
         run: bash scripts/check_parser_robustness.sh
 
