@@ -22,6 +22,8 @@ PR68 adds the Compiler test strategy and coverage matrix. The audit records 27 p
 
 Open work remains for modules, semantic differential testing, fuzzing and race detection, portability, reproducibility, release security, deployment, developer tooling, live backend qualification, full C3-ECO evidence, production MLIR lowering and measured energy evidence.
 
+Historical compatibility term: Module/import/package model.
+
 ## Language feature status
 
 The language versioning and conformance policy gate remains an active compatibility contract for beta-0.2.
