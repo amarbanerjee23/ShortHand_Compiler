@@ -9,6 +9,8 @@ PLAN_FILES=(
   "docs/language_feature_implementation_plan.md"
   "docs/beta_enterprise_requirements.md"
   "docs/enterprise_release_scorecard.md"
+  "docs/compiler_test_strategy.md"
+  "tests/coverage/compiler_test_coverage_matrix.tsv"
 )
 
 for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
@@ -30,7 +32,12 @@ required_status_terms=(
   "Source-aware diagnostics"
   "Automated SBOM"
   "Runtime observability implementation"
-  "Module/import/package model"
+  "Module, import and package model"
+  "Compiler test strategy and coverage matrix"
+  "Cross-mode semantic equivalence"
+  "Cross-platform reproducibility"
+  "Measured ShortHand versus Python energy evidence"
+  "Zero-skip production RC gate"
 )
 
 for term in "${required_status_terms[@]}"; do
@@ -44,11 +51,12 @@ unsupported_claim_patterns=(
   "Current status: fully production-ready"
   "ShortHand is fully production-ready"
   "all production blockers are complete"
+  "ShortHand uses less energy than Python"
 )
 
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness or energy claim: ${pattern}" >&2
     exit 1
   fi
 done
@@ -60,4 +68,4 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == "1" ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. Current maturity is tracked; production blockers remain explicit."
+echo "Feature plan status check passed. Current maturity, test gaps and production blockers remain explicit."
