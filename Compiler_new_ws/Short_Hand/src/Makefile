@@ -61,7 +61,7 @@ AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/
 endif
 
 AI_RUNTIME_CORE_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Telemetry.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp module/ModuleResolver.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/IR_Generator_Module.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := $(AI_RUNTIME_CORE_SRC)
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
@@ -216,7 +216,7 @@ format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \
 	  echo "warning: clang-format is not installed; format check is environment-limited"; \
 	elif [ "$${CLANG_FORMAT_STRICT:-0}" = "1" ]; then \
-	  clang-format --dry-run --Werror main.cpp ast/*.h ast/*.cpp visitors/*.h visitors/*.cpp ai_runtime/*.h ai_runtime/*.cpp green_ai/*.cpp runtime/*.h runtime/*.cpp semantic_ir/*.h; \
+	  clang-format --dry-run --Werror main.cpp ast/*.h ast/*.cpp module/*.h module/*.cpp visitors/*.h visitors/*.cpp ai_runtime/*.h ai_runtime/*.cpp green_ai/*.cpp runtime/*.h runtime/*.cpp semantic_ir/*.h; \
 	else \
 	  echo "clang-format available; set CLANG_FORMAT_STRICT=1 to enforce full legacy formatting"; \
 	fi
