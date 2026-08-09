@@ -1,7 +1,7 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-06-pr69
-baseline_commit: 02a2a17e49eaca2ce08cc15304df53b0ea5b4ad1
+compiler_test_strategy_version: 2026-08-09-pr70
+baseline_commit: 2488cab3a3ab29d2c833bccf3aec6aeab6f1652a
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
@@ -12,50 +12,50 @@ ShortHand must become a production-grade compiled AI language that lets engineer
 
 A test passing because a dependency, device, backend, or platform was skipped is not production success evidence.
 
-## Audit status after PR69
+## Audit status after PR70
 
 The current test foundation is strong enough for controlled beta, but not sufficient for an enterprise production-ready claim.
 
 The 27-area production test matrix now records:
 
-- 4 implemented areas,
+- 5 implemented areas,
 - 11 partial areas,
-- 12 open areas.
+- 11 open areas.
 
-PR69 closes the module and package syntax area. It provides executable grammar, AST provenance, stable diagnostics, backward compatibility, import-set stress and sanitizer evidence. Deterministic file resolution, lockfiles, symbol binding and multi-file code generation remain open in PR70.
+PR70 closes deterministic package-manifest resolution and package-graph construction. Its evidence includes exact module mappings, root-confinement security checks, package/module identity validation, transitive graph loading, cycle/ambiguity/collision rejection, deterministic lock regeneration, stale-lock rejection, multi-file bitcode/native binding, an honest interpreter imported-call rejection, 128-module graph stress, and sanitizer execution. Full interpreter/LLVM/native semantic equivalence remains PR71 and is deliberately not counted as resolver completion evidence.
 
 Strong current coverage exists for:
 
 1. beta-0.2 base grammar conformance,
 2. beta-0.3 module, package and import syntax,
-3. bounded malformed-input handling,
-4. source-aware coded diagnostics,
-5. selected semantic rejection cases,
-6. LLVM metadata and native runtime linkage,
-7. runtime ABI symbol stability,
-8. serialized runtime concurrency behavior,
-9. Linux packaging consumers,
-10. Prometheus and OTLP adapter behavior,
-11. fallback honesty and unavailable-backend behavior,
-12. candidate C3-ECO schemas and claim safety,
-13. AddressSanitizer, LeakSanitizer and UndefinedBehaviorSanitizer smoke paths.
+3. deterministic module manifest, resolver and lockfile behavior,
+4. bounded malformed-input handling,
+5. source-aware coded diagnostics,
+6. selected semantic rejection cases,
+7. LLVM metadata, multi-file function binding and native runtime linkage,
+8. runtime ABI symbol stability,
+9. serialized runtime concurrency behavior,
+10. Linux packaging consumers,
+11. Prometheus and OTLP adapter behavior,
+12. fallback honesty and unavailable-backend behavior,
+13. candidate C3-ECO schemas and claim safety,
+14. AddressSanitizer, LeakSanitizer and UndefinedBehaviorSanitizer smoke paths.
 
 Production-critical gaps remain for:
 
-1. deterministic module resolution and multi-file execution,
-2. interpreter, LLVM and native-output semantic equivalence,
-3. complete positive and negative semantic coverage,
-4. full-corpus sanitizer execution and continuous fuzzing,
-5. ThreadSanitizer-backed concurrency verification,
-6. compiler, LLVM, architecture and operating-system portability,
-7. reproducible release artifacts,
-8. real execution qualification for every supported AI backend,
-9. external vulnerability, SAST and license-policy enforcement,
-10. hardened container and Kubernetes deployment,
-11. formatter, linter and LSP protocol correctness,
-12. production MLIR generation and lowering,
-13. measured energy and performance comparison with equivalent Python workloads,
-14. a final release-candidate blocker gate.
+1. interpreter, LLVM and native-output semantic equivalence, including imported function execution,
+2. complete positive and negative semantic coverage,
+3. full-corpus sanitizer execution and continuous fuzzing,
+4. ThreadSanitizer-backed concurrency verification,
+5. compiler, LLVM, architecture and operating-system portability,
+6. reproducible release artifacts,
+7. real execution qualification for every supported AI backend,
+8. external vulnerability, SAST and license-policy enforcement,
+9. hardened container and Kubernetes deployment,
+10. formatter, linter and LSP protocol correctness,
+11. production MLIR generation and lowering,
+12. measured energy and performance comparison with equivalent Python workloads,
+13. a final release-candidate blocker gate.
 
 ## Required test layers for every implementation PR
 
@@ -85,7 +85,8 @@ Every PR from PR70 onward must include all applicable layers below. A PR descrip
 7. Concurrency tests must use ThreadSanitizer or an equivalent race detector before the runtime is called production safe.
 8. Energy claims require repeatable measurements, hardware metadata, uncertainty and a comparable baseline.
 9. No CI gate may disable LeakSanitizer, weaken assertions or convert a required production test into an unconditional skip.
-10. The final release gate must execute all mandatory tests from a clean checkout and installed-package consumer.
+10. Module/package tests must prove path confinement, graph determinism, lock freshness and false-success rejection rather than only parser acceptance.
+11. The final release gate must execute all mandatory tests from a clean checkout and installed-package consumer.
 
 ## CI target architecture
 
@@ -93,6 +94,7 @@ Every PR from PR70 onward must include all applicable layers below. A PR descrip
 
 - Ubuntu x86-64 build with GCC and Clang
 - base and module-extension grammar conformance
+- deterministic module resolver, lockfile and multi-file codegen gate
 - parser, diagnostics and semantic conformance
 - interpreter, LLVM and native differential suite
 - ASan, LSan and UBSan full language corpus
