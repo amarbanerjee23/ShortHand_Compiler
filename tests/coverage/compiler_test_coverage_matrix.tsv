@@ -1,28 +1,28 @@
 id	area	status	existing_evidence	missing_evidence	closure_pr	production_blocker
 TST001	beta-0.2 base grammar conformance	implemented	tests/conformance/grammar_matrix_beta_0_2.tsv; scripts/check_grammar_conformance_matrix.sh	None for the beta-0.2 base grammar	PR68	no
-TST002	parser robustness and resource bounds	implemented	tests/parser/robustness; scripts/check_parser_robustness.sh	Continuous coverage-guided fuzzing	PR72	no
-TST003	source-aware stable diagnostics	implemented	tests/diagnostics; scripts/check_diagnostics_coverage_matrix.sh	LSP publication and resolved cross-module provenance	PR78	no
-TST004	semantic validation	partial	tests/semantic/invalid; SemanticAnalyzer.cpp	Positive semantic matrix and broader negative combinations	PR71	yes
-TST005	interpreter functional correctness	partial	greenai_report smoke and selected examples	All core control, expression, function and data-flow outcomes including imported calls	PR71	yes
-TST006	LLVM and native functional correctness	partial	tests/codegen; native runtime linking; scripts/check_module_resolution.sh	Language-wide output and exit-status verification	PR71	yes
-TST007	interpreter versus compiled differential testing	open	None	Normalized interpreter, bitcode and native equivalence corpus including imported calls	PR71	yes
-TST008	full sanitizer coverage	partial	make sanitize; parser robustness, module scaffold and resolver paths sanitized	Entire conformance, semantic, codegen, runtime and evidence corpus	PR72	yes
-TST009	continuous fuzzing	open	Deterministic parser mutation smoke	Coverage-guided scanner, parser, semantic and lowering fuzzers	PR72	yes
-TST010	concurrency and race detection	partial	tests/runtime/test_runtime_state_thread_safety.sh	ThreadSanitizer and prolonged stress execution	PR72	yes
+TST002	parser robustness and resource bounds	implemented	tests/parser/robustness; scripts/check_parser_robustness.sh	Continuous coverage-guided fuzzing	PR73	no
+TST003	source-aware stable diagnostics	implemented	tests/diagnostics; scripts/check_diagnostics_coverage_matrix.sh	LSP publication and resolved cross-module provenance	PR79	no
+TST004	semantic validation	partial	tests/semantic/invalid; SemanticAnalyzer.cpp	Positive semantic matrix and broader negative combinations	PR72	yes
+TST005	interpreter functional correctness	partial	greenai_report smoke and selected examples	All core control, expression, function and data-flow outcomes including imported calls	PR72	yes
+TST006	LLVM and native functional correctness	partial	tests/codegen; native runtime linking; scripts/check_module_resolution.sh	Language-wide output and exit-status verification	PR72	yes
+TST007	interpreter versus compiled differential testing	open	None	Normalized interpreter, bitcode and native equivalence corpus including imported calls	PR72	yes
+TST008	full sanitizer coverage	partial	make sanitize; parser robustness, module scaffold and resolver paths sanitized	Entire conformance, semantic, codegen, runtime and evidence corpus	PR73	yes
+TST009	continuous fuzzing	open	Deterministic parser mutation smoke	Coverage-guided scanner, parser, semantic and lowering fuzzers	PR73	yes
+TST010	concurrency and race detection	partial	tests/runtime/test_runtime_state_thread_safety.sh	ThreadSanitizer and prolonged stress execution	PR73	yes
 TST011	module and package syntax	implemented	docs/module_import_package_syntax.md; tests/conformance/module_matrix_beta_0_3.tsv; scripts/check_module_ast_scaffold.sh	None for the beta-0.3 syntax scaffold	PR69	no
-TST012	module resolver and package graph	implemented	Compiler_new_ws/Short_Hand/src/module/ModuleResolver.cpp; docs/module_resolution_and_lockfile.md; scripts/check_module_resolution.sh	Interpreter imported-call execution equivalence is tracked by TST005 and TST007 in PR71	PR70	no
-TST013	platform and compiler portability	open	Ubuntu 24.04 GCC default CI	GCC and Clang, Linux arm64, macOS and Windows qualification	PR73	yes
-TST014	reproducible builds	open	Source hashes in candidate release evidence	Independent clean-build artifact equivalence	PR73	yes
-TST015	runtime ABI compatibility	partial	25-symbol manifest and consumer link tests	Cross-release ABI compatibility report and installed shared-library checks	PR73	yes
-TST016	packaging and installed consumers	partial	CMake and pkg-config Linux consumers	Install, upgrade, uninstall and multi-platform consumers	PR73	yes
-TST017	signed protected release	open	Unsigned candidate SBOM and provenance	OIDC signing, attestations, protected workflow and release dry run	PR74	yes
-TST018	dependency security and license policy	partial	Secret scan and candidate SBOM	External CVE scanner, SAST, license allowlist and negative fixtures	PR75	yes
-TST019	container and Kubernetes deployment	open	None	Non-root image, policies, resource limits, health and cluster tests	PR76	yes
-TST020	formatter and linter correctness	open	Non-strict clang-format availability check	Idempotence, parse preservation, diagnostics and full enforcement	PR77	yes
-TST021	syntax highlighting and LSP protocol	open	None	Protocol, cancellation, malformed document and module navigation tests	PR78	yes
-TST022	live backend and hardware qualification	partial	ONNX optional execution; unavailable-path fixtures; routing policy	Real numerical execution on every production-supported backend and device	PR79	yes
-TST023	C3-ECO language and evidence	partial	Candidate schemas, reports and claim-safety gates	Complete language blocks, measured scoring and authority bundle	PR80-PR82	yes
-TST024	MLIR dialect and lowering	partial	TableGen source scaffold and foundation guard	Generated dialect, verifier, round trip, lowering and execution equivalence	PR83-PR84	yes
-TST025	performance regression	open	None	Compiler time, runtime latency, memory and throughput budgets	PR85	yes
-TST026	measured energy comparison with Python	open	Declared Green AI measurements only	Repeatable equivalent-workload power and energy evidence with uncertainty	PR85	yes
-TST027	production release-candidate gate	open	Current enterprise hardening shell gate	Zero-skip clean release matrix and blocker aggregation	PR85	yes
+TST012	module resolver and package graph	implemented	Compiler_new_ws/Short_Hand/src/module/ModuleResolver.cpp; docs/module_resolution_and_lockfile.md; scripts/check_module_resolution.sh	Interpreter imported-call execution equivalence is tracked by TST005 and TST007 in PR72	PR70	no
+TST013	platform and compiler portability	open	Ubuntu 24.04 GCC default CI	GCC and Clang, Linux arm64, macOS and Windows qualification	PR74	yes
+TST014	reproducible builds	open	Source hashes in candidate release evidence	Independent clean-build artifact equivalence	PR74	yes
+TST015	runtime ABI compatibility	partial	25-symbol manifest and consumer link tests	Cross-release ABI compatibility report and installed shared-library checks	PR74	yes
+TST016	packaging and installed consumers	partial	CMake and pkg-config Linux consumers	Install, upgrade, uninstall and multi-platform consumers	PR74	yes
+TST017	signed protected release	open	Unsigned candidate SBOM and provenance	OIDC signing, attestations, protected workflow and release dry run	PR75	yes
+TST018	dependency security and license policy	partial	Secret scan and candidate SBOM	External CVE scanner, SAST, license allowlist and negative fixtures	PR76	yes
+TST019	container and Kubernetes deployment	open	None	Non-root image, policies, resource limits, health and cluster tests	PR77	yes
+TST020	formatter and linter correctness	open	Non-strict clang-format availability check	Idempotence, parse preservation, diagnostics and full enforcement	PR78	yes
+TST021	syntax highlighting and LSP protocol	open	None	Protocol, cancellation, malformed document and module navigation tests	PR79	yes
+TST022	live backend and hardware qualification	partial	ONNX optional execution; unavailable-path fixtures; CPU/GPU/TPU/NPU routing policy	Real numerical execution on every production-supported backend and execution-ready device tier	PR80	yes
+TST023	C3-ECO language and evidence	partial	Candidate schemas, reports and claim-safety gates	Complete language blocks, measured scoring and authority bundle	PR81-PR83	yes
+TST024	MLIR dialect and lowering	partial	TableGen source scaffold and foundation guard	Generated dialect, verifier, round trip, lowering and execution equivalence	PR84-PR85	yes
+TST025	performance regression	open	None	Compiler time, runtime latency, memory and throughput budgets	PR86	yes
+TST026	measured energy comparison with Python	open	Declared Green AI measurements only	Repeatable equivalent-workload power and energy evidence with uncertainty	PR86	yes
+TST027	production release-candidate gate	open	Current enterprise hardening shell gate	Zero-skip clean release matrix and blocker aggregation	PR86	yes
