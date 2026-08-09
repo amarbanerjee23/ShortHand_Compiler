@@ -15,6 +15,7 @@ concurrency:
 jobs:
   ubuntu:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -77,6 +78,9 @@ jobs:
 
       - name: Module import package syntax beta-0.3
         run: bash scripts/check_module_ast_scaffold.sh
+
+      - name: Module resolver unit gate
+        run: bash scripts/check_module_resolver_unit.sh
 
       - name: Module resolver and multi-file codegen
         run: bash scripts/check_module_resolution.sh
