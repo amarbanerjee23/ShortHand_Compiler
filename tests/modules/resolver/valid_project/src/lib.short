@@ -1,0 +1,8 @@
+package acme.demo;
+module acme.demo.lib;
+int helper_state;
+def int helper(int x;) {
+    print "imported helper";
+    return x;
+};
+helper_state = 1;
