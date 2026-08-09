@@ -20,6 +20,17 @@ inline constexpr const char *ParserDuplicateImportAlias = "SHD2013";
 inline constexpr const char *ParserDuplicateImportPath = "SHD2014";
 inline constexpr const char *ParserModuleDeclarationOrder = "SHD2015";
 inline constexpr const char *ParserModuleRequired = "SHD2016";
+inline constexpr const char *ModuleManifestNotFound = "SHD2020";
+inline constexpr const char *ModuleManifestInvalid = "SHD2021";
+inline constexpr const char *ModuleNotFound = "SHD2022";
+inline constexpr const char *ModulePathEscape = "SHD2023";
+inline constexpr const char *ModuleIdentityMismatch = "SHD2024";
+inline constexpr const char *ModuleImportCycle = "SHD2025";
+inline constexpr const char *ModuleAmbiguousMapping = "SHD2026";
+inline constexpr const char *ModulePackageMismatch = "SHD2027";
+inline constexpr const char *ModuleLockfileMismatch = "SHD2028";
+inline constexpr const char *ModuleSymbolCollision = "SHD2029";
+inline constexpr const char *ModuleExternalRunUnsupported = "SHD2030";
 
 inline constexpr const char *SemanticBreakOutsideLoop = "SHD3001";
 inline constexpr const char *SemanticContinueOutsideLoop = "SHD3002";
