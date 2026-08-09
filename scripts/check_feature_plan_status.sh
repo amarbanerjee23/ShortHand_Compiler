@@ -58,7 +58,7 @@ for anchor in \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
   '5 implemented, 11 partial and 11 open' \
-  'Interpreter imported-call execution equivalence is tracked under PR71'; do
+  'Imported interpreter call equivalence is tracked under PR71.'; do
   if ! grep -Fq "${anchor}" "${STATUS_FILE}"; then
     echo "error: feature implementation status missing PR70 anchor: ${anchor}" >&2
     exit 1
