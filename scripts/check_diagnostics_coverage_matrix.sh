@@ -9,6 +9,7 @@ DIAGNOSTICS_SOURCE="${SRC_DIR}/visitors/Diagnostics.cpp"
 SEMANTIC="${SRC_DIR}/visitors/SemanticAnalyzer.cpp"
 PARSER="${SRC_DIR}/scanner_parser/parser.yy"
 MAIN="${SRC_DIR}/main.cpp"
+RESOLVER="${SRC_DIR}/module/ModuleResolver.cpp"
 DOC="${ROOT_DIR}/docs/diagnostics_coverage_matrix.md"
 MATRIX="${ROOT_DIR}/tests/diagnostics/diagnostics_coverage_matrix.tsv"
 TEST="${ROOT_DIR}/tests/diagnostics/test_diagnostics_coverage_matrix.sh"
@@ -28,7 +29,7 @@ require_contains() {
 
 for file in \
   "${HEADER}" "${DIAGNOSTICS_HEADER}" "${DIAGNOSTICS_SOURCE}" \
-  "${SEMANTIC}" "${PARSER}" "${MAIN}" "${DOC}" "${MATRIX}" "${TEST}" \
+  "${SEMANTIC}" "${PARSER}" "${MAIN}" "${RESOLVER}" "${DOC}" "${MATRIX}" "${TEST}" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/break_outside_loop.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/ai_incompatible_backend_warning.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/greenai_missing_functional_unit.short" \
@@ -68,7 +69,8 @@ require_contains "${PARSER}" 'ParserModuleRequired'
 require_contains "${SEMANTIC}" 'LoweringUndefinedFunction'
 require_contains "${SEMANTIC}" 'ModuleExternalRunUnsupported'
 require_contains "${SEMANTIC}" 'diagnostics.errorAtNode('
-require_contains "${MAIN}" 'ModuleLockfileMismatch'
+require_contains "${RESOLVER}" 'ModuleLockfileMismatch'
+require_contains "${MAIN}" 'resolver.verifyLockfile'
 require_contains "${TEST}" 'PASS diagnostics coverage matrix gate'
 
 printf '%s\n' 'parser' 'module' 'semantic' 'ai' 'greenai' 'lowering' | sort >"${WORK_DIR}/required-stages.txt"
