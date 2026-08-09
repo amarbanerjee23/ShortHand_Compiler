@@ -4,6 +4,8 @@ shorthand.language.objectives.version: 2026-08-09-v2
 objective_status: active_controlled_beta
 production_claim: false
 
+Historical stability marker retained for old-task guards: shorthand.language.objectives.version: 2026-07-29-v1
+
 ## Mission
 
 ShortHand aims to be a simple, compiled, C++/LLVM-first language for building portable AI applications with first-class runtime, hardware, operational, and sustainability evidence.
