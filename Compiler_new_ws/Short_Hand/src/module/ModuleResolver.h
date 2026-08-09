@@ -1,6 +1,7 @@
 #ifndef SHORTHAND_MODULE_RESOLVER_H
 #define SHORTHAND_MODULE_RESOLVER_H
 
+#include <functional>
 #include <map>
 #include <ostream>
 #include <string>
