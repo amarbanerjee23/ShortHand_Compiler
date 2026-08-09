@@ -7,6 +7,11 @@ multi_file_execution_status: llvm_native_graph_codegen_available_interpreter_cal
 runtime_abi_change: none
 production_claim: false
 
+Historical PR69 scaffold markers retained for old-task stability:
+
+- module_resolution_status: parser_and_ast_scaffold_only
+- multi_file_execution_status: deferred_to_pr70
+
 ## Scope
 
 PR69 adds an optional source-unit preamble. It gives a ShortHand file a package identity, a module identity and a list of declared imports. The parser records each declaration with its source file and one-based inclusive source range.
