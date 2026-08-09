@@ -12,6 +12,10 @@ class SemanticAnalyzer : public Visitor {
 public:
     Diagnostics diagnostics;
 
+    static std::set<std::string> functionNames(AST_PROGRAM *program);
+    static std::set<std::string> globalNames(AST_PROGRAM *program);
+    void setImportedFunctions(const std::set<std::string> &names, bool allow_external_calls);
+
     int visit(AST_PROGRAM*) override;
     int visit(AST_DATA_DECLARATION_BLOCK*) override;
     int visit(AST_FUNCTION_LIST_RULE*) override;
@@ -54,6 +58,8 @@ private:
     std::map<std::string, TensorDeclarationData> tensors;
     std::map<std::string, GreenAIContractData> contracts;
     std::set<std::string> functions;
+    std::set<std::string> imported_functions;
+    bool allow_external_function_calls = true;
     int loopDepth = 0;
 };
 
