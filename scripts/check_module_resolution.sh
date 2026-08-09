@@ -4,6 +4,13 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 SHORT="${SHORTHAND_BIN:-${ROOT_DIR}/Compiler_new_ws/Short_Hand/build/short_hand}"
+if [[ "${SHORT}" != /* ]]; then
+  short_dir="$(cd "$(dirname "${SHORT}")" 2>/dev/null && pwd)" || {
+    echo "error: unable to resolve SHORTHAND_BIN relative to the caller working directory: ${SHORT}" >&2
+    exit 1
+  }
+  SHORT="${short_dir}/$(basename "${SHORT}")"
+fi
 FIXTURE="${ROOT_DIR}/tests/modules/resolver/valid_project"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
