@@ -12,7 +12,9 @@ PLAN_FILES=(
   "docs/compiler_test_strategy.md"
   "tests/coverage/compiler_test_coverage_matrix.tsv"
   "docs/module_import_package_syntax.md"
+  "docs/module_resolution_and_lockfile.md"
   "tests/conformance/module_matrix_beta_0_3.tsv"
+  "scripts/check_module_resolution.sh"
 )
 
 for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
@@ -50,17 +52,40 @@ for term in "${required_status_terms[@]}"; do
   fi
 done
 
+for anchor in \
+  'feature_status_version: 2026-08-09-pr70' \
+  'language_version: beta-0.3' \
+  'current_maturity: controlled_beta' \
+  'production_claim: false' \
+  '5 implemented, 11 partial and 11 open' \
+  'Interpreter imported-call execution equivalence is tracked under PR71'; do
+  if ! grep -Fq "${anchor}" "${STATUS_FILE}"; then
+    echo "error: feature implementation status missing PR70 anchor: ${anchor}" >&2
+    exit 1
+  fi
+done
+
+grep -Fq 'resolution_status: deterministic_manifest_locked_multi_file_codegen' docs/module_resolution_and_lockfile.md || {
+  echo "error: module resolver contract is not marked as deterministic/locked" >&2
+  exit 1
+}
+
+grep -Fq 'PASS deterministic module resolver, package lock and multi-file codegen gate' scripts/check_module_resolution.sh || {
+  echo "error: module resolver executable gate missing" >&2
+  exit 1
+}
+
 unsupported_claim_patterns=(
   "Current status: fully production-ready"
   "ShortHand is fully production-ready"
   "all production blockers are complete"
   "ShortHand uses less energy than Python"
-  "imports are fully resolved"
+  "all interpreter and compiled module execution is equivalent"
 )
 
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness, resolver or energy claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness, equivalence or energy claim: ${pattern}" >&2
     exit 1
   fi
 done
