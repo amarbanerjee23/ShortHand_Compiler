@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -95,7 +96,7 @@ static void emit_module_error(const std::string &source_path,
                               const std::string &code,
                               const std::string &message) {
     if (!source_path.empty()) std::cerr << source_path << ":1:1: ";
-    std::cerr << "error: [" << code << "] " << message << '\n';
+    std::cerr << "error: [" << code << "] " << message << " [range 1:1-1:1]\n";
 }
 
 static bool parse_source_unit(const std::string &path, ParsedSourceUnit &out) {
