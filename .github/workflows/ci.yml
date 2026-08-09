@@ -122,7 +122,10 @@ jobs:
             build/
 
       - name: Publish event-specific CI status
-        if: always()
+        # Commit statuses are SHA-scoped, not branch-scoped. A superseded run on a
+        # newly created feature branch may share the default-branch SHA, so a
+        # cancellation must never overwrite an already valid status for that SHA.
+        if: ${{ always() && !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
           TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
