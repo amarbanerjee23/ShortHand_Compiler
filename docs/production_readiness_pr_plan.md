@@ -1,9 +1,9 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-06-pr69
+production_readiness_plan_version: 2026-08-09-pr70
 PLAN_STATUS: active
 BASELINE_AFTER_PR: 50
-LAST_COMPLETED_PR: 69
+LAST_COMPLETED_PR: 70
 BASELINE_LANGUAGE_VERSION: beta-0.3
 TARGET: enterprise production usage ready language
 
@@ -21,6 +21,8 @@ Historical guard markers retained for old-task stability:
 - LAST_COMPLETED_PR: 67
 - production_readiness_plan_version: 2026-08-06-pr68
 - LAST_COMPLETED_PR: 68
+- production_readiness_plan_version: 2026-08-06-pr69
+- LAST_COMPLETED_PR: 69
 
 ## Goal
 
@@ -28,36 +30,43 @@ ShortHand must become a production-grade compiled AI language that lets engineer
 
 Unsupported or unavailable paths must never report success. A skipped dependency, absent accelerator, source-pattern check or transport acceptance response is not production execution evidence.
 
-## Current baseline after PR69
+## Current baseline after PR70
 
 Implemented or strongly guarded:
 
 - beta-0.2 parser-accurate base grammar and executable conformance matrix,
 - beta-0.3 package, module, dotted import and alias syntax,
 - a provenance-aware module AST scaffold with deterministic `module-info` JSON,
-- stable `SHD2011` through `SHD2016` module diagnostics,
+- hermetic `shorthand.package.v1` manifest resolution without ambient host search paths,
+- package-root path confinement and exact package/module source identity validation,
+- deterministic transitive import graphs, cycle detection and dependency-first ordering,
+- direct-import function visibility plus graph-wide linker-visible symbol-collision rejection,
+- deterministic `shorthand.lock.v1` reachable-graph fingerprints and stale-lock rejection,
+- `shorthand.module.graph.v1` inspection,
+- multi-file LLVM/bitcode/native lowering with imported declarations/functions linked before the entry module,
+- stable `SHD2011` through `SHD2030` parser/module diagnostics,
 - backward compatibility for sources without a module preamble,
 - bounded malformed-input handling and parser resource ceilings,
-- stable coded diagnostics and source ranges,
+- stable coded diagnostics and source ranges/provenance,
 - honest backend failure behavior and hardware routing policy,
 - runtime ABI 1.0.0 with 25 public symbols,
 - serialized runtime calls, Linux packaging and observability adapters,
 - compiler test strategy and 27-area coverage matrix,
-- module tests in normal and sanitizer-backed paths.
+- module syntax and resolver tests in normal and sanitizer-backed paths.
 
 Explicit boundary:
 
-- imports are not resolved,
-- package files and lockfiles do not exist,
-- imported symbols are not bound,
-- multi-file LLVM or native code generation is not implemented,
-- `module-info` reports `resolver_status: not_resolved`.
+- the legacy interpreter does not yet implement correct imported function execution; `run` rejects imported calls with `SHD2030`,
+- interpreter/LLVM/native semantic equivalence remains PR71,
+- external package acquisition/registries are not part of the beta-0.3 contract,
+- lockfile fingerprints are deterministic stale-content evidence, not cryptographic release signatures,
+- signed publication remains PR74.
 
 ShortHand remains `controlled_beta` and `production_claim: false`.
 
 ## PR69 completion
 
-PR69 - Module, import and package syntax with AST scaffold is complete in the planned post-merge state.
+PR69 - Module, import and package syntax with AST scaffold is complete.
 
 Implementation evidence:
 
@@ -80,20 +89,53 @@ Test evidence:
 - large import-set stress,
 - ASan, LSan and UBSan execution.
 
-After PR #69 is merged, 16 implementation PRs remain.
+## PR70 completion
+
+PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen is complete in the planned post-merge state.
+
+Implementation evidence:
+
+- `Compiler_new_ws/Short_Hand/src/module/ModuleResolver.h`,
+- `Compiler_new_ws/Short_Hand/src/module/ModuleResolver.cpp`,
+- `docs/module_resolution_and_lockfile.md`,
+- `shorthand.package.v1` explicit module mapping,
+- package-root canonical path confinement,
+- package/module identity validation,
+- deterministic reachable dependency graph and cycle rejection,
+- direct-import function binding and graph-wide symbol collision rejection,
+- deterministic `shorthand.lock.v1`,
+- `module-graph` inspection mode,
+- imported dependency lowering into the entry LLVM module for bitcode/native builds,
+- stable `SHD2020` through `SHD2030` diagnostics.
+
+Test evidence:
+
+- `tests/modules/resolver/valid_project/`,
+- `scripts/check_module_resolution.sh`,
+- repeated lockfile byte equality,
+- verified graph order,
+- root multi-file run after graph/lock validation,
+- multi-file bitcode generation,
+- native imported-function binding and execution,
+- honest interpreter rejection of imported calls,
+- missing manifest/import, stale lock, path escape, identity/package mismatch, ambiguity, cycle and symbol-collision negatives,
+- generated 128-module graph stress,
+- resolver execution in compiler, negative, LLVM and sanitizer suites.
+
+After PR #70 is merged, 15 implementation PRs remain.
 
 ## Mandatory rule for every remaining PR
 
-Every PR from PR70 through PR85 must include all applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability and performance tests. It must update the feature tracker, this roadmap and the compiler coverage matrix. No mandatory production test may be converted to an unconditional skip.
+Every PR from PR71 through PR85 must include all applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability and performance tests. It must update the feature tracker, this roadmap and the compiler coverage matrix. No mandatory production test may be converted to an unconditional skip.
 
 ## Remaining implementation strategy
 
 | Planned PR | Status | Implementation scope | Mandatory tests and exit evidence |
 | --- | --- | --- | --- |
 | PR68 - Production test strategy, coverage audit and per-PR test contract | MERGED | Versioned test strategy, 27-area matrix, PR template and CI audit. | Matrix schema, unique IDs, count and claim-safety gates. |
-| PR69 - Module, import and package syntax with AST scaffold | MERGED | Beta-0.3 preamble grammar, AST provenance, stable diagnostics and inspection mode. | Positive, negative, compatibility, stress and sanitizer tests. Resolver remains deferred. |
-| PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | PLANNED | Canonical resolution, hermetic roots, manifests, lockfiles, graph ordering, cycles, visibility and multi-file LLVM/native codegen. | Resolver unit tests; multi-file parse, compile, run and native fixtures; missing import, cycle, ambiguity, duplicate package and path-escape negatives; lockfile determinism; graph stress. |
-| PR71 - Cross-mode semantic correctness and differential execution suite | PLANNED | Positive semantic matrix and normalized comparison across interpreter, bitcode and native binaries. | All core types, expressions, calls, returns, branches, loops and arrays; output and exit-status equivalence; undefined-behavior rejection; coverage baseline. |
+| PR69 - Module, import and package syntax with AST scaffold | MERGED | Beta-0.3 preamble grammar, AST provenance, stable diagnostics and inspection mode. | Positive, negative, compatibility, stress and sanitizer tests. |
+| PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED | Hermetic manifest resolution, lockfiles, graph ordering, cycles, visibility and multi-file LLVM/native codegen. | Deterministic lock, graph, native imported binding, missing import, cycle, ambiguity, package/identity mismatch, path-escape, symbol-collision, stress and sanitizer evidence. |
+| PR71 - Cross-mode semantic correctness and differential execution suite | PLANNED | Positive semantic matrix and normalized comparison across interpreter, bitcode and native binaries, including correct local/imported function execution. | All core types, expressions, calls, returns, branches, loops and arrays; imported calls; output and exit-status equivalence; undefined-behavior rejection; coverage baseline. |
 | PR72 - Continuous fuzzing, full sanitizer and concurrency race hardening | PLANNED | Scanner, parser, semantic and lowering fuzz targets; full ASan, LSan, UBSan and TSan suites. | PR fuzz smoke, scheduled fuzzing, full corpus sanitizers, concurrent reset/registration/inference stress, regression fixture per finding. |
 | PR73 - Cross-platform toolchain matrix, CTest parity and reproducible builds | PLANNED | GCC/Clang, supported LLVM versions, Linux x86-64/arm64, macOS, Windows, CTest parity and deterministic artifacts. | Platform conformance, installed consumers, independent checksums, ABI consumers and generated-parser consistency. |
 | PR74 - Signed release and protected publication workflow | PLANNED | Protected environments, tag/version checks, OIDC signing, checksums, SBOM, provenance and attestations. | Reject unsigned, mismatched or modified artifacts; verify signatures; dry-run release and rollback. |
@@ -111,11 +153,11 @@ Every PR from PR70 through PR85 must include all applicable unit, positive integ
 
 ## Recommended next PR
 
-Next recommended PR after PR #69:
+Next recommended PR after PR #70:
 
-PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen.
+PR71 - Cross-mode semantic correctness and differential execution suite.
 
-Reason: the parser and AST now represent source-unit identity and import intent. Enterprise-scale programs next require secure, deterministic resolution and actual multi-file compilation without undeclared host-path dependencies.
+Reason: PR70 now gives programs deterministic source-unit identity, dependency graphs and LLVM/native imported binding. The highest-risk remaining language correctness gap is proving that core semantics, including function calls and imported calls, produce equivalent observable results across the interpreter and compiled paths.
 
 ## Production readiness exit criteria
 
@@ -135,6 +177,7 @@ remaining_planned_prs_after_pr67_original_estimate: 12
 remaining_planned_prs_after_pr67_reaudited: 18
 remaining_planned_prs_after_pr68: 17
 remaining_planned_prs_after_pr69: 16
+remaining_planned_prs_after_pr70: 15
 
 ## Historical compatibility record
 
@@ -194,4 +237,4 @@ PR67 - Parser robustness and negative corpus hardening
 
 PR79 - MLIR lowering passes and production RC gate
 
-The historical PR67 recommendation is superseded by the test re-audit. PR68 established test governance and PR69 implements the syntax and AST scaffold.
+The historical PR67 recommendation is superseded by the test re-audit. PR68 established test governance, PR69 implemented syntax/AST provenance, and PR70 implements deterministic resolution and multi-file LLVM/native package graphs.
