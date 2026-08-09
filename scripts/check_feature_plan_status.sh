@@ -10,11 +10,14 @@ PLAN_FILES=(
   "docs/beta_enterprise_requirements.md"
   "docs/enterprise_release_scorecard.md"
   "docs/compiler_test_strategy.md"
+  "docs/ci_pipeline_architecture.md"
+  "docs/production_readiness_pr_plan.md"
   "tests/coverage/compiler_test_coverage_matrix.tsv"
   "docs/module_import_package_syntax.md"
   "docs/module_resolution_and_lockfile.md"
   "tests/conformance/module_matrix_beta_0_3.tsv"
   "scripts/check_module_resolution.sh"
+  "scripts/check_ci_status_hygiene.sh"
 )
 
 for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
@@ -43,6 +46,8 @@ required_status_terms=(
   "Cross-platform reproducibility"
   "Measured ShortHand versus Python energy evidence"
   "Zero-skip production RC gate"
+  "CPU/GPU/TPU/NPU"
+  "CI status hygiene"
 )
 
 for term in "${required_status_terms[@]}"; do
@@ -53,14 +58,17 @@ for term in "${required_status_terms[@]}"; do
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-09-pr70' \
+  'feature_status_version: 2026-08-09-pr70-resume' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
   '5 implemented, 11 partial and 11 open' \
-  'Imported interpreter call equivalence is tracked under PR71.'; do
+  'Imported interpreter call equivalence is tracked under PR72.' \
+  'PR71 is a merged CI-hygiene correction' \
+  'PR74 adds the declared release-platform/toolchain matrix' \
+  'Live production qualification remains PR80.'; do
   if ! grep -Fq "${anchor}" "${STATUS_FILE}"; then
-    echo "error: feature implementation status missing PR70 anchor: ${anchor}" >&2
+    echo "error: feature implementation status missing resumed PR70 anchor: ${anchor}" >&2
     exit 1
   fi
 done
@@ -72,6 +80,16 @@ grep -Fq 'resolution_status: deterministic_manifest_locked_multi_file_codegen' d
 
 grep -Fq 'PASS deterministic module resolver, package lock and multi-file codegen gate' scripts/check_module_resolution.sh || {
   echo "error: module resolver executable gate missing" >&2
+  exit 1
+}
+
+grep -Fq 'ci_pipeline_architecture_version: 2026-08-09-v1' docs/ci_pipeline_architecture.md || {
+  echo "error: robust CI pipeline architecture contract is missing" >&2
+  exit 1
+}
+
+grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh || {
+  echo "error: CI status hygiene guard is missing" >&2
   exit 1
 }
 
