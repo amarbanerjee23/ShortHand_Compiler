@@ -7,6 +7,7 @@ version | shorthand.language.version | beta-0.2 | Previous executable base langu
 current-version | shorthand.language.version | beta-0.3 | Current executable language contract marker.
 grammar-matrix | tests/conformance/grammar_matrix_beta_0_2.tsv | accept | Every beta-0.2 base grammar obligation must remain implemented and executable.
 grammar-extension | tests/conformance/module_matrix_beta_0_3.tsv | accept | Every beta-0.3 package, module and import obligation maps to implementation and a fixture.
+module-resolution | scripts/check_module_resolution.sh | accept | Explicit manifest resolution, graph ordering, lock determinism, path safety and multi-file LLVM/native behavior must remain executable.
 parser-valid | tests/conformance/beta_0_2/core_declarations.short | accept | Primitive declarations, arrays and the required non-empty logic section must parse.
 parser-valid | tests/conformance/beta_0_2/core_control.short | accept | Functions, statements, control flow, variables and expressions must parse.
 parser-valid | tests/conformance/beta_0_2/ai_language.short | accept | All canonical AI grammar tokens and legacy inference forms must parse independently of semantic support.
@@ -34,7 +35,7 @@ semantic-invalid | tests/semantic/invalid/ai_shape_mismatch.short | reject | Sem
 semantic-invalid | tests/semantic/invalid/ai_backend_mismatch.short | reject | Semantic analyzer must reject declarations without a compatible backend or fallback.
 semantic-invalid | tests/semantic/invalid/ai_output_shape_mismatch.short | reject | Semantic analyzer must reject model and declared output tensor shape mismatch.
 diagnostics | tests/diagnostics/test_source_diagnostics.sh | accept | Source diagnostics must include file, range, stable code and caret.
-diagnostics | tests/diagnostics/test_diagnostics_coverage_matrix.sh | accept | Parser, semantic, AI, Green AI and lowering diagnostics remain covered.
+diagnostics | tests/diagnostics/test_diagnostics_coverage_matrix.sh | accept | Parser, module, semantic, AI, Green AI and lowering diagnostics remain covered.
 codegen | tests/codegen/test_ai_metadata_ir.sh | accept | LLVM metadata for AI and Green AI constructs must remain emitted.
 runtime | tests/codegen/test_external_runtime_native.sh | accept | Native runtime-linking path must remain valid.
 evidence | tests/evidence/test_ai_evidence.sh | accept | Evidence output must retain backend and fallback honesty fields.
