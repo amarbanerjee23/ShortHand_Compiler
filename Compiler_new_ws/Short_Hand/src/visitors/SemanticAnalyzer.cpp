@@ -36,6 +36,31 @@ static bool backendCompatibleWithFormat(shorthand::ai::ModelFormat format, short
     return false;
 }
 
+std::set<std::string> SemanticAnalyzer::functionNames(AST_PROGRAM *program) {
+    std::set<std::string> names;
+    if (program == nullptr || program->functions == nullptr) return names;
+    for (AST_FUNCTION_RULE *function : program->functions->functions) {
+        if (function != nullptr && function->function_name != nullptr)
+            names.insert(function->function_name);
+    }
+    return names;
+}
+
+std::set<std::string> SemanticAnalyzer::globalNames(AST_PROGRAM *program) {
+    std::set<std::string> names;
+    if (program == nullptr || program->decl_block == nullptr) return names;
+    for (const std::string &name : program->decl_block->single_ints) names.insert(name);
+    for (const auto &entry : program->decl_block->array_ints) names.insert(entry.first);
+    return names;
+}
+
+void SemanticAnalyzer::setImportedFunctions(const std::set<std::string> &names,
+                                            bool allow_external_calls) {
+    imported_functions = names;
+    functions = names;
+    allow_external_function_calls = allow_external_calls;
+}
+
 int SemanticAnalyzer::visit(AST_PROGRAM *p) {
     if (p->decl_block) p->decl_block->accept(*this);
     if (p->functions) p->functions->accept(*this);
@@ -79,8 +104,14 @@ int SemanticAnalyzer::visit(AST_EXPRESSION_STATEMENT_RULE *n) {
 
 int SemanticAnalyzer::visit(AST_FUNCTION_CALL_RULE *n) {
     const std::string name = n->function_name == nullptr ? std::string() : std::string(n->function_name);
-    if (name.empty() || !functions.count(name))
+    if (name.empty() || !functions.count(name)) {
         diagnostics.errorAtNode(n, diag::LoweringUndefinedFunction, "lowering cannot resolve function: " + name);
+    } else if (!allow_external_function_calls && imported_functions.count(name) != 0U) {
+        diagnostics.errorAtNode(
+            n,
+            diag::ModuleExternalRunUnsupported,
+            "interpreter execution of imported function is deferred to PR71; compile/native modes are supported: " + name);
+    }
     if (n->parameters) n->parameters->accept(*this);
     return 0;
 }
@@ -309,8 +340,14 @@ int SemanticAnalyzer::visit(AST_BOOL_LITERAL*) { return 0; }
 int SemanticAnalyzer::visit(AST_FLOAT_LITERAL*) { return 0; }
 
 int SemanticAnalyzer::visit(AST_FUNCTION_CALL_EXPRESSION *n) {
-    if (!functions.count(n->function_name))
+    if (!functions.count(n->function_name)) {
         diagnostics.errorAtNode(n, diag::LoweringUndefinedFunction, "lowering cannot resolve function: " + n->function_name);
+    } else if (!allow_external_function_calls && imported_functions.count(n->function_name) != 0U) {
+        diagnostics.errorAtNode(
+            n,
+            diag::ModuleExternalRunUnsupported,
+            "interpreter execution of imported function is deferred to PR71; compile/native modes are supported: " + n->function_name);
+    }
     for (auto *argument : n->arguments) {
         if (argument) argument->accept(*this);
     }
