@@ -34,6 +34,29 @@ std::vector<std::string> words(const std::string &line) {
     return out;
 }
 
+bool validIdentifierSegment(const std::string &segment) {
+    if (segment.empty()) return false;
+    const unsigned char first = static_cast<unsigned char>(segment.front());
+    if (!(std::isalpha(first) || first == '_')) return false;
+    for (unsigned char ch : segment) {
+        if (!(std::isalnum(ch) || ch == '_')) return false;
+    }
+    return true;
+}
+
+bool validModuleName(const std::string &value) {
+    if (value.empty() || value.front() == '.' || value.back() == '.') return false;
+    std::size_t begin = 0;
+    while (begin < value.size()) {
+        const std::size_t dot = value.find('.', begin);
+        const std::size_t end = dot == std::string::npos ? value.size() : dot;
+        if (!validIdentifierSegment(value.substr(begin, end - begin))) return false;
+        if (dot == std::string::npos) break;
+        begin = dot + 1;
+    }
+    return true;
+}
+
 bool startsWithPackage(const std::string &module_name, const std::string &package_name) {
     if (module_name == package_name) return true;
     return module_name.size() > package_name.size() &&
@@ -43,11 +66,10 @@ bool startsWithPackage(const std::string &module_name, const std::string &packag
 
 bool relativePathIsSafe(const fs::path &path) {
     if (path.empty() || path.is_absolute()) return false;
-    fs::path normalized = path.lexically_normal();
-    for (const fs::path &part : normalized) {
+    for (const fs::path &part : path) {
         if (part == "..") return false;
     }
-    return normalized.extension() == ".short";
+    return path.lexically_normal().extension() == ".short";
 }
 
 bool pathWithinRoot(const fs::path &root, const fs::path &candidate) {
@@ -91,7 +113,7 @@ std::string jsonEscape(const std::string &value) {
 bool fingerprintFile(const std::string &path, std::string &fingerprint) {
     std::ifstream in(path, std::ios::binary);
     if (!in) return false;
-    std::uint64_t hash = 1469598103934665603ULL;
+    std::uint64_t hash = 14695981039346656037ULL;
     char buffer[8192];
     while (in) {
         in.read(buffer, sizeof(buffer));
@@ -183,7 +205,7 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
             continue;
         }
         if (parts.size() == 2U && parts[0] == "package") {
-            if (package_seen || parts[1].empty()) {
+            if (package_seen || !validModuleName(parts[1])) {
                 code = diag::ModuleManifestInvalid;
                 message = "invalid or duplicate package declaration at line " + std::to_string(line_number);
                 return false;
@@ -193,6 +215,11 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
             continue;
         }
         if (parts.size() == 3U && parts[0] == "module") {
+            if (!validModuleName(parts[1])) {
+                code = diag::ModuleManifestInvalid;
+                message = "invalid module identity in manifest at line " + std::to_string(line_number);
+                return false;
+            }
             if (!relativePathIsSafe(fs::path(parts[2]))) {
                 code = diag::ModulePathEscape;
                 message = "unsafe module path in manifest at line " + std::to_string(line_number) + ": " + parts[2];
