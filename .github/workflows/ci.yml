@@ -75,6 +75,9 @@ jobs:
       - name: Module import package syntax beta-0.3
         run: bash scripts/check_module_ast_scaffold.sh
 
+      - name: Module resolver and multi-file codegen
+        run: bash scripts/check_module_resolution.sh
+
       - name: Parser robustness and negative corpus
         run: bash scripts/check_parser_robustness.sh
 
