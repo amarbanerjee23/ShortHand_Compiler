@@ -57,6 +57,9 @@ jobs:
           cmake --version
           ninja --version
 
+      - name: CI status hygiene guard
+        run: bash scripts/check_ci_status_hygiene.sh
+
       - name: Setup build infrastructure
         run: bash setup_build_infra.sh
 
