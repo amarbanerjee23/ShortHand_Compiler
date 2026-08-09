@@ -30,6 +30,11 @@ expect_failure() {
     cat "${out}" >&2 || true
     exit 1
   }
+  grep -Fq '[range ' "${out}" || {
+    echo "error: ${expected} did not carry stable source provenance" >&2
+    cat "${out}" >&2 || true
+    exit 1
+  }
   if grep -Eq 'AddressSanitizer|LeakSanitizer|UndefinedBehaviorSanitizer|runtime error:|Segmentation fault' "${out}"; then
     echo "error: sanitizer failure while expecting ${expected}" >&2
     cat "${out}" >&2 || true
@@ -61,8 +66,11 @@ grep -Fq '"order":["acme.demo.lib","acme.demo.app"]' "${WORK_DIR}/graph.json"
 "${SHORT}" "${APP}" run >"${WORK_DIR}/run.out" 2>"${WORK_DIR}/run.err"
 grep -Fq 'root value 7' "${WORK_DIR}/run.out"
 
-"${SHORT}" "${APP}" compile-bc >"${WORK_DIR}/compile-bc.out" 2>"${WORK_DIR}/compile-bc.err"
-[[ -f app.bc ]] && rm -f app.bc
+(
+  cd "${WORK_DIR}/valid"
+  "${SHORT}" "${APP}" compile-bc >"${WORK_DIR}/compile-bc.out" 2>"${WORK_DIR}/compile-bc.err"
+  [[ -s app.bc ]]
+)
 
 "${SHORT}" "${NATIVE_APP}" lock >"${WORK_DIR}/native-lock.out" 2>"${WORK_DIR}/native-lock.err"
 expect_failure SHD2030 "${SHORT}" "${NATIVE_APP}" run
@@ -85,17 +93,32 @@ mkdir -p "${WORK_DIR}/missing-manifest"
 cp "${FIXTURE}/src/app.short" "${WORK_DIR}/missing-manifest/app.short"
 expect_failure SHD2020 "${SHORT}" "${WORK_DIR}/missing-manifest/app.short" lock
 
+# Invalid manifest schema/identity.
+mkdir -p "${WORK_DIR}/invalid-manifest/src"
+cat >"${WORK_DIR}/invalid-manifest/shorthand.package" <<'EOF'
+format shorthand.package.v999
+package invalid.pkg
+module invalid.pkg.app src/app.short
+EOF
+cat >"${WORK_DIR}/invalid-manifest/src/app.short" <<'EOF'
+package invalid.pkg;
+module invalid.pkg.app;
+int value;
+value = 1;
+EOF
+expect_failure SHD2021 "${SHORT}" "${WORK_DIR}/invalid-manifest/src/app.short" lock
+
 # Missing import mapping.
 cp -R "${FIXTURE}" "${WORK_DIR}/missing-import"
 sed -i 's/acme.demo.lib/acme.demo.missing/' "${WORK_DIR}/missing-import/src/app.short"
 expect_failure SHD2022 "${SHORT}" "${WORK_DIR}/missing-import/src/app.short" lock
 
-# Unsafe manifest path escape.
+# Unsafe manifest path escape. Any explicit parent traversal is rejected, even if lexical normalization could re-enter the root.
 mkdir -p "${WORK_DIR}/escape/src"
 cat >"${WORK_DIR}/escape/shorthand.package" <<'EOF'
 format shorthand.package.v1
 package escape.pkg
-module escape.pkg.app ../outside.short
+module escape.pkg.app src/../src/app.short
 EOF
 cat >"${WORK_DIR}/escape/src/app.short" <<'EOF'
 package escape.pkg;
