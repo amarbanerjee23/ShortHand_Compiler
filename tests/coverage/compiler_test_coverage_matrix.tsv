@@ -3,14 +3,14 @@ TST001	beta-0.2 base grammar conformance	implemented	tests/conformance/grammar_m
 TST002	parser robustness and resource bounds	implemented	tests/parser/robustness; scripts/check_parser_robustness.sh	Continuous coverage-guided fuzzing	PR72	no
 TST003	source-aware stable diagnostics	implemented	tests/diagnostics; scripts/check_diagnostics_coverage_matrix.sh	LSP publication and resolved cross-module provenance	PR78	no
 TST004	semantic validation	partial	tests/semantic/invalid; SemanticAnalyzer.cpp	Positive semantic matrix and broader negative combinations	PR71	yes
-TST005	interpreter functional correctness	partial	greenai_report smoke and selected examples	All core control, expression, function and data-flow outcomes	PR71	yes
-TST006	LLVM and native functional correctness	partial	tests/codegen; native runtime linking	Language-wide output and exit-status verification	PR71	yes
-TST007	interpreter versus compiled differential testing	open	None	Normalized interpreter, bitcode and native equivalence corpus	PR71	yes
-TST008	full sanitizer coverage	partial	make sanitize; parser robustness and module scaffold sanitized	Entire conformance, semantic, codegen, runtime and evidence corpus	PR72	yes
+TST005	interpreter functional correctness	partial	greenai_report smoke and selected examples	All core control, expression, function and data-flow outcomes including imported calls	PR71	yes
+TST006	LLVM and native functional correctness	partial	tests/codegen; native runtime linking; scripts/check_module_resolution.sh	Language-wide output and exit-status verification	PR71	yes
+TST007	interpreter versus compiled differential testing	open	None	Normalized interpreter, bitcode and native equivalence corpus including imported calls	PR71	yes
+TST008	full sanitizer coverage	partial	make sanitize; parser robustness, module scaffold and resolver paths sanitized	Entire conformance, semantic, codegen, runtime and evidence corpus	PR72	yes
 TST009	continuous fuzzing	open	Deterministic parser mutation smoke	Coverage-guided scanner, parser, semantic and lowering fuzzers	PR72	yes
 TST010	concurrency and race detection	partial	tests/runtime/test_runtime_state_thread_safety.sh	ThreadSanitizer and prolonged stress execution	PR72	yes
-TST011	module and package syntax	implemented	docs/module_import_package_syntax.md; tests/conformance/module_matrix_beta_0_3.tsv; scripts/check_module_ast_scaffold.sh	Resolver, lockfile and multi-file execution remain separate TST012 work	PR69	no
-TST012	module resolver and package graph	open	Parser and provenance-aware AST scaffold only	Cycles, ambiguity, lockfiles, path safety and multi-file codegen	PR70	yes
+TST011	module and package syntax	implemented	docs/module_import_package_syntax.md; tests/conformance/module_matrix_beta_0_3.tsv; scripts/check_module_ast_scaffold.sh	None for the beta-0.3 syntax scaffold	PR69	no
+TST012	module resolver and package graph	implemented	Compiler_new_ws/Short_Hand/src/module/ModuleResolver.cpp; docs/module_resolution_and_lockfile.md; scripts/check_module_resolution.sh	Interpreter imported-call execution equivalence is tracked by TST005 and TST007 in PR71	PR70	no
 TST013	platform and compiler portability	open	Ubuntu 24.04 GCC default CI	GCC and Clang, Linux arm64, macOS and Windows qualification	PR73	yes
 TST014	reproducible builds	open	Source hashes in candidate release evidence	Independent clean-build artifact equivalence	PR73	yes
 TST015	runtime ABI compatibility	partial	25-symbol manifest and consumer link tests	Cross-release ABI compatibility report and installed shared-library checks	PR73	yes
