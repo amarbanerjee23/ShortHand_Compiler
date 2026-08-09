@@ -10,6 +10,7 @@ TEMPLATE="${ROOT_DIR}/.github/pull_request_template.md"
 CI="${ROOT_DIR}/.github/workflows/ci.yml"
 MODULE_MATRIX="${ROOT_DIR}/tests/conformance/module_matrix_beta_0_3.tsv"
 MODULE_GATE="${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
+RESOLVER_GATE="${ROOT_DIR}/scripts/check_module_resolution.sh"
 
 require_file() {
   local file="$1"
@@ -26,7 +27,7 @@ require_contains() {
   }
 }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${MODULE_MATRIX}" "${MODULE_GATE}"; do
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}"; do
   require_file "${file}"
 done
 
@@ -46,9 +47,9 @@ row_count="$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' 
 implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END { print count+0 }' "${MATRIX}")"
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
-[[ "${implemented_count}" == "4" ]] || { echo "error: expected 4 implemented rows after PR69" >&2; exit 1; }
-[[ "${partial_count}" == "11" ]] || { echo "error: expected 11 partial rows after PR69" >&2; exit 1; }
-[[ "${open_count}" == "12" ]] || { echo "error: expected 12 open rows after PR69" >&2; exit 1; }
+[[ "${implemented_count}" == "5" ]] || { echo "error: expected 5 implemented rows after PR70" >&2; exit 1; }
+[[ "${partial_count}" == "11" ]] || { echo "error: expected 11 partial rows after PR70" >&2; exit 1; }
+[[ "${open_count}" == "11" ]] || { echo "error: expected 11 open rows after PR70" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || {
@@ -72,7 +73,7 @@ for pr in $(seq 68 85); do
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-06-pr69' \
+  'compiler_test_strategy_version: 2026-08-09-pr70' \
   'production_claim: false' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend, or platform was skipped is not production success evidence.' \
@@ -90,13 +91,15 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${PLAN}" 'After PR #69 is merged, 16 implementation PRs remain.'
+require_contains "${PLAN}" 'After PR #70 is merged, 15 implementation PRs remain.'
 require_contains "${PLAN}" 'PR85 - Measured energy, performance and production RC gate'
-require_contains "${STATUS}" 'Module/import/package syntax and AST scaffold'
+require_contains "${STATUS}" 'Deterministic module resolution and multi-file codegen'
 require_contains "${STATUS}" 'Measured ShortHand versus Python energy evidence'
-require_contains "${CI}" 'Module import package syntax beta-0.3'
+require_contains "${CI}" 'Module resolver and multi-file codegen'
 require_contains "${MODULE_GATE}" 'PASS module import package syntax and AST scaffold gate'
+require_contains "${RESOLVER_GATE}" 'PASS deterministic module resolver, package lock and multi-file codegen gate'
 require_contains "${MATRIX}" $'TST011\tmodule and package syntax\timplemented'
+require_contains "${MATRIX}" $'TST012\tmodule resolver and package graph\timplemented'
 
 printf 'TEST_COVERAGE implemented=%s partial=%s open=%s total=%s\n' \
   "${implemented_count}" "${partial_count}" "${open_count}" "${row_count}"
