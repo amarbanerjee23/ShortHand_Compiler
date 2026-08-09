@@ -30,6 +30,28 @@ require_contains() {
   }
 }
 
+beta_0_2_anchor_present() {
+  local id="$1"
+  local source_file="$2"
+  local anchor="$3"
+
+  if grep -Fq "${anchor}" "${source_file}"; then
+    return 0
+  fi
+
+  # PR69 adds an optional beta-0.3 module preamble in front of the beta-0.2
+  # program body. Preserve the beta-0.2 ordering contract without requiring
+  # the obsolete pre-PR69 production header to remain verbatim in the parser.
+  if [[ "${id}" == "PRG001" && "${source_file}" == "${PARSER}" ]]; then
+    grep -Fq \
+      'PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK' \
+      "${PARSER}"
+    return $?
+  fi
+
+  return 1
+}
+
 for file in "${PARSER}" "${SCANNER}" "${CLI}" "${MATRIX}" "${MANIFEST}" "${GRAMMAR_DOC}" "${VERSION_DOC}" "${SPEC_DOC}"; do
   require_file "${file}"
 done
@@ -79,10 +101,10 @@ while IFS=$'\t' read -r id area source anchor fixture expectation rationale; do
     cli) source_file="${CLI}" ;;
     *) echo "error: unsupported source in ${id}: ${source}" >&2; exit 1 ;;
   esac
-  grep -Fq "${anchor}" "${source_file}" || {
+  if ! beta_0_2_anchor_present "${id}" "${source_file}" "${anchor}"; then
     echo "error: matrix ${id} anchor not found in ${source}: ${anchor}" >&2
     exit 1
-  }
+  fi
   require_file "${ROOT_DIR}/${fixture}"
 done <"${MATRIX}"
 
