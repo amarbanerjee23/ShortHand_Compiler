@@ -1,6 +1,6 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-06-pr69
+feature_status_version: 2026-08-09-pr70
 
 language_version: beta-0.3
 
@@ -16,30 +16,30 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current maturity
 
-ShortHand has a compiled C++ and LLVM foundation, AI and Green AI syntax, a parser-accurate beta-0.2 base grammar, the beta-0.3 package/module/import extension, bounded malformed-input handling, stable coded diagnostics, source ranges, an honest fallback-aware runtime, optional ONNX Runtime CPU execution, hardware capability routing, installable runtime artifacts, observability adapters and candidate C3-ECO evidence.
+ShortHand has a compiled C++ and LLVM foundation, AI and Green AI syntax, a parser-accurate beta-0.2 base grammar, the beta-0.3 package/module/import extension, deterministic package manifests and module resolution, reachable-graph lockfiles, multi-file LLVM/native code generation, bounded malformed-input handling, stable coded diagnostics, source ranges, an honest fallback-aware runtime, optional ONNX Runtime CPU execution, hardware capability routing, installable runtime artifacts, observability adapters and candidate C3-ECO evidence.
 
-PR69 implements Module/import/package syntax and AST scaffold. It records package identity, module identity, imports, aliases, source files and source ranges and exposes deterministic `module-info` JSON. Resolution, manifests, lockfiles, symbol binding and multi-file execution remain PR70.
+PR69 established source-unit identity and import intent. PR70 implements a hermetic `shorthand.package.v1` manifest, exact module-name resolution, package-root path confinement, transitive graph loading, cycle detection, direct-import function visibility, graph-wide symbol collision rejection, deterministic `shorthand.lock.v1`, graph inspection and multi-file LLVM/native binding. The legacy interpreter still does not execute imported function calls correctly, so PR70 rejects that path with `SHD2030`; PR71 owns interpreter/compiled semantic equivalence.
 
-The compiler test audit now records 27 production test areas: 4 implemented, 11 partial and 12 open. Current CI remains controlled-beta evidence and does not prove full semantic equivalence, portability, live backend coverage or lower energy than Python.
+The compiler test audit now records 27 production test areas: 5 implemented, 11 partial and 11 open. Current CI remains controlled-beta evidence and does not prove full semantic equivalence, portability, live backend coverage or lower energy than Python.
 
 Historical compatibility term: Module/import/package model.
 
 ## Language feature status
 
-The language versioning and conformance policy gate protects the beta-0.3 composite contract: the complete beta-0.2 base grammar plus the beta-0.3 module extension.
+The language versioning and conformance policy gate protects the beta-0.3 composite contract: the complete beta-0.2 base grammar plus the beta-0.3 module extension. PR70 changes module resolution semantics and build behavior without adding new language syntax, so the language version remains beta-0.3.
 
 | ID | Requirement | Status | Evidence | Production impact |
 | --- | --- | --- | --- | --- |
 | L1 | AST metadata for model, tensor, contract, measurement and infer | Implemented | `Compiler_new_ws/Short_Hand/src/ast/AST.h` | Compiler passes can inspect current AI and Green AI constructs. |
 | L2 | Versioned public language contract | Implemented for beta-0.3 | `docs/language_versioning_and_conformance.md`, `docs/module_import_package_syntax.md` | Additive syntax is explicit and versioned. |
-| L3 | Base grammar and module extension matrices | Implemented | `grammar_matrix_beta_0_2.tsv`, `module_matrix_beta_0_3.tsv` | Existing syntax and the new preamble are implementation-linked and executable. |
+| L3 | Base grammar and module extension matrices | Implemented | `grammar_matrix_beta_0_2.tsv`, `module_matrix_beta_0_3.tsv` | Existing syntax and the module preamble are implementation-linked and executable. |
 | L4 | Language versioning and conformance policy gate | Implemented | `scripts/check_language_versioning.sh`, `tests/conformance/manifest.txt` | Syntax changes cannot silently alter the active contract. |
 | L5 | Shape, model and backend semantic validation | Partial | `SemanticAnalyzer.cpp`, semantic-invalid fixtures | A complete positive and negative semantic matrix remains PR71. |
-| L6 | Source-aware diagnostics | Implemented for current coded matrix | `SourceRange.*`, `DiagnosticCodes.h`, diagnostics tests | Module, parser, semantic, AI, Green AI and lowering errors have stable codes and ranges. |
+| L6 | Source-aware diagnostics | Implemented for current coded matrix | `SourceRange.*`, `DiagnosticCodes.h`, diagnostics and resolver tests | Parser, module, semantic, AI, Green AI and lowering errors have stable codes and source provenance. |
 | L7 | Parser robustness and malformed-input handling | Implemented baseline | `ParserLimits.h`, malformed corpus, parser robustness gate | Oversized, deeply nested and malformed inputs fail within bounded execution. |
-| L8 | Module/import/package syntax and AST scaffold | Implemented | `ModuleAST.h`, module extension matrix, module fixtures and gate | Source units carry identity and import intent without false resolution claims. |
-| L9 | Deterministic module resolver and multi-file codegen | Open | Planned PR70 | Imports are not yet located, bound, locked or compiled across files. |
-| L10 | Cross-mode semantic equivalence | Open | Planned PR71 | Interpreter, LLVM and native results are not proven equivalent across the language. |
+| L8 | Module/import/package syntax and AST scaffold | Implemented | `ModuleAST.h`, module extension matrix, module fixtures and gate | Source units carry identity and import intent. |
+| L9 | Deterministic module resolver and multi-file codegen | Implemented | `ModuleResolver.*`, `docs/module_resolution_and_lockfile.md`, `scripts/check_module_resolution.sh` | Imports are resolved only through an explicit package manifest, executable graphs are locked, and LLVM/native dependencies are linked deterministically. |
+| L10 | Cross-mode semantic equivalence | Open | Planned PR71 | Imported-call interpreter equivalence and language-wide interpreter/LLVM/native results are not yet proven. |
 | L11 | Semantic IR and MLIR architecture | Partial | `semantic_ir/SemanticIR.h`, MLIR dialect scaffold | Generated dialect integration and lowering remain PR83 and PR84. |
 
 ## Compiler test status
@@ -49,13 +49,13 @@ The language versioning and conformance policy gate protects the beta-0.3 compos
 | Compiler test strategy and coverage matrix | Implemented | `docs/compiler_test_strategy.md`, test coverage matrix and guard. |
 | Grammar and parser conformance | Implemented for beta-0.3 | Beta-0.2 base matrix plus beta-0.3 module extension matrix. |
 | Module syntax and AST provenance | Implemented | Positive and negative fixtures, deterministic JSON, import stress and sanitizer execution. |
-| Module resolution and package graph | Open | Planned PR70. |
+| Module resolution and package graph | Implemented | Manifest/lock determinism, missing import, path escape, package/module mismatch, ambiguity, cycles, collision, native binding and 128-module stress. Imported interpreter call equivalence is tracked under PR71. |
 | Parser robustness | Implemented baseline | Bounded negative corpus, resource attacks and sanitizer-backed malformed inputs. |
-| Semantic correctness | Partial | Selected AI semantic-invalid fixtures exist; language-wide positive semantics remain open. |
-| Interpreter and native equivalence | Open | Planned PR71. |
-| Full sanitizer and fuzz coverage | Partial | ASan, LSan and UBSan cover parser and module paths; full corpus, fuzzing and TSan remain PR72. |
+| Semantic correctness | Partial | Selected AI semantic-invalid fixtures and module visibility checks exist; language-wide positive semantics remain open. |
+| Interpreter and native equivalence | Open | Planned PR71, including imported function execution. |
+| Full sanitizer and fuzz coverage | Partial | ASan, LSan and UBSan cover parser and module resolver paths; full corpus, fuzzing and TSan remain PR72. |
 | Cross-platform portability | Open | Default CI is Ubuntu 24.04; PR73 adds declared release-platform qualification. |
-| Reproducible builds | Open | Candidate source hashes exist; independent clean-build equivalence remains PR73. |
+| Reproducible builds | Open | Module graph/lock output is deterministic; independent clean-build artifact equivalence remains PR73. |
 | Performance regression | Open | Planned PR85. |
 | Measured ShortHand versus Python energy evidence | Open | Declared values are not comparative energy proof; planned PR85. |
 
@@ -64,7 +64,7 @@ The language versioning and conformance policy gate protects the beta-0.3 compos
 | Area | Status | Evidence and boundary |
 | --- | --- | --- |
 | Real ONNX Runtime CPU backend execution | Implemented when `ONNXRUNTIME_ROOT` is configured | Optional SDK-backed fixtures prove real execution only when the SDK test runs. |
-| Compiled-code metadata/runtime lowering | Partial | LLVM metadata and external runtime hook lowering exist; complete MLIR lowering remains open. |
+| Compiled-code metadata/runtime lowering | Partial | LLVM metadata, external runtime hooks and deterministic multi-file LLVM/native binding exist; complete MLIR lowering remains open. |
 | Full backend compatibility | Partial | Failure and optional fixture matrices are guarded; each marketed backend still needs current live success evidence. |
 | Runtime ABI stability | Implemented v1 | Runtime ABI `1.0.0` freezes exactly 25 public `short_*` symbols. |
 | Runtime state and concurrency | Implemented serialized baseline | Public calls are serialized and snapshots are thread-local; TSan and tenant isolation remain open. |
@@ -85,9 +85,10 @@ The language versioning and conformance policy gate protects the beta-0.3 compos
 ## Security, release and deployment status
 
 | Area | Status | Boundary |
-| --- | --- | --- |
+| --- | --- |
 | Automated SBOM | Implemented candidate baseline | Current evidence is unsigned and local. |
 | Secret and claim scanning | Implemented baseline | External vulnerability, SAST and license enforcement remain PR75. |
+| Module filesystem isolation | Implemented baseline | Manifest paths are explicit, relative and package-root confined; broader platform/security qualification remains PR73/PR75. |
 | Cross-platform reproducibility | Open | Planned PR73. |
 | Signed releases | Open | Planned PR74. |
 | External vulnerability gate | Open | Planned PR75. |
@@ -102,7 +103,7 @@ The language versioning and conformance policy gate protects the beta-0.3 compos
 | Build, strict validation, Makefile, sanitizer, CMake and CTest | Implemented on Ubuntu baseline |
 | Complete base grammar | Implemented for beta-0.2 accepted syntax |
 | Module/import/package syntax and AST scaffold | Implemented for beta-0.3 |
-| Deterministic module resolution and multi-file codegen | Open |
+| Deterministic module resolution and multi-file codegen | Implemented for manifest/lock and LLVM/native; imported interpreter call equivalence remains PR71 |
 | Parser robustness and negative corpus | Implemented bounded fail-fast baseline |
 | Stable diagnostics and source ranges | Implemented for the expanded coded matrix |
 | Honest fallback and backend failure behavior | Implemented |
@@ -119,18 +120,17 @@ The language versioning and conformance policy gate protects the beta-0.3 compos
 
 ## Production blockers
 
-1. Deterministic package manifests, lockfiles, module resolution, symbol binding and multi-file code generation.
-2. Language-wide interpreter, LLVM and native semantic equivalence.
-3. Full sanitizer, fuzzing and ThreadSanitizer coverage.
-4. Cross-platform toolchain qualification, CTest parity and reproducible artifacts.
-5. Signed release publication and external vulnerability, SAST and license scanning.
-6. Container and Kubernetes hardening with deployment validation.
-7. Formatter, linter, syntax highlighting and LSP support.
-8. Full live backend and hardware success evidence for every production-supported backend.
-9. Complete C3-ECO language, measured scoring and authority-ready handoff.
-10. Generated MLIR dialect and production lowering passes.
-11. Measured performance and energy evidence against equivalent Python workloads.
-12. Final zero-skip production release-candidate blocker gate.
+1. Language-wide interpreter, LLVM and native semantic equivalence, including imported function execution.
+2. Full sanitizer, fuzzing and ThreadSanitizer coverage.
+3. Cross-platform toolchain qualification, CTest parity and reproducible artifacts.
+4. Signed release publication and external vulnerability, SAST and license scanning.
+5. Container and Kubernetes hardening with deployment validation.
+6. Formatter, linter, syntax highlighting and LSP support.
+7. Full live backend and hardware success evidence for every production-supported backend.
+8. Complete C3-ECO language, measured scoring and authority-ready handoff.
+9. Generated MLIR dialect and production lowering passes.
+10. Measured performance and energy evidence against equivalent Python workloads.
+11. Final zero-skip production release-candidate blocker gate.
 
 ## Review rule
 
