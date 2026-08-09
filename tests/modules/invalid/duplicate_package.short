@@ -1,0 +1,5 @@
+package acme.ai;
+package acme.other;
+module acme.app;
+int value;
+value = 1;

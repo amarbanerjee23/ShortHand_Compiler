@@ -1,0 +1,5 @@
+module acme.app;
+import acme.models as shared;
+import acme.telemetry as shared;
+int value;
+value = 1;

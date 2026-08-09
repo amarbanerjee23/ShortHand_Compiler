@@ -11,6 +11,8 @@ PLAN_FILES=(
   "docs/enterprise_release_scorecard.md"
   "docs/compiler_test_strategy.md"
   "tests/coverage/compiler_test_coverage_matrix.tsv"
+  "docs/module_import_package_syntax.md"
+  "tests/conformance/module_matrix_beta_0_3.tsv"
 )
 
 for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
@@ -28,11 +30,12 @@ required_status_terms=(
   "Real ONNX Runtime CPU backend execution"
   "Compiled-code metadata/runtime lowering"
   "Full backend compatibility"
-  "Complete formal grammar"
+  "Base grammar and module extension matrices"
   "Source-aware diagnostics"
   "Automated SBOM"
   "Runtime observability implementation"
-  "Module, import and package model"
+  "Module/import/package syntax and AST scaffold"
+  "Deterministic module resolver and multi-file codegen"
   "Compiler test strategy and coverage matrix"
   "Cross-mode semantic equivalence"
   "Cross-platform reproducibility"
@@ -52,11 +55,12 @@ unsupported_claim_patterns=(
   "ShortHand is fully production-ready"
   "all production blockers are complete"
   "ShortHand uses less energy than Python"
+  "imports are fully resolved"
 )
 
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness or energy claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness, resolver or energy claim: ${pattern}" >&2
     exit 1
   fi
 done

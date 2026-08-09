@@ -1,0 +1,5 @@
+module acme.app;
+import acme.models;
+import acme.models as models;
+int value;
+value = 1;

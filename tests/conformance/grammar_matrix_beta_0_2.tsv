@@ -6,7 +6,7 @@ LEX004	lexical	scanner	return STRING_LITERAL;	tests/conformance/beta_0_2/comment
 LEX005	lexical	scanner	"//"[^\n]*	tests/conformance/beta_0_2/comments_and_literals.short	accept	Line comments.
 LEX006	lexical	scanner	"#"[^\n]*	tests/conformance/beta_0_2/comments_and_literals.short	accept	Hash comments.
 LEX007	lexical	scanner	"/*"([^*]|\*+[^*/])*"*/"	tests/conformance/beta_0_2/comments_and_literals.short	accept	Block comments.
-PRG001	program	parser	PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/core_declarations.short	accept	Program ordering contract.
+PRG001	program	parser	PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/core_declarations.short	accept	Program ordering contract remains compatible with an optional beta-0.3 module preamble.
 DEC001	declarations	parser	ShortType: INT	tests/conformance/beta_0_2/core_declarations.short	accept	Integer declaration type.
 DEC002	declarations	parser	FLOAT {$$=ShortType::Float;}	tests/conformance/beta_0_2/core_declarations.short	accept	Float declaration type.
 DEC003	declarations	parser	DOUBLE {$$=ShortType::Float;}	tests/conformance/beta_0_2/core_declarations.short	accept	Double compatibility declaration type.
@@ -91,7 +91,7 @@ GRN013	greenai	parser	MEASURE_FIELD: IDENTIFIER INT_LITERAL ';'	tests/conformanc
 GRN014	greenai	parser	IDENTIFIER IDENTIFIER ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Measurement backend field.
 GRN015	greenai	parser	GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI report call.
 CLI001	program	cli	mode == "parse"	tests/conformance/beta_0_2/ai_language.short	accept	Parser-only conformance mode bypasses semantic validation.
-BND001	boundary	parser	PROGRAMME_RULE: DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/invalid_empty_program.short	reject	Empty programs are outside beta-0.2.
+BND001	boundary	parser	PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/invalid_empty_program.short	reject	Empty programs remain outside beta-0.2 under the additive beta-0.3 preamble grammar.
 BND002	boundary	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')'	tests/conformance/beta_0_2/invalid_zero_parameter_function.short	reject	Empty parameter lists are not accepted.
 BND003	boundary	parser	STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'	tests/conformance/beta_0_2/invalid_empty_block.short	reject	Blocks require at least one statement.
 BND004	boundary	parser	PRECISION_NAME: INT8	tests/conformance/beta_0_2/invalid_precision_alias.short	reject	float32 is not a canonical parser precision token.

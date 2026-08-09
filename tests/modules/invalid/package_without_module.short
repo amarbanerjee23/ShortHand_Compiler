@@ -1,0 +1,3 @@
+package acme.ai;
+int value;
+value = 1;

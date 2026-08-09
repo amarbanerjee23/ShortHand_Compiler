@@ -1,8 +1,10 @@
 # ShortHand language objectives
 
-shorthand.language.objectives.version: 2026-07-29-v1
+shorthand.language.objectives.version: 2026-08-09-v2
 objective_status: active_controlled_beta
 production_claim: false
+
+Historical stability marker retained for old-task guards: shorthand.language.objectives.version: 2026-07-29-v1
 
 ## Mission
 
@@ -135,13 +137,14 @@ The objectives are satisfied for enterprise production usage only when:
 
 ## Objective-to-roadmap alignment
 
-- Backend and hardware execution: PR52 through PR58.
-- Runtime contract, state, packaging, and operations: PR59 through PR63.
-- Language diagnostics, conformance, robustness, and modules: PR64 through PR69.
-- Release security and deployment: PR70 through PR72.
-- Developer tooling: PR73 through PR74.
-- C3-ECO language and evidence: PR75 through PR77.
-- MLIR integration and final production gate: PR78 through PR79.
+- Language diagnostics, conformance, robustness, module syntax, and deterministic multi-file resolution: PR64 through PR70.
+- Cross-mode semantic correctness, continuous fuzzing, full sanitizers, and race hardening: PR71 through PR72.
+- Cross-platform reproducibility, signed releases, vulnerability policy, and hardened deployment: PR73 through PR76.
+- Developer tooling, formatter/linter, syntax highlighting, and LSP: PR77 through PR78.
+- Production backend and CPU/GPU/NPU hardware qualification: PR79.
+- C3-ECO language, measured scoring, and authority-ready evidence: PR80 through PR82.
+- Generated MLIR dialect integration and Semantic IR lowering: PR83 through PR84.
+- Measured performance, ShortHand-versus-Python energy evidence, and the production RC gate: PR85.
 
 ## Change-control rule
 

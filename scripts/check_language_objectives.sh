@@ -17,6 +17,7 @@ if [[ ! -s "${OBJECTIVES}" ]]; then
   exit 1
 fi
 
+require_contains 'shorthand.language.objectives.version: 2026-08-09-v2'
 require_contains 'shorthand.language.objectives.version: 2026-07-29-v1'
 require_contains 'objective_status: active_controlled_beta'
 require_contains 'production_claim: false'
@@ -44,7 +45,14 @@ require_contains 'silently execute through fallback while reporting success'
 require_contains 'grant Green AI or C3-ECO certification'
 require_contains '## Production success criteria'
 require_contains '## Objective-to-roadmap alignment'
-require_contains 'PR78 through PR79'
+require_contains 'PR64 through PR70'
+require_contains 'PR71 through PR72'
+require_contains 'PR73 through PR76'
+require_contains 'PR77 through PR78'
+require_contains 'PR79.'
+require_contains 'PR80 through PR82'
+require_contains 'PR83 through PR84'
+require_contains 'PR85.'
 require_contains '## Change-control rule'
 
 echo 'PASS language objectives gate'

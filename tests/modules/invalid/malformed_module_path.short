@@ -1,0 +1,3 @@
+module acme..app;
+int value;
+value = 1;

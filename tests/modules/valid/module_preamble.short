@@ -1,0 +1,7 @@
+package acme.ai;
+module acme.recommendation;
+import acme.models as models;
+import acme.telemetry;
+
+int result;
+result = 1;

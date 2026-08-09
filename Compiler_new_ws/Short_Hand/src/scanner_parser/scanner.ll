@@ -89,6 +89,10 @@ extern "C" void shorthand_release_scanner_strings() {
 
 %%
 
+"package" return PACKAGE;
+"module" return MODULE;
+"import" return IMPORT;
+"as" return AS;
 "def" return DEF;
 "double" return DOUBLE;
 "return" return RETURN;
@@ -183,6 +187,7 @@ extern "C" void shorthand_release_scanner_strings() {
 ";" return ';';
 "," return ',';
 ":" return ':';
+"." return '.';
 "{" {
     if (!shorthand::parser::enterDelimiter()) {
         shorthand_emit_guard_failure();
@@ -257,3 +262,5 @@ extern "C" void shorthand_release_scanner_strings() {
         shorthand::diagnostics::ScannerUnexpectedCharacter,
         message);
 }
+
+%%
