@@ -15,6 +15,17 @@ SHD2013	parser	error	required	tests/modules/invalid/duplicate_import_alias.short
 SHD2014	parser	error	required	tests/modules/invalid/duplicate_import_path.short	parse	module_scaffold_gate
 SHD2015	parser	error	required	tests/modules/invalid/import_before_module.short	parse	module_scaffold_gate
 SHD2016	parser	error	required	tests/modules/invalid/package_without_module.short	parse	module_scaffold_gate
+SHD2020	module	error	required	generated_missing_manifest	lock	module_resolution_gate
+SHD2021	module	error	required	generated_invalid_manifest	lock	module_resolution_gate
+SHD2022	module	error	required	generated_missing_import	lock	module_resolution_gate
+SHD2023	module	error	required	generated_path_escape	lock	module_resolution_gate
+SHD2024	module	error	required	generated_identity_mismatch	lock	module_resolution_gate
+SHD2025	module	error	required	generated_import_cycle	lock	module_resolution_gate
+SHD2026	module	error	required	generated_ambiguous_mapping	lock	module_resolution_gate
+SHD2027	module	error	required	generated_package_mismatch	lock	module_resolution_gate
+SHD2028	module	error	required	generated_stale_lock	run	module_resolution_gate
+SHD2029	module	error	required	generated_symbol_collision	lock	module_resolution_gate
+SHD2030	module	error	required	tests/modules/resolver/valid_project/src/native_app.short	run	module_resolution_gate
 SHD3001	semantic	error	required	tests/diagnostics/fixtures/break_outside_loop.short	run	representative
 SHD3002	semantic	error	required	catalogued	run	continue_outside_loop
 SHD4001	ai	error	required	catalogued	run	model_redeclared
