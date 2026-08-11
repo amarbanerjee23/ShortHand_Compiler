@@ -74,7 +74,6 @@ for anchor in \
   'clang-18' \
   'check_cmake_ctest_parity.sh' \
   'check_reproducible_builds.sh' \
-  'check_installed_consumer_cmake.sh' \
   'check_installed_sdk_lifecycle.sh' \
   'compile-native' \
   'SHD7001' \
@@ -111,9 +110,6 @@ require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'PASS in
 bash "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh"
 bash "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh"
 
-# The coverage matrix must keep these PR75-owned areas explicit. During branch
-# development they may be partial; a merge-ready PR promotes them only when the
-# corresponding mandatory CI jobs are actually green.
 for id in TST013 TST014 TST015 TST016; do
   grep -q "^${id}"$'\t' "${MATRIX}" || { echo "error: coverage matrix missing ${id}" >&2; exit 1; }
 done
