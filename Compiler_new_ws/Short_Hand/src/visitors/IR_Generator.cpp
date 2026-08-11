@@ -1,4 +1,5 @@
 #include "IR_Generator.h"
+#include "DiagnosticCodes.h"
 #include "Symbol_Table.h"
 #include "../util/util.h"
 
@@ -8,10 +9,12 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 using namespace llvm;
 using namespace std;
+namespace diag = shorthand::diagnostics;
 
 static Module *module = nullptr;
 static map<string, Value*> NamedValues;
@@ -23,6 +26,7 @@ static FunctionCallee CalleeR;
 static unsigned ShortHandMetadataCounter = 0;
 
 static Type *i32Ty() { return Type::getInt32Ty(ShortGlobalContext); }
+static Type *i64Ty() { return Type::getInt64Ty(ShortGlobalContext); }
 static Type *i1Ty() { return Type::getInt1Ty(ShortGlobalContext); }
 static Type *voidTy() { return Type::getVoidTy(ShortGlobalContext); }
 
@@ -57,9 +61,8 @@ static AllocaInst *createEntryBlockAlloca(Function *function, const std::string 
 }
 
 static std::string stripQuotes(std::string value) {
-    if (value.size() >= 2 && value.front() == '"' && value.back() == '"') {
+    if (value.size() >= 2 && value.front() == '"' && value.back() == '"')
         return value.substr(1, value.length() - 2);
-    }
     return value;
 }
 
@@ -96,11 +99,7 @@ static Function *ensureShortHandRuntimeHook(const std::string &name, size_t argc
     if (Function *existing = module->getFunction(name)) return existing;
     std::vector<Type*> args(argc, i8PtrTy());
     FunctionType *ftype = FunctionType::get(i32Ty(), args, false);
-    Function *fn = Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);
-    BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);
-    IRBuilder<> stubBuilder(entry);
-    stubBuilder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
-    return fn;
+    return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);
 }
 
 static void emitShortHandRuntimeCall(const std::string &hook, const std::vector<std::string> &args) {
@@ -108,9 +107,8 @@ static void emitShortHandRuntimeCall(const std::string &hook, const std::vector<
     Function *fn = ensureShortHandRuntimeHook(hook, args.size());
     if (!fn) return;
     std::vector<Value*> llvmArgs;
-    for (size_t i = 0; i < args.size(); ++i) {
+    for (size_t i = 0; i < args.size(); ++i)
         llvmArgs.push_back(Builder.CreateGlobalStringPtr(args[i], safeMetadataName(hook) + "_arg" + std::to_string(i)));
-    }
     Builder.CreateCall(fn, llvmArgs, safeMetadataName(hook) + "_call");
 }
 
@@ -122,6 +120,42 @@ Value *ShowError(const char *str) {
 Value *ShowError(string str) {
     cerr << "Error:\n" << str << "\n";
     return nullptr;
+}
+
+static bool fileExists(const std::string &path) {
+    std::ifstream in(path.c_str());
+    return in.good();
+}
+
+static std::string shellQuote(const std::string &value) {
+    std::string out = "'";
+    for (char c : value) {
+        if (c == '\'') out += "'\\''";
+        else out += c;
+    }
+    out += "'";
+    return out;
+}
+
+static std::string resolveShortHandRuntimeLibrary() {
+    const char *env = std::getenv("SHORTHAND_RUNTIME_LIB");
+    if (env && *env) return std::string(env);
+
+    const std::vector<std::string> candidates = {
+        "Compiler_new_ws/Short_Hand/build/libshorthand_runtime.a",
+        "../build/libshorthand_runtime.a",
+        "build/libshorthand_runtime.a"
+    };
+    for (const auto &candidate : candidates) {
+        if (fileExists(candidate)) return candidate;
+    }
+    return "";
+}
+
+static std::string resolveShortHandNativeLinker() {
+    const char *env = std::getenv("SHORTHAND_NATIVE_LINKER");
+    if (env && *env) return std::string(env);
+    return "clang++";
 }
 
 IR_Generator::IR_Generator() {
@@ -151,17 +185,15 @@ void IR_Generator::setModuleName(std::string mod_name) {
 }
 
 void IR_Generator::dump() {
-    if (verifyModule(*module, &errs())) {
+    if (verifyModule(*module, &errs()))
         cerr << "LLVM module verification failed. IR was still written for inspection.\n";
-    }
     cerr << "Generating LLVM IR Code\n\n";
     std::string Str;
     raw_string_ostream OS(Str);
     OS << *module;
     OS.flush();
     cerr << Str;
-    std::string ir_file = this->getModuleName() + ".ir";
-    std::ofstream out(ir_file.c_str());
+    std::ofstream out((this->getModuleName() + ".ir").c_str());
     out << Str;
 }
 
@@ -186,18 +218,54 @@ bool IR_Generator::dumpBitcode() {
 bool IR_Generator::dumpNativeBinary() {
     if (!dumpBitcode()) return false;
     std::string base = this->getModuleName();
-    std::string cmd_obj = "llc -filetype=obj " + base + ".bc -o " + base + ".o";
-    std::string cmd_bin = "clang -no-pie " + base + ".o -o " + base;
+    std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc") + " -o " + shellQuote(base + ".o");
+    std::string runtime_lib = resolveShortHandRuntimeLibrary();
+    std::string native_linker = resolveShortHandNativeLinker();
+    std::string cmd_bin = shellQuote(native_linker) + " -no-pie " + shellQuote(base + ".o");
+    if (!runtime_lib.empty()) {
+        cmd_bin += " " + shellQuote(runtime_lib);
+    } else {
+        cerr << "No ShortHand runtime library found. Native linking will fail if AI/GreenAI runtime hooks are referenced.\n";
+    }
+    cmd_bin += " -o " + shellQuote(base);
+
     if (std::system(cmd_obj.c_str()) != 0) {
         cerr << "Failed to run llc. Ensure LLVM tools are installed and in PATH.\n";
         return false;
     }
     if (std::system(cmd_bin.c_str()) != 0) {
-        cerr << "Failed to run clang linker step.\n";
+        cerr << "Failed to run C++ linker step. Build libshorthand_runtime.a or set SHORTHAND_RUNTIME_LIB for AI/GreenAI programs.\n";
         return false;
     }
+    if (!runtime_lib.empty()) cerr << "Linked ShortHand runtime library: " << runtime_lib << "\n";
+    cerr << "Native linker: " << native_linker << "\n";
     cerr << "Generated native binary: " << base << "\n";
     return true;
+}
+
+void IR_Generator::emitRuntimeFailureIf(Value *condition,
+                                        const std::string &code,
+                                        const std::string &message) {
+    if (!condition || !Builder.GetInsertBlock()) return;
+    Function *function = Builder.GetInsertBlock()->getParent();
+    BasicBlock *fail = BasicBlock::Create(ShortGlobalContext, "runtime_fail", function);
+    BasicBlock *cont = BasicBlock::Create(ShortGlobalContext, "runtime_continue", function);
+    Builder.CreateCondBr(asBool(condition), fail, cont);
+
+    Builder.SetInsertPoint(fail);
+    const std::string text = "error: [" + code + "] " + message + "\n";
+    FunctionType *writeType = FunctionType::get(i64Ty(), {i32Ty(), i8PtrTy(), i64Ty()}, false);
+    FunctionCallee writeFn = module->getOrInsertFunction("write", writeType);
+    Value *textValue = Builder.CreateGlobalStringPtr(text, "runtime_error_text");
+    Builder.CreateCall(writeFn, {
+        ConstantInt::get(i32Ty(), 2), textValue,
+        ConstantInt::get(i64Ty(), static_cast<std::uint64_t>(text.size()))});
+    FunctionType *exitType = FunctionType::get(voidTy(), {i32Ty()}, false);
+    FunctionCallee exitFn = module->getOrInsertFunction("exit", exitType);
+    Builder.CreateCall(exitFn, {ConstantInt::get(i32Ty(), 1)});
+    Builder.CreateUnreachable();
+
+    Builder.SetInsertPoint(cont);
 }
 
 Value *IR_Generator::get_expression() {
@@ -233,35 +301,49 @@ int IR_Generator::visit(AST_PROGRAM *program) {
     BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry", main_function);
     Builder.SetInsertPoint(BB);
     program->code_block->accept(*this);
-    if (!Builder.GetInsertBlock()->getTerminator()) {
+    if (!Builder.GetInsertBlock()->getTerminator())
         Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
-    }
     return 0;
 }
 
 int IR_Generator::visit(AST_DATA_DECLARATION_BLOCK *decl_block) {
-    for (int i = 0; i < (int)decl_block->single_ints.size(); i++) {
-        GlobalVariable *gv = new GlobalVariable(*module, i32Ty(), false, GlobalValue::CommonLinkage,
-                                                ConstantInt::get(i32Ty(), 0, true), decl_block->single_ints[i]);
-        (void)gv;
+    for (const std::string &name : decl_block->single_ints) {
+        if (module->getNamedGlobal(name)) continue;
+        new GlobalVariable(*module, i32Ty(), false, GlobalValue::CommonLinkage,
+                           ConstantInt::get(i32Ty(), 0, true), name);
     }
-    for (int i = 0; i < (int)decl_block->array_ints.size(); i++) {
-        ArrayType *arr_type = ArrayType::get(i32Ty(), decl_block->array_ints[i].second);
+    for (const auto &entry : decl_block->array_ints) {
+        if (module->getNamedGlobal(entry.first)) continue;
+        ArrayType *arr_type = ArrayType::get(i32Ty(), entry.second);
         new GlobalVariable(*module, arr_type, false, GlobalValue::ExternalLinkage,
-                           ConstantAggregateZero::get(arr_type), decl_block->array_ints[i].first);
+                           ConstantAggregateZero::get(arr_type), entry.first);
     }
     return 0;
 }
 
 int IR_Generator::visit(AST_FUNCTION_LIST_RULE *functions) {
-    for (auto function : functions->functions) function->accept(*this);
+    for (AST_FUNCTION_RULE *function : functions->functions) {
+        if (!function || !function->function_name) continue;
+        if (module->getFunction(function->function_name)) continue;
+        std::vector<Type*> args(function->parameters->single_ints.size(), i32Ty());
+        FunctionType *ftype = FunctionType::get(parseType(function->type), args, false);
+        Function::Create(ftype, GlobalValue::ExternalLinkage, function->function_name, module);
+    }
+    for (AST_FUNCTION_RULE *function : functions->functions) {
+        if (function) function->accept(*this);
+    }
     return 0;
 }
 
 int IR_Generator::visit(AST_FUNCTION_RULE *function) {
-    std::vector<Type*> args(function->parameters->single_ints.size(), i32Ty());
-    FunctionType *ftype = FunctionType::get(i32Ty(), args, false);
-    Function *llvm_function = Function::Create(ftype, GlobalValue::ExternalLinkage, function->function_name, module);
+    Function *llvm_function = module->getFunction(function->function_name);
+    if (!llvm_function) {
+        std::vector<Type*> args(function->parameters->single_ints.size(), i32Ty());
+        FunctionType *ftype = FunctionType::get(parseType(function->type), args, false);
+        llvm_function = Function::Create(ftype, GlobalValue::ExternalLinkage, function->function_name, module);
+    }
+    if (!llvm_function->empty()) return 0;
+
     BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry", llvm_function);
     symbol_table_obj.push_block(BB);
     Builder.SetInsertPoint(BB);
@@ -275,10 +357,15 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
         symbol_table_obj.declare_locals(name, alloca);
     }
 
+    const std::size_t saved_break = break_targets.size();
+    const std::size_t saved_continue = continue_targets.size();
     function->block_statement->accept(*this);
     if (!Builder.GetInsertBlock()->getTerminator()) {
-        Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
+        if (llvm_function->getReturnType()->isVoidTy()) Builder.CreateRetVoid();
+        else Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
     }
+    break_targets.resize(saved_break);
+    continue_targets.resize(saved_continue);
     symbol_table_obj.pop_block();
     return 0;
 }
@@ -289,33 +376,32 @@ int IR_Generator::visit(AST_LOGIC_BLOCK *code_block) {
     return 0;
 }
 
-int IR_Generator::visit(AST_BREAK *break_statement) {
-    (void)break_statement;
-    return 0;
-}
-
 int IR_Generator::visit(AST_FUNCTION_CALL_RULE *function_called) {
     Function *func = module->getFunction(function_called->function_name);
     if (!func) {
         ShowError("Function Not Defined");
         return 0;
     }
+    if (func->arg_size() != function_called->parameters->variables.size()) {
+        ShowError("Function arity mismatch after semantic validation");
+        return 0;
+    }
     vector<Value*> args;
-    for (auto &i : function_called->parameters->variables) {
-        i->accept(*this);
+    for (auto *variable : function_called->parameters->variables) {
+        variable->accept(*this);
         Value *arg = get_expression();
         if (!arg) return 0;
         args.push_back(arg);
     }
     ret = Builder.CreateCall(func, args);
     load_variable = 0;
-    is_expression = 1;
+    is_expression = !func->getReturnType()->isVoidTy();
     return 0;
 }
 
 int IR_Generator::visit(AST_EXPRESSION_STATEMENT_RULE *expression_statement) {
     expression_statement->expression->accept(*this);
-    get_expression();
+    if (ret && !ret->getType()->isVoidTy()) get_expression();
     return 0;
 }
 
@@ -330,9 +416,9 @@ int IR_Generator::visit(AST_ASSIGNMENT_RULE *assignment_statement) {
 }
 
 int IR_Generator::visit(AST_STATEMENTS_BLOCK *block_statement) {
-    for (int i = 0; i < (int)block_statement->statements.size(); i++) {
+    for (AST_STATEMENT_RULE *statement : block_statement->statements) {
         if (Builder.GetInsertBlock() && Builder.GetInsertBlock()->getTerminator()) break;
-        block_statement->statements[i]->accept(*this);
+        statement->accept(*this);
         load_variable = 0;
     }
     return 0;
@@ -379,23 +465,39 @@ int IR_Generator::visit(AST_FOR_LOOP_STATEMENT_RULE *for_statement) {
     Builder.CreateStore(start, variable);
     load_variable = 0;
 
+    AllocaInst *step_slot = createEntryBlockAlloca(funct, "for_step");
     BasicBlock *cond_BB = BasicBlock::Create(ShortGlobalContext, "for_condition", funct);
     BasicBlock *body_BB = BasicBlock::Create(ShortGlobalContext, "for_body", funct);
+    BasicBlock *step_BB = BasicBlock::Create(ShortGlobalContext, "for_step_block", funct);
     BasicBlock *after_BB = BasicBlock::Create(ShortGlobalContext, "for_after", funct);
     Builder.CreateBr(cond_BB);
 
     Builder.SetInsertPoint(cond_BB);
     Value *cur_val = typedLoad(variable, i32Ty(), "for_current");
+    for_statement->step->accept(*this);
+    Value *step = get_expression();
+    emitRuntimeFailureIf(Builder.CreateICmpEQ(step, ConstantInt::get(i32Ty(), 0, true), "for_step_zero"),
+                         diag::RuntimeLoopStepZero, "loop step must be non-zero");
+    Builder.CreateStore(step, step_slot);
     for_statement->to->accept(*this);
     Value *to_val = get_expression();
-    Value *cond = Builder.CreateICmpSLT(cur_val, to_val, "forcond");
+    Value *positive = Builder.CreateICmpSGT(step, ConstantInt::get(i32Ty(), 0, true), "for_step_positive");
+    Value *positive_cond = Builder.CreateICmpSLT(cur_val, to_val, "for_forward_cond");
+    Value *negative_cond = Builder.CreateICmpSGT(cur_val, to_val, "for_reverse_cond");
+    Value *cond = Builder.CreateSelect(positive, positive_cond, negative_cond, "forcond");
     Builder.CreateCondBr(cond, body_BB, after_BB);
 
     Builder.SetInsertPoint(body_BB);
+    break_targets.push_back(after_BB);
+    continue_targets.push_back(step_BB);
     for_statement->for_block->accept(*this);
-    for_statement->step->accept(*this);
-    Value *step = get_expression();
-    Value *next = Builder.CreateAdd(typedLoad(variable, i32Ty()), step, "for_next");
+    continue_targets.pop_back();
+    break_targets.pop_back();
+    if (!Builder.GetInsertBlock()->getTerminator()) Builder.CreateBr(step_BB);
+
+    Builder.SetInsertPoint(step_BB);
+    Value *saved_step = typedLoad(step_slot, i32Ty(), "for_saved_step");
+    Value *next = Builder.CreateAdd(typedLoad(variable, i32Ty()), saved_step, "for_next");
     Builder.CreateStore(next, variable);
     Builder.CreateBr(cond_BB);
 
@@ -414,31 +516,52 @@ int IR_Generator::visit(AST_WHILE_LOOP_STATEMENT_RULE *while_statement) {
     Value *condition_value = get_condition();
     Builder.CreateCondBr(condition_value, body_BB, after_BB);
     Builder.SetInsertPoint(body_BB);
+    break_targets.push_back(after_BB);
+    continue_targets.push_back(cond_BB);
     while_statement->while_block->accept(*this);
+    continue_targets.pop_back();
+    break_targets.pop_back();
     if (!Builder.GetInsertBlock()->getTerminator()) Builder.CreateBr(cond_BB);
     Builder.SetInsertPoint(after_BB);
     return 0;
 }
 
-int IR_Generator::visit(AST_GOTO_STATEMENT_RULE *goto_statement) {
-    Value *cond = nullptr;
-    if (goto_statement->condition) {
-        goto_statement->condition->accept(*this);
-        cond = get_condition();
+int IR_Generator::visit(AST_BREAK *) {
+    if (break_targets.empty()) {
+        ShowError("break reached lowering outside loop");
+        return 0;
     }
-    string &label = goto_statement->label;
-    Function *funct = Builder.GetInsertBlock()->getParent();
-    BasicBlock *label_BB;
-    if (goto_labels.find(label) == goto_labels.end()) {
-        label_BB = BasicBlock::Create(ShortGlobalContext, label, funct);
-        goto_labels[label] = label_BB;
+    Builder.CreateBr(break_targets.back());
+    return 0;
+}
+
+int IR_Generator::visit(AST_CONTINUE *) {
+    if (continue_targets.empty()) {
+        ShowError("continue reached lowering outside loop");
+        return 0;
+    }
+    Builder.CreateBr(continue_targets.back());
+    return 0;
+}
+
+int IR_Generator::visit(AST_RETURN_STATEMENT *statement) {
+    Function *function = Builder.GetInsertBlock()->getParent();
+    if (function->getReturnType()->isVoidTy()) {
+        Builder.CreateRetVoid();
+        return 0;
+    }
+    if (statement->expression) {
+        statement->expression->accept(*this);
+        Builder.CreateRet(get_expression());
     } else {
-        label_BB = goto_labels[label];
+        Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
     }
-    BasicBlock *next_BB = BasicBlock::Create(ShortGlobalContext, "goto_next", funct);
-    if (goto_statement->condition) Builder.CreateCondBr(cond, label_BB, next_BB);
-    else Builder.CreateBr(label_BB);
-    Builder.SetInsertPoint(next_BB);
+    return 0;
+}
+
+int IR_Generator::visit(AST_GOTO_STATEMENT_RULE *goto_statement) {
+    (void)goto_statement;
+    ShowError("goto is rejected by the beta-0.3 executable semantic contract");
     return 0;
 }
 
@@ -455,7 +578,7 @@ int IR_Generator::visit(AST_READ_RULE *read_statement) {
 }
 
 int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
-    int sz = (int)print_statement->printables.size();
+    const int sz = static_cast<int>(print_statement->printables.size());
     for (int i = 0; i < sz; i++) {
         vector<Value*> args;
         AST_PRINTABLE_ITEM &p = print_statement->printables[i];
@@ -465,11 +588,10 @@ int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
             args.push_back(Builder.CreateGlobalStringPtr("%d"));
             args.push_back(v);
         } else {
-            print_statement->printables[i].string_literal->accept(*this);
+            p.string_literal->accept(*this);
             string printable = str_;
-            if (printable.size() >= 2 && printable.front() == '"' && printable.back() == '"') {
+            if (printable.size() >= 2 && printable.front() == '"' && printable.back() == '"')
                 printable = printable.substr(1, printable.length() - 2);
-            }
             args.push_back(Builder.CreateGlobalStringPtr("%s"));
             args.push_back(Builder.CreateGlobalStringPtr(printable));
         }
@@ -483,17 +605,7 @@ int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
 }
 
 int IR_Generator::visit(AST_LABEL_RULE *label_statement) {
-    string &label = label_statement->label;
-    Function *funct = Builder.GetInsertBlock()->getParent();
-    BasicBlock *label_BB;
-    if (goto_labels.find(label) == goto_labels.end()) {
-        label_BB = BasicBlock::Create(ShortGlobalContext, label, funct);
-        goto_labels[label] = label_BB;
-    } else {
-        label_BB = goto_labels[label];
-    }
-    if (!Builder.GetInsertBlock()->getTerminator()) Builder.CreateBr(label_BB);
-    Builder.SetInsertPoint(label_BB);
+    (void)label_statement;
     return 0;
 }
 
@@ -505,11 +617,11 @@ int IR_Generator::visit(AST_GREENAI_REPORT_RULE *greenai_report) {
     greenai_report->seconds->accept(*this);
     Value *seconds = get_expression();
     Value *energy = Builder.CreateMul(watts, seconds, "greenai_energy_j");
-    Value *safe_energy = Builder.CreateSelect(Builder.CreateICmpEQ(energy, ConstantInt::get(i32Ty(), 0, true), "greenai_zero_energy"),
-                                             ConstantInt::get(i32Ty(), 1, true), energy);
-    Value *efficiency = Builder.CreateSDiv(inferences, safe_energy, "greenai_inf_per_j");
-    std::string workload = greenai_report->workload_name;
-    if (workload.size() >= 2 && workload.front() == '"' && workload.back() == '"') workload = workload.substr(1, workload.length() - 2);
+    Value *zero_energy = Builder.CreateICmpEQ(energy, ConstantInt::get(i32Ty(), 0, true), "greenai_zero_energy");
+    Value *safe_energy = Builder.CreateSelect(zero_energy, ConstantInt::get(i32Ty(), 1, true), energy);
+    Value *raw_efficiency = Builder.CreateSDiv(inferences, safe_energy, "greenai_raw_inf_per_j");
+    Value *efficiency = Builder.CreateSelect(zero_energy, ConstantInt::get(i32Ty(), 0, true), raw_efficiency, "greenai_inf_per_j");
+    std::string workload = stripQuotes(greenai_report->workload_name);
     vector<Value*> args;
     args.push_back(Builder.CreateGlobalStringPtr("GreenAI workload %s: inferences=%d energy_j=%d inf_per_j=%d\n"));
     args.push_back(Builder.CreateGlobalStringPtr(workload));
@@ -521,12 +633,9 @@ int IR_Generator::visit(AST_GREENAI_REPORT_RULE *greenai_report) {
 }
 
 int IR_Generator::visit(AST_AI_INFER_RULE *ai_infer) {
-    std::string model_path = ai_infer->model_path;
-    std::string shape_csv = ai_infer->shape_csv;
-    std::string input_csv = ai_infer->input_csv;
-    if (model_path.size() >= 2 && model_path.front() == '"' && model_path.back() == '"') model_path = model_path.substr(1, model_path.length() - 2);
-    if (shape_csv.size() >= 2 && shape_csv.front() == '"' && shape_csv.back() == '"') shape_csv = shape_csv.substr(1, shape_csv.length() - 2);
-    if (input_csv.size() >= 2 && input_csv.front() == '"' && input_csv.back() == '"') input_csv = input_csv.substr(1, input_csv.length() - 2);
+    std::string model_path = stripQuotes(ai_infer->model_path);
+    std::string shape_csv = stripQuotes(ai_infer->shape_csv);
+    std::string input_csv = stripQuotes(ai_infer->input_csv);
     vector<Value*> args;
     args.push_back(Builder.CreateGlobalStringPtr("AI inference request: model=%s shape=%s input=%s\n"));
     args.push_back(Builder.CreateGlobalStringPtr(model_path));
@@ -538,7 +647,7 @@ int IR_Generator::visit(AST_AI_INFER_RULE *ai_infer) {
 }
 
 int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) {
-    int op = binary_operator_expression->op;
+    const int op = binary_operator_expression->op;
     binary_operator_expression->left->accept(*this);
     Value *L = get_expression();
     binary_operator_expression->right->accept(*this);
@@ -547,8 +656,17 @@ int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) 
     if (op == PLUS) ret = Builder.CreateAdd(L, R, "addtmp"), is_expression = 1;
     else if (op == MINUS) ret = Builder.CreateSub(L, R, "subtmp"), is_expression = 1;
     else if (op == MULTIPLY) ret = Builder.CreateMul(L, R, "multmp"), is_expression = 1;
-    else if (op == DIVIDE) ret = Builder.CreateSDiv(L, R, "divtmp"), is_expression = 1;
-    else if (op == MODULO) ret = Builder.CreateSRem(L, R, "modtmp"), is_expression = 1;
+    else if (op == DIVIDE || op == MODULO) {
+        Value *zero = Builder.CreateICmpEQ(R, ConstantInt::get(i32Ty(), 0, true), "arith_zero_divisor");
+        Value *min_value = Builder.CreateICmpEQ(L, ConstantInt::get(i32Ty(), std::numeric_limits<std::int32_t>::min(), true), "arith_min_value");
+        Value *negative_one = Builder.CreateICmpEQ(R, ConstantInt::get(i32Ty(), -1, true), "arith_negative_one");
+        Value *overflow = Builder.CreateAnd(min_value, negative_one, "arith_div_overflow");
+        emitRuntimeFailureIf(Builder.CreateOr(zero, overflow, "arith_domain_error"),
+                             diag::RuntimeArithmeticDomainError,
+                             op == DIVIDE ? "integer division domain error" : "integer remainder domain error");
+        ret = op == DIVIDE ? Builder.CreateSDiv(L, R, "divtmp") : Builder.CreateSRem(L, R, "modtmp");
+        is_expression = 1;
+    }
     else if (op == LESS) ret = Builder.CreateICmpSLT(L, R, "lttmp"), is_condition = 1;
     else if (op == GREATER) ret = Builder.CreateICmpSGT(L, R, "gttmp"), is_condition = 1;
     else if (op == LESS_OR_EQUAL) ret = Builder.CreateICmpSLE(L, R, "letmp"), is_condition = 1;
@@ -563,10 +681,9 @@ int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) 
 }
 
 int IR_Generator::visit(AST_UNARY_EXPRESSION_RULE *unary_operator_expression) {
-    int op = unary_operator_expression->op;
     unary_operator_expression->expression->accept(*this);
     Value *R = get_expression();
-    if (op == UMINUS) ret = Builder.CreateNeg(R, "negtmp");
+    if (unary_operator_expression->op == UMINUS) ret = Builder.CreateNeg(R, "negtmp");
     else ret = ShowError("Not a supported unary operator");
     is_expression = 1;
     is_condition = 0;
@@ -593,6 +710,17 @@ int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
         ret = ShowError("Unknown Array name " + array_name);
         return 0;
     }
+    ArrayType *array_type = dyn_cast<ArrayType>(array_global->getValueType());
+    if (!array_type) {
+        ret = ShowError("Variable is not an array " + array_name);
+        return 0;
+    }
+    Value *negative = Builder.CreateICmpSLT(index, ConstantInt::get(i32Ty(), 0, true), "array_index_negative");
+    Value *too_large = Builder.CreateICmpSGE(
+        index, ConstantInt::get(i32Ty(), array_type->getNumElements(), false), "array_index_too_large");
+    emitRuntimeFailureIf(Builder.CreateOr(negative, too_large, "array_bounds_error"),
+                         diag::RuntimeArrayBounds,
+                         "array index is outside declared bounds for `" + array_name + "`");
     vector<Value*> array_index;
     array_index.push_back(ConstantInt::get(i32Ty(), 0, true));
     array_index.push_back(index);
@@ -615,11 +743,11 @@ int IR_Generator::visit(AST_STRING_LITERAL *string_literal) {
 
 llvm::Type* IR_Generator::parseType(ShortType type) {
     switch (type) {
-    case ShortType::Boolean: return i32Ty();
-    case ShortType::Int: return i32Ty();
-    case ShortType::Void: return voidTy();
-    case ShortType::Float: return i32Ty();
-    case ShortType::String: return i32Ty();
+        case ShortType::Boolean: return i32Ty();
+        case ShortType::Int: return i32Ty();
+        case ShortType::Void: return voidTy();
+        case ShortType::Float: return i32Ty();
+        case ShortType::String: return i32Ty();
     }
     return i32Ty();
 }
@@ -634,15 +762,8 @@ int IR_Generator::visit(AST_MODEL_DECLARATION *n){
         ";backend_preference=" + backend_preference +
         ";compact=" + std::string(d.compact ? "true" : "false"));
     emitShortHandRuntimeCall("short_ai_register_model", {
-        d.name,
-        d.format,
-        stripQuotes(d.path),
-        stripQuotes(d.task),
-        d.precision,
-        d.input_shape,
-        d.output_shape,
-        backend_preference
-    });
+        d.name, d.format, stripQuotes(d.path), stripQuotes(d.task), d.precision,
+        d.input_shape, d.output_shape, backend_preference});
     return 0;
 }
 
@@ -653,12 +774,8 @@ int IR_Generator::visit(AST_TENSOR_DECLARATION *n){
         ";shape=" + d.shape_csv + ";rank=" + std::to_string(d.rank) +
         ";total_elements=" + std::to_string(d.total_elements));
     emitShortHandRuntimeCall("short_ai_register_tensor", {
-        d.name,
-        d.element_type,
-        d.shape_csv,
-        std::to_string(d.rank),
-        std::to_string(d.total_elements)
-    });
+        d.name, d.element_type, d.shape_csv,
+        std::to_string(d.rank), std::to_string(d.total_elements)});
     return 0;
 }
 
@@ -674,32 +791,21 @@ int IR_Generator::visit(AST_GREENAI_CONTRACT *n){
         ";carbon_factor=" + std::to_string(d.carbon_factor) +
         ";claims_mode=" + d.claims_mode);
     emitShortHandRuntimeCall("short_greenai_register_contract", {
-        d.name,
-        stripQuotes(d.functional_unit),
-        stripQuotes(d.success_criteria),
-        boundary,
-        d.measurement_quality,
-        d.data_quality,
-        std::to_string(d.carbon_factor),
-        d.claims_mode
-    });
+        d.name, stripQuotes(d.functional_unit), stripQuotes(d.success_criteria), boundary,
+        d.measurement_quality, d.data_quality, std::to_string(d.carbon_factor), d.claims_mode});
     return 0;
 }
 
 int IR_Generator::visit(AST_GREENAI_MEASUREMENT *n){
     const auto &d = n->data;
-    emitShortHandMetadata("greenai_measure", d.workload,
+    emitShortHandMetadata("greenai_measurement", d.workload,
         "workload=" + d.workload + ";backend=" + d.backend +
         ";inferences=" + std::to_string(d.inferences) +
         ";watts=" + std::to_string(d.watts) +
         ";seconds=" + std::to_string(d.seconds));
     emitShortHandRuntimeCall("short_greenai_record_measurement", {
-        d.workload,
-        d.backend,
-        std::to_string(d.inferences),
-        std::to_string(d.watts),
-        std::to_string(d.seconds)
-    });
+        d.workload, d.backend, std::to_string(d.inferences),
+        std::to_string(d.watts), std::to_string(d.seconds)});
     return 0;
 }
 
@@ -711,8 +817,38 @@ int IR_Generator::visit(AST_INFER_STATEMENT *n){
     return 0;
 }
 
-int IR_Generator::visit(AST_CONTINUE *){ return 0; }
-int IR_Generator::visit(AST_RETURN_STATEMENT * n){ if(n->expression) n->expression->accept(*this); return 0; }
-int IR_Generator::visit(AST_BOOL_LITERAL * n){ return n->value ? 1 : 0; }
-int IR_Generator::visit(AST_FLOAT_LITERAL * n){ return (int)n->value; }
-int IR_Generator::visit(AST_FUNCTION_CALL_EXPRESSION *){ return 0; }
+int IR_Generator::visit(AST_BOOL_LITERAL *n){
+    ret = ConstantInt::get(i32Ty(), n->value ? 1 : 0, true);
+    load_variable = 0;
+    is_expression = 1;
+    return 0;
+}
+
+int IR_Generator::visit(AST_FLOAT_LITERAL *n){
+    (void)n;
+    ret = ShowError("float literal reached lowering despite executable-type validation");
+    return 0;
+}
+
+int IR_Generator::visit(AST_FUNCTION_CALL_EXPRESSION *call){
+    Function *func = module->getFunction(call->function_name);
+    if (!func) {
+        ret = ShowError("Function Not Defined");
+        return 0;
+    }
+    if (func->arg_size() != call->arguments.size()) {
+        ret = ShowError("Function arity mismatch after semantic validation");
+        return 0;
+    }
+    vector<Value*> args;
+    for (AST_EXPRESSION_RULE *argument : call->arguments) {
+        argument->accept(*this);
+        Value *value = get_expression();
+        if (!value) return 0;
+        args.push_back(value);
+    }
+    ret = Builder.CreateCall(func, args, "calltmp");
+    load_variable = 0;
+    is_expression = !func->getReturnType()->isVoidTy();
+    return 0;
+}
