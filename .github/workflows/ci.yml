@@ -15,7 +15,7 @@ concurrency:
 jobs:
   ubuntu:
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +64,9 @@ jobs:
       - name: CI status hygiene guard
         run: bash scripts/check_ci_status_hygiene.sh
 
+      - name: PR73 safety contract guard
+        run: bash scripts/check_fuzz_safety_contract.sh
+
       - name: Setup build infrastructure
         run: bash setup_build_infra.sh
 
@@ -91,14 +94,14 @@ jobs:
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
 
-      - name: Coverage-guided sanitizer fuzz smoke
-        env:
-          SHORTHAND_FUZZ_RUNS: '64'
-          SHORTHAND_FUZZ_SEED: '73073'
-        run: bash scripts/check_fuzz_safety.sh
+      - name: Fuzz ASan LSan UBSan compiler stages
+        run: bash scripts/check_fuzz_sanitizers.sh
 
-      - name: ThreadSanitizer concurrency race gate
-        run: bash scripts/check_tsan_concurrency.sh
+      - name: Runtime ASan LSan UBSan stress
+        run: bash scripts/check_runtime_memory_sanitizer.sh
+
+      - name: ThreadSanitizer race stress
+        run: bash scripts/check_thread_sanitizer.sh
 
       - name: Parser robustness and negative corpus
         run: bash scripts/check_parser_robustness.sh
@@ -143,7 +146,6 @@ jobs:
             /tmp/short_hand_*.out
             /tmp/short_hand_*.err
             /tmp/shorthand_semantic_differential.json
-            /tmp/shorthand_fuzz_summary.out
             /tmp/shorthand_fuzz_artifacts/
             /tmp/shorthand_c3eco_bundle/
             Compiler_new_ws/Short_Hand/build/

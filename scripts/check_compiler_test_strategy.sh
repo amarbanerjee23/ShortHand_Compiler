@@ -8,14 +8,16 @@ PLAN="${ROOT_DIR}/docs/production_readiness_pr_plan.md"
 STATUS="${ROOT_DIR}/docs/feature_implementation_status.md"
 TEMPLATE="${ROOT_DIR}/.github/pull_request_template.md"
 CI="${ROOT_DIR}/.github/workflows/ci.yml"
+FUZZ_CI="${ROOT_DIR}/.github/workflows/fuzz.yml"
 PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
 MODULE_MATRIX="${ROOT_DIR}/tests/conformance/module_matrix_beta_0_3.tsv"
 MODULE_GATE="${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
 RESOLVER_GATE="${ROOT_DIR}/scripts/check_module_resolution.sh"
 DIFFERENTIAL_GATE="${ROOT_DIR}/scripts/check_semantic_differential.sh"
-FUZZ_GATE="${ROOT_DIR}/scripts/check_fuzz_safety.sh"
-TSAN_GATE="${ROOT_DIR}/scripts/check_tsan_concurrency.sh"
-FUZZ_DOC="${ROOT_DIR}/docs/fuzz_sanitizer_concurrency.md"
+FUZZ_GATE="${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh"
+RUNTIME_MEMORY_GATE="${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh"
+TSAN_GATE="${ROOT_DIR}/scripts/check_thread_sanitizer.sh"
+FUZZ_DOC="${ROOT_DIR}/docs/fuzz_sanitizer_race_hardening.md"
 EXECUTION_CONTRACT="${ROOT_DIR}/docs/execution_semantics_beta_0_3.md"
 
 require_file() {
@@ -33,12 +35,9 @@ require_contains() {
   }
 }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${PIPELINE}" \
-  "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}" "${DIFFERENTIAL_GATE}" \
-  "${FUZZ_GATE}" "${TSAN_GATE}" "${FUZZ_DOC}" "${EXECUTION_CONTRACT}" \
-  "${ROOT_DIR}/tests/fuzz/FuzzSubprocess.cpp" \
-  "${ROOT_DIR}/tests/runtime/runtime_tsan_stress.cpp" \
-  "${ROOT_DIR}/.github/workflows/fuzz-nightly.yml"; do
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${FUZZ_CI}" "${PIPELINE}" \
+  "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}" "${DIFFERENTIAL_GATE}" "${FUZZ_GATE}" \
+  "${RUNTIME_MEMORY_GATE}" "${TSAN_GATE}" "${FUZZ_DOC}" "${EXECUTION_CONTRACT}"; do
   require_file "${file}"
 done
 
@@ -91,8 +90,9 @@ for anchor in \
   'measured energy and performance comparison with equivalent Python workloads' \
   'PR70 and all PR72 through PR86 implementation completion gates are merged' \
   'CPU/GPU/TPU/NPU' \
-  'Tsan' ; do
-  if [[ "${anchor}" == 'Tsan' ]]; then continue; fi
+  '12 implemented areas' \
+  '6 partial areas' \
+  '9 open areas'; do
   require_contains "${DOC}" "${anchor}"
 done
 
@@ -105,26 +105,43 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
+require_contains "${PLAN}" 'after PR73 is successfully merged, 13 implementation PRs remain.'
+require_contains "${PLAN}" 'PR86 - Measured energy, performance and zero-skip production RC gate'
+require_contains "${PLAN}" 'PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED'
+require_contains "${PLAN}" 'PR71 - CI status publication hygiene | MERGED'
 require_contains "${PLAN}" 'PR72 - Cross-mode semantic correctness and differential execution suite | MERGED'
 require_contains "${PLAN}" 'PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening | IN PROGRESS'
-require_contains "${PLAN}" 'PR86 - Measured energy, performance and zero-skip production RC gate'
+require_contains "${STATUS}" 'Deterministic module resolver and multi-file codegen'
+require_contains "${STATUS}" 'Measured ShortHand versus Python energy evidence'
+require_contains "${STATUS}" 'CI status hygiene'
 require_contains "${STATUS}" 'Cross-mode semantic equivalence'
-require_contains "${STATUS}" 'Coverage-guided fuzzing'
-require_contains "${STATUS}" 'ThreadSanitizer'
-require_contains "${CI}" 'Coverage-guided sanitizer fuzz smoke'
-require_contains "${CI}" 'ThreadSanitizer concurrency race gate'
+require_contains "${STATUS}" 'Full sanitizer coverage'
+require_contains "${STATUS}" 'Continuous fuzzing'
+require_contains "${STATUS}" 'Concurrency and race detection'
+require_contains "${CI}" 'Module resolver and multi-file codegen'
+require_contains "${CI}" 'Semantic differential execution'
+require_contains "${CI}" 'Fuzz ASan LSan UBSan compiler stages'
+require_contains "${CI}" 'Runtime ASan LSan UBSan stress'
+require_contains "${CI}" 'ThreadSanitizer race stress'
+require_contains "${CI}" 'CI status hygiene guard'
+require_contains "${FUZZ_CI}" 'Extended staged libFuzzer campaign'
 require_contains "${PIPELINE}" 'Tier 5 - runtime/backend/hardware qualification'
 require_contains "${PIPELINE}" 'CPU, GPU, TPU and NPU'
 require_contains "${MODULE_GATE}" 'PASS module import package syntax and AST scaffold gate'
 require_contains "${RESOLVER_GATE}" 'PASS deterministic module resolver, package lock and multi-file codegen gate'
 require_contains "${DIFFERENTIAL_GATE}" 'PASS cross-mode semantic differential execution gate'
-require_contains "${FUZZ_GATE}" 'PASS coverage-guided sanitizer fuzz gate'
-require_contains "${TSAN_GATE}" 'PASS ThreadSanitizer concurrency gate'
-require_contains "${FUZZ_DOC}" 'fuzz_safety_contract_version: 1.0.0'
+require_contains "${FUZZ_GATE}" 'PASS libFuzzer ASan LSan UBSan compiler-stage gate'
+require_contains "${RUNTIME_MEMORY_GATE}" 'PASS runtime ASan LSan UBSan stress gate'
+require_contains "${TSAN_GATE}" 'PASS mandatory ThreadSanitizer race gate'
+require_contains "${FUZZ_DOC}" 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1'
 require_contains "${EXECUTION_CONTRACT}" 'execution_semantics_contract: beta-0.3-pr72-v1'
+require_contains "${MATRIX}" $'TST004\tsemantic validation\timplemented'
+require_contains "${MATRIX}" $'TST007\tinterpreter versus compiled differential testing\timplemented'
 require_contains "${MATRIX}" $'TST008\tfull sanitizer coverage\timplemented'
 require_contains "${MATRIX}" $'TST009\tcontinuous fuzzing\timplemented'
 require_contains "${MATRIX}" $'TST010\tconcurrency and race detection\timplemented'
+require_contains "${MATRIX}" $'TST011\tmodule and package syntax\timplemented'
+require_contains "${MATRIX}" $'TST012\tmodule resolver and package graph\timplemented'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
 
 printf 'TEST_COVERAGE implemented=%s partial=%s open=%s total=%s\n' \

@@ -13,15 +13,15 @@ A test passing because a dependency, device, backend or platform was skipped is 
 
 ## Audit status at PR73
 
-PR72 is merged and established the beta-0.3 executable semantic oracle across interpreter, `lli` and native execution. PR73 adds continuous adversarial safety evidence around that oracle rather than replacing deterministic tests.
+The current test foundation is substantially stronger after PR72 semantic equivalence and PR73 safety hardening, but it is not sufficient for an enterprise production-ready claim.
 
-The 27-area production test matrix now records:
+The 27-area production test matrix records:
 
 - 12 implemented areas,
 - 6 partial areas,
 - 9 open areas.
 
-PR73 closes the current Ubuntu safety blockers for full sanitizer execution, continuous coverage-guided fuzzing and concurrency race detection. Evidence includes stage-specific scanner/parser/semantic/module/lowering fuzz corpora, ASan/LSan/UBSan-instrumented compiler execution, sanitized PR72 semantic differential coverage, a scheduled extended fuzz workflow, and ThreadSanitizer instrumentation of the runtime implementation plus a dedicated concurrent stress client.
+PR72 closed the beta-0.3 executable semantic contract for the claimed core and established interpreter/`lli`/native differential behavior. PR73 closes the existing sanitizer, continuous-fuzzing and concurrency-race blockers for that baseline with staged libFuzzer targets, ASan/LSan/UBSan runtime stress and an actual TSan race-stress build. PR73 does not convert later platform, release, security, backend, MLIR, performance or energy work into completed evidence.
 
 Strong current coverage exists for:
 
@@ -30,15 +30,15 @@ Strong current coverage exists for:
 3. deterministic manifest/resolver/lockfile behavior,
 4. bounded malformed-input handling,
 5. source-aware coded diagnostics,
-6. defined beta-0.3 semantic validation,
+6. executable beta-0.3 semantic validation,
 7. interpreter/LLVM/native differential correctness,
-8. imported function execution equivalence,
-9. scanner/parser/semantic/module/lowering coverage-guided fuzzing,
-10. ASan/LSan/UBSan safety execution,
-11. TSan runtime concurrency stress,
-12. runtime ABI symbol stability,
+8. scanner/parser/module/semantic/lowering coverage-guided fuzzing,
+9. ASan/LSan/UBSan compiler and runtime stress,
+10. ThreadSanitizer-backed runtime race stress,
+11. runtime ABI symbol stability,
+12. serialized runtime concurrency behavior,
 13. Linux packaging consumers,
-14. observability adapters,
+14. Prometheus and OTLP adapter behavior,
 15. fallback honesty and unavailable-backend behavior,
 16. candidate C3-ECO schemas and claim safety,
 17. cancellation-safe event-specific CI status publication.
@@ -46,21 +46,20 @@ Strong current coverage exists for:
 Production-critical gaps remain for:
 
 1. compiler/LLVM/architecture/OS portability,
-2. reproducible release artifacts,
-3. cross-release ABI and installed-consumer qualification,
-4. signed release publication,
-5. external vulnerability, SAST and license-policy enforcement,
-6. hardened container/Kubernetes deployment,
-7. formatter/linter/LSP correctness,
-8. real execution qualification for every production-supported backend and CPU/GPU/TPU/NPU execution tier,
-9. complete C3-ECO authority evidence,
-10. production MLIR generation and lowering,
-11. measured energy and performance comparison with equivalent Python workloads,
-12. a zero-skip release-candidate blocker gate.
+2. reproducible release artifacts and cross-release ABI/install consumers,
+3. signed protected releases,
+4. external vulnerability, SAST and license-policy enforcement,
+5. hardened container/Kubernetes deployment,
+6. formatter/linter/LSP correctness,
+7. real execution qualification for every production-supported backend and CPU/GPU/TPU/NPU execution tier,
+8. complete C3-ECO language/scoring/auditor evidence,
+9. production MLIR generation and lowering,
+10. measured energy and performance comparison with equivalent Python workloads,
+11. a zero-skip release-candidate blocker gate.
 
 ## Required test layers for every implementation PR
 
-Every implementation PR from PR70 and PR72 through PR86 must include all applicable layers below. PR71 is the already-merged CI-hygiene correction. A PR description must explicitly mark non-applicable layers and explain why.
+Every remaining implementation PR through PR86 must include all applicable layers below. A PR description must explicitly mark non-applicable layers and explain why.
 
 | Layer | Required evidence |
 | --- | --- |
@@ -89,26 +88,11 @@ Every implementation PR from PR70 and PR72 through PR86 must include all applica
 9. No CI gate may disable LeakSanitizer, weaken assertions, use `continue-on-error` for a mandatory check or turn a production test into an unconditional skip.
 10. Module/package tests prove path confinement, graph determinism, lock freshness and false-success rejection, not only parser acceptance.
 11. Deterministic compiler/test failures are fixed, not automatically retried to obtain a green result.
-12. Fuzz failures record the seed and minimized reproducer.
+12. Fuzz failures record the target, seed and crash artifact; minimized reproductions are promoted to regression corpora where practical.
 13. Release qualification includes at least one clean no-cache build.
 14. CPU/GPU/TPU/NPU detection is not execution evidence; execution readiness additionally requires compatible runtime/SDK, model, precision, memory and policy.
 15. Final release qualification executes mandatory tests from a clean checkout and installed-package consumer.
-16. Ordinary parser, semantic or module rejection is not a fuzz failure; sanitizer findings, crashes, signal exits and hangs are.
-17. TSan evidence counts only when the runtime implementation itself is instrumented.
-
-## PR73 safety profile
-
-The mandatory pull-request safety profile includes:
-
-- the existing deterministic parser/module/semantic tests,
-- `make sanitize`, now including the PR72 semantic differential suite under the sanitized compiler,
-- `scripts/check_fuzz_safety.sh` with a fixed seed and bounded libFuzzer run count,
-- scanner, parser, semantic, module and lowering seed corpora,
-- ASan/LSan/UBSan failure detection,
-- `scripts/check_tsan_concurrency.sh`, which instruments both runtime objects and the stress executable,
-- retained `/tmp/shorthand_fuzz_artifacts/` crash inputs and test logs.
-
-The scheduled `fuzz-nightly` profile increases the mutation budget while preserving explicit bounds and artifact retention. Every newly fixed fuzz defect must add its minimized reproducer to the appropriate checked-in corpus.
+16. New parser, module, semantic, lowering or runtime C++ paths must join the appropriate PR73 sanitizer/fuzz/race contract instead of relying only on functional tests.
 
 ## CI target architecture
 
@@ -116,7 +100,7 @@ The scheduled `fuzz-nightly` profile increases the mutation budget while preserv
 
 ### Pull-request profile
 
-PR73 keeps the stable Ubuntu aggregate contexts while adding first-class fuzz and TSan gates. PR74 will split the monolithic job into a dependency DAG and add the platform/toolchain matrix without weakening these gates.
+PR73 preserves the existing mandatory Ubuntu gate while adding independent compiler-stage fuzz, runtime memory-sanitizer and runtime TSan checks. PR74 will split the monolithic job into a dependency DAG without changing the stable aggregate status contexts.
 
 Required PR evidence includes:
 
@@ -124,19 +108,21 @@ Required PR evidence includes:
 - base/module grammar conformance,
 - deterministic resolver/lock/multi-file codegen,
 - semantic differential execution,
-- coverage-guided sanitizer fuzz smoke,
-- ThreadSanitizer concurrency stress,
-- deterministic sanitizer suite,
-- Makefile, CMake and CTest parity,
+- staged libFuzzer ASan/LSan/UBSan smoke,
+- runtime ASan/LSan/UBSan stress,
+- ThreadSanitizer race stress,
+- legacy sanitizer corpus,
+- Makefile, CMake and CTest surfaces,
 - structured failure artifacts.
 
 ### Scheduled profile
 
-- extended scanner/parser/module/semantic/lowering fuzzing with persisted corpora,
-- TSan runtime race stress,
-- future scale/platform/backend/hardware qualification as later PRs land,
+- scanner/parser/module/semantic/lowering fuzzing with persisted corpora and recorded seeds,
+- TSan runtime suite,
+- extended 1k+ module and large-program stress,
+- platform/backend/hardware runners,
 - dependency/container vulnerability rescans,
-- runtime soak tests.
+- runtime soak and concurrency tests.
 
 ### Release-candidate profile
 
@@ -163,3 +149,9 @@ ShortHand may claim enterprise production readiness only when:
 6. reproducible and signed artifacts are produced,
 7. measured performance and energy evidence supports any published claim,
 8. the final PR86 RC gate reports zero open production blockers.
+
+## Historical strategy audit anchors
+
+The current strategy is `2026-08-11-pr73`. The following exact prior version marker is retained only because older production-readiness guards verify that the earlier strategy milestone has not disappeared:
+
+- compiler_test_strategy_version: 2026-08-09-pr70

@@ -13,17 +13,17 @@ PLAN_FILES=(
   "docs/ci_pipeline_architecture.md"
   "docs/production_readiness_pr_plan.md"
   "docs/execution_semantics_beta_0_3.md"
-  "docs/fuzz_sanitizer_concurrency.md"
+  "docs/fuzz_sanitizer_race_hardening.md"
   "tests/coverage/compiler_test_coverage_matrix.tsv"
   "docs/module_import_package_syntax.md"
   "docs/module_resolution_and_lockfile.md"
   "tests/conformance/module_matrix_beta_0_3.tsv"
   "scripts/check_module_resolution.sh"
   "scripts/check_semantic_differential.sh"
-  "scripts/check_fuzz_safety.sh"
-  "scripts/check_tsan_concurrency.sh"
+  "scripts/check_fuzz_sanitizers.sh"
+  "scripts/check_runtime_memory_sanitizer.sh"
+  "scripts/check_thread_sanitizer.sh"
   "scripts/check_ci_status_hygiene.sh"
-  ".github/workflows/fuzz-nightly.yml"
 )
 
 for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
@@ -49,8 +49,9 @@ required_status_terms=(
   "Deterministic module resolver and multi-file codegen"
   "Compiler test strategy and coverage matrix"
   "Cross-mode semantic equivalence"
-  "Coverage-guided fuzzing"
-  "ThreadSanitizer"
+  "Full sanitizer coverage"
+  "Continuous fuzzing"
+  "Concurrency and race detection"
   "Cross-platform reproducibility"
   "Measured ShortHand versus Python energy evidence"
   "Zero-skip production RC gate"
@@ -75,9 +76,11 @@ for anchor in \
   '12 implemented, 6 partial and 9 open' \
   'PR72 is merged' \
   'PR73 is the active safety-hardening candidate' \
-  'Coverage-guided fuzzing | Implemented' \
-  'ThreadSanitizer concurrency race detection | Implemented' \
-  'Cross-platform portability | Open' \
+  'Cross-mode semantic equivalence | Implemented for defined beta-0.3 core contract' \
+  'Full sanitizer coverage | Implemented for current baseline' \
+  'Continuous fuzzing | Implemented for current compiler stages' \
+  'Concurrency and race detection | Implemented for current runtime baseline' \
+  'PR74 adds declared platform/toolchain matrix' \
   'live production qualification remains PR80'; do
   if ! grep -Fiq "${anchor}" "${STATUS_FILE}"; then
     echo "error: feature implementation status missing PR73 anchor: ${anchor}" >&2
@@ -95,8 +98,13 @@ grep -Fq 'execution_semantics_contract: beta-0.3-pr72-v1' docs/execution_semanti
   exit 1
 }
 
-grep -Fq 'fuzz_safety_contract_version: 1.0.0' docs/fuzz_sanitizer_concurrency.md || {
-  echo "error: PR73 fuzz/sanitizer/race contract is missing" >&2
+grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md || {
+  echo "error: PR73 fuzz/sanitizer contract is missing" >&2
+  exit 1
+}
+
+grep -Fq 'PASS deterministic module resolver, package lock and multi-file codegen gate' scripts/check_module_resolution.sh || {
+  echo "error: module resolver executable gate missing" >&2
   exit 1
 }
 
@@ -105,13 +113,18 @@ grep -Fq 'PASS cross-mode semantic differential execution gate' scripts/check_se
   exit 1
 }
 
-grep -Fq 'PASS coverage-guided sanitizer fuzz gate' scripts/check_fuzz_safety.sh || {
-  echo "error: fuzz sanitizer executable gate missing" >&2
+grep -Fq 'PASS libFuzzer ASan LSan UBSan compiler-stage gate' scripts/check_fuzz_sanitizers.sh || {
+  echo "error: compiler-stage fuzz sanitizer gate missing" >&2
   exit 1
 }
 
-grep -Fq 'PASS ThreadSanitizer concurrency gate' scripts/check_tsan_concurrency.sh || {
-  echo "error: ThreadSanitizer executable gate missing" >&2
+grep -Fq 'PASS runtime ASan LSan UBSan stress gate' scripts/check_runtime_memory_sanitizer.sh || {
+  echo "error: runtime memory sanitizer gate missing" >&2
+  exit 1
+}
+
+grep -Fq 'PASS mandatory ThreadSanitizer race gate' scripts/check_thread_sanitizer.sh || {
+  echo "error: ThreadSanitizer race gate missing" >&2
   exit 1
 }
 
@@ -131,11 +144,13 @@ unsupported_claim_patterns=(
   "all production blockers are complete"
   "ShortHand uses less energy than Python"
   "all interpreter and compiled module execution is equivalent"
+  "fuzzing proves the compiler has no bugs"
+  "ThreadSanitizer proves the runtime has no races"
 )
 
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness, equivalence or energy claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness, equivalence, safety or energy claim: ${pattern}" >&2
     exit 1
   fi
 done

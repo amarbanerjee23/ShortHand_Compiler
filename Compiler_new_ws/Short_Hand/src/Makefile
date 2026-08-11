@@ -168,7 +168,7 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o *.bc *.ir *.o
 
@@ -201,6 +201,12 @@ test-conformance: short_hand runtime_lib
 test-semantic-differential: short_hand runtime_lib
 	SHORTHAND_BIN=$(BIN) SHORTHAND_RUNTIME_LIB=$(SHORTHAND_RUNTIME_LIB) bash ../../../scripts/check_semantic_differential.sh
 
+test-fuzz-sanitizers: short_hand
+	bash ../../../scripts/check_fuzz_sanitizers.sh
+
+test-tsan:
+	bash ../../../scripts/check_thread_sanitizer.sh
+
 test-llvm: short_hand
 	bash ../../../tests/run_language_tests.sh llvm
 
@@ -213,7 +219,7 @@ test-ai-app: ai_app
 sanitize:
 	$(MAKE) clean
 	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool runtime_lib
-	bash ../../../tests/run_language_tests.sh sanitize
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \
