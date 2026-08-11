@@ -71,7 +71,6 @@ for anchor in \
   'check_cmake_ctest_parity.sh' \
   'check_reproducible_builds.sh' \
   'check_installed_consumer_cmake.sh' \
-  'test_external_runtime_source_guard_negative.sh' \
   'Publish event-specific CI status' \
   'ci / ubuntu (%s)'; do
   require_contains "${CI}" "${anchor}"
@@ -100,6 +99,8 @@ require_contains "${ROOT_DIR}/scripts/apply_external_runtime_to_ir_source.sh" 'P
 require_contains "${ROOT_DIR}/scripts/check_cmake_ctest_parity.sh" 'PASS CMake CTest parity gate'
 require_contains "${ROOT_DIR}/scripts/check_reproducible_builds.sh" 'PASS clean reproducible build gate'
 require_contains "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" 'PASS installed ShortHand CMake consumer gate'
+
+bash "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh"
 
 # The coverage matrix must keep these PR75-owned areas explicit. During branch
 # development they may be partial; a merge-ready PR promotes them only when the
