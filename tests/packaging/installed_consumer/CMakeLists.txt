@@ -17,6 +17,14 @@ add_executable(runtime_shared runtime_consumer.cpp)
 target_link_libraries(runtime_shared PRIVATE ShortHand::runtime_shared)
 add_test(NAME installed_runtime_shared COMMAND runtime_shared)
 
+add_executable(abi_v1_static abi_v1_consumer.cpp)
+target_link_libraries(abi_v1_static PRIVATE ShortHand::runtime)
+add_test(NAME installed_abi_v1_static COMMAND abi_v1_static)
+
+add_executable(abi_v1_shared abi_v1_consumer.cpp)
+target_link_libraries(abi_v1_shared PRIVATE ShortHand::runtime_shared)
+add_test(NAME installed_abi_v1_shared COMMAND abi_v1_shared)
+
 add_executable(bridge_static bridge_consumer.cpp)
 target_link_libraries(bridge_static PRIVATE ShortHand::ai_bridge)
 add_test(NAME installed_bridge_static COMMAND bridge_static)
