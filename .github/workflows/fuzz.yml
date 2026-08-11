@@ -47,6 +47,9 @@ jobs:
           SHORTHAND_FUZZ_ARTIFACT_DIR: /tmp/shorthand_fuzz_artifacts
         run: bash scripts/check_fuzz_sanitizers.sh
 
+      - name: Runtime ASan LSan UBSan extended stress
+        run: bash scripts/check_runtime_memory_sanitizer.sh
+
       - name: ThreadSanitizer extended race stress
         run: bash scripts/check_thread_sanitizer.sh
 
@@ -59,5 +62,7 @@ jobs:
             /tmp/shorthand_fuzz_build_*.out
             /tmp/shorthand_fuzz_build_*.err
             /tmp/shorthand_fuzz_artifacts/
+            /tmp/shorthand_runtime_memory_sanitizer.out
+            /tmp/shorthand_runtime_memory_sanitizer.err
             /tmp/shorthand_tsan_runtime.out
             /tmp/shorthand_tsan_runtime.err
