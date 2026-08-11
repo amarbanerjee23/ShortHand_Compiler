@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstdlib>
+#include <fcntl.h>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -131,8 +132,8 @@ void runCompilerInput(const std::uint8_t *data, std::size_t size) {
     const int exit_code = normalizedExitCode(status);
     const std::string log = readFile(log_path);
 
-    // Ordinary parse/semantic/module rejection is expected fuzz behavior. A sanitizer
-    // finding, signal-style exit, timeout, or launcher failure is never expected.
+    // Ordinary language rejection is expected fuzz behavior. A sanitizer finding,
+    // signal-style exit, timeout, or launcher failure is never expected.
     if (containsFailureMarker(log) || exit_code == 124 || exit_code == 125 ||
         exit_code == 126 || exit_code == 127 || exit_code >= 128) {
         fuzzFailure();
