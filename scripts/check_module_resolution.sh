@@ -80,7 +80,9 @@ grep -Fq 'root value 7' "${WORK_DIR}/run.out"
 )
 
 "${SHORT}" "${NATIVE_APP}" lock >"${WORK_DIR}/native-lock.out" 2>"${WORK_DIR}/native-lock.err"
-expect_failure SHD2030 "${SHORT}" "${NATIVE_APP}" run
+"${SHORT}" "${NATIVE_APP}" run >"${WORK_DIR}/interpreter-import-run.out" 2>"${WORK_DIR}/interpreter-import-run.err"
+grep -Fq 'imported helper' "${WORK_DIR}/interpreter-import-run.out"
+grep -Fq 'native root' "${WORK_DIR}/interpreter-import-run.out"
 (
   cd "${WORK_DIR}/valid"
   "${SHORT}" "${NATIVE_APP}" compile-native >"${WORK_DIR}/native-compile.out" 2>"${WORK_DIR}/native-compile.err"
@@ -88,6 +90,11 @@ expect_failure SHD2030 "${SHORT}" "${NATIVE_APP}" run
 )
 grep -Fq 'imported helper' "${WORK_DIR}/native-run.out"
 grep -Fq 'native root' "${WORK_DIR}/native-run.out"
+cmp -s "${WORK_DIR}/interpreter-import-run.out" "${WORK_DIR}/native-run.out" || {
+  echo "error: imported-function interpreter/native output differs" >&2
+  diff -u "${WORK_DIR}/interpreter-import-run.out" "${WORK_DIR}/native-run.out" >&2 || true
+  exit 1
+}
 
 # A changed source invalidates the exact graph fingerprint.
 cp -R "${FIXTURE}" "${WORK_DIR}/stale"
