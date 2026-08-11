@@ -1,0 +1,5 @@
+int numerator,denominator,result;
+numerator = 7;
+denominator = 0;
+result = numerator / denominator;
+print "result", result;
