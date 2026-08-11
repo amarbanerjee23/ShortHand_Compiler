@@ -235,3 +235,19 @@ The following strings are retained solely so earlier guarded milestones remain a
 - PR68 - Module/import/package design and parser scaffold.
 - PR79 - MLIR lowering passes and production RC gate
 - The historical PR67 recommendation is superseded by the test re-audit.
+
+### Superseded PR72 active-plan anchors
+
+The following exact strings describe the prior PR72 active plan and are retained only for old-task stability checks. They are not current state.
+
+- production_readiness_plan_version: 2026-08-11-pr72
+- LAST_COMPLETED_PR: 70
+- CURRENT_IMPLEMENTATION_PR: 72
+- NEXT_IMPLEMENTATION_PR_AFTER_PR72: 73
+- PR72 - Cross-mode semantic correctness and differential execution suite is IN PROGRESS.
+- after PR72 is successfully merged, 14 implementation PRs remain.
+- remaining_planned_prs_after_pr72: 14
+- remaining_planned_implementation_prs_pr73_through_pr86: 14
+- Next recommended PR after PR #72:
+- PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening.
+- | PR72 - Cross-mode semantic correctness and differential execution suite | IN PROGRESS
