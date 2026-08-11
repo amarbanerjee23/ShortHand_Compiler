@@ -18,6 +18,7 @@
 #include <llvm/Config/llvm-config.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -42,6 +43,12 @@ private:
     int is_expression;
     std::string str_;
     std::map<std::string, llvm::BasicBlock*> goto_labels;
+    std::vector<llvm::BasicBlock*> break_targets;
+    std::vector<llvm::BasicBlock*> continue_targets;
+
+    void emitRuntimeFailureIf(llvm::Value *condition,
+                              const std::string &code,
+                              const std::string &message);
 
     static const int ERROR = 0;
     static const int PLUS = 1;
@@ -91,7 +98,13 @@ public:
     int visit(AST_LABEL_RULE * label_statement);
     int visit(AST_GREENAI_REPORT_RULE * greenai_report);
     int visit(AST_AI_INFER_RULE * ai_infer);
-    int visit(AST_MODEL_DECLARATION *); int visit(AST_TENSOR_DECLARATION *); int visit(AST_GREENAI_CONTRACT *); int visit(AST_GREENAI_MEASUREMENT *); int visit(AST_INFER_STATEMENT *); int visit(AST_CONTINUE *); int visit(AST_RETURN_STATEMENT *);
+    int visit(AST_MODEL_DECLARATION *);
+    int visit(AST_TENSOR_DECLARATION *);
+    int visit(AST_GREENAI_CONTRACT *);
+    int visit(AST_GREENAI_MEASUREMENT *);
+    int visit(AST_INFER_STATEMENT *);
+    int visit(AST_CONTINUE *);
+    int visit(AST_RETURN_STATEMENT *);
 
     int visit(AST_BINARY_EXPRESSION_RULE * binary_operator_expression);
     int visit(AST_UNARY_EXPRESSION_RULE * unary_operator_expression);
@@ -100,7 +113,9 @@ public:
     int visit(AST_ARRAY_VARIABLE * variable_array_int);
     int visit(AST_LITERAL * int_literal);
     int visit(AST_STRING_LITERAL * string_literal);
-    int visit(AST_BOOL_LITERAL *); int visit(AST_FLOAT_LITERAL *); int visit(AST_FUNCTION_CALL_EXPRESSION *);
+    int visit(AST_BOOL_LITERAL *);
+    int visit(AST_FLOAT_LITERAL *);
+    int visit(AST_FUNCTION_CALL_EXPRESSION *);
 };
 
 #endif

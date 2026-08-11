@@ -41,6 +41,7 @@ required_files=(
   scripts/check_runtime_production_packaging.sh
   scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
+  scripts/check_semantic_differential.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
   scripts/check_backend_failure_mode_matrix.sh
@@ -62,6 +63,8 @@ required_files=(
   docs/feature_implementation_status.md
   docs/pr_task_stability_strategy.md
   docs/production_readiness_pr_plan.md
+  docs/production_readiness_history.md
+  docs/execution_semantics_beta_0_3.md
   docs/language_grammar_ebnf.md
   docs/language_spec.md
   docs/language_versioning_and_conformance.md
@@ -115,6 +118,7 @@ for file in "${required_files[@]}"; do require_file "${file}"; done
 
 for task in \
   'Strict language validation' \
+  'Semantic differential execution' \
   'Smoke tests' \
   'Feature plan status check' \
   'Enterprise hardening check' \
@@ -132,7 +136,8 @@ for anchor in \
   'Runtime observability implementation' \
   'Module/import/package model' \
   'Production blockers' \
-  'Compiled-code metadata/runtime lowering'; do
+  'Compiled-code metadata/runtime lowering' \
+  'Cross-mode semantic equivalence'; do
   require_contains docs/feature_implementation_status.md "${anchor}"
 done
 
@@ -156,6 +161,8 @@ require_contains scripts/check_language_correctness.sh 'check_runtime_abi_api_st
 require_contains scripts/check_language_correctness.sh 'check_runtime_state_thread_safety.sh'
 require_contains scripts/check_backend_compatibility_matrix.sh 'check_hardware_capability_routing.sh'
 require_contains scripts/check_backend_compatibility_matrix.sh 'check_backend_failure_mode_matrix.sh'
+require_contains scripts/check_semantic_differential.sh 'PASS cross-mode semantic differential execution gate'
+require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-semantic-differential'
 
 shell_files=(
   scripts/check_feature_plan_status.sh
@@ -169,6 +176,7 @@ shell_files=(
   scripts/check_runtime_production_packaging.sh
   scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
+  scripts/check_semantic_differential.sh
   scripts/check_c3eco_claims_and_schema.sh
   scripts/check_mlir_foundation.sh
   scripts/check_release_supply_chain.sh
@@ -198,6 +206,10 @@ for script in "${shell_files[@]}"; do require_bash_syntax "${script}"; done
 require_contains docs/pr_task_stability_strategy.md 'Old-task contract'
 require_contains docs/pr_task_stability_strategy.md 'New-gate contract'
 
+# Old roadmap/task anchors are immutable history, not active plan state. Moving
+# them into a dedicated history document keeps the old-task contract strict
+# without forcing stale CURRENT_IMPLEMENTATION_PR text into today's roadmap.
+require_contains docs/production_readiness_history.md 'production_readiness_history_contract: immutable-milestone-anchors-v1'
 for anchor in \
   'production_readiness_plan_version: 2026-08-02-pr62' \
   'LAST_COMPLETED_PR: 62' \
@@ -218,6 +230,17 @@ for anchor in \
   'remaining_planned_prs_after_pr62: 17' \
   'PR67 - Parser robustness and negative corpus hardening' \
   'PR79 - MLIR lowering passes and production RC gate'; do
+  require_contains docs/production_readiness_history.md "${anchor}"
+done
+
+for anchor in \
+  'production_readiness_plan_version: 2026-08-11-pr72' \
+  'CURRENT_IMPLEMENTATION_PR: 72' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR72: 73' \
+  '| PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED' \
+  '| PR71 - CI status publication hygiene | MERGED' \
+  '| PR72 - Cross-mode semantic correctness and differential execution suite | IN PROGRESS' \
+  'remaining_planned_implementation_prs_pr73_through_pr86: 14'; do
   require_contains docs/production_readiness_pr_plan.md "${anchor}"
 done
 require_contains scripts/check_production_readiness_pr_plan.sh 'PASS production readiness PR plan gate'
@@ -230,6 +253,8 @@ require_contains docs/language_objectives.md 'shorthand.language.objectives.vers
 require_contains docs/language_objectives.md 'production_claim: false'
 require_contains docs/language_objectives.md 'Honest execution and fallback'
 require_contains docs/language_objectives.md 'First-class Green AI evidence'
+require_contains docs/execution_semantics_beta_0_3.md 'execution_semantics_contract: beta-0.3-pr72-v1'
+require_contains docs/execution_semantics_beta_0_3.md 'production_claim: false'
 require_contains tests/conformance/manifest.txt 'version | shorthand.language.version | beta-0.1 | Current beta language contract marker.'
 
 for anchor in \

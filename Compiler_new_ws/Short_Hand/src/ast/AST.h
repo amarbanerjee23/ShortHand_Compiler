@@ -6,33 +6,21 @@
 
 using namespace std;
 
-// main AST node
 class AST_NODE;
 class AST_PROGRAM;
-
-// declaration block nodes
 class AST_DATA_DECLARATION_BLOCK;
 class AST_DATA_DECLARATION_RULE;
 class AST_DATA_DECLARATION_VARIABLE;
 class AST_DATA_DECLARATION_SIMPLE;
 class AST_DATA_DECLARATION_ARRAY;
-
-//functions
 class AST_FUNCTION_LIST_RULE;
 class AST_FUNCTION_RULE;
-// code block node
 class AST_LOGIC_BLOCK;
-
-// a statement node
 class AST_STATEMENT_RULE;
-
-
-// all statements nodes derived from AST_statement
 class AST_EXPRESSION_STATEMENT_RULE;
 class AST_ASSIGNMENT_RULE;
 class AST_STATEMENTS_BLOCK;
 class AST_IF_STATEMENT;
-
 class AST_FUNCTION_CALL_RULE;
 class AST_IF_ELSE_STATEMENT;
 class AST_FOR_LOOP_STATEMENT_RULE;
@@ -44,14 +32,19 @@ class AST_LABEL_RULE;
 class AST_BREAK;
 class AST_GREENAI_REPORT_RULE;
 class AST_AI_INFER_RULE;
-class AST_MODEL_DECLARATION; class AST_TENSOR_DECLARATION; class AST_GREENAI_CONTRACT; class AST_GREENAI_MEASUREMENT; class AST_INFER_STATEMENT; class AST_CONTINUE; class AST_RETURN_STATEMENT; class AST_BOOL_LITERAL; class AST_FLOAT_LITERAL; class AST_FUNCTION_CALL_EXPRESSION;
-
-
-// expression node and derived expressions nodes
+class AST_MODEL_DECLARATION;
+class AST_TENSOR_DECLARATION;
+class AST_GREENAI_CONTRACT;
+class AST_GREENAI_MEASUREMENT;
+class AST_INFER_STATEMENT;
+class AST_CONTINUE;
+class AST_RETURN_STATEMENT;
+class AST_BOOL_LITERAL;
+class AST_FLOAT_LITERAL;
+class AST_FUNCTION_CALL_EXPRESSION;
 class AST_EXPRESSION_RULE;
 class AST_BINARY_EXPRESSION_RULE;
 class AST_UNARY_EXPRESSION_RULE;
-
 class AST_VARIABLE_RULE;
 class AST_SIMPLE_VARIABLE;
 class AST_ARRAY_VARIABLE;
@@ -59,23 +52,30 @@ class AST_LITERAL;
 class AST_STRING_LITERAL;
 
 enum class ShortType {
-	Int = 1,
-	String = 2,
-	Void = 3,
-	Boolean = 4,
-	Float = 5
+    Int = 1,
+    String = 2,
+    Void = 3,
+    Boolean = 4,
+    Float = 5
 };
 
+struct AST_TYPED_SCALAR_DECLARATION {
+    string name;
+    ShortType type = ShortType::Int;
+};
 
-// union for TTSTYPE
+struct AST_TYPED_ARRAY_DECLARATION {
+    string name;
+    int size = 0;
+    ShortType type = ShortType::Int;
+};
+
 union _NODE_
 {
     int int_val;
     double float_val;
     char * string_val;
-    //AST_node * node;
     AST_PROGRAM * program;
-
     AST_DATA_DECLARATION_BLOCK * decl_block;
     AST_DATA_DECLARATION_RULE * decl_statement;
     AST_DATA_DECLARATION_VARIABLE * decl_variable;
@@ -84,8 +84,6 @@ union _NODE_
     AST_FUNCTION_LIST_RULE * functions;
     AST_FUNCTION_RULE * function;
     AST_LOGIC_BLOCK * code_block;
-
-
     AST_STATEMENT_RULE * statement;
     AST_FUNCTION_CALL_RULE * function_called;
     AST_ASSIGNMENT_RULE * assignment_statement;
@@ -101,35 +99,35 @@ union _NODE_
     AST_LABEL_RULE * label_statement;
     AST_GREENAI_REPORT_RULE * greenai_report;
     AST_AI_INFER_RULE * ai_infer;
-    AST_MODEL_DECLARATION * model_decl; AST_TENSOR_DECLARATION * tensor_decl; AST_GREENAI_CONTRACT * greenai_contract; AST_GREENAI_MEASUREMENT * greenai_measure; AST_INFER_STATEMENT * infer_statement; AST_RETURN_STATEMENT * return_statement;
-
+    AST_MODEL_DECLARATION * model_decl;
+    AST_TENSOR_DECLARATION * tensor_decl;
+    AST_GREENAI_CONTRACT * greenai_contract;
+    AST_GREENAI_MEASUREMENT * greenai_measure;
+    AST_INFER_STATEMENT * infer_statement;
+    AST_RETURN_STATEMENT * return_statement;
     AST_EXPRESSION_RULE * expression;
     AST_BINARY_EXPRESSION_RULE * binary_operator_expression;
     AST_UNARY_EXPRESSION_RULE * unary_operator_expression;
-
     AST_VARIABLE_RULE * variable;
     AST_SIMPLE_VARIABLE * variable_single_int;
     AST_ARRAY_VARIABLE * variable_array_int;
     AST_LITERAL * int_literal;
     AST_STRING_LITERAL * string_literal;
-    AST_BOOL_LITERAL * bool_literal; AST_FLOAT_LITERAL * float_literal;
-
+    AST_BOOL_LITERAL * bool_literal;
+    AST_FLOAT_LITERAL * float_literal;
     ShortType type;
 };
 typedef union _NODE_ YYSTYPE;
 #define YYSTYPE_IS_DECLARED 1
 
-
-
 class Visitor
 {
 public:
-    virtual ~Visitor(){};
+    virtual ~Visitor(){}
     virtual int visit(AST_PROGRAM *) = 0;
     virtual int visit(AST_DATA_DECLARATION_BLOCK *) = 0;
     virtual int visit(AST_FUNCTION_LIST_RULE*) = 0;
     virtual int visit(AST_LOGIC_BLOCK *) = 0;
-
     virtual int visit(AST_EXPRESSION_STATEMENT_RULE *) = 0;
     virtual int visit(AST_FUNCTION_RULE *) = 0;
     virtual int visit(AST_FUNCTION_CALL_RULE *) = 0;
@@ -153,10 +151,8 @@ public:
     virtual int visit(AST_INFER_STATEMENT *) = 0;
     virtual int visit(AST_CONTINUE *) = 0;
     virtual int visit(AST_RETURN_STATEMENT *) = 0;
-
     virtual int visit(AST_BINARY_EXPRESSION_RULE *) = 0;
     virtual int visit(AST_UNARY_EXPRESSION_RULE *) = 0;
-
     virtual int visit(AST_SIMPLE_VARIABLE *) = 0;
     virtual int visit(AST_ARRAY_VARIABLE *) = 0;
     virtual int visit(AST_LITERAL *) = 0;
@@ -166,17 +162,13 @@ public:
     virtual int visit(AST_FUNCTION_CALL_EXPRESSION *) = 0;
 };
 
-
-
-// main AST_node
 class AST_NODE
 {
 public:
     virtual int accept(Visitor &) = 0;
-    virtual ~AST_NODE(){};
+    virtual ~AST_NODE(){}
 };
 
-// program node
 class AST_PROGRAM : public AST_NODE
 {
 private:
@@ -190,10 +182,8 @@ public:
     void setProgramName(char *);
     AST_PROGRAM(AST_DATA_DECLARATION_BLOCK * decl_block, AST_FUNCTION_LIST_RULE * functions, AST_LOGIC_BLOCK * code_block);
     int accept(Visitor &);
-
 };
 
-// declaration block node
 class AST_DATA_DECLARATION_BLOCK : public AST_NODE
 {
 private:
@@ -201,27 +191,26 @@ private:
     friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     vector<string> single_ints;
     vector<pair<string, int> > array_ints;
+    vector<AST_TYPED_SCALAR_DECLARATION> typed_scalars;
+    vector<AST_TYPED_ARRAY_DECLARATION> typed_arrays;
 public:
     void push_back(string name);
     void push_back(string name, int size);
     void push_back(AST_DATA_DECLARATION_BLOCK * decl_block);
+    void setType(ShortType type);
     int accept(Visitor &);
-    virtual ~AST_DATA_DECLARATION_BLOCK(){
-    };
+    virtual ~AST_DATA_DECLARATION_BLOCK(){}
 };
 
 class AST_FUNCTION_LIST_RULE: public AST_NODE{
 private:
     friend class Interpreter; friend class IR_Generator;
     friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
-
     vector<AST_FUNCTION_RULE *> functions;
 public:
     void push_back(AST_FUNCTION_RULE * function);
     int accept(Visitor &);
-    virtual ~AST_FUNCTION_LIST_RULE(){
-    };
-
+    virtual ~AST_FUNCTION_LIST_RULE(){}
 };
 
 class AST_FUNCTION_RULE{
@@ -232,15 +221,11 @@ private:
     ShortType type;
     AST_DATA_DECLARATION_BLOCK * parameters;
     AST_STATEMENTS_BLOCK * block_statement;
-
 public:
-
     AST_FUNCTION_RULE(ShortType type,char * function_name,AST_DATA_DECLARATION_BLOCK * parameters, AST_STATEMENTS_BLOCK * block_statement);
     int accept(Visitor &);
 };
 
-
-// code block node
 class AST_LOGIC_BLOCK : public AST_NODE
 {
 private:
@@ -250,18 +235,10 @@ private:
 public:
     AST_LOGIC_BLOCK(AST_STATEMENTS_BLOCK * block_statement = NULL);
     int accept(Visitor &);
-    virtual ~AST_LOGIC_BLOCK(){};
+    virtual ~AST_LOGIC_BLOCK(){}
 };
 
-
-/*
-======================== all statements =======================
-main statement node and all other derived statements node except expression
-*/
-
-class AST_STATEMENT_RULE : public AST_NODE
-{
-};
+class AST_STATEMENT_RULE : public AST_NODE {};
 
 class AST_EXPRESSION_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
@@ -274,14 +251,12 @@ public:
     int accept(Visitor &);
 };
 
-
 class AST_FUNCTION_CALL_RULE: public AST_STATEMENT_RULE{
 private:
     friend class Interpreter; friend class IR_Generator;
     friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     char * function_name;
     AST_READ_RULE * parameters;
-
 public:
     AST_FUNCTION_CALL_RULE(char * function_name, AST_READ_RULE * parameters);
     int accept(Visitor &);
@@ -289,8 +264,14 @@ public:
 
 class AST_BREAK: public AST_STATEMENT_RULE{ public: int accept(Visitor &); };
 class AST_CONTINUE: public AST_STATEMENT_RULE{ public: int accept(Visitor &); };
-class AST_RETURN_STATEMENT: public AST_STATEMENT_RULE{ private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticAnalyzer; AST_EXPRESSION_RULE * expression; public: AST_RETURN_STATEMENT(AST_EXPRESSION_RULE * expression=nullptr); int accept(Visitor &); };
-
+class AST_RETURN_STATEMENT: public AST_STATEMENT_RULE{
+private:
+    friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
+    AST_EXPRESSION_RULE * expression;
+public:
+    AST_RETURN_STATEMENT(AST_EXPRESSION_RULE * expression=nullptr);
+    int accept(Visitor &);
+};
 
 class AST_ASSIGNMENT_RULE : public AST_STATEMENT_RULE
 {
@@ -339,7 +320,6 @@ public:
     AST_IF_ELSE_STATEMENT(AST_EXPRESSION_RULE * condition, AST_STATEMENTS_BLOCK * if_block, AST_STATEMENTS_BLOCK * else_block);
     int accept(Visitor &);
 };
-
 
 class AST_FOR_LOOP_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
@@ -393,13 +373,14 @@ public:
     int accept(Visitor &);
 };
 
-
 struct AST_PRINTABLE_ITEM
 {
     AST_STRING_LITERAL * string_literal;
-    AST_BOOL_LITERAL * bool_literal; AST_FLOAT_LITERAL * float_literal;
+    AST_BOOL_LITERAL * bool_literal;
+    AST_FLOAT_LITERAL * float_literal;
     AST_EXPRESSION_RULE * expression;
 };
+
 class AST_PRINT_RULE : public AST_STATEMENT_RULE
 {
 private:
@@ -412,7 +393,6 @@ public:
     int accept(Visitor &);
 };
 
-
 class AST_LABEL_RULE : public AST_STATEMENT_RULE
 {
 private:
@@ -423,7 +403,6 @@ public:
     AST_LABEL_RULE(string label);
     int accept(Visitor &);
 };
-
 
 struct QualityGuardrail { std::string metric; std::string op; double threshold; };
 struct ModelDeclarationData { std::string name, format, path, task, precision, input_shape, output_shape; std::vector<std::string> backend_preference; bool compact=false; bool has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
@@ -464,14 +443,7 @@ public:
     int accept(Visitor &);
 };
 
-
-/*
-==================== all expressions =======================
-main expression node and all derived expressions nodes
-*/
-class AST_EXPRESSION_RULE : public AST_NODE
-{
-};
+class AST_EXPRESSION_RULE : public AST_NODE {};
 
 class AST_BINARY_EXPRESSION_RULE : public AST_EXPRESSION_RULE
 {
@@ -490,7 +462,6 @@ public:
     static const int NOT_EQUAL = 11;
     static const int OR = 12;
     static const int AND = 13;
-
 private:
     friend class Interpreter; friend class IR_Generator;
     friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
@@ -501,7 +472,6 @@ public:
     AST_BINARY_EXPRESSION_RULE(AST_EXPRESSION_RULE * left, AST_EXPRESSION_RULE * right, string op_);
     int accept(Visitor &);
 };
-
 
 class AST_UNARY_EXPRESSION_RULE : public AST_EXPRESSION_RULE
 {
@@ -518,16 +488,11 @@ public:
     int accept(Visitor &);
 };
 
-
-
 class AST_VARIABLE_RULE : public AST_EXPRESSION_RULE
 {
-protected:
-
 public:
     string type;
     string variable_name;
-
 };
 
 class AST_SIMPLE_VARIABLE : public AST_VARIABLE_RULE
@@ -567,6 +532,7 @@ public:
 class AST_BOOL_LITERAL : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; bool value; public: AST_BOOL_LITERAL(bool value); int accept(Visitor &); };
 class AST_FLOAT_LITERAL : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; double value; public: AST_FLOAT_LITERAL(double value); int accept(Visitor &); };
 class AST_FUNCTION_CALL_EXPRESSION : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; std::string function_name; std::vector<AST_EXPRESSION_RULE*> arguments; public: AST_FUNCTION_CALL_EXPRESSION(std::string name, std::vector<AST_EXPRESSION_RULE*> args); int accept(Visitor &); };
+
 class AST_STRING_LITERAL : public AST_NODE
 {
 private:
@@ -577,8 +543,5 @@ public:
     AST_STRING_LITERAL(string string_literal);
     int accept(Visitor &);
 };
-
-typedef union _NODE_ YYSTYPE;
-#define YYSTYPE_IS_DECLARED 1
 
 #endif

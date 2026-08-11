@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
@@ -81,13 +82,8 @@ static int finish_with(int status) {
 
 static bool validate_regular_file_size(const char *path) {
     struct stat source_stat {};
-    if (stat(path, &source_stat) != 0 || !S_ISREG(source_stat.st_mode)) {
-        return true;
-    }
-    if (shorthand::parser::validateSourceBytes(
-            static_cast<std::uint64_t>(source_stat.st_size))) {
-        return true;
-    }
+    if (stat(path, &source_stat) != 0 || !S_ISREG(source_stat.st_mode)) return true;
+    if (shorthand::parser::validateSourceBytes(static_cast<std::uint64_t>(source_stat.st_size))) return true;
     shorthand::parser::emitParserGuardFailure(path, 1, 1, 1, 1);
     return false;
 }
@@ -116,9 +112,7 @@ static bool parse_source_unit(const std::string &path, ParsedSourceUnit &out) {
     const int return_val = yyparse();
     fclose(yyin);
     yyin = nullptr;
-    if (return_val || shorthand::parser::hasParserGuardFailure() || main_program == nullptr) {
-        return false;
-    }
+    if (return_val || shorthand::parser::hasParserGuardFailure() || main_program == nullptr) return false;
 
     out.source_path = path;
     out.program = main_program;
@@ -180,8 +174,7 @@ static bool load_module_graph(const ParsedSourceUnit &entry,
                     message = "import " + import_name + " resolved to source declaring module " + dependency_descriptor.module_name;
                     return false;
                 }
-                if (!resolver.validateUnitIdentity(
-                        dependency_descriptor, package_for(dependency), code, message))
+                if (!resolver.validateUnitIdentity(dependency_descriptor, package_for(dependency), code, message))
                     return false;
                 parsed_units[import_name] = dependency;
                 descriptors[import_name] = dependency_descriptor;
@@ -223,21 +216,20 @@ static bool validate_graph_symbols(const std::map<std::string, ParsedSourceUnit>
 
 static bool analyze_module_graph(const std::map<std::string, ParsedSourceUnit> &units,
                                  const std::map<std::string, shmod::ModuleUnitDescriptor> &descriptors,
-                                 const std::vector<std::string> &ordered_modules,
-                                 bool allow_external_calls) {
-    std::map<std::string, std::set<std::string>> function_names;
+                                 const std::vector<std::string> &ordered_modules) {
+    std::map<std::string, std::map<std::string, std::size_t>> function_arities;
     for (const std::string &module_name : ordered_modules)
-        function_names[module_name] = SemanticAnalyzer::functionNames(units.at(module_name).program);
+        function_arities[module_name] = SemanticAnalyzer::functionArities(units.at(module_name).program);
 
     bool failed = false;
     for (const std::string &module_name : ordered_modules) {
-        std::set<std::string> imported;
+        std::map<std::string, std::size_t> imported;
         for (const std::string &dependency : descriptors.at(module_name).imports) {
-            const std::set<std::string> &dependency_functions = function_names[dependency];
+            const auto &dependency_functions = function_arities[dependency];
             imported.insert(dependency_functions.begin(), dependency_functions.end());
         }
         SemanticAnalyzer semantic;
-        semantic.setImportedFunctions(imported, allow_external_calls);
+        semantic.setImportedFunctions(imported, true);
         semantic.diagnostics.setSourceFile(units.at(module_name).source_path);
         units.at(module_name).program->accept(semantic);
         if (semantic.diagnostics.hasDiagnostics()) semantic.diagnostics.print();
@@ -253,6 +245,17 @@ static void add_imported_programs(IR_Generator &generator,
     for (const std::string &module_name : ordered_modules) {
         if (module_name == entry_module) continue;
         generator.addLibraryProgram(units.at(module_name).program);
+    }
+}
+
+static void add_imported_programs(Interpreter &interpreter,
+                                  const std::map<std::string, ParsedSourceUnit> &units,
+                                  const std::vector<std::string> &ordered_modules,
+                                  const std::string &entry_module) {
+    for (const std::string &module_name : ordered_modules) {
+        if (module_name == entry_module) continue;
+        const ParsedSourceUnit &unit = units.at(module_name);
+        interpreter.addLibraryProgram(unit.program, unit.source_path);
     }
 }
 
@@ -353,8 +356,7 @@ int main(int argc, char *argv[])
             emit_module_error(path, module_code, module_message);
             return finish_with(1);
         }
-        if (!analyze_module_graph(parsed_units, descriptors, ordered_modules, mode != "run"))
-            return finish_with(1);
+        if (!analyze_module_graph(parsed_units, descriptors, ordered_modules)) return finish_with(1);
     } else {
         if (mode == "lock" || mode == "module-graph") {
             emit_module_error(path, diag::ModuleIdentityMismatch,
@@ -388,8 +390,9 @@ int main(int argc, char *argv[])
     }
     else if(mode == "run")
     {
-        Interpreter v;
-        entry.program->accept(v);
+        Interpreter interpreter(path);
+        if (has_module_contract) add_imported_programs(interpreter, parsed_units, ordered_modules, entry_module);
+        if (entry.program->accept(interpreter) != 0 || !interpreter.ok()) return finish_with(1);
     }
     else if(mode == "print")
     {
@@ -403,7 +406,7 @@ int main(int argc, char *argv[])
         if (has_module_contract) add_imported_programs(c, parsed_units, ordered_modules, entry_module);
         entry.program->accept(c);
         c.dump();
-        c.dumpBitcode();
+        if (!c.dumpBitcode()) return finish_with(1);
     }
     else if(mode == "compile-bc")
     {
@@ -411,7 +414,7 @@ int main(int argc, char *argv[])
         c.setModuleName(file_without_extension);
         if (has_module_contract) add_imported_programs(c, parsed_units, ordered_modules, entry_module);
         entry.program->accept(c);
-        c.dumpBitcode();
+        if (!c.dumpBitcode()) return finish_with(1);
     }
     else if(mode == "compile-native")
     {

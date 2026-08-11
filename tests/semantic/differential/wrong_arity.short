@@ -1,0 +1,7 @@
+int x,y;
+def int combine(int left,right;) {
+    return left;
+};
+x = 1;
+y = 2;
+combine(x);

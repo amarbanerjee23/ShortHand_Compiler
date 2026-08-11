@@ -1,0 +1,50 @@
+int i,total,step,countdown;
+bool flag;
+int values[3];
+def int helper(int x;) {
+    print "helper", x;
+    if x > 1 {
+        return x;
+    }
+    print "helper-fallthrough";
+    return 0;
+};
+def int nested(int x;) {
+    helper(x);
+    print "nested", x;
+    return x;
+};
+i = 0;
+total = 0;
+step = 1;
+flag = true;
+values[0] = 3;
+values[1] = 4;
+values[2] = 5;
+print "arith", values[2] + 2, values[2] - 2, values[2] * 2, values[2] / 2, values[2] % 2;
+print "cmp", 2 < 3, 3 > 2, 2 <= 2, 3 >= 3, 2 == 2, 2 != 3;
+print "logic", true && false, true || false;
+print "unary", -5;
+print "array", values[0], values[1], values[2];
+nested(values[1]);
+if flag {
+    print "flag", 1;
+} else {
+    print "flag", 0;
+}
+loop i = 0, step, 5 {
+    if i == 1 {
+        continue;
+    }
+    if i == 4 {
+        break;
+    }
+    total = total + i;
+}
+print "total", total;
+countdown = 3;
+loop countdown > 0 {
+    print "count", countdown;
+    countdown = countdown - 1;
+}
+print "done";
