@@ -1,0 +1,5 @@
+int value;
+value = 1;
+goto finish;
+finish:
+print "done";
