@@ -13,6 +13,7 @@ RESOLVER="${SRC_DIR}/module/ModuleResolver.cpp"
 DOC="${ROOT_DIR}/docs/diagnostics_coverage_matrix.md"
 MATRIX="${ROOT_DIR}/tests/diagnostics/diagnostics_coverage_matrix.tsv"
 TEST="${ROOT_DIR}/tests/diagnostics/test_diagnostics_coverage_matrix.sh"
+DIFFERENTIAL="${ROOT_DIR}/scripts/check_semantic_differential.sh"
 SHORT="${SHORTHAND_BIN:-${ROOT_DIR}/Compiler_new_ws/Short_Hand/build/short_hand}"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
@@ -29,11 +30,15 @@ require_contains() {
 
 for file in \
   "${HEADER}" "${DIAGNOSTICS_HEADER}" "${DIAGNOSTICS_SOURCE}" \
-  "${SEMANTIC}" "${PARSER}" "${MAIN}" "${RESOLVER}" "${DOC}" "${MATRIX}" "${TEST}" \
+  "${SEMANTIC}" "${PARSER}" "${MAIN}" "${RESOLVER}" "${DOC}" "${MATRIX}" "${TEST}" "${DIFFERENTIAL}" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/break_outside_loop.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/ai_incompatible_backend_warning.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/greenai_missing_functional_unit.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/lowering_undefined_function.short" \
+  "${ROOT_DIR}/tests/semantic/differential/unsupported_float.short" \
+  "${ROOT_DIR}/tests/semantic/differential/wrong_arity.short" \
+  "${ROOT_DIR}/tests/semantic/differential/division_by_zero.short" \
+  "${ROOT_DIR}/tests/semantic/differential/array_bounds.short" \
   "${ROOT_DIR}/tests/modules/invalid/duplicate_package.short" \
   "${ROOT_DIR}/tests/modules/invalid/duplicate_module.short" \
   "${ROOT_DIR}/tests/modules/invalid/duplicate_import_alias.short" \
@@ -47,13 +52,15 @@ done
 
 bash -n "${TEST}"
 bash -n "${ROOT_DIR}/scripts/check_module_resolution.sh"
+bash -n "${DIFFERENTIAL}"
 
 for anchor in \
-  'diagnostics_coverage_contract_version: 1.1.0' \
+  'diagnostics_coverage_contract_version: 1.2.0' \
   'diagnostics_coverage_status: stable_coded_stage_matrix_guarded' \
-  'covered_stages: parser, module, semantic, ai, greenai, lowering' \
+  'covered_stages: parser, module, semantic, ai, greenai, lowering, runtime' \
   'warning_delivery_status: printed_without_failing_successful_compilation' \
   'lowering_preflight_status: unresolved_calls_rejected_before_ir_generation' \
+  'runtime_failure_status: stable_code_cross_mode_differential_guarded' \
   'runtime_abi_change: none' \
   'production_claim_boundary: matrix_is_not_parser_recovery_or_localization_completion'; do
   require_contains "${DOC}" "${anchor}"
@@ -67,13 +74,15 @@ require_contains "${PARSER}" 'ParserExpectedAIInferBuiltin'
 require_contains "${PARSER}" 'ParserDuplicatePackageDeclaration'
 require_contains "${PARSER}" 'ParserModuleRequired'
 require_contains "${SEMANTIC}" 'LoweringUndefinedFunction'
-require_contains "${SEMANTIC}" 'ModuleExternalRunUnsupported'
-require_contains "${SEMANTIC}" 'diagnostics.errorAtNode('
+require_contains "${SEMANTIC}" 'SemanticUnsupportedExecutableType'
+require_contains "${SEMANTIC}" 'SemanticFunctionArityMismatch'
+require_contains "${SEMANTIC}" 'SemanticUndeclaredVariable'
 require_contains "${RESOLVER}" 'ModuleLockfileMismatch'
 require_contains "${MAIN}" 'resolver.verifyLockfile'
+require_contains "${DIFFERENTIAL}" 'PASS cross-mode semantic differential execution gate'
 require_contains "${TEST}" 'PASS diagnostics coverage matrix gate'
 
-printf '%s\n' 'parser' 'module' 'semantic' 'ai' 'greenai' 'lowering' | sort >"${WORK_DIR}/required-stages.txt"
+printf '%s\n' 'parser' 'module' 'semantic' 'ai' 'greenai' 'lowering' 'runtime' | sort >"${WORK_DIR}/required-stages.txt"
 printf '%s\n' 'error' 'warning' | sort >"${WORK_DIR}/required-severities.txt"
 
 grep -Eo 'SHD[0-9]{4}' "${HEADER}" | sort >"${WORK_DIR}/header-codes-all.txt"
@@ -94,8 +103,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 56 ]] || {
-  echo "error: expected 56 stable diagnostics after the PR70 module resolver expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 67 ]] || {
+  echo "error: expected 67 stable diagnostics after the PR72 semantic/runtime expansion" >&2
   exit 1
 }
 
@@ -106,10 +115,10 @@ awk -F '\t' '
   }
   NF != 7 { exit 11 }
   $1 !~ /^SHD[0-9][0-9][0-9][0-9]$/ { exit 12 }
-  $2 !~ /^(parser|module|semantic|ai|greenai|lowering)$/ { exit 13 }
+  $2 !~ /^(parser|module|semantic|ai|greenai|lowering|runtime)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 57) exit 16 }
+  END { if (NR != 68) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1
