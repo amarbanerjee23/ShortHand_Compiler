@@ -7,13 +7,15 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 class Interpreter : public Visitor
 {
-private:
+public:
     using IntValue = std::int32_t;
 
+private:
     struct Frame {
         std::map<std::string, IntValue> scalars;
         std::map<std::string, std::vector<IntValue>> arrays;
