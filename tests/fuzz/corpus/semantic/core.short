@@ -1,0 +1,18 @@
+int i,total,values[4];
+bool enabled;
+def int square(int x;) {
+    return x * x;
+};
+i = 0;
+total = 0;
+enabled = true;
+values[0] = 1;
+values[1] = 2;
+values[2] = 3;
+values[3] = 4;
+loop i = 0, 1, 4 {
+    if enabled && values[i] > 1 {
+        total = total + values[i];
+    }
+}
+print "sum", total;
