@@ -1,6 +1,7 @@
 # Fuzz, sanitizer and concurrency race hardening
 
 fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1
+runtime_memory_sanitizer_contract_version: shorthand.runtime.asan_lsan_ubsan.v1
 runtime_tsan_contract_version: shorthand.runtime.tsan.v1
 language_version_change: none
 runtime_abi_change: none
@@ -56,6 +57,12 @@ bash scripts/replay_fuzz_reproducer.sh lowering /path/to/crash-artifact --minimi
 
 A replay that never reaches the target is reported as a build/harness failure rather than being misreported as a reproduced compiler crash.
 
+## Runtime memory-sanitizer contract
+
+`scripts/check_runtime_memory_sanitizer.sh` compiles the actual `ShorthandRuntime.cpp` implementation, the public `RuntimeThreadSafeFacade.cpp` facade and the shared runtime stress workload with ASan and UBSan. LeakSanitizer is mandatory through `detect_leaks=1`, recovery is disabled and sanitizer markers are fatal even if a process were to return zero.
+
+The stress overlaps registration, inference, counters, observability snapshots, C-string snapshot lifetime and runtime reset. This gives the current runtime baseline direct memory-safety/undefined-behavior evidence instead of relying only on compiler fuzz targets.
+
 ## ThreadSanitizer contract
 
 `scripts/check_thread_sanitizer.sh` compiles the actual runtime implementation and public thread-safe facade with ThreadSanitizer, PIE and pthread support. `tests/runtime/tsan_runtime_stress.cpp` overlaps:
@@ -70,13 +77,14 @@ Any `ThreadSanitizer` warning, data race, lock-order inversion, non-zero exit, t
 
 ## Existing sanitizer suite remains mandatory
 
-PR73 does not replace `make sanitize`. The legacy ASan/UBSan language suite remains mandatory and now explicitly enables leak detection and fail-fast sanitizer options. The first-class libFuzzer and TSan gates run separately so a pass cannot be hidden inside aggregate output.
+PR73 does not replace `make sanitize`. The legacy ASan/UBSan language suite remains mandatory and explicitly enables leak detection and fail-fast sanitizer options. Its `sanitize` mode now exercises compiler smoke, LLVM metadata/codegen, source diagnostics, semantic negatives, parser robustness, module syntax/resolution and AI/evidence paths. The first-class compiler fuzz, runtime memory-sanitizer and TSan gates run separately so a pass cannot be hidden inside aggregate output.
 
 ## CI evidence
 
 The normal Actions workflow contains separate mandatory steps:
 
 - `Fuzz ASan LSan UBSan compiler stages`,
+- `Runtime ASan LSan UBSan stress`,
 - `ThreadSanitizer race stress`,
 - the existing `Sanitizer tests` step.
 
@@ -84,4 +92,4 @@ The scheduled extended workflow is additional evidence, not a substitute for PR 
 
 ## Claim boundary
 
-Passing PR73 demonstrates bounded sanitizer-backed adversarial testing and a clean TSan stress run on the declared Ubuntu CI environment. It does not prove absence of all memory bugs or races, cross-platform correctness, hardened hostile-input security, live accelerator execution, or lower energy than Python. Those remain later production-readiness gates.
+Passing PR73 demonstrates bounded sanitizer-backed adversarial testing and clean memory/race stress on the declared Ubuntu CI environment. It does not prove absence of all memory bugs or races, cross-platform correctness, hardened hostile-input security, live accelerator execution, or lower energy than Python. Those remain later production-readiness gates.
