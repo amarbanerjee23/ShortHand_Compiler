@@ -13,9 +13,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ubuntu:
+  ubuntu-core:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 70
 
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +66,12 @@ jobs:
 
       - name: PR73 safety contract guard
         run: bash scripts/check_fuzz_safety_contract.sh
+
+      - name: PR75 portability contract guard
+        run: |
+          bash scripts/check_toolchain_platform_contract.sh
+          bash tests/ci/test_toolchain_platform_contract_negative.sh
+          bash tests/ci/test_cmake_ctest_parity_negative.sh
 
       - name: Setup build infrastructure
         run: bash setup_build_infra.sh
@@ -139,7 +145,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-logs
+          name: test-logs-ubuntu-core-${{ github.run_id }}
           path: |
             /tmp/shorthand_*.out
             /tmp/shorthand_*.err
@@ -151,10 +157,279 @@ jobs:
             Compiler_new_ws/Short_Hand/build/
             build/
 
+  toolchain:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: gcc-12
+            cc: gcc-12
+            cxx: g++-12
+          - id: gcc-14
+            cc: gcc-14
+            cxx: g++-14
+          - id: clang-16
+            cc: clang-16
+            cxx: clang++-16
+          - id: clang-18
+            cc: clang-18
+            cxx: clang++-18
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install matrix build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
+
+      - name: Record matrix toolchain
+        run: |
+          set -euo pipefail
+          command -v "${CC}"
+          command -v "${CXX}"
+          command -v llvm-config-18
+          "${CXX}" --version
+          llvm-config-18 --version
+          uname -a
+
+      - name: Configure matrix compiler
+        run: cmake -S . -B build-toolchain -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_CONFIG=/usr/bin/llvm-config-18
+
+      - name: Build matrix compiler and runtime
+        run: cmake --build build-toolchain --parallel 2 --target short_hand shorthand_runtime green_ai_tool
+
+      - name: Execute matrix compiler smoke
+        run: |
+          set -euo pipefail
+          build-toolchain/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_toolchain_${{ matrix.id }}.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_toolchain_${{ matrix.id }}.out
+          build-toolchain/short_hand tests/conformance/fixtures/base/int_bool_ops.short parse >/tmp/shorthand_toolchain_${{ matrix.id }}_parse.out
+
+  linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux arm64 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
+      - name: Record Linux arm64 environment
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "aarch64"
+          clang++ --version
+          llvm-config --version
+
+      - name: Build Linux arm64 compiler and runtime
+        run: |
+          cmake -S . -B build-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-arm64"
+          cmake --build build-arm64 --parallel 2
+
+      - name: Execute Linux arm64 compiler smoke
+        run: |
+          set -euo pipefail
+          build-arm64/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_arm64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64.out
+          build-arm64/short_hand tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          lli core_control.bc > /tmp/shorthand_arm64_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_lli.out
+
+      - name: Install and consume Linux arm64 SDK
+        run: |
+          cmake --install build-arm64
+          bash scripts/check_installed_consumer_cmake.sh "$PWD/stage-arm64" "$PWD/consumer-arm64"
+
+  macos-arm64:
+    runs-on: macos-15
+    timeout-minutes: 55
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install macOS build dependencies
+        run: |
+          brew install bison flex llvm@18 ninja
+          echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix llvm@18)/bin" >> "$GITHUB_PATH"
+
+      - name: Record macOS Apple Silicon environment
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "arm64"
+          "$(brew --prefix llvm@18)/bin/clang++" --version
+          "$(brew --prefix llvm@18)/bin/llvm-config" --version
+          sw_vers
+
+      - name: Build macOS Apple Silicon compiler and runtime
+        env:
+          CC: /opt/homebrew/opt/llvm@18/bin/clang
+          CXX: /opt/homebrew/opt/llvm@18/bin/clang++
+        run: |
+          cmake -S . -B build-macos -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage-macos" \
+            -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config"
+          cmake --build build-macos --parallel 2
+
+      - name: Execute macOS compiler smoke
+        run: |
+          set -euo pipefail
+          build-macos/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_macos.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos.out
+          build-macos/short_hand tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          "$(brew --prefix llvm@18)/bin/lli" core_control.bc > /tmp/shorthand_macos_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_lli.out
+
+      - name: Install and consume macOS SDK
+        run: |
+          cmake --install build-macos
+          bash scripts/check_installed_consumer_cmake.sh "$PWD/stage-macos" "$PWD/consumer-macos"
+
+  windows-x64:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    env:
+      MSYSTEM: UCRT64
+      CHERE_INVOKING: 1
+    defaults:
+      run:
+        shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Windows UCRT64 compiler dependencies
+        run: |
+          pacman -S --noconfirm --needed \
+            mingw-w64-ucrt-x86_64-clang \
+            mingw-w64-ucrt-x86_64-llvm \
+            mingw-w64-ucrt-x86_64-cmake \
+            mingw-w64-ucrt-x86_64-ninja \
+            bison flex make diffutils
+
+      - name: Record Windows UCRT64 environment
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          clang++ --version
+          llvm-config --version
+          cmake --version
+          uname -a
+
+      - name: Build Windows compiler and runtime
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          export CC=clang
+          export CXX=clang++
+          cmake -S . -B build-windows -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage-windows" \
+            -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe
+          cmake --build build-windows --parallel 2
+
+      - name: Execute Windows compiler semantic smoke
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          ./build-windows/short_hand.exe tests/semantic/differential/core_control.short run > /tmp/shorthand_windows.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows.out
+          ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          lli core_control.bc > /tmp/shorthand_windows_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_lli.out
+
+      - name: Install and consume Windows SDK
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          cmake --install build-windows
+          bash scripts/check_installed_consumer_cmake.sh "$PWD/stage-windows" "$PWD/consumer-windows"
+
+  ctest-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CTest parity dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
+      - name: Verify CTest parity manifest
+        run: |
+          bash scripts/check_cmake_ctest_parity.sh
+          bash tests/ci/test_cmake_ctest_parity_negative.sh
+
+      - name: Execute Makefile suite through CTest
+        env:
+          SHORTHAND_CTEST_PARITY_EXECUTE: '1'
+        run: bash scripts/check_cmake_ctest_parity.sh
+
+  reproducible:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install reproducibility dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
+      - name: Independent clean-build reproducibility
+        run: bash scripts/check_reproducible_builds.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reproducibility-${{ github.run_id }}
+          path: |
+            /tmp/shorthand_reproducibility.json
+            /tmp/shorthand-reproducibility/
+
+  ubuntu:
+    needs:
+      - ubuntu-core
+      - toolchain
+      - linux-arm64
+      - macos-arm64
+      - windows-x64
+      - ctest-parity
+      - reproducible
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Verify mandatory CI DAG results
+        run: |
+          set -euo pipefail
+          test "${{ needs.ubuntu-core.result }}" = "success"
+          test "${{ needs.toolchain.result }}" = "success"
+          test "${{ needs.linux-arm64.result }}" = "success"
+          test "${{ needs.macos-arm64.result }}" = "success"
+          test "${{ needs.windows-x64.result }}" = "success"
+          test "${{ needs.ctest-parity.result }}" = "success"
+          test "${{ needs.reproducible.result }}" = "success"
+
       - name: Publish event-specific CI status
-        # Commit statuses are SHA-scoped, not branch-scoped. A superseded run on a
-        # newly created feature branch may share the default-branch SHA, so a
-        # cancellation must never overwrite an already valid status for that SHA.
         if: ${{ always() && !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
