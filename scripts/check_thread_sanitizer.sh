@@ -88,7 +88,7 @@ if grep -Eq 'WARNING: ThreadSanitizer|SUMMARY: ThreadSanitizer|data race|lock-or
   echo "error: ThreadSanitizer reported a concurrency defect" >&2
   exit 1
 fi
-grep -Fq 'PASS ThreadSanitizer runtime race stress' /tmp/shorthand_tsan_runtime.out
+grep -Fq 'PASS runtime concurrency stress' /tmp/shorthand_tsan_runtime.out
 
 printf 'TSAN contract=shorthand.runtime.tsan.v1 compiler=%s\n' "${CXX}"
 printf 'PASS mandatory ThreadSanitizer race gate\n'
