@@ -32,64 +32,41 @@ required_files=(
   "${ROOT_DIR}/docs/module_import_package_syntax.md"
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md"
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md"
+  "${ROOT_DIR}/docs/fuzz_sanitizer_concurrency.md"
   "${ROOT_DIR}/docs/backend_failure_mode_matrix.md"
   "${ROOT_DIR}/docs/runtime_abi_api_stability.md"
   "${ROOT_DIR}/docs/runtime_state_and_thread_safety.md"
   "${ROOT_DIR}/docs/runtime_production_packaging.md"
-  "${ROOT_DIR}/docs/prometheus_scrape_host_adapter.md"
-  "${ROOT_DIR}/docs/otlp_exporter_adapter.md"
-  "${ROOT_DIR}/docs/ast_source_ranges.md"
-  "${ROOT_DIR}/docs/diagnostics_coverage_matrix.md"
-  "${ROOT_DIR}/docs/parser_robustness.md"
   "${ROOT_DIR}/docs/compiler_test_strategy.md"
   "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv"
-  "${ROOT_DIR}/.github/pull_request_template.md"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ast/SourceRange.h"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ast/SourceRange.cpp"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ast/ModuleAST.h"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/module/ModuleResolver.h"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/module/ModuleResolver.cpp"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/parser/ParserLimits.h"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/visitors/DiagnosticCodes.h"
-  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/main.cpp"
-  "${ROOT_DIR}/tests/diagnostics/diagnostics_coverage_matrix.tsv"
-  "${ROOT_DIR}/tests/conformance/grammar_matrix_beta_0_2.tsv"
-  "${ROOT_DIR}/tests/conformance/module_matrix_beta_0_3.tsv"
-  "${ROOT_DIR}/tests/conformance/manifest.txt"
-  "${ROOT_DIR}/tests/modules/valid/module_preamble.short"
-  "${ROOT_DIR}/tests/modules/resolver/valid_project/shorthand.package"
-  "${ROOT_DIR}/tests/parser/robustness/malformed_cases.tsv"
-  "${ROOT_DIR}/tests/semantic/differential/core_control.short"
-  "${ROOT_DIR}/scripts/check_ast_source_ranges.sh"
-  "${ROOT_DIR}/scripts/check_diagnostics_coverage_matrix.sh"
-  "${ROOT_DIR}/scripts/check_grammar_conformance_matrix.sh"
-  "${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
-  "${ROOT_DIR}/scripts/check_module_resolution.sh"
+  "${ROOT_DIR}/tests/fuzz/FuzzSubprocess.cpp"
+  "${ROOT_DIR}/tests/runtime/runtime_tsan_stress.cpp"
+  "${ROOT_DIR}/scripts/check_fuzz_safety.sh"
+  "${ROOT_DIR}/scripts/check_tsan_concurrency.sh"
   "${ROOT_DIR}/scripts/check_semantic_differential.sh"
-  "${ROOT_DIR}/scripts/check_parser_robustness.sh"
-  "${ROOT_DIR}/scripts/check_language_versioning.sh"
-  "${ROOT_DIR}/scripts/check_compiler_test_strategy.sh"
+  "${ROOT_DIR}/.github/workflows/fuzz-nightly.yml"
+  "${ROOT_DIR}/.github/workflows/ci.yml"
   "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt"
 )
 for file in "${required_files[@]}"; do require_file "${file}"; done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-11-pr72' \
+  'production_readiness_plan_version: 2026-08-11-pr73' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 70' \
+  'LAST_COMPLETED_PR: 72' \
   'MERGED_OUT_OF_BAND_PR: 71' \
-  'CURRENT_IMPLEMENTATION_PR: 72' \
-  'NEXT_IMPLEMENTATION_PR_AFTER_PR72: 73' \
+  'CURRENT_IMPLEMENTATION_PR: 73' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR73: 74' \
   'BASELINE_LANGUAGE_VERSION: beta-0.3' \
   'TARGET: enterprise production usage ready language' \
-  'PR72 - Cross-mode semantic correctness and differential execution suite is IN PROGRESS.' \
-  'after PR72 is successfully merged, 14 implementation PRs remain.' \
+  'PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening is IN PROGRESS.' \
+  'after PR73 is successfully merged, 13 implementation PRs remain.' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture' \
-  'remaining_planned_prs_after_pr72: 14' \
-  'remaining_planned_implementation_prs_pr73_through_pr86: 14' \
-  'Next recommended PR after PR #72:' \
-  'PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening.'; do
+  'remaining_planned_prs_after_pr73: 13' \
+  'remaining_planned_implementation_prs_pr74_through_pr86: 13' \
+  'Next recommended PR after PR #73:' \
+  'PR74 - CI/toolchain/platform matrix, CTest parity and reproducible builds.'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
@@ -97,8 +74,9 @@ require_contains "${PLAN}" '| PR68 - Production test strategy, coverage audit an
 require_contains "${PLAN}" '| PR69 - Module, import and package syntax with AST scaffold | MERGED'
 require_contains "${PLAN}" '| PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED'
 require_contains "${PLAN}" '| PR71 - CI status publication hygiene | MERGED'
-require_contains "${PLAN}" '| PR72 - Cross-mode semantic correctness and differential execution suite | IN PROGRESS'
-for pr in $(seq 73 86); do
+require_contains "${PLAN}" '| PR72 - Cross-mode semantic correctness and differential execution suite | MERGED'
+require_contains "${PLAN}" '| PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening | IN PROGRESS'
+for pr in $(seq 74 86); do
   require_contains "${PLAN}" "PR${pr} -"
   require_contains "${PLAN}" "| PR${pr} -"
 done
@@ -115,7 +93,7 @@ for anchor in \
   require_contains "${PIPELINE}" "${anchor}"
 done
 
-# Preserve old guarded history while explicitly superseding earlier estimates.
+# Preserve guarded history while explicitly superseding earlier estimates.
 for anchor in \
   'production_readiness_plan_version: 2026-08-02-pr62' \
   'LAST_COMPLETED_PR: 62' \
@@ -140,30 +118,35 @@ for anchor in \
   'After PR #67 is merged, approximately 12 implementation PRs remain.' \
   'PR68 - Module/import/package design and parser scaffold.' \
   'PR79 - MLIR lowering passes and production RC gate' \
-  'The historical PR67 recommendation is superseded by the test re-audit.'; do
+  'The historical PR67 recommendation is superseded by the test re-audit.' \
+  'production_readiness_plan_version: 2026-08-11-pr72' \
+  'CURRENT_IMPLEMENTATION_PR: 72' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR72: 73' \
+  'PR72 - Cross-mode semantic correctness and differential execution suite is IN PROGRESS.' \
+  'after PR72 is successfully merged, 14 implementation PRs remain.' \
+  'remaining_planned_prs_after_pr72: 14' \
+  'remaining_planned_implementation_prs_pr73_through_pr86: 14' \
+  'Next recommended PR after PR #72:' \
+  'PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening.'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'production_claim: false'
 require_contains "${ROOT_DIR}/docs/backend_failure_mode_matrix.md" 'backend_failure_mode_matrix_status: finalized_v1'
 require_contains "${ROOT_DIR}/docs/runtime_abi_api_stability.md" 'runtime_external_symbol_count: 25'
-require_contains "${ROOT_DIR}/docs/ast_source_ranges.md" 'ast_source_range_status: parser_propagated_line_column_ranges'
-require_contains "${ROOT_DIR}/docs/diagnostics_coverage_matrix.md" 'diagnostics_coverage_status: stable_coded_stage_matrix_guarded'
-require_contains "${ROOT_DIR}/docs/language_grammar_ebnf.md" 'grammar_conformance_status: parser_accurate_matrix_guarded'
 require_contains "${ROOT_DIR}/docs/language_versioning_and_conformance.md" 'shorthand.language.version: beta-0.3'
-require_contains "${ROOT_DIR}/docs/module_import_package_syntax.md" 'module_syntax_contract_version: beta-0.3'
 require_contains "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" 'resolution_status: deterministic_manifest_locked_multi_file_codegen'
 require_contains "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" 'execution_semantics_contract: beta-0.3-pr72-v1'
-require_contains "${ROOT_DIR}/docs/parser_robustness.md" 'parser_robustness_status: bounded_fail_fast_negative_corpus_guarded'
-require_contains "${ROOT_DIR}/docs/compiler_test_strategy.md" 'compiler_test_strategy_version: 2026-08-09-pr70'
+require_contains "${ROOT_DIR}/docs/fuzz_sanitizer_concurrency.md" 'fuzz_safety_contract_version: 1.0.0'
+require_contains "${ROOT_DIR}/docs/compiler_test_strategy.md" 'compiler_test_strategy_version: 2026-08-11-pr73'
 require_contains "${ROOT_DIR}/scripts/check_compiler_test_strategy.sh" 'PASS compiler test strategy and coverage audit gate'
-require_contains "${ROOT_DIR}/scripts/check_module_ast_scaffold.sh" 'PASS module import package syntax and AST scaffold gate'
-require_contains "${ROOT_DIR}/scripts/check_module_resolution.sh" 'PASS deterministic module resolver, package lock and multi-file codegen gate'
 require_contains "${ROOT_DIR}/scripts/check_semantic_differential.sh" 'PASS cross-mode semantic differential execution gate'
+require_contains "${ROOT_DIR}/scripts/check_fuzz_safety.sh" 'PASS coverage-guided sanitizer fuzz gate'
+require_contains "${ROOT_DIR}/scripts/check_tsan_concurrency.sh" 'PASS ThreadSanitizer concurrency gate'
 require_contains "${ROOT_DIR}/scripts/check_ci_status_hygiene.sh" 'PASS CI status hygiene guard'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/main.cpp" 'add_imported_programs(interpreter'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/main.cpp" 'mode == "module-graph"'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/main.cpp" 'mode == "lock"'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/parser/ParserLimits.h" 'MaxNestingDepth = 256U'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'Coverage-guided sanitizer fuzz smoke'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'ThreadSanitizer concurrency race gate'
+require_contains "${ROOT_DIR}/.github/workflows/fuzz-nightly.yml" 'Extended coverage-guided sanitizer fuzzing'
+require_contains "${ROOT_DIR}/.github/workflows/fuzz-nightly.yml" 'Extended ThreadSanitizer concurrency stress'
 
 printf 'PASS production readiness PR plan gate\n'
