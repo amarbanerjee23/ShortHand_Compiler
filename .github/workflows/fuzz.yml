@@ -1,0 +1,59 @@
+name: extended-fuzz
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extended-fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compiler-fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install fuzz toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            make \
+            g++ \
+            flex \
+            bison \
+            libfl-dev \
+            llvm \
+            llvm-dev \
+            clang
+
+      - name: Build compiler frontend baseline
+        run: make -C Compiler_new_ws/Short_Hand/src short_hand
+
+      - name: Extended staged libFuzzer campaign
+        env:
+          SHORTHAND_FUZZ_MAX_TOTAL_TIME: '180'
+          SHORTHAND_FUZZ_RUNS: '0'
+          SHORTHAND_FUZZ_SEED: ${{ github.run_id }}
+          SHORTHAND_FUZZ_MAX_LEN: '4096'
+          SHORTHAND_FUZZ_ARTIFACT_DIR: /tmp/shorthand_fuzz_artifacts
+        run: bash scripts/check_fuzz_sanitizers.sh
+
+      - name: ThreadSanitizer extended race stress
+        run: bash scripts/check_thread_sanitizer.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: extended-fuzz-${{ github.run_id }}
+          path: |
+            /tmp/shorthand_fuzz_*.out
+            /tmp/shorthand_fuzz_artifacts/
+            /tmp/shorthand_tsan_runtime.out
+            /tmp/shorthand_tsan_runtime.err
