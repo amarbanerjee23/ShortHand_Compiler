@@ -94,6 +94,9 @@ jobs:
       - name: Fuzz ASan LSan UBSan compiler stages
         run: bash scripts/check_fuzz_sanitizers.sh
 
+      - name: Runtime ASan LSan UBSan stress
+        run: bash scripts/check_runtime_memory_sanitizer.sh
+
       - name: ThreadSanitizer race stress
         run: bash scripts/check_thread_sanitizer.sh
 
