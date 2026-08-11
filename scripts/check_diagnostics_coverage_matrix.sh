@@ -9,6 +9,7 @@ DIAGNOSTICS_SOURCE="${SRC_DIR}/visitors/Diagnostics.cpp"
 SEMANTIC="${SRC_DIR}/visitors/SemanticAnalyzer.cpp"
 PARSER="${SRC_DIR}/scanner_parser/parser.yy"
 MAIN="${SRC_DIR}/main.cpp"
+RESOLVER="${SRC_DIR}/module/ModuleResolver.cpp"
 DOC="${ROOT_DIR}/docs/diagnostics_coverage_matrix.md"
 MATRIX="${ROOT_DIR}/tests/diagnostics/diagnostics_coverage_matrix.tsv"
 TEST="${ROOT_DIR}/tests/diagnostics/test_diagnostics_coverage_matrix.sh"
@@ -28,7 +29,7 @@ require_contains() {
 
 for file in \
   "${HEADER}" "${DIAGNOSTICS_HEADER}" "${DIAGNOSTICS_SOURCE}" \
-  "${SEMANTIC}" "${PARSER}" "${MAIN}" "${DOC}" "${MATRIX}" "${TEST}" \
+  "${SEMANTIC}" "${PARSER}" "${MAIN}" "${RESOLVER}" "${DOC}" "${MATRIX}" "${TEST}" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/break_outside_loop.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/ai_incompatible_backend_warning.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/greenai_missing_functional_unit.short" \
@@ -38,16 +39,19 @@ for file in \
   "${ROOT_DIR}/tests/modules/invalid/duplicate_import_alias.short" \
   "${ROOT_DIR}/tests/modules/invalid/duplicate_import_path.short" \
   "${ROOT_DIR}/tests/modules/invalid/import_before_module.short" \
-  "${ROOT_DIR}/tests/modules/invalid/package_without_module.short"; do
+  "${ROOT_DIR}/tests/modules/invalid/package_without_module.short" \
+  "${ROOT_DIR}/tests/modules/resolver/valid_project/src/native_app.short" \
+  "${ROOT_DIR}/scripts/check_module_resolution.sh"; do
   [[ -f "${file}" ]] || { echo "error: missing required file: ${file}" >&2; exit 1; }
 done
 
 bash -n "${TEST}"
+bash -n "${ROOT_DIR}/scripts/check_module_resolution.sh"
 
 for anchor in \
-  'diagnostics_coverage_contract_version: 1.0.0' \
+  'diagnostics_coverage_contract_version: 1.1.0' \
   'diagnostics_coverage_status: stable_coded_stage_matrix_guarded' \
-  'covered_stages: parser, semantic, ai, greenai, lowering' \
+  'covered_stages: parser, module, semantic, ai, greenai, lowering' \
   'warning_delivery_status: printed_without_failing_successful_compilation' \
   'lowering_preflight_status: unresolved_calls_rejected_before_ir_generation' \
   'runtime_abi_change: none' \
@@ -63,11 +67,13 @@ require_contains "${PARSER}" 'ParserExpectedAIInferBuiltin'
 require_contains "${PARSER}" 'ParserDuplicatePackageDeclaration'
 require_contains "${PARSER}" 'ParserModuleRequired'
 require_contains "${SEMANTIC}" 'LoweringUndefinedFunction'
+require_contains "${SEMANTIC}" 'ModuleExternalRunUnsupported'
 require_contains "${SEMANTIC}" 'diagnostics.errorAtNode('
-require_contains "${MAIN}" 'semantic.diagnostics.hasDiagnostics()'
+require_contains "${RESOLVER}" 'ModuleLockfileMismatch'
+require_contains "${MAIN}" 'resolver.verifyLockfile'
 require_contains "${TEST}" 'PASS diagnostics coverage matrix gate'
 
-printf '%s\n' 'parser' 'semantic' 'ai' 'greenai' 'lowering' | sort >"${WORK_DIR}/required-stages.txt"
+printf '%s\n' 'parser' 'module' 'semantic' 'ai' 'greenai' 'lowering' | sort >"${WORK_DIR}/required-stages.txt"
 printf '%s\n' 'error' 'warning' | sort >"${WORK_DIR}/required-severities.txt"
 
 grep -Eo 'SHD[0-9]{4}' "${HEADER}" | sort >"${WORK_DIR}/header-codes-all.txt"
@@ -88,8 +94,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 45 ]] || {
-  echo "error: expected 45 stable diagnostics after the PR69 module syntax expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 56 ]] || {
+  echo "error: expected 56 stable diagnostics after the PR70 module resolver expansion" >&2
   exit 1
 }
 
@@ -100,10 +106,10 @@ awk -F '\t' '
   }
   NF != 7 { exit 11 }
   $1 !~ /^SHD[0-9][0-9][0-9][0-9]$/ { exit 12 }
-  $2 !~ /^(parser|semantic|ai|greenai|lowering)$/ { exit 13 }
+  $2 !~ /^(parser|module|semantic|ai|greenai|lowering)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 46) exit 16 }
+  END { if (NR != 57) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1
@@ -128,5 +134,6 @@ fi
 
 SHORTHAND_BIN="${SHORT}" bash "${TEST}"
 SHORTHAND_BIN="${SHORT}" bash "${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
+SHORTHAND_BIN="${SHORT}" bash "${ROOT_DIR}/scripts/check_module_resolution.sh"
 
 echo "PASS diagnostics coverage matrix guard"

@@ -170,7 +170,12 @@ require_contains "${MANIFEST}" 'semantic-invalid'
 require_contains "${MANIFEST}" 'runtime | tests/codegen/test_external_runtime_native.sh'
 
 run_existing_gate 'language objectives' bash "${ROOT_DIR}/scripts/check_language_objectives.sh"
-run_existing_gate 'language versioning and conformance' bash "${ROOT_DIR}/scripts/check_language_versioning.sh"
+# Makefile compatibility callers provide build artifacts as paths relative to
+# Compiler_new_ws/Short_Hand/src. Nested gates execute native compilation from
+# temporary package roots, so always propagate the canonical artifact paths.
+run_existing_gate 'language versioning and conformance' \
+  env SHORTHAND_BIN="${SHORT}" SHORTHAND_RUNTIME_LIB="${RUNTIME_LIB}" \
+  bash "${ROOT_DIR}/scripts/check_language_versioning.sh"
 run_existing_gate 'runtime ABI and API stability' bash "${ROOT_DIR}/scripts/check_runtime_abi_api_stability.sh"
 run_existing_gate 'runtime state isolation and thread safety' bash "${ROOT_DIR}/scripts/check_runtime_state_thread_safety.sh"
 compile_semantic_ir_probe

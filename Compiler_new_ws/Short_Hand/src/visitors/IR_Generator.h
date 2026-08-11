@@ -64,6 +64,7 @@ public:
     void dump();
     bool dumpBitcode();
     bool dumpNativeBinary();
+    bool addLibraryProgram(AST_PROGRAM *program);
     llvm::Value * get_expression();
     llvm::Value * get_condition();
     void setModuleName(std::string mod_name);

@@ -102,6 +102,13 @@ inline bool hasParserGuardFailure() {
 }
 
 inline bool validateSourceBytes(std::uint64_t source_bytes) {
+    // Source-size validation is a pre-scanner check. Re-read the lower-only
+    // environment ceiling here so a caller cannot accidentally perform the
+    // file-size check before resetParserGuard() has initialized this process's
+    // configured limit. The value can never exceed the production ceiling.
+    detail::guard_state.limits.max_source_bytes =
+        detail::lowerOnlyEnvironmentLimit("SHORTHAND_MAX_SOURCE_BYTES",
+                                          detail::MaxSourceBytes);
     if (source_bytes <= detail::guard_state.limits.max_source_bytes) return true;
     recordParserGuardFailure(
         diagnostics::ParserSourceLimitExceeded,

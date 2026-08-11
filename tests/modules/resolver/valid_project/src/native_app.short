@@ -1,0 +1,7 @@
+package acme.demo;
+module acme.demo.native_app;
+import acme.demo.lib as lib;
+int native_value;
+native_value = 3;
+helper(native_value);
+print "native root";

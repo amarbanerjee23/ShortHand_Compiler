@@ -255,9 +255,11 @@ add_executable(short_hand
   ${PARSER_SRC}
   ${SCANNER_SRC}
   ${SRC_DIR}/ast/AST.cpp
+  ${SRC_DIR}/module/ModuleResolver.cpp
   ${SRC_DIR}/visitors/AST_Printer.cpp
   ${SRC_DIR}/visitors/Interpreter.cpp
   ${SRC_DIR}/visitors/IR_Generator.cpp
+  ${SRC_DIR}/visitors/IR_Generator_Module.cpp
   ${SRC_DIR}/visitors/SemanticAnalyzer.cpp
   ${SRC_DIR}/visitors/Diagnostics.cpp
   ${SRC_DIR}/evidence/EvidenceEmitter.cpp

@@ -1,0 +1,5 @@
+format shorthand.package.v1
+package acme.demo
+module acme.demo.app src/app.short
+module acme.demo.lib src/lib.short
+module acme.demo.native_app src/native_app.short

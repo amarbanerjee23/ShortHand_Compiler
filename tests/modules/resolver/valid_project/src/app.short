@@ -1,0 +1,6 @@
+package acme.demo;
+module acme.demo.app;
+import acme.demo.lib as lib;
+int value;
+value = 7;
+print "root value", value;
