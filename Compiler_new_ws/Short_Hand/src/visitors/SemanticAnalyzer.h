@@ -4,17 +4,21 @@
 #include "../ast/AST.h"
 #include "Diagnostics.h"
 
+#include <cstddef>
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 class SemanticAnalyzer : public Visitor {
 public:
     Diagnostics diagnostics;
 
     static std::set<std::string> functionNames(AST_PROGRAM *program);
+    static std::map<std::string, std::size_t> functionArities(AST_PROGRAM *program);
     static std::set<std::string> globalNames(AST_PROGRAM *program);
-    void setImportedFunctions(const std::set<std::string> &names, bool allow_external_calls);
+    void setImportedFunctions(const std::map<std::string, std::size_t> &arities,
+                              bool allow_external_calls);
 
     int visit(AST_PROGRAM*) override;
     int visit(AST_DATA_DECLARATION_BLOCK*) override;
@@ -58,9 +62,17 @@ private:
     std::map<std::string, TensorDeclarationData> tensors;
     std::map<std::string, GreenAIContractData> contracts;
     std::set<std::string> functions;
+    std::map<std::string, std::size_t> function_arity;
     std::set<std::string> imported_functions;
+    std::set<std::string> globals;
+    std::vector<std::set<std::string>> local_scopes;
+    std::vector<ShortType> return_types;
     bool allow_external_function_calls = true;
     int loopDepth = 0;
+
+    bool isDeclared(const std::string &name) const;
+    static bool isExecutableScalarType(ShortType type);
+    void validateCall(const void *node, const std::string &name, std::size_t arity);
 };
 
 #endif
