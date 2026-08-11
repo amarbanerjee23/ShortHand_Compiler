@@ -149,3 +149,9 @@ ShortHand may claim enterprise production readiness only when:
 6. reproducible and signed artifacts are produced,
 7. measured performance and energy evidence supports any published claim,
 8. the final PR86 RC gate reports zero open production blockers.
+
+## Historical strategy audit anchors
+
+The current strategy is `2026-08-11-pr73`. The following exact prior version marker is retained only because older production-readiness guards verify that the earlier strategy milestone has not disappeared:
+
+- compiler_test_strategy_version: 2026-08-09-pr70
