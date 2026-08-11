@@ -88,7 +88,7 @@ if grep -Eq 'AddressSanitizer|LeakSanitizer|UndefinedBehaviorSanitizer|runtime e
   echo "error: runtime memory/undefined-behavior sanitizer reported a defect" >&2
   exit 1
 fi
-grep -Fq 'PASS ThreadSanitizer runtime race stress' /tmp/shorthand_runtime_memory_sanitizer.out
+grep -Fq 'PASS runtime concurrency stress' /tmp/shorthand_runtime_memory_sanitizer.out
 
 printf 'RUNTIME_MEMORY_SANITIZER contract=shorthand.runtime.asan_lsan_ubsan.v1 compiler=%s\n' "${CXX}"
 printf 'PASS runtime ASan LSan UBSan stress gate\n'
