@@ -195,6 +195,7 @@ jobs:
           command -v "${CXX}"
           command -v llvm-config-18
           "${CXX}" --version
+          test "$(llvm-config-18 --version | cut -d. -f1)" = "18"
           llvm-config-18 --version
           uname -a
 
@@ -213,7 +214,7 @@ jobs:
 
   linux-arm64:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 45
+    timeout-minutes: 50
 
     steps:
       - uses: actions/checkout@v4
@@ -227,6 +228,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = "aarch64"
+          test "$(llvm-config --version | cut -d. -f1)" = "18"
           clang++ --version
           llvm-config --version
 
@@ -235,24 +237,29 @@ jobs:
           cmake -S . -B build-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-arm64"
           cmake --build build-arm64 --parallel 2
 
-      - name: Execute Linux arm64 compiler smoke
+      - name: Execute Linux arm64 interpreter bitcode and native
         run: |
           set -euo pipefail
+          rm -f core_control core_control.o core_control.bc
           build-arm64/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_arm64.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64.out
           build-arm64/short_hand tests/semantic/differential/core_control.short compile-bc
           test -s core_control.bc
           lli core_control.bc > /tmp/shorthand_arm64_lli.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-arm64/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            build-arm64/short_hand tests/semantic/differential/core_control.short compile-native
+          test -x core_control
+          ./core_control > /tmp/shorthand_arm64_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_native.out
 
-      - name: Install and consume Linux arm64 SDK
-        run: |
-          cmake --install build-arm64
-          bash scripts/check_installed_consumer_cmake.sh "$PWD/stage-arm64" "$PWD/consumer-arm64"
+      - name: Install upgrade uninstall Linux arm64 SDK lifecycle
+        run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-arm64" "$PWD/stage-arm64" "$PWD/consumer-arm64"
 
   macos-arm64:
     runs-on: macos-15
-    timeout-minutes: 55
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -268,6 +275,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = "arm64"
+          test "$("$(brew --prefix llvm@18)/bin/llvm-config" --version | cut -d. -f1)" = "18"
           "$(brew --prefix llvm@18)/bin/clang++" --version
           "$(brew --prefix llvm@18)/bin/llvm-config" --version
           sw_vers
@@ -283,24 +291,29 @@ jobs:
             -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config"
           cmake --build build-macos --parallel 2
 
-      - name: Execute macOS compiler smoke
+      - name: Execute macOS interpreter bitcode and native
         run: |
           set -euo pipefail
+          rm -f core_control core_control.o core_control.bc
           build-macos/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_macos.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos.out
           build-macos/short_hand tests/semantic/differential/core_control.short compile-bc
           test -s core_control.bc
           "$(brew --prefix llvm@18)/bin/lli" core_control.bc > /tmp/shorthand_macos_lli.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-macos/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER="$(brew --prefix llvm@18)/bin/clang++" \
+            build-macos/short_hand tests/semantic/differential/core_control.short compile-native
+          test -x core_control
+          ./core_control > /tmp/shorthand_macos_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_native.out
 
-      - name: Install and consume macOS SDK
-        run: |
-          cmake --install build-macos
-          bash scripts/check_installed_consumer_cmake.sh "$PWD/stage-macos" "$PWD/consumer-macos"
+      - name: Install upgrade uninstall macOS SDK lifecycle
+        run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-macos" "$PWD/stage-macos" "$PWD/consumer-macos"
 
   windows-x64:
     runs-on: windows-2025
-    timeout-minutes: 60
+    timeout-minutes: 70
     env:
       MSYSTEM: UCRT64
       CHERE_INVOKING: 1
@@ -324,6 +337,7 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          test "$(llvm-config --version | cut -d. -f1)" = "22"
           clang++ --version
           llvm-config --version
           cmake --version
@@ -341,23 +355,46 @@ jobs:
             -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe
           cmake --build build-windows --parallel 2
 
-      - name: Execute Windows compiler semantic smoke
+      - name: Execute Windows interpreter bitcode native and runtime negative
         run: |
           set -euo pipefail
           export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          rm -f core_control.exe core_control.o core_control.bc division_by_zero.exe division_by_zero.o division_by_zero.bc
           ./build-windows/short_hand.exe tests/semantic/differential/core_control.short run > /tmp/shorthand_windows.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows.out
           ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-bc
           test -s core_control.bc
           lli core_control.bc > /tmp/shorthand_windows_lli.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-windows/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-native
+          test -x core_control.exe
+          ./core_control.exe > /tmp/shorthand_windows_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_native.out
 
-      - name: Install and consume Windows SDK
+          ./build-windows/short_hand.exe tests/semantic/differential/division_by_zero.short compile-bc
+          if lli division_by_zero.bc > /tmp/shorthand_windows_divzero_lli.out 2> /tmp/shorthand_windows_divzero_lli.err; then
+            echo "error: Windows lli division-by-zero runtime negative unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq '[SHD7001]' /tmp/shorthand_windows_divzero_lli.err
+
+          SHORTHAND_RUNTIME_LIB="$PWD/build-windows/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            ./build-windows/short_hand.exe tests/semantic/differential/division_by_zero.short compile-native
+          test -x division_by_zero.exe
+          if ./division_by_zero.exe > /tmp/shorthand_windows_divzero_native.out 2> /tmp/shorthand_windows_divzero_native.err; then
+            echo "error: Windows native division-by-zero runtime negative unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq '[SHD7001]' /tmp/shorthand_windows_divzero_native.err
+
+      - name: Install upgrade uninstall Windows SDK lifecycle
         run: |
           set -euo pipefail
           export PATH="/ucrt64/bin:/usr/bin:${PATH}"
-          cmake --install build-windows
-          bash scripts/check_installed_consumer_cmake.sh "$PWD/stage-windows" "$PWD/consumer-windows"
+          bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-windows" "$PWD/stage-windows" "$PWD/consumer-windows"
 
   ctest-parity:
     runs-on: ubuntu-24.04
