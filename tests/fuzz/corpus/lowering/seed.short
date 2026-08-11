@@ -1,0 +1,7 @@
+int value;
+def int twice(int x;) {
+    return x * 2;
+};
+value = 4;
+twice(value);
+print "value", value;
