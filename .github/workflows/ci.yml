@@ -64,6 +64,9 @@ jobs:
       - name: CI status hygiene guard
         run: bash scripts/check_ci_status_hygiene.sh
 
+      - name: PR73 safety contract guard
+        run: bash scripts/check_fuzz_safety_contract.sh
+
       - name: Setup build infrastructure
         run: bash setup_build_infra.sh
 
