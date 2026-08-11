@@ -42,24 +42,19 @@ private:
 public:
     template <typename T>
     T *track(T *node) {
-        if (node == nullptr) {
-            return node;
-        }
+        if (node == nullptr) return node;
         if (tracked.insert(static_cast<void *>(node)).second) {
             allocations.push_back(
                 ShorthandParserAllocation{
                     static_cast<void *>(node),
-                    [](void *pointer) {
-                        delete static_cast<T *>(pointer);
-                    }});
+                    [](void *pointer) { delete static_cast<T *>(pointer); }});
         }
         return node;
     }
 
     ~ShorthandParserAllocationRegistry() {
         for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
-             it != allocations.rend();
-             ++it) {
+             it != allocations.rend(); ++it) {
             it->destroy(it->pointer);
         }
         main_program = nullptr;
@@ -193,17 +188,13 @@ PACKAGE_DECLARATION: PACKAGE MODULE_PATH ';'
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@$);
         if (preamble->hasPackage()) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserDuplicatePackageDeclaration,
-                "duplicate package declaration",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserDuplicatePackageDeclaration,
+                                        "duplicate package declaration", @$);
             YYERROR;
         }
         if (preamble->hasModule() || preamble->hasImports()) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserModuleDeclarationOrder,
-                "package declaration must precede module and import declarations",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserModuleDeclarationOrder,
+                                        "package declaration must precede module and import declarations", @$);
             YYERROR;
         }
         preamble->setPackage(current_module_path, shorthand_range(@$));
@@ -213,17 +204,13 @@ MODULE_DECLARATION: MODULE MODULE_PATH ';'
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@$);
         if (preamble->hasModule()) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserDuplicateModuleDeclaration,
-                "duplicate module declaration",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserDuplicateModuleDeclaration,
+                                        "duplicate module declaration", @$);
             YYERROR;
         }
         if (preamble->hasImports()) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserModuleDeclarationOrder,
-                "module declaration must precede import declarations",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserModuleDeclarationOrder,
+                                        "module declaration must precede import declarations", @$);
             YYERROR;
         }
         preamble->setModule(current_module_path, shorthand_range(@$));
@@ -233,24 +220,18 @@ IMPORT_DECLARATION: IMPORT MODULE_PATH IMPORT_ALIAS_OPT ';'
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble(@$);
         if (!preamble->hasModule()) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserModuleDeclarationOrder,
-                "import declaration requires a preceding module declaration",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserModuleDeclarationOrder,
+                                        "import declaration requires a preceding module declaration", @$);
             YYERROR;
         }
         if (preamble->hasImportPath(current_module_path)) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserDuplicateImportPath,
-                "duplicate import path",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserDuplicateImportPath,
+                                        "duplicate import path", @$);
             YYERROR;
         }
         if (preamble->hasImportAlias(current_import_alias)) {
-            shorthand_parser_diagnostic(
-                shorthand::diagnostics::ParserDuplicateImportAlias,
-                "duplicate import alias",
-                @$);
+            shorthand_parser_diagnostic(shorthand::diagnostics::ParserDuplicateImportAlias,
+                                        "duplicate import alias", @$);
             YYERROR;
         }
         preamble->addImport(current_module_path, current_import_alias, shorthand_range(@$));
@@ -277,7 +258,7 @@ DECLARATION_STATEMENT_LIST_RULE:
 
 ShortType: INT {$$=ShortType::Int;} | FLOAT {$$=ShortType::Float;} | DOUBLE {$$=ShortType::Float;} | STRING {$$=ShortType::String;} | VOID {$$=ShortType::Void;} | BOOL {$$=ShortType::Boolean;};
 
-DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE { $$=$2; located($$, @$); };
+DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE { $$=$2; $$->setType($1); located($$, @$); };
 
 DECLARATION_VARIABLE_LIST_RULE:
       DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER { $$=$1; $$->push_back(string($3)); located($$, @$); }
@@ -356,10 +337,8 @@ BOUNDARY_NAME: COMPUTE {$$=(char*)"compute";} | ACCELERATOR {$$=(char*)"accelera
 
 AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')' {
     if ((string($1)!="ai_infer" && string($1)!="aiinfer")) {
-        shorthand_parser_diagnostic(
-            shorthand::diagnostics::ParserExpectedAIInferBuiltin,
-            "expected ai_infer builtin",
-            @$);
+        shorthand_parser_diagnostic(shorthand::diagnostics::ParserExpectedAIInferBuiltin,
+                                    "expected ai_infer builtin", @$);
         YYERROR;
     }
     $$=located(new AST_AI_INFER_RULE(string($3),string($5),string($7)), @$);
@@ -367,10 +346,8 @@ AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITER
 
 GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')' {
     if (string($1)!="greenai") {
-        shorthand_parser_diagnostic(
-            shorthand::diagnostics::ParserExpectedGreenAIReportBuiltin,
-            "expected greenai report builtin",
-            @$);
+        shorthand_parser_diagnostic(shorthand::diagnostics::ParserExpectedGreenAIReportBuiltin,
+                                    "expected greenai report builtin", @$);
         YYERROR;
     }
     $$=located(new AST_GREENAI_REPORT_RULE(string($3),$5,$7,$9), @$);
@@ -415,8 +392,5 @@ PRINT_VARIABLE_LIST_RULE:
 %%
 
 void yyerror(char const *s) {
-    shorthand_parser_diagnostic(
-        shorthand::diagnostics::ParserSyntaxError,
-        s,
-        yylloc);
+    shorthand_parser_diagnostic(shorthand::diagnostics::ParserSyntaxError, s, yylloc);
 }
