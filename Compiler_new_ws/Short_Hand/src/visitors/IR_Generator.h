@@ -18,6 +18,7 @@
 #include <llvm/Config/llvm-config.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <map>
