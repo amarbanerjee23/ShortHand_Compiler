@@ -1,0 +1,53 @@
+name: fuzz-nightly
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  safety:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install fuzz toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential make g++ flex bison libfl-dev \
+            llvm llvm-dev clang cmake ninja-build
+          command -v clang++
+          command -v timeout
+
+      - name: Setup compiler baseline
+        run: bash setup_build_infra.sh
+
+      - name: Extended coverage-guided sanitizer fuzzing
+        env:
+          SHORTHAND_FUZZ_RUNS: '1000'
+          SHORTHAND_FUZZ_SEED: '7307301'
+        run: bash scripts/check_fuzz_safety.sh
+
+      - name: Extended ThreadSanitizer concurrency stress
+        run: bash scripts/check_tsan_concurrency.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fuzz-nightly-artifacts
+          path: |
+            /tmp/shorthand_fuzz_*.out
+            /tmp/shorthand_fuzz_*.err
+            /tmp/shorthand_fuzz_summary.out
+            /tmp/shorthand_fuzz_artifacts/
+            /tmp/shorthand_tsan_*.out
+            /tmp/shorthand_tsan_*.err
