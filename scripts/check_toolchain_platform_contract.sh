@@ -21,6 +21,7 @@ for file in \
   "${ROOT_DIR}/scripts/check_reproducible_builds.sh" \
   "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" \
   "${ROOT_DIR}/tests/ci/test_cmake_ctest_parity_negative.sh" \
+  "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh" \
   "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh" \
   "${ROOT_DIR}/tests/ctest_parity/CMakeLists.txt" \
   "${ROOT_DIR}/tests/ctest_parity/expected_make_targets.txt" \
@@ -37,6 +38,7 @@ for script in \
   "${ROOT_DIR}/scripts/check_reproducible_builds.sh" \
   "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" \
   "${ROOT_DIR}/tests/ci/test_cmake_ctest_parity_negative.sh" \
+  "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh" \
   "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh"; do
   bash -n "${script}"
 done
@@ -101,6 +103,7 @@ require_contains "${ROOT_DIR}/scripts/check_reproducible_builds.sh" 'PASS clean 
 require_contains "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" 'PASS installed ShortHand CMake consumer gate'
 
 bash "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh"
+bash "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh"
 
 # The coverage matrix must keep these PR75-owned areas explicit. During branch
 # development they may be partial; a merge-ready PR promotes them only when the
