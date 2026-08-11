@@ -1,0 +1,5 @@
+float unsupported;
+int values[2];
+return 1;
+values[3] = missing + 1;
+goto nowhere;

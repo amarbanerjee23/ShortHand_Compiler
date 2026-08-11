@@ -1,0 +1,14 @@
+int i,total;
+bool flag;
+def int add(int a; int b;) {
+    return a + b;
+};
+i = 0;
+total = 0;
+flag = true;
+loop i = 0, 1, 4 {
+    if flag && i != 2 {
+        total = total + i;
+    }
+}
+print "total", total;

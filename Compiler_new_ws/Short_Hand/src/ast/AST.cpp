@@ -108,9 +108,10 @@ AST_FOR_LOOP_STATEMENT_RULE::AST_FOR_LOOP_STATEMENT_RULE(AST_VARIABLE_RULE * var
 }
 AST_FOR_LOOP_STATEMENT_RULE::AST_FOR_LOOP_STATEMENT_RULE(AST_VARIABLE_RULE * variable, AST_EXPRESSION_RULE * from, AST_EXPRESSION_RULE * to, AST_STATEMENTS_BLOCK * for_block)
 {
+    static AST_LITERAL implicit_step_one(1);
     this->variable = variable;
     this->from = from;
-    this->step = new AST_LITERAL(1);
+    this->step = &implicit_step_one;
     this->to = to;
     this->for_block = for_block;
 }
