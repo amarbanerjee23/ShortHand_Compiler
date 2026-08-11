@@ -57,6 +57,26 @@ require_manifest_rows_have_four_fields() {
   ' "${MANIFEST}"
 }
 
+# Run nested executable contracts once, with xtrace captured only for diagnostics.
+# This preserves fail-fast semantics and never retries a failed gate. A silent
+# assertion failure therefore exposes the exact command without weakening CI.
+run_executable_gate() {
+  local label="$1"
+  local gate="$2"
+  local log
+  log="$(mktemp)"
+  if PS4='+ conformance:${LINENO}: ' bash -x "${gate}" >"${log}" 2>&1; then
+    grep -v '^+ conformance:' "${log}" || true
+    rm -f "${log}"
+    return 0
+  fi
+
+  echo "error: executable conformance gate failed: ${label}" >&2
+  tail -n 160 "${log}" >&2 || true
+  rm -f "${log}"
+  return 1
+}
+
 for file in \
   "${MANIFEST}" "${BASE_MATRIX}" "${MODULE_MATRIX}" "${VERSION_DOC}" \
   "${GRAMMAR_DOC}" "${SPEC_DOC}" "${MODULE_DOC}" "${RESOLVER_DOC}" "${TRACKER}" \
@@ -103,8 +123,8 @@ done
 bash -n "${BASE_GATE}"
 bash -n "${MODULE_GATE}"
 bash -n "${RESOLVER_GATE}"
-bash "${BASE_GATE}"
-bash "${MODULE_GATE}"
-bash "${RESOLVER_GATE}"
+run_executable_gate 'beta-0.2 grammar matrix' "${BASE_GATE}"
+run_executable_gate 'beta-0.3 module AST scaffold' "${MODULE_GATE}"
+run_executable_gate 'deterministic module resolver' "${RESOLVER_GATE}"
 
 printf 'PASS language versioning and conformance gate beta-0.3\n'
