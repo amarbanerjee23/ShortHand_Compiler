@@ -11,15 +11,17 @@ Earlier compiler slices emitted hook calls, but the generated LLVM module also c
 
 ## Current implementation
 
-The default Makefile and CMake builds now compile `Compiler_new_ws/Short_Hand/src/visitors/IR_Generator.cpp` directly.
+The default Makefile and CMake builds compile `Compiler_new_ws/Short_Hand/src/visitors/IR_Generator.cpp` directly.
 
-Before compilation, the build applies a guarded source-level lowering step through:
+The external-runtime lowering is now permanently represented in the checked-in C++ source. The compatibility targets remain:
 
 - `scripts/apply_external_runtime_to_ir_source.sh`
 - Makefile target: `runtime-source-lowering`
 - CMake target: `shorthand_runtime_source_lowering`
 
-That source-level lowering removes local runtime hook stub bodies from `IR_Generator.cpp` and makes the compiler emit external declarations for hooks such as:
+The script is intentionally **validation-only and Python-free**. It verifies that the canonical external declarations and native runtime-linking helpers are present and rejects the historical local no-op runtime stubs. It does not rewrite the source during a build. This keeps older build/enterprise contracts stable while ensuring ShortHand compiler construction does not require Python merely to mutate checked-in C++.
+
+The canonical source emits external declarations for hooks such as:
 
 - `short_ai_register_model`
 - `short_ai_register_tensor`
@@ -30,7 +32,7 @@ That source-level lowering removes local runtime hook stub bodies from `IR_Gener
 
 The old generated file path `IR_Generator.default_runtime.cpp` has been removed from the default Makefile and CMake builds.
 
-The native path resolves these declarations against `libshorthand_runtime.a` when `compile-native` is used. The linker can be overridden with `SHORTHAND_NATIVE_LINKER`; otherwise the source-level lowered path uses a C++ linker so the C++ runtime library is resolved correctly.
+The native path resolves these declarations against `libshorthand_runtime.a` when `compile-native` is used. The linker can be overridden with `SHORTHAND_NATIVE_LINKER`; otherwise the external-runtime path uses a C++ linker so the C++ runtime library is resolved correctly.
 
 ## Validation
 
@@ -45,7 +47,9 @@ The native path resolves these declarations against `libshorthand_runtime.a` whe
 - `compile-native` links `libshorthand_runtime.a`,
 - the native executable emits runtime hook output from the registry-backed runtime library.
 
-The enterprise hardening gate requires this source-level runtime-lowering test to pass.
+`tests/codegen/test_external_runtime_source_guard_negative.sh` additionally injects the historical local-stub pattern into a temporary source copy and requires the Python-free source guard to reject it. The PR75 portability contract also fails if the guard reintroduces a Python interpreter invocation.
+
+The enterprise hardening gate requires the source-level runtime-lowering test to pass.
 
 ## Runtime behavior
 
@@ -70,7 +74,6 @@ Runtime hooks return explicit status codes for important cases:
 
 ## Remaining work
 
-- Replace the guarded source patcher with a direct hand-edited `IR_Generator.cpp` once the large LLVM visitor file is refactored safely.
 - Route `short_ai_infer()` into `AI_Runtime` for SDK-enabled ONNX Runtime CPU execution.
 - Keep fallback and not-executed statuses explicit when SDKs are unavailable.
 - Move this hook abstraction into the MLIR lowering plan so `model`, `tensor`, `infer`, and `greenai_measure` lower through typed compiler operations rather than string-only hooks.
