@@ -1,0 +1,7 @@
+int values[3];
+def int broken(int x;) {
+    if x > 0 {
+        return x;
+    
+values[999999999999999999999999] = 1;
+"unterminated
