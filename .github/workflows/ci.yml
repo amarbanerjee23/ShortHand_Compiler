@@ -45,14 +45,17 @@ jobs:
           command -v flex
           command -v bison
           command -v llvm-config
+          command -v lli
           command -v llc
           command -v clang
+          command -v clang++
           command -v cmake
           command -v ninja
           command -v base64
           command -v timeout
           command -v curl
           llvm-config --version
+          lli --version
           llc --version
           clang --version
           cmake --version
@@ -84,6 +87,9 @@ jobs:
 
       - name: Module resolver and multi-file codegen
         run: bash scripts/check_module_resolution.sh
+
+      - name: Semantic differential execution
+        run: bash scripts/check_semantic_differential.sh
 
       - name: Parser robustness and negative corpus
         run: bash scripts/check_parser_robustness.sh
@@ -127,6 +133,7 @@ jobs:
             /tmp/shorthand_*.err
             /tmp/short_hand_*.out
             /tmp/short_hand_*.err
+            /tmp/shorthand_semantic_differential.json
             /tmp/shorthand_c3eco_bundle/
             Compiler_new_ws/Short_Hand/build/
             build/
