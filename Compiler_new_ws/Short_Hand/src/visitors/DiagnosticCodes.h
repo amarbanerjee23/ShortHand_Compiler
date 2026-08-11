@@ -34,6 +34,13 @@ inline constexpr const char *ModuleExternalRunUnsupported = "SHD2030";
 
 inline constexpr const char *SemanticBreakOutsideLoop = "SHD3001";
 inline constexpr const char *SemanticContinueOutsideLoop = "SHD3002";
+inline constexpr const char *SemanticUnsupportedExecutableType = "SHD3003";
+inline constexpr const char *SemanticFunctionArityMismatch = "SHD3004";
+inline constexpr const char *SemanticReturnOutsideFunction = "SHD3005";
+inline constexpr const char *SemanticGotoUnsupported = "SHD3006";
+inline constexpr const char *SemanticReturnTypeMismatch = "SHD3007";
+inline constexpr const char *SemanticUndeclaredVariable = "SHD3008";
+inline constexpr const char *SemanticDuplicateFunction = "SHD3009";
 
 inline constexpr const char *AIModelRedeclared = "SHD4001";
 inline constexpr const char *AIModelInvalidFormat = "SHD4002";
@@ -64,6 +71,11 @@ inline constexpr const char *GreenAIMeasureUnknownContract = "SHD5009";
 inline constexpr const char *GreenAIMeasureExternalBackend = "SHD5010";
 
 inline constexpr const char *LoweringUndefinedFunction = "SHD6001";
+
+inline constexpr const char *RuntimeArithmeticDomainError = "SHD7001";
+inline constexpr const char *RuntimeArrayBounds = "SHD7002";
+inline constexpr const char *RuntimeLoopStepZero = "SHD7003";
+inline constexpr const char *RuntimeInvalidState = "SHD7004";
 
 }  // namespace diagnostics
 }  // namespace shorthand
