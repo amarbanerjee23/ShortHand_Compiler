@@ -69,11 +69,25 @@ COMMON_SOURCES=(
   "${SRC_DIR}/ai_runtime/AI_Types.cpp"
 )
 
+run_build() {
+  local label="$1"
+  shift
+  local out="/tmp/shorthand_fuzz_build_${label}.out"
+  local err="/tmp/shorthand_fuzz_build_${label}.err"
+  if ! "$@" >"${out}" 2>"${err}"; then
+    echo "error: fuzz build command failed: ${label}" >&2
+    cat "${out}" >&2 || true
+    cat "${err}" >&2 || true
+    exit 1
+  fi
+}
+
 COMMON_OBJECTS=()
 index=0
 for source in "${COMMON_SOURCES[@]}"; do
   object="${WORK_DIR}/common-${index}.o"
-  "${CLANGXX}" "${LLVM_CXXFLAGS[@]}" "${COMMON_FLAGS[@]}" -c "${source}" -o "${object}"
+  run_build "common_${index}" \
+    "${CLANGXX}" "${LLVM_CXXFLAGS[@]}" "${COMMON_FLAGS[@]}" -c "${source}" -o "${object}"
   COMMON_OBJECTS+=("${object}")
   index=$((index + 1))
 done
@@ -83,9 +97,11 @@ build_target() {
   local stage="$2"
   local harness_object="${WORK_DIR}/${name}-harness.o"
   local binary="${WORK_DIR}/${name}_fuzz"
-  "${CLANGXX}" "${LLVM_CXXFLAGS[@]}" "${COMMON_FLAGS[@]}" \
+  run_build "${name}_harness" \
+    "${CLANGXX}" "${LLVM_CXXFLAGS[@]}" "${COMMON_FLAGS[@]}" \
     -DSHORTHAND_FUZZ_STAGE="${stage}" -c "${HARNESS}" -o "${harness_object}"
-  "${CLANGXX}" -fsanitize=fuzzer,address,undefined -fno-sanitize-recover=all \
+  run_build "${name}_link" \
+    "${CLANGXX}" -fsanitize=fuzzer,address,undefined -fno-sanitize-recover=all \
     "${harness_object}" "${COMMON_OBJECTS[@]}" "${LLVM_LDFLAGS[@]}" -lfl -o "${binary}"
 }
 
