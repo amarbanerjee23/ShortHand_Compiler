@@ -18,18 +18,19 @@ run_negative(){ need_compiler || return 0; if "$SHORT" "$ROOT_DIR/tests/parser/i
 run_parser_robustness(){ need_compiler || return 0; if [[ "$MODE" == "sanitize" ]]; then SHORTHAND_BIN="$SHORT" SHORTHAND_PARSER_SANITIZER_MODE=1 bash "$ROOT_DIR/scripts/check_parser_robustness.sh" && ok parser_robustness_sanitized || bad parser_robustness_sanitized; else SHORTHAND_BIN="$SHORT" bash "$ROOT_DIR/scripts/check_parser_robustness.sh" && ok parser_robustness || bad parser_robustness; fi; }
 run_modules(){ need_compiler || return 0; SHORTHAND_BIN="$SHORT" bash "$ROOT_DIR/scripts/check_module_ast_scaffold.sh" && ok module_ast_scaffold || bad module_ast_scaffold; }
 run_module_resolution(){ need_compiler || return 0; bash "$ROOT_DIR/scripts/check_module_resolver_unit.sh" && SHORTHAND_BIN="$SHORT" bash "$ROOT_DIR/scripts/check_module_resolution.sh" && ok module_resolution || bad module_resolution; }
+run_semantic_differential(){ need_compiler || return 0; SHORTHAND_BIN="$SHORT" bash "$ROOT_DIR/scripts/check_semantic_differential.sh" && ok semantic_differential || bad semantic_differential; }
 run_ai(){ if need_compiler; then SHORTHAND_BIN="$SHORT" bash "$ROOT_DIR/tests/ai_runtime/test_fallback.sh" && ok ai_runtime_fallback || bad ai_runtime_fallback; SHORTHAND_BIN="$SHORT" bash "$ROOT_DIR/tests/evidence/test_ai_evidence.sh" && ok ai_evidence_backend_fields || bad ai_evidence_backend_fields; bash "$ROOT_DIR/tests/ai_runtime/test_onnxruntime_backend_source.sh" && ok onnxruntime_backend_execution_source || bad onnxruntime_backend_execution_source; else warning "short_hand unavailable; AI tests environment-limited"; fi; }
 run_ai_app(){ if [[ -x "${BUILD_DIR}/short_ai_app" ]]; then "${BUILD_DIR}/short_ai_app" missing.onnx "1" "0" >/tmp/shorthand_ai_app.out 2>&1 && bad ai_app_unexpected_success || ok ai_app_fallback_unavailable; else warning "short_ai_app unavailable; optional AI app tests environment-limited"; fi; }
 case "$MODE" in
   unit) run_green; bash "$ROOT_DIR/scripts/check_module_resolver_unit.sh" && ok module_resolver_unit || bad module_resolver_unit ;;
   compiler) run_compiler_smoke; run_modules; run_module_resolution ;;
-  sanitize) run_compiler_smoke; run_parser_robustness; run_modules; run_module_resolution ;;
+  sanitize) run_compiler_smoke; run_parser_robustness; run_modules; run_module_resolution; run_semantic_differential ;;
   all) run_compiler_smoke; run_parser_robustness; run_modules; run_module_resolution ;;
   llvm) run_compiler_smoke; run_codegen; run_module_resolution ;;
   negative) run_negative; run_parser_robustness; run_modules; run_module_resolution ;;
   ai) run_ai ;;
   ai_app) run_ai_app ;;
-  *) run_green; run_compiler_smoke; run_codegen; run_negative; run_parser_robustness; run_modules; run_module_resolution; run_ai ;;
+  *) run_green; run_compiler_smoke; run_codegen; run_negative; run_parser_robustness; run_modules; run_module_resolution; run_semantic_differential; run_ai ;;
 esac
 printf 'Summary: pass=%d fail=%d warning=%d\n' "$pass" "$fail" "$warn"
 [[ "$fail" -eq 0 ]]
