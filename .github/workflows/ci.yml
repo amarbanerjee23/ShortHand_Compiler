@@ -209,7 +209,7 @@ jobs:
           set -euo pipefail
           build-toolchain/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_toolchain_${{ matrix.id }}.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_toolchain_${{ matrix.id }}.out
-          build-toolchain/short_hand tests/conformance/fixtures/base/int_bool_ops.short parse >/tmp/shorthand_toolchain_${{ matrix.id }}_parse.out
+          build-toolchain/short_hand tests/semantic/differential/core_control.short parse >/tmp/shorthand_toolchain_${{ matrix.id }}_parse.out
 
   linux-arm64:
     runs-on: ubuntu-24.04-arm
