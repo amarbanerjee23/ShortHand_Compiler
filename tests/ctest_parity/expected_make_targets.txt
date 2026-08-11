@@ -1,0 +1,11 @@
+test-unit
+test-integration
+test-green
+test-compiler
+test-negative
+test-diagnostics
+test-runtime-linking
+test-conformance
+test-semantic-differential
+test-llvm
+test-ai
