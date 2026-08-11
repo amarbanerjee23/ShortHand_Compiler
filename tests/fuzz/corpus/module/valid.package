@@ -1,0 +1,4 @@
+format shorthand.package.v1
+package fuzz.pkg
+module fuzz.pkg.app src/app.short
+module fuzz.pkg.lib src/lib.short
