@@ -1,0 +1,10 @@
+int i,total;
+i = 0;
+total = 0;
+loop i = 0, 1, 4 {
+    if i == 2 {
+        continue;
+    }
+    total = total + i;
+}
+print "total", total;
