@@ -1,0 +1,6 @@
+int value;
+def void invalid_return(int x;) {
+    return x;
+};
+value = 1;
+invalid_return(value);
