@@ -18,7 +18,7 @@ require_file() {
 }
 require_contains() {
   require_file "$1"
-  grep -Fq "$2" "$1" || { echo "error: $1 missing PR73 safety contract text: $2" >&2; exit 1; }
+  grep -Fq -- "$2" "$1" || { echo "error: $1 missing PR73 safety contract text: $2" >&2; exit 1; }
 }
 
 for file in "${DOC}" "${FUZZ}" "${REPLAY}" "${MEMORY}" "${TSAN}" "${CI}" "${NIGHTLY}" "${MATRIX}" "${HARNESS}" "${RACE}"; do
@@ -33,6 +33,7 @@ done
 
 for anchor in \
   'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' \
+  'runtime_memory_sanitizer_contract_version: shorthand.runtime.asan_lsan_ubsan.v1' \
   'runtime_tsan_contract_version: shorthand.runtime.tsan.v1' \
   'production_claim: false' \
   'scripts/check_runtime_memory_sanitizer.sh' \
@@ -65,6 +66,7 @@ for anchor in \
   require_contains "${CI}" "${anchor}"
 done
 require_contains "${NIGHTLY}" 'Extended staged libFuzzer campaign'
+require_contains "${NIGHTLY}" 'Runtime ASan LSan UBSan extended stress'
 require_contains "${NIGHTLY}" 'SHORTHAND_FUZZ_SEED: ${{ github.run_number }}'
 require_contains "${MATRIX}" $'TST008\tfull sanitizer coverage\timplemented'
 require_contains "${MATRIX}" $'TST009\tcontinuous fuzzing\timplemented'
