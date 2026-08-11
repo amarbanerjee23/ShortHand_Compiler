@@ -12,6 +12,10 @@ RUNS="${SHORTHAND_FUZZ_RUNS:-256}"
 MAX_TOTAL_TIME="${SHORTHAND_FUZZ_MAX_TOTAL_TIME:-0}"
 SEED="${SHORTHAND_FUZZ_SEED:-1337}"
 MAX_LEN="${SHORTHAND_FUZZ_MAX_LEN:-4096}"
+REPLAY_TARGET="${SHORTHAND_FUZZ_REPLAY_TARGET:-}"
+REPLAY_INPUT="${SHORTHAND_FUZZ_REPLAY_INPUT:-}"
+MINIMIZE_CRASH="${SHORTHAND_FUZZ_MINIMIZE_CRASH:-0}"
+MINIMIZE_RUNS="${SHORTHAND_FUZZ_MINIMIZE_RUNS:-10000}"
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
 for tool in "${CLANGXX}" llvm-config bison flex; do
@@ -30,8 +34,22 @@ for path in \
   [[ -e "${path}" ]] || { echo "error: missing fuzz input: ${path}" >&2; exit 1; }
 done
 
+if [[ -n "${REPLAY_TARGET}" || -n "${REPLAY_INPUT}" ]]; then
+  [[ -n "${REPLAY_TARGET}" && -n "${REPLAY_INPUT}" ]] || {
+    echo "error: replay requires both SHORTHAND_FUZZ_REPLAY_TARGET and SHORTHAND_FUZZ_REPLAY_INPUT" >&2
+    exit 2
+  }
+  case "${REPLAY_TARGET}" in
+    parser|module|semantic|lowering) ;;
+    *) echo "error: invalid fuzz replay target: ${REPLAY_TARGET}" >&2; exit 2 ;;
+  esac
+  [[ -f "${REPLAY_INPUT}" ]] || { echo "error: replay input not found: ${REPLAY_INPUT}" >&2; exit 2; }
+fi
+
 mkdir -p "${ARTIFACT_DIR}"
-rm -f "${ARTIFACT_DIR}"/* || true
+if [[ -z "${REPLAY_INPUT}" ]]; then
+  rm -f "${ARTIFACT_DIR}"/* || true
+fi
 
 # Ensure the checked-in/generated frontend and source-level lowering are exactly
 # the same ones used by the ordinary compiler before building fuzz objects.
@@ -111,6 +129,40 @@ build_target parser 1
 build_target module 2
 build_target semantic 3
 build_target lowering 4
+
+run_reproducer() {
+  local binary="${WORK_DIR}/${REPLAY_TARGET}_fuzz"
+  local log="/tmp/shorthand_fuzz_replay_${REPLAY_TARGET}.out"
+  local -a replay_args
+  if [[ "${MINIMIZE_CRASH}" == "1" ]]; then
+    replay_args=(-minimize_crash=1 -runs="${MINIMIZE_RUNS}" "${REPLAY_INPUT}")
+  else
+    replay_args=(-runs=1 "${REPLAY_INPUT}")
+  fi
+
+  printf 'REPLAY_EXECUTED target=%s input=%s minimize=%s seed=%s\n' \
+    "${REPLAY_TARGET}" "${REPLAY_INPUT}" "${MINIMIZE_CRASH}" "${SEED}"
+  set +e
+  ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" \
+  UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" \
+  "${binary}" \
+    "${replay_args[@]}" \
+    -seed="${SEED}" \
+    -max_len="${MAX_LEN}" \
+    -timeout=5 \
+    -rss_limit_mb=2048 \
+    -artifact_prefix="${ARTIFACT_DIR}/${REPLAY_TARGET}-replay-" \
+    >"${log}" 2>&1
+  local status=$?
+  set -e
+  cat "${log}"
+  return "${status}"
+}
+
+if [[ -n "${REPLAY_INPUT}" ]]; then
+  run_reproducer
+  exit $?
+fi
 
 run_target() {
   local name="$1"
