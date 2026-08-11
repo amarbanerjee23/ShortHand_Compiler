@@ -35,7 +35,12 @@ require_literal 'static std::string resolveShortHandNativeLinker()'
 require_literal 'Linked ShortHand runtime library:'
 require_literal 'Native linker:'
 require_literal 'std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc")'
-require_literal 'std::string cmd_bin = shellQuote(native_linker) + " -no-pie " + shellQuote(base + ".o")'
+require_literal 'std::string cmd_bin = shellQuote(native_linker);'
+require_literal '#if !defined(_WIN32)'
+require_literal 'cmd_bin += " -no-pie";'
+require_literal 'const std::string binary_file = base + ".exe";'
+require_literal 'module->getOrInsertFunction("_write", writeType)'
+require_literal 'module->getOrInsertFunction("write", writeType)'
 
 forbid_literal 'BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);'
 forbid_literal 'IRBuilder<> stubBuilder(entry);'
@@ -47,4 +52,4 @@ if grep -Eq 'python(3)?[[:space:]]+-' "$0"; then
   exit 1
 fi
 
-printf 'PASS external runtime source lowering is canonical and Python-free: %s\n' "${src}"
+printf 'PASS external runtime source lowering is canonical, target-aware and Python-free: %s\n' "${src}"
