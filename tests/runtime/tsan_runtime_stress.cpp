@@ -29,11 +29,11 @@ int main() {
     for (int worker = 0; worker < kWorkers; ++worker) {
         workers.emplace_back([worker, &api_failures] {
             const std::string suffix = std::to_string(worker);
-            const std::string model = "tsan_model_" + suffix;
-            const std::string input = "tsan_input_" + suffix;
-            const std::string output = "tsan_output_" + suffix;
-            const std::string contract = "tsan_contract_" + suffix;
-            const std::string workload = "tsan_workload_" + suffix;
+            const std::string model = "stress_model_" + suffix;
+            const std::string input = "stress_input_" + suffix;
+            const std::string output = "stress_output_" + suffix;
+            const std::string contract = "stress_contract_" + suffix;
+            const std::string workload = "stress_workload_" + suffix;
 
             if (short_ai_register_model(model.c_str(), "onnx", "missing.onnx", "inference",
                                         "float32", "1", "1", "fallback") != SHORTHAND_RUNTIME_OK)
@@ -84,10 +84,8 @@ int main() {
     snapshot_owner.join();
     state_changer.join();
 
-    if (api_failures.load() != 0) fail("runtime API consistency failed under race stress");
+    if (api_failures.load() != 0) fail("runtime API consistency failed under concurrent stress");
 
-    // Deliberately overlap reset with snapshot readers. The public facade contract
-    // serializes each ABI call, so TSan must observe no unsynchronized access.
     std::atomic<int> snapshot_failures{0};
     workers.clear();
     for (int worker = 0; worker < 6; ++worker) {
@@ -108,8 +106,8 @@ int main() {
     if (snapshot_failures.load() != 0) fail("snapshot malformed during concurrent reset");
     if (short_runtime_reset() != SHORTHAND_RUNTIME_OK) fail("final reset failed");
 
-    std::cout << "TSAN_STRESS workers=" << kWorkers << " iterations=" << kIterations
+    std::cout << "RUNTIME_STRESS workers=" << kWorkers << " iterations=" << kIterations
               << " facade=serialized_public_abi\n";
-    std::cout << "PASS ThreadSanitizer runtime race stress\n";
+    std::cout << "PASS runtime concurrency stress\n";
     return 0;
 }
