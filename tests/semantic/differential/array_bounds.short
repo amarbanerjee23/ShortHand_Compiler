@@ -1,0 +1,5 @@
+int index,value;
+int values[3];
+index = 3;
+value = values[index];
+print "value", value;
