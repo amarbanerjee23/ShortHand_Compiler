@@ -8,7 +8,7 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
 bash "${GUARD}" "${SOURCE}" >"${TMP_DIR}/positive.out"
-grep -Fq 'PASS external runtime source lowering is canonical and Python-free' "${TMP_DIR}/positive.out"
+grep -Fq 'PASS external runtime source lowering is canonical, target-aware and Python-free' "${TMP_DIR}/positive.out"
 
 cp "${SOURCE}" "${TMP_DIR}/IR_Generator.cpp"
 printf '\n// regression sentinel\n// BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);\n' >> "${TMP_DIR}/IR_Generator.cpp"
