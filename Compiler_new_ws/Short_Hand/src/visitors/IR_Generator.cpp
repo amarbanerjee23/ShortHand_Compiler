@@ -129,6 +129,7 @@ static bool fileExists(const std::string &path) {
 
 static std::string shellQuote(const std::string &value) {
 #if defined(_WIN32)
+    if (value.find_first_of(" \t\"&|<>^") == std::string::npos) return value;
     std::string out = "\"";
     for (char c : value) {
         if (c == '"') out += "\\\"";
@@ -164,7 +165,16 @@ static std::string resolveShortHandRuntimeLibrary() {
 
 static std::string resolveShortHandNativeLinker() {
     const char *env = std::getenv("SHORTHAND_NATIVE_LINKER");
-    if (env && *env) return std::string(env);
+    if (env && *env) {
+        std::string linker(env);
+#if defined(_WIN32)
+        if (linker.find_first_of(" \t\"") != std::string::npos) {
+            cerr << "SHORTHAND_NATIVE_LINKER on Windows must be a PATH-resolved command token without whitespace.\n";
+            return "";
+        }
+#endif
+        return linker;
+    }
     return "clang++";
 }
 
@@ -237,6 +247,7 @@ bool IR_Generator::dumpNativeBinary() {
     std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc") + " -o " + shellQuote(object_file);
     std::string runtime_lib = resolveShortHandRuntimeLibrary();
     std::string native_linker = resolveShortHandNativeLinker();
+    if (native_linker.empty()) return false;
     std::string cmd_bin = shellQuote(native_linker);
 #if !defined(_WIN32)
     cmd_bin += " -no-pie";
