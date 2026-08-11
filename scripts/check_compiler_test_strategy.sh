@@ -12,6 +12,8 @@ PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
 MODULE_MATRIX="${ROOT_DIR}/tests/conformance/module_matrix_beta_0_3.tsv"
 MODULE_GATE="${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
 RESOLVER_GATE="${ROOT_DIR}/scripts/check_module_resolution.sh"
+DIFFERENTIAL_GATE="${ROOT_DIR}/scripts/check_semantic_differential.sh"
+EXECUTION_CONTRACT="${ROOT_DIR}/docs/execution_semantics_beta_0_3.md"
 
 require_file() {
   local file="$1"
@@ -28,7 +30,8 @@ require_contains() {
   }
 }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${PIPELINE}" "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}"; do
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${PIPELINE}" \
+  "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}" "${DIFFERENTIAL_GATE}" "${EXECUTION_CONTRACT}"; do
   require_file "${file}"
 done
 
@@ -48,9 +51,9 @@ row_count="$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' 
 implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END { print count+0 }' "${MATRIX}")"
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
-[[ "${implemented_count}" == "5" ]] || { echo "error: expected 5 implemented rows after PR70" >&2; exit 1; }
-[[ "${partial_count}" == "11" ]] || { echo "error: expected 11 partial rows after PR70" >&2; exit 1; }
-[[ "${open_count}" == "11" ]] || { echo "error: expected 11 open rows after PR70" >&2; exit 1; }
+[[ "${implemented_count}" == "9" ]] || { echo "error: expected 9 implemented rows in the PR72 candidate" >&2; exit 1; }
+[[ "${partial_count}" == "8" ]] || { echo "error: expected 8 partial rows in the PR72 candidate" >&2; exit 1; }
+[[ "${open_count}" == "10" ]] || { echo "error: expected 10 open rows in the PR72 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || {
@@ -93,21 +96,30 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${PLAN}" 'after PR70 is successfully merged, 15 implementation PRs remain.'
+require_contains "${PLAN}" 'after PR72 is successfully merged, 14 implementation PRs remain.'
 require_contains "${PLAN}" 'PR86 - Measured energy, performance and zero-skip production RC gate'
+require_contains "${PLAN}" 'PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED'
 require_contains "${PLAN}" 'PR71 - CI status publication hygiene | MERGED'
+require_contains "${PLAN}" 'PR72 - Cross-mode semantic correctness and differential execution suite | IN PROGRESS'
 require_contains "${STATUS}" 'Deterministic module resolution and multi-file codegen'
 require_contains "${STATUS}" 'Measured ShortHand versus Python energy evidence'
 require_contains "${STATUS}" 'CI status hygiene'
+require_contains "${STATUS}" 'Cross-mode semantic equivalence'
 require_contains "${CI}" 'Module resolver and multi-file codegen'
+require_contains "${CI}" 'Semantic differential execution'
 require_contains "${CI}" 'CI status hygiene guard'
 require_contains "${PIPELINE}" 'Tier 5 - runtime/backend/hardware qualification'
 require_contains "${PIPELINE}" 'CPU, GPU, TPU and NPU'
 require_contains "${MODULE_GATE}" 'PASS module import package syntax and AST scaffold gate'
 require_contains "${RESOLVER_GATE}" 'PASS deterministic module resolver, package lock and multi-file codegen gate'
+require_contains "${DIFFERENTIAL_GATE}" 'PASS cross-mode semantic differential execution gate'
+require_contains "${EXECUTION_CONTRACT}" 'execution_semantics_contract: beta-0.3-pr72-v1'
+require_contains "${MATRIX}" $'TST004\tsemantic validation\timplemented'
+require_contains "${MATRIX}" $'TST005\tinterpreter functional correctness\timplemented'
+require_contains "${MATRIX}" $'TST006\tLLVM and native functional correctness\timplemented'
+require_contains "${MATRIX}" $'TST007\tinterpreter versus compiled differential testing\timplemented'
 require_contains "${MATRIX}" $'TST011\tmodule and package syntax\timplemented'
 require_contains "${MATRIX}" $'TST012\tmodule resolver and package graph\timplemented'
-require_contains "${MATRIX}" $'TST007\tinterpreter versus compiled differential testing\topen'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
 
 printf 'TEST_COVERAGE implemented=%s partial=%s open=%s total=%s\n' \
