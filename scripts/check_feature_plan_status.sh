@@ -13,13 +13,17 @@ PLAN_FILES=(
   "docs/ci_pipeline_architecture.md"
   "docs/production_readiness_pr_plan.md"
   "docs/execution_semantics_beta_0_3.md"
+  "docs/fuzz_sanitizer_concurrency.md"
   "tests/coverage/compiler_test_coverage_matrix.tsv"
   "docs/module_import_package_syntax.md"
   "docs/module_resolution_and_lockfile.md"
   "tests/conformance/module_matrix_beta_0_3.tsv"
   "scripts/check_module_resolution.sh"
   "scripts/check_semantic_differential.sh"
+  "scripts/check_fuzz_safety.sh"
+  "scripts/check_tsan_concurrency.sh"
   "scripts/check_ci_status_hygiene.sh"
+  ".github/workflows/fuzz-nightly.yml"
 )
 
 for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
@@ -45,6 +49,8 @@ required_status_terms=(
   "Deterministic module resolver and multi-file codegen"
   "Compiler test strategy and coverage matrix"
   "Cross-mode semantic equivalence"
+  "Coverage-guided fuzzing"
+  "ThreadSanitizer"
   "Cross-platform reproducibility"
   "Measured ShortHand versus Python energy evidence"
   "Zero-skip production RC gate"
@@ -62,18 +68,19 @@ for term in "${required_status_terms[@]}"; do
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-11-pr72' \
+  'feature_status_version: 2026-08-11-pr73' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  '9 implemented, 8 partial and 10 open' \
-  'PR70 is merged' \
-  'PR72 is the active semantic-correctness candidate' \
-  'Cross-mode semantic equivalence | Implemented in PR72 candidate for defined core contract' \
-  'PR74 adds declared platform/toolchain matrix' \
+  '12 implemented, 6 partial and 9 open' \
+  'PR72 is merged' \
+  'PR73 is the active safety-hardening candidate' \
+  'Coverage-guided fuzzing | Implemented' \
+  'ThreadSanitizer concurrency race detection | Implemented' \
+  'Cross-platform portability | Open' \
   'live production qualification remains PR80'; do
   if ! grep -Fiq "${anchor}" "${STATUS_FILE}"; then
-    echo "error: feature implementation status missing PR72 anchor: ${anchor}" >&2
+    echo "error: feature implementation status missing PR73 anchor: ${anchor}" >&2
     exit 1
   fi
 done
@@ -88,13 +95,23 @@ grep -Fq 'execution_semantics_contract: beta-0.3-pr72-v1' docs/execution_semanti
   exit 1
 }
 
-grep -Fq 'PASS deterministic module resolver, package lock and multi-file codegen gate' scripts/check_module_resolution.sh || {
-  echo "error: module resolver executable gate missing" >&2
+grep -Fq 'fuzz_safety_contract_version: 1.0.0' docs/fuzz_sanitizer_concurrency.md || {
+  echo "error: PR73 fuzz/sanitizer/race contract is missing" >&2
   exit 1
 }
 
 grep -Fq 'PASS cross-mode semantic differential execution gate' scripts/check_semantic_differential.sh || {
   echo "error: semantic differential executable gate missing" >&2
+  exit 1
+}
+
+grep -Fq 'PASS coverage-guided sanitizer fuzz gate' scripts/check_fuzz_safety.sh || {
+  echo "error: fuzz sanitizer executable gate missing" >&2
+  exit 1
+}
+
+grep -Fq 'PASS ThreadSanitizer concurrency gate' scripts/check_tsan_concurrency.sh || {
+  echo "error: ThreadSanitizer executable gate missing" >&2
   exit 1
 }
 
@@ -130,4 +147,4 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == "1" ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. PR72 semantic evidence and remaining production blockers remain explicit."
+echo "Feature plan status check passed. PR73 safety evidence and remaining production blockers remain explicit."
