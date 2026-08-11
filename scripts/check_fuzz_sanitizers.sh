@@ -41,8 +41,10 @@ make -C "${SRC_DIR}" short_hand >/tmp/shorthand_fuzz_prepare.out 2>/tmp/shorthan
   exit 1
 }
 
-read -r -a LLVM_CXXFLAGS <<<"$(llvm-config --cxxflags)"
-read -r -a LLVM_LDFLAGS <<<"$(llvm-config --ldflags --system-libs --libs core bitwriter)"
+# llvm-config emits linker flags on multiple lines on Ubuntu/LLVM 18. Flatten
+# whitespace before array parsing so neither -L nor the LLVM library list is lost.
+read -r -a LLVM_CXXFLAGS <<<"$(llvm-config --cxxflags | tr '\n' ' ')"
+read -r -a LLVM_LDFLAGS <<<"$(llvm-config --ldflags --system-libs --libs core bitwriter | tr '\n' ' ')"
 
 COMMON_FLAGS=(
   -O1
