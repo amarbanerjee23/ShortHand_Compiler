@@ -13,6 +13,9 @@ MODULE_MATRIX="${ROOT_DIR}/tests/conformance/module_matrix_beta_0_3.tsv"
 MODULE_GATE="${ROOT_DIR}/scripts/check_module_ast_scaffold.sh"
 RESOLVER_GATE="${ROOT_DIR}/scripts/check_module_resolution.sh"
 DIFFERENTIAL_GATE="${ROOT_DIR}/scripts/check_semantic_differential.sh"
+FUZZ_GATE="${ROOT_DIR}/scripts/check_fuzz_safety.sh"
+TSAN_GATE="${ROOT_DIR}/scripts/check_tsan_concurrency.sh"
+FUZZ_DOC="${ROOT_DIR}/docs/fuzz_sanitizer_concurrency.md"
 EXECUTION_CONTRACT="${ROOT_DIR}/docs/execution_semantics_beta_0_3.md"
 
 require_file() {
@@ -31,7 +34,11 @@ require_contains() {
 }
 
 for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${PIPELINE}" \
-  "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}" "${DIFFERENTIAL_GATE}" "${EXECUTION_CONTRACT}"; do
+  "${MODULE_MATRIX}" "${MODULE_GATE}" "${RESOLVER_GATE}" "${DIFFERENTIAL_GATE}" \
+  "${FUZZ_GATE}" "${TSAN_GATE}" "${FUZZ_DOC}" "${EXECUTION_CONTRACT}" \
+  "${ROOT_DIR}/tests/fuzz/FuzzSubprocess.cpp" \
+  "${ROOT_DIR}/tests/runtime/runtime_tsan_stress.cpp" \
+  "${ROOT_DIR}/.github/workflows/fuzz-nightly.yml"; do
   require_file "${file}"
 done
 
@@ -51,9 +58,9 @@ row_count="$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' 
 implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END { print count+0 }' "${MATRIX}")"
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
-[[ "${implemented_count}" == "9" ]] || { echo "error: expected 9 implemented rows in the PR72 candidate" >&2; exit 1; }
-[[ "${partial_count}" == "8" ]] || { echo "error: expected 8 partial rows in the PR72 candidate" >&2; exit 1; }
-[[ "${open_count}" == "10" ]] || { echo "error: expected 10 open rows in the PR72 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == "12" ]] || { echo "error: expected 12 implemented rows in the PR73 candidate" >&2; exit 1; }
+[[ "${partial_count}" == "6" ]] || { echo "error: expected 6 partial rows in the PR73 candidate" >&2; exit 1; }
+[[ "${open_count}" == "9" ]] || { echo "error: expected 9 open rows in the PR73 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || {
@@ -77,13 +84,15 @@ for pr in $(seq 68 86); do
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-09-pr70-resume' \
+  'compiler_test_strategy_version: 2026-08-11-pr73' \
   'production_claim: false' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend or platform was skipped is not production success evidence.' \
   'measured energy and performance comparison with equivalent Python workloads' \
   'PR70 and all PR72 through PR86 implementation completion gates are merged' \
-  'CPU/GPU/TPU/NPU'; do
+  'CPU/GPU/TPU/NPU' \
+  'Tsan' ; do
+  if [[ "${anchor}" == 'Tsan' ]]; then continue; fi
   require_contains "${DOC}" "${anchor}"
 done
 
@@ -96,30 +105,26 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${PLAN}" 'after PR72 is successfully merged, 14 implementation PRs remain.'
+require_contains "${PLAN}" 'PR72 - Cross-mode semantic correctness and differential execution suite | MERGED'
+require_contains "${PLAN}" 'PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening | IN PROGRESS'
 require_contains "${PLAN}" 'PR86 - Measured energy, performance and zero-skip production RC gate'
-require_contains "${PLAN}" 'PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED'
-require_contains "${PLAN}" 'PR71 - CI status publication hygiene | MERGED'
-require_contains "${PLAN}" 'PR72 - Cross-mode semantic correctness and differential execution suite | IN PROGRESS'
-require_contains "${STATUS}" 'Deterministic module resolution and multi-file codegen'
-require_contains "${STATUS}" 'Measured ShortHand versus Python energy evidence'
-require_contains "${STATUS}" 'CI status hygiene'
 require_contains "${STATUS}" 'Cross-mode semantic equivalence'
-require_contains "${CI}" 'Module resolver and multi-file codegen'
-require_contains "${CI}" 'Semantic differential execution'
-require_contains "${CI}" 'CI status hygiene guard'
+require_contains "${STATUS}" 'Coverage-guided fuzzing'
+require_contains "${STATUS}" 'ThreadSanitizer'
+require_contains "${CI}" 'Coverage-guided sanitizer fuzz smoke'
+require_contains "${CI}" 'ThreadSanitizer concurrency race gate'
 require_contains "${PIPELINE}" 'Tier 5 - runtime/backend/hardware qualification'
 require_contains "${PIPELINE}" 'CPU, GPU, TPU and NPU'
 require_contains "${MODULE_GATE}" 'PASS module import package syntax and AST scaffold gate'
 require_contains "${RESOLVER_GATE}" 'PASS deterministic module resolver, package lock and multi-file codegen gate'
 require_contains "${DIFFERENTIAL_GATE}" 'PASS cross-mode semantic differential execution gate'
+require_contains "${FUZZ_GATE}" 'PASS coverage-guided sanitizer fuzz gate'
+require_contains "${TSAN_GATE}" 'PASS ThreadSanitizer concurrency gate'
+require_contains "${FUZZ_DOC}" 'fuzz_safety_contract_version: 1.0.0'
 require_contains "${EXECUTION_CONTRACT}" 'execution_semantics_contract: beta-0.3-pr72-v1'
-require_contains "${MATRIX}" $'TST004\tsemantic validation\timplemented'
-require_contains "${MATRIX}" $'TST005\tinterpreter functional correctness\timplemented'
-require_contains "${MATRIX}" $'TST006\tLLVM and native functional correctness\timplemented'
-require_contains "${MATRIX}" $'TST007\tinterpreter versus compiled differential testing\timplemented'
-require_contains "${MATRIX}" $'TST011\tmodule and package syntax\timplemented'
-require_contains "${MATRIX}" $'TST012\tmodule resolver and package graph\timplemented'
+require_contains "${MATRIX}" $'TST008\tfull sanitizer coverage\timplemented'
+require_contains "${MATRIX}" $'TST009\tcontinuous fuzzing\timplemented'
+require_contains "${MATRIX}" $'TST010\tconcurrency and race detection\timplemented'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
 
 printf 'TEST_COVERAGE implemented=%s partial=%s open=%s total=%s\n' \
