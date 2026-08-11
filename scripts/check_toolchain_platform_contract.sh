@@ -20,6 +20,7 @@ for file in \
   "${ROOT_DIR}/scripts/check_cmake_ctest_parity.sh" \
   "${ROOT_DIR}/scripts/check_reproducible_builds.sh" \
   "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" \
+  "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" \
   "${ROOT_DIR}/tests/ci/test_cmake_ctest_parity_negative.sh" \
   "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh" \
   "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh" \
@@ -37,6 +38,7 @@ for script in \
   "${ROOT_DIR}/scripts/check_cmake_ctest_parity.sh" \
   "${ROOT_DIR}/scripts/check_reproducible_builds.sh" \
   "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" \
+  "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" \
   "${ROOT_DIR}/tests/ci/test_cmake_ctest_parity_negative.sh" \
   "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh" \
   "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh"; do
@@ -73,6 +75,9 @@ for anchor in \
   'check_cmake_ctest_parity.sh' \
   'check_reproducible_builds.sh' \
   'check_installed_consumer_cmake.sh' \
+  'check_installed_sdk_lifecycle.sh' \
+  'compile-native' \
+  'SHD7001' \
   'Publish event-specific CI status' \
   'ci / ubuntu (%s)'; do
   require_contains "${CI}" "${anchor}"
@@ -97,10 +102,11 @@ if grep -Eq 'python(3)?[[:space:]]+-' "${ROOT_DIR}/scripts/apply_external_runtim
   echo "error: runtime source lowering must not require Python during compiler builds" >&2
   exit 1
 fi
-require_contains "${ROOT_DIR}/scripts/apply_external_runtime_to_ir_source.sh" 'PASS external runtime source lowering is canonical and Python-free'
+require_contains "${ROOT_DIR}/scripts/apply_external_runtime_to_ir_source.sh" 'PASS external runtime source lowering is canonical, target-aware and Python-free'
 require_contains "${ROOT_DIR}/scripts/check_cmake_ctest_parity.sh" 'PASS CMake CTest parity gate'
 require_contains "${ROOT_DIR}/scripts/check_reproducible_builds.sh" 'PASS clean reproducible build gate'
 require_contains "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" 'PASS installed ShortHand CMake consumer gate'
+require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'PASS installed ShortHand SDK install/reinstall/uninstall lifecycle'
 
 bash "${ROOT_DIR}/tests/codegen/test_external_runtime_source_guard_negative.sh"
 bash "${ROOT_DIR}/tests/ci/test_parser_diagnostic_stream_portability.sh"
