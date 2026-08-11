@@ -29,8 +29,13 @@ hash_install_manifest() {
   : >"${output}"
   while IFS= read -r installed; do
     [[ -n "${installed}" ]] || continue
-    [[ -f "${installed}" ]] || { echo "error: installed SDK file missing: ${installed}" >&2; exit 1; }
-    cmake -E sha256sum "${installed}" >>"${output}"
+    # CMake writes native Windows paths (for example D:/...) into the install
+    # manifest. Let CMake resolve those paths instead of asking an MSYS shell to
+    # reinterpret them as POSIX paths.
+    if ! cmake -E sha256sum "${installed}" >>"${output}"; then
+      echo "error: installed SDK file missing or unreadable: ${installed}" >&2
+      exit 1
+    fi
   done < <(LC_ALL=C sort "${INSTALL_MANIFEST}")
 }
 
@@ -49,11 +54,11 @@ cmp -s "${FIRST_MANIFEST}" "${SECOND_MANIFEST}" || {
 }
 bash "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" "${PREFIX}" "${CONSUMER_BUILD}-second"
 
-# Uninstall exactly the files recorded by CMake. Removal is a real negative
-# package-consumption test, not an in-tree link check.
+# Uninstall exactly the files recorded by CMake. Use `cmake -E rm` so native
+# Windows paths and POSIX paths follow the same code path.
 while IFS= read -r installed; do
   [[ -n "${installed}" ]] || continue
-  rm -f "${installed}"
+  cmake -E rm -f "${installed}"
 done < "${INSTALL_MANIFEST}"
 
 # Remove now-empty package directories without touching files outside PREFIX.
