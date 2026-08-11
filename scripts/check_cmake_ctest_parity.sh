@@ -52,7 +52,12 @@ for target in "${expected_targets[@]}"; do
   }
 done
 
-registered="$(grep -c 'Test #' <<<"${ctest_listing}" || true)"
+registered="$(awk '/Total Tests:/ {print $3}' <<<"${ctest_listing}" | tail -n1)"
+[[ "${registered}" =~ ^[0-9]+$ ]] || {
+  echo "error: unable to read authoritative CTest total from generated parity project" >&2
+  printf '%s\n' "${ctest_listing}" >&2
+  exit 1
+}
 if [[ "${registered}" -ne "${#expected_targets[@]}" ]]; then
   echo "error: CTest registered ${registered} parity tests, expected ${#expected_targets[@]}" >&2
   exit 1
