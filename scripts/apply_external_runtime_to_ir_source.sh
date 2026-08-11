@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
 if [[ "$#" -ne 1 ]]; then
   echo "usage: $0 <IR_Generator.cpp>" >&2
@@ -7,136 +7,44 @@ if [[ "$#" -ne 1 ]]; then
 fi
 
 src="$1"
+[[ -s "${src}" ]] || { echo "error: IR generator source is missing or empty: ${src}" >&2; exit 1; }
 
-python3 - "$src" <<'PY'
-import sys
-from pathlib import Path
-
-src = Path(sys.argv[1])
-text = src.read_text()
-
-old_hook = '''static Function *ensureShortHandRuntimeHook(const std::string &name, size_t argc) {
-    if (!module) return nullptr;
-    if (Function *existing = module->getFunction(name)) return existing;
-    std::vector<Type*> args(argc, i8PtrTy());
-    FunctionType *ftype = FunctionType::get(i32Ty(), args, false);
-    Function *fn = Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);
-    BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);
-    IRBuilder<> stubBuilder(entry);
-    stubBuilder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
-    return fn;
-}
-'''
-
-new_hook = '''static Function *ensureShortHandRuntimeHook(const std::string &name, size_t argc) {
-    if (!module) return nullptr;
-    if (Function *existing = module->getFunction(name)) return existing;
-    std::vector<Type*> args(argc, i8PtrTy());
-    FunctionType *ftype = FunctionType::get(i32Ty(), args, false);
-    return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);
-}
-'''
-
-if old_hook in text:
-    text = text.replace(old_hook, new_hook)
-elif new_hook not in text:
-    raise SystemExit("expected runtime-hook implementation was not found")
-
-helper_anchor = '''bool IR_Generator::dumpNativeBinary() {
-'''
-helpers = r'''static bool fileExists(const std::string &path) {
-    std::ifstream in(path.c_str());
-    return in.good();
+require_literal() {
+  local needle="$1"
+  grep -Fq -- "${needle}" "${src}" || {
+    echo "error: canonical external-runtime lowering is missing required source: ${needle}" >&2
+    exit 1
+  }
 }
 
-static std::string shellQuote(const std::string &value) {
-    std::string out = "'";
-    for (char c : value) {
-        if (c == '\'') out += "'\\''";
-        else out += c;
-    }
-    out += "'";
-    return out;
+forbid_literal() {
+  local needle="$1"
+  if grep -Fq -- "${needle}" "${src}"; then
+    echo "error: source-level runtime lowering still contains forbidden local-stub/native-link text: ${needle}" >&2
+    exit 1
+  fi
 }
 
-static std::string resolveShortHandRuntimeLibrary() {
-    const char *env = std::getenv("SHORTHAND_RUNTIME_LIB");
-    if (env && *env) return std::string(env);
+# PR63/PR72 permanently integrated external runtime lowering into the checked-in
+# source. This target remains intentionally named runtime-source-lowering for
+# compatibility with older build and enterprise-hardening contracts, but it is
+# now validation-only. The build must not require Python to mutate source files.
+require_literal 'return Function::Create(ftype, GlobalValue::ExternalLinkage, name, module);'
+require_literal 'static std::string resolveShortHandRuntimeLibrary()'
+require_literal 'static std::string resolveShortHandNativeLinker()'
+require_literal 'Linked ShortHand runtime library:'
+require_literal 'Native linker:'
+require_literal 'std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc")'
+require_literal 'std::string cmd_bin = shellQuote(native_linker) + " -no-pie " + shellQuote(base + ".o")'
 
-    const std::vector<std::string> candidates = {
-        "Compiler_new_ws/Short_Hand/build/libshorthand_runtime.a",
-        "../build/libshorthand_runtime.a",
-        "build/libshorthand_runtime.a"
-    };
-    for (const auto &candidate : candidates) {
-        if (fileExists(candidate)) return candidate;
-    }
-    return "";
-}
+forbid_literal 'BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);'
+forbid_literal 'IRBuilder<> stubBuilder(entry);'
+forbid_literal 'stubBuilder.CreateRet(ConstantInt::get(i32Ty(), 0, true));'
+forbid_literal 'std::string cmd_bin = "clang -no-pie " + base + ".o -o " + base;'
 
-static std::string resolveShortHandNativeLinker() {
-    const char *env = std::getenv("SHORTHAND_NATIVE_LINKER");
-    if (env && *env) return std::string(env);
-    return "clang++";
-}
+if grep -Eq 'python(3)?[[:space:]]+-' "$0"; then
+  echo "error: runtime source-lowering guard must remain Python-free" >&2
+  exit 1
+fi
 
-'''
-
-if "resolveShortHandRuntimeLibrary" not in text:
-    if helper_anchor not in text:
-        raise SystemExit("could not locate dumpNativeBinary anchor")
-    text = text.replace(helper_anchor, helpers + helper_anchor)
-
-start = text.find('bool IR_Generator::dumpNativeBinary() {')
-end_marker = '\nValue *IR_Generator::get_expression() {'
-end = text.find(end_marker, start)
-if start == -1 or end == -1:
-    raise SystemExit("could not locate dumpNativeBinary block")
-
-new_dump = r'''bool IR_Generator::dumpNativeBinary() {
-    if (!dumpBitcode()) return false;
-    std::string base = this->getModuleName();
-    std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc") + " -o " + shellQuote(base + ".o");
-    std::string runtime_lib = resolveShortHandRuntimeLibrary();
-    std::string native_linker = resolveShortHandNativeLinker();
-    std::string cmd_bin = shellQuote(native_linker) + " -no-pie " + shellQuote(base + ".o");
-    if (!runtime_lib.empty()) {
-        cmd_bin += " " + shellQuote(runtime_lib);
-    } else {
-        cerr << "No ShortHand runtime library found. Native linking will fail if AI/GreenAI runtime hooks are referenced.\n";
-    }
-    cmd_bin += " -o " + shellQuote(base);
-
-    if (std::system(cmd_obj.c_str()) != 0) {
-        cerr << "Failed to run llc. Ensure LLVM tools are installed and in PATH.\n";
-        return false;
-    }
-    if (std::system(cmd_bin.c_str()) != 0) {
-        cerr << "Failed to run C++ linker step. Build libshorthand_runtime.a or set SHORTHAND_RUNTIME_LIB for AI/GreenAI programs.\n";
-        return false;
-    }
-    if (!runtime_lib.empty()) {
-        cerr << "Linked ShortHand runtime library: " << runtime_lib << "\n";
-    }
-    cerr << "Native linker: " << native_linker << "\n";
-    cerr << "Generated native binary: " << base << "\n";
-    return true;
-}
-'''
-
-if "resolveShortHandNativeLinker" in text[start:end] and "Linked ShortHand runtime library" in text[start:end]:
-    pass
-else:
-    text = text[:start] + new_dump + text[end:]
-
-for forbidden in [
-    'BasicBlock *entry = BasicBlock::Create(ShortGlobalContext, "entry", fn);',
-    'IRBuilder<> stubBuilder(entry);',
-    'stubBuilder.CreateRet(ConstantInt::get(i32Ty(), 0, true));',
-    'std::string cmd_bin = "clang -no-pie " + base + ".o -o " + base;'
-]:
-    if forbidden in text:
-        raise SystemExit("source-level runtime lowering still contains forbidden local-stub/native-link text: " + forbidden)
-
-src.write_text(text)
-PY
+printf 'PASS external runtime source lowering is canonical and Python-free: %s\n' "${src}"
