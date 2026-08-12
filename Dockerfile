@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /opt/shorthand
 COPY . .
-RUN make -C Compiler_new_ws/Short_Hand/src compiler green_ai_tool \
+RUN make -C Compiler_new_ws/Short_Hand/src compiler green_ai_tool runtime_lib \
   && test -x Compiler_new_ws/Short_Hand/build/short_hand \
   && test -s Compiler_new_ws/Short_Hand/build/libshorthand_runtime.a
 
