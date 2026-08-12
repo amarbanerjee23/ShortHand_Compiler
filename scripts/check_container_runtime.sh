@@ -12,6 +12,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
+fail_stage() {
+  local stage="$1"
+  echo "error: hardened container qualification failed at stage=${stage}" >&2
+  [[ -f "${TMP}/${stage}.out" ]] && { echo "--- ${stage} stdout ---" >&2; cat "${TMP}/${stage}.out" >&2; }
+  [[ -f "${TMP}/${stage}.err" ]] && { echo "--- ${stage} stderr ---" >&2; cat "${TMP}/${stage}.err" >&2; }
+  exit 1
+}
+
+run_stage() {
+  local stage="$1"; shift
+  if ! "$@" >"${TMP}/${stage}.out" 2>"${TMP}/${stage}.err"; then fail_stage "${stage}"; fi
+}
+
 command -v docker >/dev/null 2>&1 || { echo "error: docker is required for container runtime qualification" >&2; exit 1; }
 docker image inspect "${IMAGE}" >/dev/null 2>&1 || { echo "error: container image is unavailable: ${IMAGE}" >&2; exit 1; }
 
@@ -21,32 +34,20 @@ actual_arch="$(docker image inspect --format '{{.Architecture}}' "${IMAGE}")"
   exit 1
 }
 
-common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges --network none)
-uid="$(docker run "${common[@]}" "${IMAGE}" id -u)"
-gid="$(docker run "${common[@]}" "${IMAGE}" id -g)"
+common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none)
+if ! uid="$(docker run "${common[@]}" "${IMAGE}" id -u 2>"${TMP}/identity_uid.err")"; then fail_stage identity_uid; fi
+if ! gid="$(docker run "${common[@]}" "${IMAGE}" id -g 2>"${TMP}/identity_gid.err")"; then fail_stage identity_gid; fi
 [[ "${uid}" == 10001 ]] || { echo "error: runtime image uid must be 10001, got ${uid}" >&2; exit 1; }
 [[ "${gid}" == 10001 ]] || { echo "error: runtime image gid must be 10001, got ${gid}" >&2; exit 1; }
 
-docker run "${common[@]}" "${IMAGE}" >"${TMP}/run.out" 2>"${TMP}/run.err"
-diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/run.out"
+run_stage interpreter docker run "${common[@]}" "${IMAGE}"
+if ! diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/interpreter.out"; then fail_stage interpreter; fi
 
-if ! docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'touch /tmp/shorthand-writable /work/shorthand-work-writable && test -f /tmp/shorthand-writable && test -f /work/shorthand-work-writable'; then
-  echo "error: bounded writable scratch/workspace contract failed" >&2
-  exit 1
-fi
-
-if ! docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'if touch /etc/shorthand-forbidden 2>/dev/null; then exit 1; else exit 0; fi'; then
-  echo "error: read-only root filesystem negative failed" >&2
-  exit 1
-fi
-
-# A hardened compiler image must remain usable as a compiler. Compile and run a
-# native ShortHand artifact from the bounded writable /work mount while the
-# image root stays read-only and networking/capabilities remain disabled.
-docker run "${common[@]}" --workdir /work "${IMAGE}" /bin/bash -lc \
-  'short_hand /opt/shorthand/smoke/core_control.short compile-native && test -x ./core_control && ./core_control' \
-  >"${TMP}/native.out" 2>"${TMP}/native.err"
-diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/native.out"
+run_stage writable docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'touch /tmp/shorthand-writable /work/shorthand-work-writable && test -f /tmp/shorthand-writable && test -f /work/shorthand-work-writable'
+run_stage readonly docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'if touch /etc/shorthand-forbidden 2>/dev/null; then exit 1; else exit 0; fi'
+run_stage native docker run "${common[@]}" --workdir /work "${IMAGE}" /bin/bash -lc \
+  'short_hand /opt/shorthand/smoke/core_control.short compile-native && test -x ./core_control && ./core_control'
+if ! diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/native.out"; then fail_stage native; fi
 
 health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}' "${IMAGE}")"
 [[ "${health_test}" == *'core_control.short'* && "${health_test}" == *'parse'* ]] || {
@@ -54,7 +55,7 @@ health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}'
   exit 1
 }
 
-CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges --network none \
+CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none \
   "${IMAGE}" /bin/bash -lc 'trap "exit 0" TERM INT; while true; do sleep 3600 & wait $!; done')"
 healthy=0
 for _ in $(seq 1 45); do
