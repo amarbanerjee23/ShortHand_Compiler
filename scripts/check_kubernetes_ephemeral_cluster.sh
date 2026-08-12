@@ -79,11 +79,17 @@ uid="$(action_kubectl exec -n shorthand-system "${pod}" -- id -u)"
 gid="$(action_kubectl exec -n shorthand-system "${pod}" -- id -g)"
 [[ "${uid}" == 10001 && "${gid}" == 10001 ]] || { echo "error: Kubernetes runtime identity mismatch uid=${uid} gid=${gid}" >&2; exit 1; }
 action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'test ! -e /var/run/secrets/kubernetes.io/serviceaccount/token'
-action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'touch /tmp/shorthand-k8s-writable && test -f /tmp/shorthand-k8s-writable'
+action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'touch /tmp/shorthand-k8s-writable /work/shorthand-k8s-work-writable && test -f /tmp/shorthand-k8s-writable && test -f /work/shorthand-k8s-work-writable'
 if action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'touch /etc/shorthand-forbidden' >/dev/null 2>&1; then
   echo "error: Kubernetes root filesystem unexpectedly writable" >&2
   exit 1
 fi
+
+action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc \
+  'cd /work && rm -f core_control core_control.o core_control.bc && short_hand /opt/shorthand/smoke/core_control.short compile-native && test -x ./core_control && ./core_control' \
+  >"${TMP}/k8s-native.out"
+diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/k8s-native.out"
+
 cap_eff="$(action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc "awk '/CapEff:/ {print \$2}' /proc/1/status")"
 [[ "${cap_eff}" == 0000000000000000 ]] || { echo "error: effective Linux capabilities not fully dropped: ${cap_eff}" >&2; exit 1; }
 no_new_privs="$(action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc "awk '/NoNewPrivs:/ {print \$2}' /proc/1/status")"
@@ -202,5 +208,5 @@ after="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=s
 ready_after="$(action_kubectl get deployment shorthand -n shorthand-system -o jsonpath='{.status.readyReplicas}')"
 [[ "${ready_after}" == 2 ]] || { echo "error: deployment failed to restore two ready replicas after restart" >&2; exit 1; }
 
-printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 arch=%s replicas=2 restricted=true quota_negative=true network_negative=true restart=true\n' \
+printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 arch=%s replicas=2 restricted=true native_compile=true quota_negative=true network_negative=true restart=true\n' \
   "${KIND_VERSION}" "${image_arch}"
