@@ -128,6 +128,16 @@ static bool fileExists(const std::string &path) {
 }
 
 static std::string shellQuote(const std::string &value) {
+#if defined(_WIN32)
+    if (value.find_first_of(" \t\"&|<>^") == std::string::npos) return value;
+    std::string out = "\"";
+    for (char c : value) {
+        if (c == '"') out += "\\\"";
+        else out += c;
+    }
+    out += "\"";
+    return out;
+#else
     std::string out = "'";
     for (char c : value) {
         if (c == '\'') out += "'\\''";
@@ -135,6 +145,7 @@ static std::string shellQuote(const std::string &value) {
     }
     out += "'";
     return out;
+#endif
 }
 
 static std::string resolveShortHandRuntimeLibrary() {
@@ -154,7 +165,16 @@ static std::string resolveShortHandRuntimeLibrary() {
 
 static std::string resolveShortHandNativeLinker() {
     const char *env = std::getenv("SHORTHAND_NATIVE_LINKER");
-    if (env && *env) return std::string(env);
+    if (env && *env) {
+        std::string linker(env);
+#if defined(_WIN32)
+        if (linker.find_first_of(" \t\"") != std::string::npos) {
+            cerr << "SHORTHAND_NATIVE_LINKER on Windows must be a PATH-resolved command token without whitespace.\n";
+            return "";
+        }
+#endif
+        return linker;
+    }
     return "clang++";
 }
 
@@ -217,17 +237,28 @@ bool IR_Generator::dumpBitcode() {
 
 bool IR_Generator::dumpNativeBinary() {
     if (!dumpBitcode()) return false;
-    std::string base = this->getModuleName();
-    std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc") + " -o " + shellQuote(base + ".o");
+    const std::string base = this->getModuleName();
+    const std::string object_file = base + ".o";
+#if defined(_WIN32)
+    const std::string binary_file = base + ".exe";
+#else
+    const std::string binary_file = base;
+#endif
+    std::string cmd_obj = "llc -filetype=obj " + shellQuote(base + ".bc") + " -o " + shellQuote(object_file);
     std::string runtime_lib = resolveShortHandRuntimeLibrary();
     std::string native_linker = resolveShortHandNativeLinker();
-    std::string cmd_bin = shellQuote(native_linker) + " -no-pie " + shellQuote(base + ".o");
+    if (native_linker.empty()) return false;
+    std::string cmd_bin = shellQuote(native_linker);
+#if !defined(_WIN32)
+    cmd_bin += " -no-pie";
+#endif
+    cmd_bin += " " + shellQuote(object_file);
     if (!runtime_lib.empty()) {
         cmd_bin += " " + shellQuote(runtime_lib);
     } else {
         cerr << "No ShortHand runtime library found. Native linking will fail if AI/GreenAI runtime hooks are referenced.\n";
     }
-    cmd_bin += " -o " + shellQuote(base);
+    cmd_bin += " -o " + shellQuote(binary_file);
 
     if (std::system(cmd_obj.c_str()) != 0) {
         cerr << "Failed to run llc. Ensure LLVM tools are installed and in PATH.\n";
@@ -239,7 +270,7 @@ bool IR_Generator::dumpNativeBinary() {
     }
     if (!runtime_lib.empty()) cerr << "Linked ShortHand runtime library: " << runtime_lib << "\n";
     cerr << "Native linker: " << native_linker << "\n";
-    cerr << "Generated native binary: " << base << "\n";
+    cerr << "Generated native binary: " << binary_file << "\n";
     return true;
 }
 
@@ -254,12 +285,20 @@ void IR_Generator::emitRuntimeFailureIf(Value *condition,
 
     Builder.SetInsertPoint(fail);
     const std::string text = "error: [" + code + "] " + message + "\n";
+    Value *textValue = Builder.CreateGlobalStringPtr(text, "runtime_error_text");
+#if defined(_WIN32)
+    FunctionType *writeType = FunctionType::get(i32Ty(), {i32Ty(), i8PtrTy(), i32Ty()}, false);
+    FunctionCallee writeFn = module->getOrInsertFunction("_write", writeType);
+    Builder.CreateCall(writeFn, {
+        ConstantInt::get(i32Ty(), 2), textValue,
+        ConstantInt::get(i32Ty(), static_cast<std::uint32_t>(text.size()))});
+#else
     FunctionType *writeType = FunctionType::get(i64Ty(), {i32Ty(), i8PtrTy(), i64Ty()}, false);
     FunctionCallee writeFn = module->getOrInsertFunction("write", writeType);
-    Value *textValue = Builder.CreateGlobalStringPtr(text, "runtime_error_text");
     Builder.CreateCall(writeFn, {
         ConstantInt::get(i32Ty(), 2), textValue,
         ConstantInt::get(i64Ty(), static_cast<std::uint64_t>(text.size()))});
+#endif
     FunctionType *exitType = FunctionType::get(voidTy(), {i32Ty()}, false);
     FunctionCallee exitFn = module->getOrInsertFunction("exit", exitType);
     Builder.CreateCall(exitFn, {ConstantInt::get(i32Ty(), 1)});

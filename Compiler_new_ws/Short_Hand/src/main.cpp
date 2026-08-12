@@ -279,8 +279,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    flex_output = fopen("/dev/null", "w");
-    bison_output = fopen("/dev/null", "w");
+    flex_output = tmpfile();
+    bison_output = tmpfile();
     if (!flex_output || !bison_output) {
         fprintf(stderr, "Could not initialize parser diagnostic streams.\n");
         return finish_with(1);
