@@ -36,6 +36,7 @@ The compiler test audit records **16 implemented, 5 partial and 6 open** areas. 
 | Packaging and installed consumers | Implemented | install/reinstall/uninstall lifecycle on qualified platforms. |
 
 Historical compatibility term: Module/import/package model.
+Historical compatibility gate: language versioning and conformance policy gate.
 
 ## Runtime, backend and hardware status
 
