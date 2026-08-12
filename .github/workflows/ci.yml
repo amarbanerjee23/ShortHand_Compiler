@@ -460,11 +460,17 @@ jobs:
       - name: Security policy and negative matrix
         run: bash scripts/check_external_security_policy.sh
 
-      - name: Dependency review
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294
-        with:
-          config-file: ./.github/dependency-review-config.yml
+      - name: Repository-owned dependency delta review
+        env:
+          SHORTHAND_DEPENDENCY_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          SHORTHAND_DEPENDENCY_HEAD_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          base="${SHORTHAND_DEPENDENCY_BASE_REF}"
+          if [[ -z "${base}" || "${base}" =~ ^0+$ ]]; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          bash scripts/check_dependency_delta.sh "${base}" "${SHORTHAND_DEPENDENCY_HEAD_REF}"
 
       - name: Initialize CodeQL C/C++ security analysis
         uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
@@ -537,6 +543,7 @@ jobs:
             /tmp/shorthand-codeql-results/
             /tmp/shorthand-trivy-repository.json
             /tmp/shorthand-trivy-vulnerable-fixture.json
+            /tmp/shorthand_dependency_delta.json
             /tmp/shorthand_security_*.out
             /tmp/shorthand_security_*.err
 
