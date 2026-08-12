@@ -25,7 +25,9 @@ The runtime image:
 - includes a valid ShortHand smoke source and expected output,
 - exposes no network port by default,
 - uses a Docker `HEALTHCHECK` that runs `short_hand ... parse`, and
-- is qualified under read-only-root, tmpfs `/tmp`, no-network, no-new-privileges and drop-all-capabilities runtime options.
+- is qualified under read-only-root, non-executable scratch `/tmp`, bounded writable `/work`, no-network, no-new-privileges and drop-all-capabilities runtime options.
+
+The runtime qualification does not stop at interpreter execution. It compiles `core_control.short` to a native executable in `/work`, executes that binary and compares its output with the semantic differential oracle. This proves the hardened compiler image remains usable while its immutable root filesystem is enforced.
 
 Linux amd64 image execution is tested in the mandatory ephemeral-cluster qualification. Linux arm64 image execution is tested natively in the existing mandatory `linux-arm64` CI lane. An image architecture is not considered supported merely because a manifest label names it.
 
@@ -35,7 +37,7 @@ Linux amd64 image execution is tested in the mandatory ephemeral-cluster qualifi
 
 The Deployment uses two replicas, zero unavailable pods during rolling updates, a bounded termination grace period and a PodDisruptionBudget requiring one available replica. Pod and container security contexts require non-root uid/gid 10001, RuntimeDefault seccomp, read-only root filesystem, no privilege escalation and all Linux capabilities dropped.
 
-CPU and memory requests and limits are mandatory. A namespace ResourceQuota prevents unbounded workloads. The only writable filesystem path is a bounded memory-backed `emptyDir` mounted at `/tmp`.
+CPU and memory requests and limits are mandatory. A namespace ResourceQuota prevents unbounded workloads. Writable state is isolated from the image: a bounded memory-backed `emptyDir` is mounted at `/tmp` for parser/runtime scratch, and a separate bounded `emptyDir` is mounted at `/work` for generated compiler artifacts. Persistent or shared artifact storage is intentionally not claimed by this baseline.
 
 Startup, readiness and liveness probes all execute the real ShortHand parser on `/opt/shorthand/smoke/core_control.short`. Probe success therefore demonstrates that the compiler executable, parser and bundled smoke input are usable inside the restricted workload rather than merely checking that a shell process exists.
 
@@ -50,14 +52,15 @@ The live gate requires:
 1. two Ready deployment replicas,
 2. runtime uid/gid 10001,
 3. no mounted Kubernetes service-account token,
-4. writable `/tmp` but unwritable root filesystem,
-5. zero effective Linux capabilities,
-6. `NoNewPrivs=1` and seccomp filtering active,
-7. the runtime service account cannot read Secrets,
-8. a pod missing resource requests/limits is rejected by ResourceQuota,
-9. a control pod can reach the Kubernetes API service while a ShortHand pod selected by default-deny NetworkPolicy cannot,
-10. deletion of a ShortHand pod is repaired back to two Ready replicas, and
-11. the standalone container healthcheck becomes healthy and terminates cleanly on SIGTERM.
+4. writable bounded `/tmp` and `/work` while the image root remains unwritable,
+5. native compilation/execution in the hardened standalone container,
+6. zero effective Linux capabilities,
+7. `NoNewPrivs=1` and seccomp filtering active,
+8. the runtime service account cannot read Secrets,
+9. a pod missing resource requests/limits is rejected by ResourceQuota,
+10. a control pod can reach the Kubernetes API service while a ShortHand pod selected by default-deny NetworkPolicy cannot,
+11. deletion of a ShortHand pod is repaired back to two Ready replicas, and
+12. the standalone container healthcheck becomes healthy and terminates cleanly on SIGTERM.
 
 The deployment gate is bounded by explicit timeouts. Failure to download/verify Kind, build the image, create the cluster, enforce policy or observe the required runtime state is a failure. There is no unconditional skip path.
 
