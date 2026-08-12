@@ -6,8 +6,8 @@ ROOT_DIR="${SHORTHAND_ACTION_WORKFLOW_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")
 count=0
 while IFS= read -r -d '' file; do
   while IFS= read -r line; do
-    [[ "${line}" =~ uses:[[:space:]]*([^[:space:]#]+) ]] || continue
-    ref="${BASH_REMATCH[1]}"
+    [[ "${line}" =~ ^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*([^[:space:]#]+) ]] || continue
+    ref="${BASH_REMATCH[2]}"
     count=$((count + 1))
     if [[ "${ref}" == ./* ]]; then
       continue

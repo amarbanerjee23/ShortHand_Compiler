@@ -26,7 +26,6 @@ badlib	latest	optional-sdk	MIT	no	https://example.invalid/badlib
 EOF
 expect_failure unbounded-version env SHORTHAND_THIRD_PARTY_INVENTORY="${TMP}/latest.tsv" bash scripts/check_third_party_license_policy.sh
 
-: >"${TMP}/codeql_empty.tsv"
 printf 'rule_id\tpath_prefix\texpires_on\towner\tticket\tjustification\n' >"${TMP}/codeql_empty.tsv"
 cat >"${TMP}/expired.trivyignore" <<'EOF'
 CVE-2020-0001 exp:2026-08-11 # owner=security ticket=SEC-1 reason=test
@@ -57,6 +56,16 @@ EOF
 expect_failure wildcard-codeql env SECURITY_POLICY_TODAY=2026-08-12 SHORTHAND_TRIVY_IGNORE="${TMP}/comments.trivyignore" SHORTHAND_CODEQL_EXCEPTIONS="${TMP}/wild_codeql.tsv" bash scripts/check_security_exceptions.sh
 
 mkdir -p "${TMP}/workflow"
+cat >"${TMP}/workflow/pinned.yml" <<'EOF'
+name: pinned
+permissions:
+  statuses: write
+jobs:
+  good:
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+EOF
+env SHORTHAND_ACTION_WORKFLOW_ROOT="${TMP}/workflow" bash scripts/check_action_pinning.sh >/dev/null
 cat >"${TMP}/workflow/floating.yml" <<'EOF'
 name: bad
 jobs:
