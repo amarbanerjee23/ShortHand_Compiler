@@ -102,3 +102,15 @@ if ! grep -Eq 'ShortHand|find_package' "${LIFECYCLE_ROOT}/after-uninstall.out" "
 fi
 
 echo "PASS installed ShortHand SDK install/reinstall/uninstall lifecycle"
+
+# The existing mandatory Linux arm64 CI lane is also the native arm64 image
+# qualification lane for roadmap PR77. This is deliberately fail-closed: when
+# GitHub CI is running on the qualified aarch64 host, Docker availability and
+# the production image build/runtime test are mandatory evidence, not a skip.
+if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "aarch64" ]]; then
+  command -v docker >/dev/null 2>&1 || { echo "error: Docker is required for native Linux arm64 image qualification" >&2; exit 1; }
+  docker info >/dev/null 2>&1 || { echo "error: Docker daemon unavailable for native Linux arm64 image qualification" >&2; exit 1; }
+  docker build --pull --platform linux/arm64 -t shorthand:pr78-arm64 "${ROOT_DIR}"
+  bash "${ROOT_DIR}/scripts/check_container_runtime.sh" shorthand:pr78-arm64 arm64
+  echo "PASS native Linux arm64 production container qualification"
+fi
