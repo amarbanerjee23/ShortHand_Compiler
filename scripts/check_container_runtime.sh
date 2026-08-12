@@ -21,7 +21,7 @@ actual_arch="$(docker image inspect --format '{{.Architecture}}' "${IMAGE}")"
   exit 1
 }
 
-common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m --tmpfs /work:rw,nosuid,nodev,size=128m --cap-drop ALL --security-opt no-new-privileges --network none)
+common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges --network none)
 uid="$(docker run "${common[@]}" "${IMAGE}" id -u)"
 gid="$(docker run "${common[@]}" "${IMAGE}" id -g)"
 [[ "${uid}" == 10001 ]] || { echo "error: runtime image uid must be 10001, got ${uid}" >&2; exit 1; }
@@ -54,7 +54,7 @@ health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}'
   exit 1
 }
 
-CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m --tmpfs /work:rw,nosuid,nodev,size=128m --cap-drop ALL --security-opt no-new-privileges --network none \
+CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges --network none \
   "${IMAGE}" /bin/bash -lc 'trap "exit 0" TERM INT; while true; do sleep 3600 & wait $!; done')"
 healthy=0
 for _ in $(seq 1 45); do
