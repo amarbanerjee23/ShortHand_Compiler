@@ -3,9 +3,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DOCKERFILE="${SHORTHAND_CONTAINER_DOCKERFILE:-${ROOT_DIR}/Dockerfile}"
+DOCKERIGNORE="${SHORTHAND_CONTAINER_DOCKERIGNORE:-${ROOT_DIR}/.dockerignore}"
 MANIFEST="${SHORTHAND_K8S_PRODUCTION_MANIFEST:-${ROOT_DIR}/deploy/k8s/production.yaml}"
 
 [[ -s "${DOCKERFILE}" ]] || { echo "error: production Dockerfile missing: ${DOCKERFILE}" >&2; exit 1; }
+[[ -s "${DOCKERIGNORE}" ]] || { echo "error: production .dockerignore missing: ${DOCKERIGNORE}" >&2; exit 1; }
 [[ -s "${MANIFEST}" ]] || { echo "error: production Kubernetes manifest missing: ${MANIFEST}" >&2; exit 1; }
 
 require_file_pattern() {
@@ -30,8 +32,13 @@ require_file_pattern "${DOCKERFILE}" '^USER[[:space:]]+10001:10001[[:space:]]*$'
 require_file_pattern "${DOCKERFILE}" '^HEALTHCHECK[[:space:]]' 'container healthcheck'
 require_file_pattern "${DOCKERFILE}" 'core_control\.short.*parse' 'healthcheck must execute the real ShortHand parser'
 require_file_pattern "${DOCKERFILE}" 'COPY --from=builder --chown=10001:10001' 'runtime artifacts copied with non-root ownership'
+require_file_pattern "${DOCKERFILE}" 'runtime_lib' 'runtime library must be built in builder stage'
 require_file_pattern "${DOCKERFILE}" 'SHORTHAND_RUNTIME_LIB=' 'native runtime library path'
 require_file_pattern "${DOCKERFILE}" 'SHORTHAND_NATIVE_LINKER=' 'native linker contract'
+
+for context_guard in '^\.git$' '^Compiler_new_ws/Short_Hand/build$' '^Compiler_new_ws/\.metadata$' '^deprecated$'; do
+  require_file_pattern "${DOCKERIGNORE}" "${context_guard}" "bounded container build context (${context_guard})"
+done
 
 runtime_section="$(awk 'BEGIN{runtime=0} /^FROM[[:space:]]+ubuntu:24\.04[[:space:]]+AS[[:space:]]+runtime/{runtime=1} runtime{print}' "${DOCKERFILE}")"
 [[ -n "${runtime_section}" ]] || { echo "error: Dockerfile runtime stage could not be isolated" >&2; exit 1; }
@@ -55,6 +62,8 @@ require_file_pattern "${MANIFEST}" 'terminationGracePeriodSeconds:[[:space:]]+20
 require_file_pattern "${MANIFEST}" 'runAsNonRoot:[[:space:]]+true' 'non-root pod/container execution'
 require_file_pattern "${MANIFEST}" 'runAsUser:[[:space:]]+10001' 'fixed uid 10001'
 require_file_pattern "${MANIFEST}" 'runAsGroup:[[:space:]]+10001' 'fixed gid 10001'
+require_file_pattern "${MANIFEST}" 'fsGroup:[[:space:]]+10001' 'non-root writable volume ownership'
+require_file_pattern "${MANIFEST}" 'fsGroupChangePolicy:[[:space:]]+OnRootMismatch' 'bounded volume ownership change policy'
 require_file_pattern "${MANIFEST}" 'allowPrivilegeEscalation:[[:space:]]+false' 'privilege escalation disabled'
 require_file_pattern "${MANIFEST}" 'readOnlyRootFilesystem:[[:space:]]+true' 'read-only root filesystem'
 require_file_pattern "${MANIFEST}" 'type:[[:space:]]+RuntimeDefault' 'RuntimeDefault seccomp profile'
@@ -66,8 +75,11 @@ require_file_pattern "${MANIFEST}" 'startupProbe:[[:space:]]*$' 'startup probe'
 require_file_pattern "${MANIFEST}" 'readinessProbe:[[:space:]]*$' 'readiness probe'
 require_file_pattern "${MANIFEST}" 'livenessProbe:[[:space:]]*$' 'liveness probe'
 require_file_pattern "${MANIFEST}" '/opt/shorthand/smoke/core_control\.short' 'probes execute a bundled valid ShortHand program'
-require_file_pattern "${MANIFEST}" 'emptyDir:[[:space:]]*$' 'writable ephemeral tmp volume'
+require_file_pattern "${MANIFEST}" 'mountPath:[[:space:]]+/tmp' 'bounded scratch volume'
+require_file_pattern "${MANIFEST}" 'mountPath:[[:space:]]+/work' 'bounded compiler output workspace'
 require_file_pattern "${MANIFEST}" 'medium:[[:space:]]+Memory' 'memory-backed tmp volume'
+require_file_pattern "${MANIFEST}" 'sizeLimit:[[:space:]]+64Mi' 'bounded tmp volume size'
+require_file_pattern "${MANIFEST}" 'sizeLimit:[[:space:]]+128Mi' 'bounded compiler workspace size'
 require_file_pattern "${MANIFEST}" '^kind:[[:space:]]+PodDisruptionBudget[[:space:]]*$' 'PodDisruptionBudget'
 require_file_pattern "${MANIFEST}" 'minAvailable:[[:space:]]+1' 'minimum one replica available'
 require_file_pattern "${MANIFEST}" '^kind:[[:space:]]+NetworkPolicy[[:space:]]*$' 'NetworkPolicy'
@@ -88,4 +100,4 @@ forbid_file_pattern "${MANIFEST}" 'hostIPC:[[:space:]]+true' 'host IPC namespace
 forbid_file_pattern "${MANIFEST}" 'image:[[:space:]]+[^[:space:]]*:latest([[:space:]]|$)' 'floating latest image tag'
 forbid_file_pattern "${MANIFEST}" 'allowPrivilegeEscalation:[[:space:]]+true' 'privilege escalation enabled'
 
-printf 'PASS container Kubernetes production hardening contract multi_stage=true non_root=true probes=3 default_deny=true quota=true pdb=true\n'
+printf 'PASS container Kubernetes production hardening contract multi_stage=true non_root=true probes=3 bounded_workspace=true default_deny=true quota=true pdb=true\n'
