@@ -3,163 +3,94 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
-
-STATUS_FILE="docs/feature_implementation_status.md"
-PLAN_FILES=(
-  "docs/language_feature_implementation_plan.md"
-  "docs/beta_enterprise_requirements.md"
-  "docs/enterprise_release_scorecard.md"
-  "docs/compiler_test_strategy.md"
-  "docs/ci_pipeline_architecture.md"
-  "docs/production_readiness_pr_plan.md"
-  "docs/execution_semantics_beta_0_3.md"
-  "docs/fuzz_sanitizer_race_hardening.md"
-  "tests/coverage/compiler_test_coverage_matrix.tsv"
-  "docs/module_import_package_syntax.md"
-  "docs/module_resolution_and_lockfile.md"
-  "tests/conformance/module_matrix_beta_0_3.tsv"
-  "scripts/check_module_resolution.sh"
-  "scripts/check_semantic_differential.sh"
-  "scripts/check_fuzz_sanitizers.sh"
-  "scripts/check_runtime_memory_sanitizer.sh"
-  "scripts/check_thread_sanitizer.sh"
-  "scripts/check_ci_status_hygiene.sh"
+STATUS_FILE=docs/feature_implementation_status.md
+required_files=(
+  "${STATUS_FILE}"
+  docs/compiler_test_strategy.md
+  docs/production_readiness_pr_plan.md
+  docs/execution_semantics_beta_0_3.md
+  docs/fuzz_sanitizer_race_hardening.md
+  docs/signed_release_publication.md
+  docs/toolchain_platform_reproducibility.md
+  tests/coverage/compiler_test_coverage_matrix.tsv
+  scripts/check_module_resolution.sh
+  scripts/check_semantic_differential.sh
+  scripts/check_fuzz_sanitizers.sh
+  scripts/check_runtime_memory_sanitizer.sh
+  scripts/check_thread_sanitizer.sh
+  scripts/check_ci_status_hygiene.sh
+  scripts/check_signed_release_contract.sh
+  .github/workflows/release.yml
 )
-
-for file in "${PLAN_FILES[@]}" "${STATUS_FILE}"; do
-  if [[ ! -s "${file}" ]]; then
-    echo "error: required feature plan/status file missing or empty: ${file}" >&2
-    exit 1
-  fi
-done
+for file in "${required_files[@]}"; do [[ -s "${file}" ]] || { echo "error: required feature/status evidence missing: ${file}" >&2; exit 1; }; done
 
 required_status_terms=(
-  "Implemented"
-  "Partial"
-  "Open"
-  "Production blockers"
+  "Implemented" "Partial" "Open" "Production blockers"
   "Real ONNX Runtime CPU backend execution"
   "Compiled-code metadata/runtime lowering"
   "Full backend compatibility"
   "Base grammar and module extension matrices"
-  "Source-aware diagnostics"
-  "Automated SBOM"
+  "Source-aware diagnostics" "Automated SBOM"
   "Runtime observability implementation"
   "Module/import/package syntax and AST scaffold"
   "Deterministic module resolver and multi-file codegen"
-  "Compiler test strategy and coverage matrix"
-  "Cross-mode semantic equivalence"
-  "Full sanitizer coverage"
-  "Continuous fuzzing"
-  "Concurrency and race detection"
+  "Cross-mode semantic equivalence" "Full sanitizer coverage"
+  "Continuous fuzzing" "Concurrency and race detection"
   "Cross-platform reproducibility"
   "Measured ShortHand versus Python energy evidence"
-  "Zero-skip production RC gate"
-  "CPU/GPU/TPU/NPU"
-  "CI status hygiene"
-  "MLIR dialect scaffold"
-  "Module/import/package model"
+  "Zero-skip production RC gate" "CPU/GPU/TPU/NPU"
+  "CI status hygiene" "MLIR dialect scaffold"
+  "Module/import/package model" "Signed releases" "Protected publication"
 )
-
 for term in "${required_status_terms[@]}"; do
-  if ! grep -q "${term}" "${STATUS_FILE}"; then
-    echo "error: feature implementation status is missing required tracking term: ${term}" >&2
-    exit 1
-  fi
+  grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-11-pr73' \
+  'feature_status_version: 2026-08-12-pr76' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  '12 implemented, 6 partial and 9 open' \
-  'PR72 is merged' \
-  'PR73 is the active safety-hardening candidate' \
-  'Cross-mode semantic equivalence | Implemented for defined beta-0.3 core contract' \
-  'Full sanitizer coverage | Implemented for current baseline' \
-  'Continuous fuzzing | Implemented for current compiler stages' \
-  'Concurrency and race detection | Implemented for current runtime baseline' \
-  'PR74 adds declared platform/toolchain matrix' \
+  '16 implemented, 5 partial and 6 open' \
+  'Roadmap PR74 was implemented and merged as GitHub PR75' \
+  'GitHub PR76 now implements roadmap PR75' \
+  'Cross-platform portability | Implemented for PR74 tiers' \
+  'Cross-platform reproducibility | Implemented' \
+  'Signed releases | Partial' \
+  'The repository did not have the required `production-release` environment at PR76 start' \
   'live production qualification remains PR80'; do
-  if ! grep -Fiq "${anchor}" "${STATUS_FILE}"; then
-    echo "error: feature implementation status missing PR73 anchor: ${anchor}" >&2
-    exit 1
-  fi
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing current anchor: ${anchor}" >&2; exit 1; }
 done
 
-grep -Fq 'resolution_status: deterministic_manifest_locked_multi_file_codegen' docs/module_resolution_and_lockfile.md || {
-  echo "error: module resolver contract is not marked as deterministic/locked" >&2
-  exit 1
-}
-
-grep -Fq 'execution_semantics_contract: beta-0.3-pr72-v1' docs/execution_semantics_beta_0_3.md || {
-  echo "error: PR72 executable semantic contract is missing" >&2
-  exit 1
-}
-
-grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md || {
-  echo "error: PR73 fuzz/sanitizer contract is missing" >&2
-  exit 1
-}
-
-grep -Fq 'PASS deterministic module resolver, package lock and multi-file codegen gate' scripts/check_module_resolution.sh || {
-  echo "error: module resolver executable gate missing" >&2
-  exit 1
-}
-
-grep -Fq 'PASS cross-mode semantic differential execution gate' scripts/check_semantic_differential.sh || {
-  echo "error: semantic differential executable gate missing" >&2
-  exit 1
-}
-
-grep -Fq 'PASS libFuzzer ASan LSan UBSan compiler-stage gate' scripts/check_fuzz_sanitizers.sh || {
-  echo "error: compiler-stage fuzz sanitizer gate missing" >&2
-  exit 1
-}
-
-grep -Fq 'PASS runtime ASan LSan UBSan stress gate' scripts/check_runtime_memory_sanitizer.sh || {
-  echo "error: runtime memory sanitizer gate missing" >&2
-  exit 1
-}
-
-grep -Fq 'PASS mandatory ThreadSanitizer race gate' scripts/check_thread_sanitizer.sh || {
-  echo "error: ThreadSanitizer race gate missing" >&2
-  exit 1
-}
-
-grep -Fq 'ci_pipeline_architecture_version: 2026-08-09-v1' docs/ci_pipeline_architecture.md || {
-  echo "error: robust CI pipeline architecture contract is missing" >&2
-  exit 1
-}
-
-grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh || {
-  echo "error: CI status hygiene guard is missing" >&2
-  exit 1
-}
+grep -Fq 'resolution_status: deterministic_manifest_locked_multi_file_codegen' docs/module_resolution_and_lockfile.md
+grep -Fq 'execution_semantics_contract: beta-0.3-pr72-v1' docs/execution_semantics_beta_0_3.md
+grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
+grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
+grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
+grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
+grep -Fq 'PASS signed release and protected publication contract gate' scripts/check_signed_release_contract.sh
 
 unsupported_claim_patterns=(
   "Current status: fully production-ready"
   "ShortHand is fully production-ready"
   "all production blockers are complete"
   "ShortHand uses less energy than Python"
-  "all interpreter and compiled module execution is equivalent"
   "fuzzing proves the compiler has no bugs"
   "ThreadSanitizer proves the runtime has no races"
+  "signed release blocker is complete"
 )
-
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness, equivalence, safety or energy claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness/safety/signing claim: ${pattern}" >&2
     exit 1
   fi
 done
 
-if [[ "${REQUIRE_PRODUCTION_READY:-0}" == "1" ]]; then
-  if grep -q "| Open |\|| Partial |" "${STATUS_FILE}"; then
+if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
+  if grep -Eq '\| (Open|Partial)(/[^|]+)? \|' "${STATUS_FILE}"; then
     echo "error: production-ready check failed because open or partial items remain" >&2
     exit 1
   fi
 fi
 
-echo "Feature plan status check passed. PR73 safety evidence and remaining production blockers remain explicit."
+echo "Feature plan status check passed. PR74 portability is recorded and PR75 signed publication remains fail-closed pending protected-environment execution."

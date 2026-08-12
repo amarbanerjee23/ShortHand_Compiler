@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/amarbanerjee23/ShortHand_Compiler/schemas/release/release_bundle_provenance.schema.json",
+  "title": "ShortHand release bundle provenance v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "repository",
+    "commit",
+    "version",
+    "platform",
+    "artifact",
+    "artifact_sha256",
+    "sbom",
+    "release_status",
+    "attestation_status",
+    "production_claim",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "shorthand.release.bundle_provenance.v2" },
+    "repository": { "const": "amarbanerjee23/ShortHand_Compiler" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "version": { "type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(-rc\\.[0-9]+)?$" },
+    "platform": { "enum": ["linux-x64", "linux-arm64", "macos-arm64", "windows-x64"] },
+    "artifact": { "type": "string" },
+    "artifact_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sbom": { "type": "string" },
+    "release_status": { "const": "unsigned_candidate" },
+    "attestation_status": { "const": "pending_oidc_attestation" },
+    "production_claim": { "const": false },
+    "generated_at": { "type": "string" }
+  },
+  "additionalProperties": false
+}
