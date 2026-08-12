@@ -19,7 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /opt/shorthand
 COPY . .
-RUN bash setup_build_infra.sh
+RUN bash setup_build_infra.sh \
+  && groupadd --gid 10001 shorthand \
+  && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin shorthand \
+  && chown -R 10001:10001 /opt/shorthand
 
 ENV PATH="/opt/shorthand/Compiler_new_ws/Short_Hand/build:${PATH}"
+USER 10001:10001
 CMD ["short_hand", "Compiler_new_ws/Short_Hand/examples/greenai_report.short", "run"]
