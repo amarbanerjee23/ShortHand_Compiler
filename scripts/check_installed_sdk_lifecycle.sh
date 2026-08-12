@@ -23,11 +23,20 @@ SECOND_MANIFEST="${LIFECYCLE_ROOT}/second.sha256"
 rm -rf "${CONSUMER_BUILD}" "${LIFECYCLE_ROOT}"
 mkdir -p "${LIFECYCLE_ROOT}"
 
+normalize_manifest_path() {
+  local path="$1"
+  # Native Windows CMake writes install_manifest.txt with CRLF line endings.
+  # Bash read -r preserves the trailing carriage return, so remove exactly that
+  # record terminator without altering any valid path character.
+  printf '%s' "${path%$'\r'}"
+}
+
 hash_install_manifest() {
   local output="$1"
   [[ -s "${INSTALL_MANIFEST}" ]] || { echo "error: CMake install manifest is missing" >&2; exit 1; }
   : >"${output}"
   while IFS= read -r installed; do
+    installed="$(normalize_manifest_path "${installed}")"
     [[ -n "${installed}" ]] || continue
     # CMake writes native Windows paths (for example D:/...) into the install
     # manifest. Let CMake resolve those paths instead of asking an MSYS shell to
@@ -57,6 +66,7 @@ bash "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" "${PREFIX}" "${CONS
 # Uninstall exactly the files recorded by CMake. Use `cmake -E rm` so native
 # Windows paths and POSIX paths follow the same code path.
 while IFS= read -r installed; do
+  installed="$(normalize_manifest_path "${installed}")"
   [[ -n "${installed}" ]] || continue
   cmake -E rm -f "${installed}"
 done < "${INSTALL_MANIFEST}"
