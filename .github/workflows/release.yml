@@ -1,0 +1,344 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version to qualify (vMAJOR.MINOR.PATCH or vMAJOR.MINOR.PATCH-rc.N)'
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  policy:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.policy.outputs.version }}
+      version_no_v: ${{ steps.policy.outputs.version_no_v }}
+      publish: ${{ steps.policy.outputs.publish }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Fetch protected master lineage for publication policy
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/master:refs/remotes/origin/master
+      - id: policy
+        name: Validate immutable version and event policy
+        env:
+          REQUESTED_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+        run: |
+          set -euo pipefail
+          publish=false
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            publish=true
+            GITHUB_REF_TYPE=tag GITHUB_REF_NAME="${GITHUB_REF_NAME}" GITHUB_SHA="${GITHUB_SHA}" \
+              bash scripts/check_release_version_policy.sh "${REQUESTED_VERSION}" --publish
+          else
+            bash scripts/check_release_version_policy.sh "${REQUESTED_VERSION}"
+          fi
+          echo "version=${REQUESTED_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "version_no_v=${REQUESTED_VERSION#v}" >> "${GITHUB_OUTPUT}"
+          echo "publish=${publish}" >> "${GITHUB_OUTPUT}"
+
+  linux-x64:
+    needs: policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install qualified Linux x64 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build
+      - name: Build, execute and stage Linux x64
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/usr/bin/llvm-config-18
+          cmake --build build-release --parallel 2
+          build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-linux-x64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/release-linux-x64.out
+          cmake --install build-release
+          mkdir -p stage-release/bin
+          cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
+          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" linux-x64 "$PWD/stage-release" "$PWD/release-linux-x64"
+          bash scripts/verify_release_bundle.sh "$PWD/release-linux-x64"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-linux-x64
+          path: release-linux-x64/
+          if-no-files-found: error
+
+  linux-arm64:
+    needs: policy
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install qualified Linux arm64 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+      - name: Build, execute and stage Linux arm64
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          test "$(llvm-config --version | cut -d. -f1)" = 18
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release"
+          cmake --build build-release --parallel 2
+          build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-linux-arm64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/release-linux-arm64.out
+          cmake --install build-release
+          mkdir -p stage-release/bin
+          cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
+          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" linux-arm64 "$PWD/stage-release" "$PWD/release-linux-arm64"
+          bash scripts/verify_release_bundle.sh "$PWD/release-linux-arm64"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-linux-arm64
+          path: release-linux-arm64/
+          if-no-files-found: error
+
+  macos-arm64:
+    needs: policy
+    runs-on: macos-15
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install qualified macOS dependencies
+        run: |
+          brew install bison flex llvm@18 ninja
+          echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix llvm@18)/bin" >> "$GITHUB_PATH"
+      - name: Build, execute and stage macOS arm64
+        env:
+          CC: /opt/homebrew/opt/llvm@18/bin/clang
+          CXX: /opt/homebrew/opt/llvm@18/bin/clang++
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config"
+          cmake --build build-release --parallel 2
+          build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-macos-arm64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/release-macos-arm64.out
+          cmake --install build-release
+          mkdir -p stage-release/bin
+          cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
+          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" macos-arm64 "$PWD/stage-release" "$PWD/release-macos-arm64"
+          bash scripts/verify_release_bundle.sh "$PWD/release-macos-arm64"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-macos-arm64
+          path: release-macos-arm64/
+          if-no-files-found: error
+
+  windows-x64:
+    needs: policy
+    runs-on: windows-2025
+    timeout-minutes: 80
+    env:
+      MSYSTEM: UCRT64
+      CHERE_INVOKING: 1
+    defaults:
+      run:
+        shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install qualified Windows dependencies
+        run: |
+          pacman -S --noconfirm --needed mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja bison flex make diffutils
+      - name: Build, execute and stage Windows x64
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          export CC=clang
+          export CXX=clang++
+          test "$(llvm-config --version | cut -d. -f1)" = 22
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe
+          cmake --build build-release --parallel 2
+          ./build-release/short_hand.exe tests/semantic/differential/core_control.short run > /tmp/release-windows-x64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/release-windows-x64.out
+          cmake --install build-release
+          mkdir -p stage-release/bin
+          cp build-release/short_hand.exe build-release/green_ai_tool.exe stage-release/bin/
+          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" windows-x64 "$PWD/stage-release" "$PWD/release-windows-x64"
+          bash scripts/verify_release_bundle.sh "$PWD/release-windows-x64"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: release-windows-x64
+          path: release-windows-x64/
+          if-no-files-found: error
+
+  candidate:
+    needs: [policy, linux-x64, linux-arm64, macos-arm64, windows-x64]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        with:
+          pattern: release-*
+          path: release-assets
+      - name: Verify all unsigned candidate bundles
+        run: |
+          set -euo pipefail
+          for dir in release-assets/release-*; do
+            bash scripts/verify_release_bundle.sh "$dir"
+          done
+          if [[ "${{ needs.policy.outputs.publish }}" != "true" ]]; then
+            echo 'DRY_RUN_ONLY: workflow_dispatch can build and verify candidates but cannot publish.'
+          fi
+
+  release-policy-preflight:
+    needs: [policy, candidate]
+    if: ${{ needs.policy.outputs.publish == 'true' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify protected release environment before privileged job admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/environments/production-release" > /tmp/production-release.environment.json
+          gh api "repos/${GITHUB_REPOSITORY}/environments/production-release/deployment-branch-policies?per_page=100" > /tmp/production-release.policies.json
+          bash scripts/check_protected_release_environment.sh /tmp/production-release.environment.json /tmp/production-release.policies.json
+
+  publish:
+    needs: [policy, candidate, release-policy-preflight]
+    if: ${{ needs.policy.outputs.publish == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: production-release
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+      actions: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        with:
+          pattern: release-*
+          path: release-assets
+      - name: Revalidate protected environment after admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/environments/production-release" > /tmp/production-release.environment.json
+          gh api "repos/${GITHUB_REPOSITORY}/environments/production-release/deployment-branch-policies?per_page=100" > /tmp/production-release.policies.json
+          bash scripts/check_protected_release_environment.sh /tmp/production-release.environment.json /tmp/production-release.policies.json
+      - name: Reject duplicate release publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.policy.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "${VERSION}" -R "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            echo "error: GitHub Release already exists for immutable tag ${VERSION}" >&2
+            exit 1
+          fi
+      - name: Attest Linux x64 build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.tar
+      - name: Attest Linux x64 SPDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.tar
+          sbom-path: release-assets/release-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.spdx.json
+      - name: Attest Linux arm64 build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.tar
+      - name: Attest Linux arm64 SPDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.tar
+          sbom-path: release-assets/release-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.spdx.json
+      - name: Attest macOS arm64 build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.tar
+      - name: Attest macOS arm64 SPDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.tar
+          sbom-path: release-assets/release-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.spdx.json
+      - name: Attest Windows x64 build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
+      - name: Attest Windows x64 SPDX SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: release-assets/release-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
+          sbom-path: release-assets/release-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.spdx.json
+      - name: Cryptographically verify every artifact attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r archive; do
+            gh attestation verify "$archive" -R "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" \
+              --format json > "${archive}.provenance.attestation.json"
+            gh attestation verify "$archive" -R "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" \
+              --predicate-type https://spdx.dev/Document/v2.3 \
+              --format json > "${archive}.sbom.attestation.json"
+            bash scripts/verify_release_bundle.sh "$(dirname "$archive")" --publication
+          done < <(find release-assets -type f -name '*.tar' -print | LC_ALL=C sort)
+      - name: Stage, verify and publish GitHub Release with rollback
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.policy.outputs.version }}
+        run: |
+          set -euo pipefail
+          assets=()
+          while IFS= read -r file; do assets+=("$file"); done < <(find release-assets -type f -print | LC_ALL=C sort)
+          release_flags=(--draft --verify-tag)
+          if [[ "${VERSION}" == *-rc.* ]]; then
+            release_flags+=(--prerelease --latest=false)
+          fi
+          gh release create "$VERSION" "${assets[@]}" -R "$GITHUB_REPOSITORY" "${release_flags[@]}" \
+            --title "ShortHand ${VERSION}" \
+            --notes "Signed ShortHand release artifacts. production_claim remains false until the remaining roadmap gates close."
+          rollback() {
+            echo "error: release verification failed; deleting draft release ${VERSION}" >&2
+            gh release delete "$VERSION" -R "$GITHUB_REPOSITORY" --yes || true
+          }
+          trap rollback ERR
+          rm -rf /tmp/shorthand-release-download
+          mkdir -p /tmp/shorthand-release-download
+          gh release download "$VERSION" -R "$GITHUB_REPOSITORY" --dir /tmp/shorthand-release-download
+          for local_file in "${assets[@]}"; do
+            base="$(basename "$local_file")"
+            test -f "/tmp/shorthand-release-download/${base}"
+            local_hash="$(cmake -E sha256sum "$local_file" | awk '{print $1}')"
+            remote_hash="$(cmake -E sha256sum "/tmp/shorthand-release-download/${base}" | awk '{print $1}')"
+            test "$local_hash" = "$remote_hash"
+          done
+          gh release edit "$VERSION" -R "$GITHUB_REPOSITORY" --draft=false
+          trap - ERR

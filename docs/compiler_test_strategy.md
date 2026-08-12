@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-11-pr73
+compiler_test_strategy_version: 2026-08-12-pr76
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
@@ -11,51 +11,19 @@ ShortHand must become a production-grade compiled AI language that lets engineer
 
 A test passing because a dependency, device, backend or platform was skipped is not production success evidence.
 
-## Audit status at PR73
+## Current audit
 
-The current test foundation is substantially stronger after PR72 semantic equivalence and PR73 safety hardening, but it is not sufficient for an enterprise production-ready claim.
+The 27-area production test matrix now records:
 
-The 27-area production test matrix records:
+- 16 implemented areas,
+- 5 partial areas,
+- 6 open areas.
 
-- 12 implemented areas,
-- 6 partial areas,
-- 9 open areas.
+Roadmap PR74, merged as GitHub PR75, closed the compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. GitHub PR76 implements roadmap PR75's signed-release workflow, but `TST017` intentionally remains partial until the repository's `production-release` environment is protected and a real version-tag publication produces attestations that pass cryptographic verification.
 
-PR72 closed the beta-0.3 executable semantic contract for the claimed core and established interpreter/`lli`/native differential behavior. PR73 closes the existing sanitizer, continuous-fuzzing and concurrency-race blockers for that baseline with staged libFuzzer targets, ASan/LSan/UBSan runtime stress and an actual TSan race-stress build. PR73 does not convert later platform, release, security, backend, MLIR, performance or energy work into completed evidence.
+Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible clean builds, frozen ABI consumers and install/reinstall/uninstall package lifecycle.
 
-Strong current coverage exists for:
-
-1. beta-0.2 base grammar conformance,
-2. beta-0.3 module/package/import syntax,
-3. deterministic manifest/resolver/lockfile behavior,
-4. bounded malformed-input handling,
-5. source-aware coded diagnostics,
-6. executable beta-0.3 semantic validation,
-7. interpreter/LLVM/native differential correctness,
-8. scanner/parser/module/semantic/lowering coverage-guided fuzzing,
-9. ASan/LSan/UBSan compiler and runtime stress,
-10. ThreadSanitizer-backed runtime race stress,
-11. runtime ABI symbol stability,
-12. serialized runtime concurrency behavior,
-13. Linux packaging consumers,
-14. Prometheus and OTLP adapter behavior,
-15. fallback honesty and unavailable-backend behavior,
-16. candidate C3-ECO schemas and claim safety,
-17. cancellation-safe event-specific CI status publication.
-
-Production-critical gaps remain for:
-
-1. compiler/LLVM/architecture/OS portability,
-2. reproducible release artifacts and cross-release ABI/install consumers,
-3. signed protected releases,
-4. external vulnerability, SAST and license-policy enforcement,
-5. hardened container/Kubernetes deployment,
-6. formatter/linter/LSP correctness,
-7. real execution qualification for every production-supported backend and CPU/GPU/TPU/NPU execution tier,
-8. complete C3-ECO language/scoring/auditor evidence,
-9. production MLIR generation and lowering,
-10. measured energy and performance comparison with equivalent Python workloads,
-11. a zero-skip release-candidate blocker gate.
+Production-critical gaps remain for protected signed-release execution, external vulnerability/SAST/license enforcement, hardened deployment, formatter/linter/LSP, live production backend/hardware qualification, complete C3-ECO evidence, production MLIR lowering, measured performance/energy and the final zero-skip release-candidate gate.
 
 ## Required test layers for every implementation PR
 
@@ -73,7 +41,7 @@ Every remaining implementation PR through PR86 must include all applicable layer
 | Portability | Platform-sensitive code gets independent toolchain/platform checks when available. |
 | Performance | Hot paths receive bounded regression evidence or an explicit non-performance rationale. |
 | Documentation guard | Roadmap, feature status and test coverage matrix update in the same PR. |
-| Pipeline behavior | New mandatory jobs fail closed, emit artifacts and cannot be satisfied by cancellation or unconditional skip. |
+| Pipeline behavior | New mandatory jobs fail closed, emit usable evidence and cannot be satisfied by cancellation or unconditional skip. |
 
 ## Test quality rules
 
@@ -86,54 +54,26 @@ Every remaining implementation PR through PR86 must include all applicable layer
 7. Concurrency safety requires TSan or equivalent evidence.
 8. Energy claims require repeatable measurements, hardware metadata, uncertainty and an equivalent-workload baseline.
 9. No CI gate may disable LeakSanitizer, weaken assertions, use `continue-on-error` for a mandatory check or turn a production test into an unconditional skip.
-10. Module/package tests prove path confinement, graph determinism, lock freshness and false-success rejection, not only parser acceptance.
-11. Deterministic compiler/test failures are fixed, not automatically retried to obtain a green result.
-12. Fuzz failures record the target, seed and crash artifact; minimized reproductions are promoted to regression corpora where practical.
-13. Release qualification includes at least one clean no-cache build.
-14. CPU/GPU/TPU/NPU detection is not execution evidence; execution readiness additionally requires compatible runtime/SDK, model, precision, memory and policy.
-15. Final release qualification executes mandatory tests from a clean checkout and installed-package consumer.
-16. New parser, module, semantic, lowering or runtime C++ paths must join the appropriate PR73 sanitizer/fuzz/race contract instead of relying only on functional tests.
+10. Deterministic compiler/test failures are fixed, not automatically retried to obtain green.
+11. Release qualification includes clean no-cache build evidence and installed-package consumers.
+12. Signing source code is not signing evidence: a signed-release blocker closes only after cryptographic verification succeeds for the produced artifact.
+13. A protected release workflow must prevent branch publication, bind version tags to exact commits, minimize privileges and fail closed when environment protections are absent.
+14. CPU/GPU/TPU/NPU detection is not execution evidence.
+15. Final release qualification executes mandatory tests from a clean checkout and reports zero mandatory skips.
 
-## CI target architecture
-
-`docs/ci_pipeline_architecture.md` is authoritative for the staged pipeline design.
+## CI profiles
 
 ### Pull-request profile
 
-PR73 preserves the existing mandatory Ubuntu gate while adding independent compiler-stage fuzz, runtime memory-sanitizer and runtime TSan checks. PR74 will split the monolithic job into a dependency DAG without changing the stable aggregate status contexts.
-
-Required PR evidence includes:
-
-- policy/status/roadmap guards,
-- base/module grammar conformance,
-- deterministic resolver/lock/multi-file codegen,
-- semantic differential execution,
-- staged libFuzzer ASan/LSan/UBSan smoke,
-- runtime ASan/LSan/UBSan stress,
-- ThreadSanitizer race stress,
-- legacy sanitizer corpus,
-- Makefile, CMake and CTest surfaces,
-- structured failure artifacts.
+The mandatory PR75 DAG runs policy/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity and reproducibility. GitHub PR76 adds signed-release contract tests through the existing mandatory enterprise hardening path without granting OIDC or repository-write permissions to pull-request jobs.
 
 ### Scheduled profile
 
-- scanner/parser/module/semantic/lowering fuzzing with persisted corpora and recorded seeds,
-- TSan runtime suite,
-- extended 1k+ module and large-program stress,
-- platform/backend/hardware runners,
-- dependency/container vulnerability rescans,
-- runtime soak and concurrency tests.
+Extended fuzzing, race stress, large module graphs, backend/hardware qualification, vulnerability rescans and soak tests remain scheduled or later-roadmap work as appropriate.
 
 ### Release-candidate profile
 
-- every declared production platform/toolchain,
-- every declared production backend and hardware tier,
-- signed artifacts, checksums, SBOM and provenance,
-- reproducibility comparison from independent clean builds,
-- installed compiler/runtime consumer verification,
-- deployment/security/C3-ECO/MLIR qualification,
-- performance and energy regression evidence,
-- zero mandatory skips.
+A release candidate requires every declared platform/toolchain, signed artifacts, checksums, SPDX SBOM, provenance, independent reproducibility evidence, installed consumers, deployment/security/C3-ECO/MLIR qualification, performance/energy evidence and zero mandatory skips.
 
 ## Production test exit criteria
 
@@ -143,15 +83,20 @@ ShortHand may claim enterprise production readiness only when:
 
 1. PR70 and all PR72 through PR86 implementation completion gates are merged, with PR71 CI hygiene already merged,
 2. no mandatory test is skipped,
-3. all production-supported backends have live success evidence,
-4. all declared CPU/GPU/TPU/NPU execution tiers have honest qualification evidence,
-5. all release platforms pass installed-consumer tests,
-6. reproducible and signed artifacts are produced,
-7. measured performance and energy evidence supports any published claim,
-8. the final PR86 RC gate reports zero open production blockers.
+3. all production-supported backends and CPU/GPU/TPU/NPU tiers have live success evidence,
+4. all release platforms pass installed-consumer tests,
+5. reproducible and signed artifacts are produced and cryptographically verified,
+6. measured performance and energy evidence supports any published claim,
+7. the final PR86 RC gate reports zero open production blockers.
 
 ## Historical strategy audit anchors
 
-The current strategy is `2026-08-11-pr73`. The following exact prior version marker is retained only because older production-readiness guards verify that the earlier strategy milestone has not disappeared:
+The following exact strings are retained only for milestone guards and are not current counts:
 
+- compiler_test_strategy_version: 2026-08-11-pr73
+- 12 implemented areas
+- 6 partial areas
+- 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
+
+The current strategy is `2026-08-12-pr76`.
