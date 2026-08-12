@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-12-pr77
+feature_status_version: 2026-08-12-pr78
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 77
-current_roadmap_pr: 76
+current_github_pr: 78
+current_roadmap_pr: 77
 
 ## Goal
 
@@ -13,9 +13,9 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-PR69 through PR73 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, adding the mandatory compiler/platform DAG, CTest parity, qualified installed consumers and independent clean-build reproducibility. Roadmap PR75 was implemented and merged as GitHub PR76, adding fail-closed signed release publication architecture. GitHub PR77 now implements roadmap PR76, the external vulnerability, C/C++ SAST, dependency and license policy gate. CI status hygiene remains implemented through cancellation-safe event-specific status publication.
+PR69 through PR73 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, adding the mandatory compiler/platform DAG, CTest parity, qualified installed consumers and independent clean-build reproducibility. Roadmap PR75 was implemented and merged as GitHub PR76, adding fail-closed signed release publication architecture. GitHub PR77 implemented and merged roadmap PR76, the external vulnerability, C/C++ SAST, dependency and license policy gate. GitHub PR78 now implements roadmap PR77, container and Kubernetes production hardening for the ShortHand CLI/compiler workload.
 
-The compiler test audit records **17 implemented, 4 partial and 6 open** areas for the PR77 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and deployment, editor, backend, C3-ECO, MLIR, performance and energy blockers remain.
+The compiler test audit records **18 implemented, 4 partial and 5 open** areas for the PR78 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and formatter/linter, editor, backend/hardware, C3-ECO, MLIR, performance and energy blockers remain.
 
 ## Language and compiler status
 
@@ -44,7 +44,7 @@ Historical compatibility gate: language versioning and conformance policy gate.
 | --- | --- | --- |
 | Real ONNX Runtime CPU backend execution | Implemented when the SDK gate actually runs | optional SDK availability cannot count as production qualification. |
 | Full backend compatibility | Partial | failure/unavailability behavior exists; live production qualification remains PR80. |
-| Runtime observability implementation | Partial | JSON, Prometheus and OTLP-shaped adapters exist; deployment hardening remains PR77. |
+| Runtime observability implementation | Partial | JSON, Prometheus and OTLP-shaped adapters exist; public network exposure is not claimed by PR78. |
 | CPU/GPU/TPU/NPU routing | Partial production evidence | inventory/routing is not accelerator execution proof; PR80 owns execution qualification. |
 
 ## Security, release and deployment status
@@ -55,8 +55,8 @@ Historical compatibility gate: language versioning and conformance policy gate.
 | Secret and claim scanning | Implemented | repository secret baseline plus mandatory Trivy secret scan and release claim safety. |
 | Signed releases | Partial | GitHub PR76 adds immutable tag policy, OIDC artifact/SBOM attestations, cryptographic verification, draft verification and rollback. Real signed publication remains blocked until `production-release` is protected and exercised. |
 | Protected publication | Partial | workflow fails closed unless required reviewers, prevent-self-review and exact `v*` deployment policy are live. |
-| External vulnerability gate | Implemented for current repository/dependency contract | PR77 adds mandatory CodeQL `security-extended`, Trivy CVE/secret/misconfiguration/license scanning, dependency review, immutable action pins, license policy and expiring exceptions. Absent optional SDKs are not security-qualified by this result. |
-| Container and Kubernetes hardening | Open | roadmap PR77. |
+| External vulnerability gate | Implemented for current repository/dependency contract | GitHub PR77 adds mandatory CodeQL `security-extended`, Trivy CVE/secret/misconfiguration/license scanning, repository-owned dependency delta review, immutable action pins, license policy and expiring exceptions. Absent optional SDKs are not security-qualified by this result. |
+| Container and Kubernetes hardening | Implemented for the PR78 CLI/compiler deployment contract | Multi-stage non-root Linux amd64/arm64 images, read-only runtime, Restricted Pod Security, resource quota/limits, real compiler probes, PDB, default-deny networking and live ephemeral-cluster enforcement. No public service or backend qualification is implied. |
 | Formatter and linter | Open | roadmap PR78. |
 | Syntax highlighting and LSP | Open | roadmap PR79. |
 
@@ -76,20 +76,23 @@ GitHub PR76 introduced `.github/workflows/release.yml`, immutable release tag/ma
 
 ## External security PR77 boundary
 
-GitHub PR77 adds `.github/workflows/security.yml`, a mandatory `security` job in normal CI, CodeQL C/C++ `security-extended`, Trivy repository scans, pull-request dependency review, `security/third_party_inventory.tsv`, redistribution license allowlisting, immutable GitHub Action pins and 90-day maximum security exceptions. `tests/security/test_security_policy_negative.sh` verifies deterministic policy failures, while a live generated `lodash@4.17.15` fixture must be detected by Trivy.
+GitHub PR77 implemented roadmap PR76 with a mandatory security CI branch, CodeQL C/C++ `security-extended`, Trivy repository scans, a fail-closed repository-owned dependency delta gate, `security/third_party_inventory.tsv`, redistribution license allowlisting, immutable GitHub Action pins and 90-day maximum security exceptions. TST018 is implemented only for dependencies and source present in the current scan contract. Optional AI SDKs absent from CI remain unqualified; PR80 owns live backend/SDK qualification.
 
-TST018 is implemented only for dependencies and source present in the current scan contract. Optional AI SDKs that are absent from CI remain unqualified; PR80 owns live backend/SDK qualification. The source SBOM is not misrepresented as a complete package-version vulnerability inventory.
+## Container and Kubernetes PR78 boundary
+
+GitHub PR78 now implements roadmap PR77. `Dockerfile` is a multi-stage production image, and `deploy/k8s/production.yaml` defines a Restricted Pod Security workload with a dedicated service account, disabled token automount, two replicas, bounded rolling updates, resource requests/limits and quota, real ShortHand parser startup/readiness/liveness probes, a memory-backed `/tmp`, PodDisruptionBudget and default-deny NetworkPolicy.
+
+The mandatory live deployment gate builds and executes the Linux amd64 image, creates a pinned Kind/Kubernetes cluster, verifies runtime uid/capability/seccomp/no-new-privileges state, rejects an unbounded pod through ResourceQuota, demonstrates NetworkPolicy denial against a positive control and confirms replica repair after pod deletion. The existing mandatory Linux arm64 lane builds and executes the production arm64 image natively. TST019 is implemented only for this compiler/CLI deployment contract; no fake HTTP service, ingress or accelerator execution claim is introduced.
 
 ## Production blockers
 
 1. Configure and exercise the protected signed-release environment for roadmap PR75 / TST017.
-2. Container/Kubernetes hardening and deployment validation (PR77).
-3. Formatter/linter production support (PR78).
-4. Syntax highlighting/LSP production support (PR79).
-5. Full live backend and CPU/GPU/TPU/NPU success evidence (PR80).
-6. Complete C3-ECO language, measured scoring and authority-ready handoff (PR81-PR83).
-7. Generated MLIR dialect and production lowering (PR84-PR85).
-8. Measured performance/energy comparison and zero-skip production RC gate (PR86).
+2. Formatter/linter production support (PR78).
+3. Syntax highlighting/LSP production support (PR79).
+4. Full live backend and CPU/GPU/TPU/NPU success evidence (PR80).
+5. Complete C3-ECO language, measured scoring and authority-ready handoff (PR81-PR83).
+6. Generated MLIR dialect and production lowering (PR84-PR85).
+7. Measured performance/energy comparison and zero-skip production RC gate (PR86).
 
 ## Historical PR73 guard anchors
 
@@ -114,6 +117,14 @@ These strings are retained as historical audit anchors only; they are not curren
 - GitHub PR76 now implements roadmap PR75
 - Signed releases | Partial
 - The repository did not have the required `production-release` environment at PR76 start
+
+## Historical PR77 audit anchors
+
+- feature_status_version: 2026-08-12-pr77
+- 17 implemented, 4 partial and 6 open
+- GitHub PR77 now implements roadmap PR76
+- External vulnerability gate | Implemented
+- Container and Kubernetes hardening | Open
 
 ## Review rule
 
