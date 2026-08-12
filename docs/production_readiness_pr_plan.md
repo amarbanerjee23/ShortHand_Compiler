@@ -1,12 +1,12 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-12-pr76
+production_readiness_plan_version: 2026-08-12-pr77
 PLAN_STATUS: active
-LAST_COMPLETED_PR: 75
+LAST_COMPLETED_PR: 76
 MERGED_OUT_OF_BAND_PR: 71
-CURRENT_IMPLEMENTATION_PR: 76
-GITHUB_IMPLEMENTATION_PR: 77
-NEXT_IMPLEMENTATION_PR_AFTER_PR76: 77
+CURRENT_IMPLEMENTATION_PR: 77
+GITHUB_IMPLEMENTATION_PR: 78
+NEXT_IMPLEMENTATION_PR_AFTER_PR77: 78
 BASELINE_LANGUAGE_VERSION: beta-0.3
 TARGET: enterprise production usage ready language
 
@@ -14,39 +14,42 @@ TARGET: enterprise production usage ready language
 
 ShortHand must become a production-grade compiled AI language that lets engineers build and deploy AI software without Python. It must provide predictable semantics, deterministic compilation, honest hardware-aware execution, lower runtime overhead, measurable energy efficiency, portable release artifacts, enterprise security and auditable Green AI evidence.
 
-Unsupported or unavailable paths must never report success. A skipped dependency, absent accelerator, unprotected release environment, cancelled workflow, unavailable security scanner or source-pattern check is not production execution evidence.
+Unsupported or unavailable paths must never report success. A skipped dependency, absent accelerator, unprotected release environment, cancelled workflow, unavailable security scanner, missing container runtime or unavailable deployment cluster is not production execution evidence.
 
 ## Current baseline
 
-Roadmap PR69 through PR75 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75 because GitHub PR74 had already been consumed by a duplicate PR73 branch. Roadmap PR75 was implemented and merged as GitHub PR76, establishing immutable release tags, four-platform candidate construction, SHA-256/SPDX/provenance binding, OIDC attestations, protected-environment preflight, cryptographic verification and draft-release rollback.
+Roadmap PR69 through PR76 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75 because GitHub PR74 had already been consumed by a duplicate PR73 branch. Roadmap PR75 was implemented and merged as GitHub PR76, establishing immutable release tags, four-platform candidate construction, SHA-256/SPDX/provenance binding, OIDC attestations, protected-environment preflight, cryptographic verification and draft-release rollback.
 
-Roadmap PR76 is now the active implementation and is carried by GitHub PR77. It adds mandatory external C/C++ SAST, source/dependency vulnerability scanning, pull-request dependency review, redistribution license policy, repository-wide immutable GitHub Action pins, expiring security exceptions and positive/negative scanner evidence.
+Roadmap PR76 was implemented and merged as GitHub PR77. It added mandatory CodeQL C/C++ SAST, Trivy vulnerability/secret/misconfiguration/license scanning, a repository-owned fail-closed dependency-delta gate, redistribution license policy, immutable GitHub Action pins, expiring security exceptions and live vulnerable-dependency evidence.
 
-ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. PR77 does not claim absent optional AI SDKs are security-qualified; PR80 owns live backend/SDK qualification.
+Roadmap PR77 is now the active implementation and is carried by GitHub PR78. It hardens the production compiler/runtime container and Kubernetes workload, qualifies native Linux amd64 and arm64 images and requires live ephemeral-cluster evidence for restricted execution, health, quota, network denial and restart behavior.
 
-## PR76 completion contract
+ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. PR78 closes only the CLI/compiler deployment contract and does not claim public ingress or absent AI backends are production-qualified.
 
-Roadmap PR76 - External vulnerability, SAST, dependency and license policy gate is IN PROGRESS as GitHub PR77.
+## PR77 completion contract
+
+Roadmap PR77 - Container and Kubernetes production hardening is IN PROGRESS as GitHub PR78.
 
 Implementation requirements:
 
-1. A dedicated mandatory `security` CI job must be a dependency of the stable Ubuntu aggregate for both push and pull-request events.
-2. GitHub CodeQL must analyze C/C++ with the `security-extended` suite using a real manual compiler build.
-3. CodeQL SARIF must be enforced locally and fail on unexcepted `security-severity >= 7.0` findings.
-4. Trivy must perform an external repository scan for vulnerabilities, secrets, misconfiguration and licenses; scanner execution errors remain failures.
-5. HIGH/CRITICAL vulnerabilities, any detected secret, HIGH/CRITICAL misconfiguration and HIGH/CRITICAL license findings must fail the repository policy.
-6. Pull requests must execute GitHub dependency review with HIGH severity and an explicit redistribution license allowlist; `warn-only` is forbidden.
-7. `security/third_party_inventory.tsv` must distinguish build tools, optional SDKs, linked runtime dependencies and vendored dependencies with version/license/source/redistribution policy.
-8. Linked, vendored or redistributed dependencies must use an allowlisted SPDX license; unknown, `LicenseRef-*` and unbounded versions are rejected for redistribution.
-9. Every external GitHub Action under `.github/workflows` must use an immutable 40-hex commit SHA rather than a floating tag or branch.
-10. Trivy and CodeQL exceptions must be concrete, owned, ticketed, justified and expire no more than 90 days from the policy date; wildcard or expired exceptions fail.
-11. Deterministic negative tests must reject prohibited licenses, unbounded versions, expired/wildcard exceptions, floating actions, high CodeQL SARIF and failing Trivy reports.
-12. A live generated vulnerable dependency fixture must be detected by the external Trivy CVE database; the fixture must not be committed as a production package manifest.
-13. A scheduled security rescan must re-evaluate the repository against newly published vulnerability data without overwriting stable PR/push statuses.
-14. Existing PR73 safety, PR74 portability/reproducibility and PR75 signed-release gates remain mandatory and unweakened.
-15. Final PR head must have `ci / ubuntu (push)` successful.
-16. Final PR head must have `ci / ubuntu (pull_request)` successful.
-17. TST018 becomes implemented only after the required live scanners and local enforcement pass on the exact final head; absent optional SDKs remain outside this evidence.
+1. The production Dockerfile must use separate builder/runtime stages and keep build-only tooling out of the runtime image.
+2. The runtime image must execute as fixed non-root uid/gid 10001, own its runtime artifacts and support read-only-root execution with bounded writable `/tmp`.
+3. Docker health must execute the real `short_hand` parser against a bundled valid ShortHand source rather than a shell-only liveness check.
+4. Linux amd64 production image execution must be qualified in the mandatory deployment gate and Linux arm64 image execution must be qualified natively in the existing mandatory arm64 CI lane.
+5. Kubernetes must use a dedicated namespace with Restricted Pod Security enforcement pinned to the qualified Kubernetes version.
+6. The workload must use a dedicated service account with token automount disabled and must not receive secret-reading permission.
+7. Pod/container security must require non-root uid/gid 10001, RuntimeDefault seccomp, no privilege escalation, read-only root filesystem and all capabilities dropped.
+8. CPU/memory requests and limits plus namespace ResourceQuota must be mandatory; an under-specified pod must be rejected in a live cluster.
+9. Startup, readiness and liveness probes must execute the real ShortHand parser inside the restricted workload.
+10. The production workload must use at least two replicas, bounded rolling-update unavailability and a PodDisruptionBudget.
+11. Default-deny NetworkPolicy must cover ingress and egress. Live qualification must prove a positive-control pod can connect while the selected ShortHand workload is denied.
+12. A pod deletion must be repaired back to the desired Ready replica count within a bounded timeout.
+13. The live ephemeral cluster must use version-pinned Kind/Kubernetes inputs with integrity verification; unavailable cluster tooling is a failure in mandatory CI.
+14. Deterministic negative tests must reject root execution, writable root filesystem, missing readiness probes, missing limits, open egress and privileged execution.
+15. Existing PR73 safety, PR74 portability/reproducibility, PR75 signed-release and PR76 external-security gates remain mandatory and unweakened.
+16. Final PR head must have `ci / ubuntu (push)` successful.
+17. Final PR head must have `ci / ubuntu (pull_request)` successful.
+18. TST019 becomes implemented only after the exact final head passes the static, runtime, native multi-architecture and live-cluster evidence. Public services/backends remain outside this claim.
 
 ## Mandatory rule for every remaining PR
 
@@ -56,7 +59,7 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. PR77 adds a mandatory external security branch to the CI DAG while release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. PR78 adds exact-head deployment qualification to the mandatory compiler CI: Linux amd64 builds/runs the production image and ephemeral Kind cluster from the existing ubuntu-core path, while the existing native Linux arm64 lane builds/runs the arm64 production image. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -70,8 +73,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening | MERGED | Scanner/parser/module/semantic/lowering fuzzing, ASan/LSan/UBSan and TSan. | First-class safety steps plus scheduled fuzz. | Replayable corpus and no sanitizer/race findings. |
 | PR74 - CI/toolchain/platform matrix, CTest parity and reproducible builds | MERGED as GitHub PR75 | GCC12/14, Clang16/18, Linux x64/arm64, macOS arm64, Windows x64, installed consumers and deterministic artifacts. | Multi-job DAG and reproducibility/CTest parity jobs. | Native/platform execution, ABI consumers, SDK lifecycle and clean-build checksums. |
 | PR75 - Signed release and protected publication workflow | MERGED as GitHub PR76 | Immutable tag/version/master-lineage policy, checksums, artifact SBOM/provenance, OIDC attestations, protected publication and rollback. | Separate tag/manual release workflow plus mandatory non-privileged contract tests. | Tamper/unsigned/environment negatives; real protected tag verification still closes TST017 externally. |
-| PR76 - External vulnerability, SAST, dependency and license policy gate | IN PROGRESS as GitHub PR77 | CodeQL C++ SAST, Trivy CVE/secret/misconfiguration/license scanning, dependency review, license policy, action pins and expiring exceptions. | Dedicated mandatory security job plus daily rescan. | Vulnerable dependency, secret, prohibited-license, SARIF, exception and anti-weakening tests. |
-| PR77 - Container and Kubernetes production hardening | PLANNED | Multi-arch non-root images, read-only filesystem, dropped capabilities, probes, limits and network policy. | Ephemeral-cluster integration. | Image scan, deployment, health, shutdown/restart, limits and network negatives. |
+| PR76 - External vulnerability, SAST, dependency and license policy gate | MERGED as GitHub PR77 | CodeQL C++ SAST, Trivy CVE/secret/misconfiguration/license scanning, dependency delta review, license policy, action pins and expiring exceptions. | Dedicated mandatory security job plus daily rescan. | Vulnerable dependency, secret, prohibited-license, SARIF, exception and anti-weakening tests. |
+| PR77 - Container and Kubernetes production hardening | IN PROGRESS as GitHub PR78 | Multi-stage native amd64/arm64 non-root images, read-only runtime, Restricted Pod Security, probes, limits/quota, PDB and default-deny network policy. | Mandatory native container execution plus ephemeral Kind integration in exact-head CI. | Image execution, parser health, runtime security state, quota/network negatives, restart and graceful shutdown. |
 | PR78 - Formatter and linter baseline | PLANNED | Deterministic formatter, semantic-preserving lint rules, machine diagnostics and safe fixes. | Fast frontend format/lint job. | Idempotence, format-parse roundtrip, preservation and fix safety. |
 | PR79 - Syntax highlighting and LSP implementation | PLANNED | Editor grammar plus compiler-backed diagnostics, hover, completion, definition and module navigation. | Protocol/golden job with cancellation and latency budget. | Token/protocol goldens, partial docs, cancellation and imported navigation. |
 | PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | PLANNED | Production-supported backends and evidence-driven hardware target selection. | Capability-aware backend matrix. | Numerical outputs, route/fallback and no-false-success tests. |
@@ -84,17 +87,27 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr76_through_pr86: 11
-remaining_planned_implementation_prs_after_pr76: 10
+remaining_planned_implementation_prs_pr77_through_pr86: 10
+remaining_planned_implementation_prs_after_pr77: 9
 
-Next recommended roadmap PR after PR76 is merged:
+Next recommended roadmap PR after PR77 is merged:
 
-PR77 - Container and Kubernetes production hardening.
+PR78 - Formatter and linter baseline.
 
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
 
+- production_readiness_plan_version: 2026-08-12-pr76
+- LAST_COMPLETED_PR: 75
+- CURRENT_IMPLEMENTATION_PR: 76
+- GITHUB_IMPLEMENTATION_PR: 77
+- NEXT_IMPLEMENTATION_PR_AFTER_PR76: 77
+- Roadmap PR76 - External vulnerability, SAST, dependency and license policy gate is IN PROGRESS as GitHub PR77.
+- remaining_planned_implementation_prs_pr76_through_pr86: 11
+- remaining_planned_implementation_prs_after_pr76: 10
+- | PR76 - External vulnerability, SAST, dependency and license policy gate | IN PROGRESS as GitHub PR77
+- | PR77 - Container and Kubernetes production hardening | PLANNED
 - production_readiness_plan_version: 2026-08-12-pr75
 - LAST_COMPLETED_PR: 74
 - CURRENT_IMPLEMENTATION_PR: 75
@@ -104,7 +117,6 @@ The following strings are immutable audit history and are not active state:
 - remaining_planned_implementation_prs_pr75_through_pr86: 12
 - remaining_planned_implementation_prs_after_pr75: 11
 - | PR75 - Signed release and protected publication workflow | IN PROGRESS as GitHub PR76
-- | PR76 - External vulnerability, SAST, dependency and license policy gate | PLANNED
 - production_readiness_plan_version: 2026-08-11-pr72
 - PLAN_STATUS: active
 - LAST_COMPLETED_PR: 70
