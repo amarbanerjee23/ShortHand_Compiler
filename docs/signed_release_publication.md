@@ -33,7 +33,10 @@ Normal `push` and `pull_request` CI retains read-only repository permissions exc
 - `contents: write`,
 - `id-token: write`,
 - `attestations: write`,
+- `artifact-metadata: write`,
 - `actions: read`.
+
+The `artifact-metadata` permission is included because the exact pinned `actions/attest` v4 contract lists it alongside OIDC and attestation permissions. All unspecified job permissions remain `none` under GitHub's explicit-permission model.
 
 That job is additionally bound to the GitHub Environment `production-release`.
 
@@ -74,7 +77,7 @@ Mandatory enterprise CI executes:
 - missing custom `v*` policy rejection,
 - checksum-tampered artifact rejection,
 - unsigned candidate rejection in publication mode,
-- static release-workflow anti-weakening checks for action pins, OIDC permissions, protected environment, attestation verification and rollback.
+- static release-workflow anti-weakening checks for action pins, OIDC permissions, artifact-metadata permission, protected environment, attestation verification and rollback.
 
 ## Remaining blocker
 
