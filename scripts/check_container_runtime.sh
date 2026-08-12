@@ -21,7 +21,7 @@ actual_arch="$(docker image inspect --format '{{.Architecture}}' "${IMAGE}")"
   exit 1
 }
 
-common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges --network none)
+common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m --tmpfs /work:rw,nosuid,nodev,size=128m --cap-drop ALL --security-opt no-new-privileges --network none)
 uid="$(docker run "${common[@]}" "${IMAGE}" id -u)"
 gid="$(docker run "${common[@]}" "${IMAGE}" id -g)"
 [[ "${uid}" == 10001 ]] || { echo "error: runtime image uid must be 10001, got ${uid}" >&2; exit 1; }
@@ -30,8 +30,8 @@ gid="$(docker run "${common[@]}" "${IMAGE}" id -g)"
 docker run "${common[@]}" "${IMAGE}" >"${TMP}/run.out" 2>"${TMP}/run.err"
 diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/run.out"
 
-if ! docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'touch /tmp/shorthand-writable && test -f /tmp/shorthand-writable'; then
-  echo "error: writable tmpfs contract failed" >&2
+if ! docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'touch /tmp/shorthand-writable /work/shorthand-work-writable && test -f /tmp/shorthand-writable && test -f /work/shorthand-work-writable'; then
+  echo "error: bounded writable scratch/workspace contract failed" >&2
   exit 1
 fi
 
@@ -40,13 +40,21 @@ if ! docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'if touch /etc/shorthand
   exit 1
 fi
 
+# A hardened compiler image must remain usable as a compiler. Compile and run a
+# native ShortHand artifact from the bounded writable /work mount while the
+# image root stays read-only and networking/capabilities remain disabled.
+docker run "${common[@]}" --workdir /work "${IMAGE}" /bin/bash -lc \
+  'short_hand /opt/shorthand/smoke/core_control.short compile-native && test -x ./core_control && ./core_control' \
+  >"${TMP}/native.out" 2>"${TMP}/native.err"
+diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/native.out"
+
 health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}' "${IMAGE}")"
 [[ "${health_test}" == *'core_control.short'* && "${health_test}" == *'parse'* ]] || {
   echo "error: image healthcheck does not execute the ShortHand parser" >&2
   exit 1
 }
 
-CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m --cap-drop ALL --security-opt no-new-privileges --network none \
+CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m --tmpfs /work:rw,nosuid,nodev,size=128m --cap-drop ALL --security-opt no-new-privileges --network none \
   "${IMAGE}" /bin/bash -lc 'trap "exit 0" TERM INT; while true; do sleep 3600 & wait $!; done')"
 healthy=0
 for _ in $(seq 1 45); do
@@ -67,4 +75,4 @@ exit_code="$(docker inspect --format '{{.State.ExitCode}}' "${CONTAINER_ID}")"
 docker rm "${CONTAINER_ID}" >/dev/null
 CONTAINER_ID=""
 
-printf 'PASS hardened container runtime image=%s arch=%s uid=%s gid=%s health=healthy graceful_shutdown=true\n' "${IMAGE}" "${actual_arch}" "${uid}" "${gid}"
+printf 'PASS hardened container runtime image=%s arch=%s uid=%s gid=%s native_compile=true health=healthy graceful_shutdown=true\n' "${IMAGE}" "${actual_arch}" "${uid}" "${gid}"
