@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 70
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install required dependencies
         run: |
@@ -142,7 +142,7 @@ jobs:
       - name: Run CTest
         run: ctest --test-dir build --output-on-failure
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: test-logs-ubuntu-core-${{ github.run_id }}
@@ -181,7 +181,7 @@ jobs:
       CXX: ${{ matrix.cxx }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install matrix build dependencies
         run: |
@@ -217,7 +217,7 @@ jobs:
     timeout-minutes: 50
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install Linux arm64 dependencies
         run: |
@@ -262,7 +262,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install macOS build dependencies
         run: |
@@ -308,7 +308,7 @@ jobs:
           ./core_control > /tmp/shorthand_macos_native.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_native.out
 
-      - name: Install upgrade uninstall macOS SDK lifecycle
+      - name: Install upgrade uninstall macOS arm64 SDK lifecycle
         run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-macos" "$PWD/stage-macos" "$PWD/consumer-macos"
 
   windows-x64:
@@ -322,7 +322,7 @@ jobs:
         shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install Windows UCRT64 compiler dependencies
         run: |
@@ -401,7 +401,7 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install CTest parity dependencies
         run: |
@@ -423,7 +423,7 @@ jobs:
     timeout-minutes: 50
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install reproducibility dependencies
         run: |
@@ -433,13 +433,119 @@ jobs:
       - name: Independent clean-build reproducibility
         run: bash scripts/check_reproducible_builds.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: reproducibility-${{ github.run_id }}
           path: |
             /tmp/shorthand_reproducibility.json
             /tmp/shorthand-reproducibility/
+
+  security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+
+      - name: Install security build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
+
+      - name: Security policy and negative matrix
+        run: bash scripts/check_external_security_policy.sh
+
+      - name: Repository-owned dependency delta review
+        env:
+          SHORTHAND_DEPENDENCY_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          SHORTHAND_DEPENDENCY_HEAD_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          base="${SHORTHAND_DEPENDENCY_BASE_REF}"
+          if [[ -z "${base}" || "${base}" =~ ^0+$ ]]; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          bash scripts/check_dependency_delta.sh "${base}" "${SHORTHAND_DEPENDENCY_HEAD_REF}"
+
+      - name: Initialize CodeQL C/C++ security analysis
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
+        with:
+          languages: c-cpp
+          build-mode: manual
+          queries: security-extended
+
+      - name: Build compiler for CodeQL
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: |
+          cmake -S . -B build-codeql -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_CONFIG=/usr/bin/llvm-config-18
+          cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool
+
+      - name: Produce CodeQL SARIF without weakening local enforcement
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
+        with:
+          output: /tmp/shorthand-codeql-results
+          upload: never
+          upload-database: false
+
+      - name: Enforce CodeQL high-severity policy
+        run: bash scripts/check_codeql_sarif.sh /tmp/shorthand-codeql-results
+
+      - name: Trivy repository vulnerability secret misconfiguration and license scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.70.0
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig,license
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          format: json
+          output: /tmp/shorthand-trivy-repository.json
+          exit-code: '0'
+          ignore-unfixed: 'false'
+          skip-dirs: tests/security/fixtures,build,build-codeql,Compiler_new_ws/Short_Hand/build
+          trivyignores: security/.trivyignore
+
+      - name: Enforce Trivy repository policy
+        run: bash scripts/check_trivy_report.sh /tmp/shorthand-trivy-repository.json
+
+      - name: Generate vulnerable dependency scanner fixture
+        run: bash scripts/create_vulnerable_dependency_fixture.sh /tmp/shorthand-vulnerable-dependency-fixture
+
+      - name: Scan vulnerable dependency fixture
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.70.0
+          skip-setup-trivy: 'true'
+          scan-type: fs
+          scan-ref: /tmp/shorthand-vulnerable-dependency-fixture
+          scanners: vuln
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          format: json
+          output: /tmp/shorthand-trivy-vulnerable-fixture.json
+          exit-code: '0'
+          ignore-unfixed: 'false'
+
+      - name: Require vulnerable dependency detection
+        run: bash scripts/assert_trivy_vulnerable_fixture.sh /tmp/shorthand-trivy-vulnerable-fixture.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: security-evidence-${{ github.run_id }}-${{ github.event_name }}
+          path: |
+            /tmp/shorthand-codeql-results/
+            /tmp/shorthand-trivy-repository.json
+            /tmp/shorthand-trivy-vulnerable-fixture.json
+            /tmp/shorthand_dependency_delta.json
+            /tmp/shorthand_security_*.out
+            /tmp/shorthand_security_*.err
 
   ubuntu:
     needs:
@@ -450,6 +556,7 @@ jobs:
       - windows-x64
       - ctest-parity
       - reproducible
+      - security
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -465,6 +572,7 @@ jobs:
           test "${{ needs.windows-x64.result }}" = "success"
           test "${{ needs.ctest-parity.result }}" = "success"
           test "${{ needs.reproducible.result }}" = "success"
+          test "${{ needs.security.result }}" = "success"
 
       - name: Publish event-specific CI status
         if: ${{ always() && !cancelled() }}

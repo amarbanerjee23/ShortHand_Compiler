@@ -3,11 +3,27 @@ kind: Pod
 metadata:
   name: shorthand-demo
 spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: shorthand
       image: shorthand:beta
       command: ["short_hand"]
       args: ["Compiler_new_ws/Short_Hand/examples/greenai_report.short", "run"]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - ALL
       resources:
         requests:
           cpu: "250m"

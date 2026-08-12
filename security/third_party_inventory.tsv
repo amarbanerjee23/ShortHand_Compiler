@@ -1,0 +1,13 @@
+component	version_policy	scope	license_spdx	redistributed	source
+llvm	18	build-tool	Apache-2.0 WITH LLVM-exception	no	https://github.com/llvm/llvm-project
+clang	16|18	build-tool	Apache-2.0 WITH LLVM-exception	no	https://github.com/llvm/llvm-project
+gcc	12|14	build-tool	GPL-3.0-or-later WITH GCC-exception-3.1	no	https://gcc.gnu.org
+flex	distribution-supported	build-tool	BSD-2-Clause	no	https://github.com/westes/flex
+bison	distribution-supported	build-tool	GPL-3.0-or-later	no	https://www.gnu.org/software/bison/
+cmake	>=3.16	build-tool	BSD-3-Clause	no	https://github.com/Kitware/CMake
+ninja	distribution-supported	build-tool	Apache-2.0	no	https://github.com/ninja-build/ninja
+onnxruntime	external-root;qualification=PR80	optional-sdk	MIT	no	https://github.com/microsoft/onnxruntime
+tensorrt	external-root;qualification=PR80	optional-sdk	LicenseRef-NVIDIA-TensorRT	no	https://developer.nvidia.com/tensorrt
+openvino	external-root;qualification=PR80	optional-sdk	Apache-2.0	no	https://github.com/openvinotoolkit/openvino
+libtorch	external-root;qualification=PR80	optional-sdk	BSD-3-Clause	no	https://github.com/pytorch/pytorch
+llama.cpp	external-root;qualification=PR80	optional-sdk	MIT	no	https://github.com/ggml-org/llama.cpp

@@ -1,0 +1,4 @@
+# ShortHand Trivy exceptions.
+# Active entries must be narrowly scoped and time bounded:
+# CVE-YYYY-NNNN exp:YYYY-MM-DD # owner=<team> ticket=<id> reason=<justification>
+# No active exceptions are approved in PR77.
