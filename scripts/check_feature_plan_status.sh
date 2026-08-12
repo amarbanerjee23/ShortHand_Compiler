@@ -11,6 +11,7 @@ required_files=(
   docs/execution_semantics_beta_0_3.md
   docs/fuzz_sanitizer_race_hardening.md
   docs/signed_release_publication.md
+  docs/external_security_policy.md
   docs/toolchain_platform_reproducibility.md
   tests/coverage/compiler_test_coverage_matrix.tsv
   scripts/check_module_resolution.sh
@@ -20,7 +21,13 @@ required_files=(
   scripts/check_thread_sanitizer.sh
   scripts/check_ci_status_hygiene.sh
   scripts/check_signed_release_contract.sh
+  scripts/check_external_security_policy.sh
+  scripts/check_third_party_license_policy.sh
+  scripts/check_security_exceptions.sh
+  scripts/check_action_pinning.sh
   .github/workflows/release.yml
+  .github/workflows/security.yml
+  .github/dependency-review-config.yml
 )
 for file in "${required_files[@]}"; do [[ -s "${file}" ]] || { echo "error: required feature/status evidence missing: ${file}" >&2; exit 1; }; done
 
@@ -41,23 +48,24 @@ required_status_terms=(
   "Zero-skip production RC gate" "CPU/GPU/TPU/NPU"
   "CI status hygiene" "MLIR dialect scaffold"
   "Module/import/package model" "Signed releases" "Protected publication"
+  "External vulnerability gate"
 )
 for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-12-pr76' \
+  'feature_status_version: 2026-08-12-pr77' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  '16 implemented, 5 partial and 6 open' \
-  'Roadmap PR74 was implemented and merged as GitHub PR75' \
-  'GitHub PR76 now implements roadmap PR75' \
+  '17 implemented, 4 partial and 6 open' \
+  'Roadmap PR75 was implemented and merged as GitHub PR76' \
+  'GitHub PR77 now implements roadmap PR76' \
   'Cross-platform portability | Implemented for PR74 tiers' \
   'Cross-platform reproducibility | Implemented' \
   'Signed releases | Partial' \
-  'The repository did not have the required `production-release` environment at PR76 start' \
+  'External vulnerability gate | Implemented' \
   'live production qualification remains PR80'; do
   grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing current anchor: ${anchor}" >&2; exit 1; }
 done
@@ -67,8 +75,10 @@ grep -Fq 'execution_semantics_contract: beta-0.3-pr72-v1' docs/execution_semanti
 grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
 grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
 grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
+grep -Fq 'external_security_policy_version: shorthand.security.external.v1' docs/external_security_policy.md
 grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
 grep -Fq 'PASS signed release and protected publication contract gate' scripts/check_signed_release_contract.sh
+grep -Fq 'PASS external vulnerability SAST dependency and license policy gate' scripts/check_external_security_policy.sh
 
 unsupported_claim_patterns=(
   "Current status: fully production-ready"
@@ -78,10 +88,11 @@ unsupported_claim_patterns=(
   "fuzzing proves the compiler has no bugs"
   "ThreadSanitizer proves the runtime has no races"
   "signed release blocker is complete"
+  "all dependencies are vulnerability-free"
 )
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness/safety/signing claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness/safety/signing/security claim: ${pattern}" >&2
     exit 1
   fi
 done
@@ -93,4 +104,4 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. PR74 portability is recorded and PR75 signed publication remains fail-closed pending protected-environment execution."
+echo "Feature plan status check passed. PR76 external security is implemented for current scanned scope; PR75 signed publication remains fail-closed pending protected-environment execution."

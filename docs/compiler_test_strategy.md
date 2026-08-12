@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-12-pr76
+compiler_test_strategy_version: 2026-08-12-pr77
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
@@ -15,15 +15,15 @@ A test passing because a dependency, device, backend or platform was skipped is 
 
 The 27-area production test matrix now records:
 
-- 16 implemented areas,
-- 5 partial areas,
+- 17 implemented areas,
+- 4 partial areas,
 - 6 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed the compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. GitHub PR76 implements roadmap PR75's signed-release workflow, but `TST017` intentionally remains partial until the repository's `production-release` environment is protected and a real version-tag publication produces attestations that pass cryptographic verification.
+Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while `TST017` remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 implements roadmap PR76 and closes `TST018` for the current source/dependency contract with mandatory CodeQL C/C++ SAST, Trivy external scanning, PR dependency review, license inventory/allowlisting, immutable action pins, expiring exceptions and negative/live-vulnerability fixtures.
 
-Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible clean builds, frozen ABI consumers and install/reinstall/uninstall package lifecycle.
+Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle and fail-closed external source/dependency security scanning.
 
-Production-critical gaps remain for protected signed-release execution, external vulnerability/SAST/license enforcement, hardened deployment, formatter/linter/LSP, live production backend/hardware qualification, complete C3-ECO evidence, production MLIR lowering, measured performance/energy and the final zero-skip release-candidate gate.
+Production-critical gaps remain for protected signed-release execution, hardened deployment, formatter/linter/LSP, live production backend/hardware qualification, complete C3-ECO evidence, production MLIR lowering, measured performance/energy and the final zero-skip release-candidate gate.
 
 ## Required test layers for every implementation PR
 
@@ -59,17 +59,20 @@ Every remaining implementation PR through PR86 must include all applicable layer
 12. Signing source code is not signing evidence: a signed-release blocker closes only after cryptographic verification succeeds for the produced artifact.
 13. A protected release workflow must prevent branch publication, bind version tags to exact commits, minimize privileges and fail closed when environment protections are absent.
 14. CPU/GPU/TPU/NPU detection is not execution evidence.
-15. Final release qualification executes mandatory tests from a clean checkout and reports zero mandatory skips.
+15. External security scanners are mandatory evidence, not advisory decoration. A scanner/network execution failure is a gate failure.
+16. Security exceptions are concrete, owned, ticketed, justified and expire within 90 days; wildcard or expired exceptions fail CI.
+17. A committed source SBOM is not a substitute for package-version CVE scanning, and an absent optional SDK is not security qualification.
+18. Final release qualification executes mandatory tests from a clean checkout and reports zero mandatory skips.
 
 ## CI profiles
 
 ### Pull-request profile
 
-The mandatory PR75 DAG runs policy/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity and reproducibility. GitHub PR76 adds signed-release contract tests through the existing mandatory enterprise hardening path without granting OIDC or repository-write permissions to pull-request jobs.
+The mandatory DAG runs policy/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility and the PR77 security job. The security job executes local negative-policy tests, dependency-delta review, CodeQL `security-extended`, Trivy source scanning and a live vulnerable-dependency detection fixture. Normal PR jobs do not receive release OIDC or repository-write permissions.
 
 ### Scheduled profile
 
-Extended fuzzing, race stress, large module graphs, backend/hardware qualification, vulnerability rescans and soak tests remain scheduled or later-roadmap work as appropriate.
+Extended fuzzing/race stress continues independently. `.github/workflows/security.yml` performs a daily external Trivy rescan so newly published CVEs can fail without waiting for source changes. Scheduled evidence is additive and does not publish the stable PR/push status contexts.
 
 ### Release-candidate profile
 
@@ -93,10 +96,14 @@ ShortHand may claim enterprise production readiness only when:
 
 The following exact strings are retained only for milestone guards and are not current counts:
 
+- compiler_test_strategy_version: 2026-08-12-pr76
+- 16 implemented areas
+- 5 partial areas
+- 6 open areas
 - compiler_test_strategy_version: 2026-08-11-pr73
 - 12 implemented areas
 - 6 partial areas
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-08-12-pr76`.
+The current strategy is `2026-08-12-pr77`.

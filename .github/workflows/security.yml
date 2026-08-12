@@ -1,0 +1,74 @@
+name: security-rescan
+
+on:
+  schedule:
+    - cron: '23 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-rescan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install policy dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Validate immutable security policy
+        run: bash scripts/check_external_security_policy.sh
+
+      - name: Trivy repository rescan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.70.0
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig,license
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          format: json
+          output: /tmp/shorthand-trivy-repository.json
+          exit-code: '0'
+          ignore-unfixed: 'false'
+          skip-dirs: tests/security/fixtures,build,Compiler_new_ws/Short_Hand/build
+          trivyignores: security/.trivyignore
+
+      - name: Enforce Trivy repository policy
+        run: bash scripts/check_trivy_report.sh /tmp/shorthand-trivy-repository.json
+
+      - name: Generate vulnerable scanner fixture
+        run: bash scripts/create_vulnerable_dependency_fixture.sh /tmp/shorthand-vulnerable-dependency-fixture
+
+      - name: Scan vulnerable dependency fixture
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.70.0
+          skip-setup-trivy: 'true'
+          scan-type: fs
+          scan-ref: /tmp/shorthand-vulnerable-dependency-fixture
+          scanners: vuln
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          format: json
+          output: /tmp/shorthand-trivy-vulnerable-fixture.json
+          exit-code: '0'
+          ignore-unfixed: 'false'
+
+      - name: Require vulnerable fixture detection
+        run: bash scripts/assert_trivy_vulnerable_fixture.sh /tmp/shorthand-trivy-vulnerable-fixture.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: security-rescan-${{ github.run_id }}
+          path: |
+            /tmp/shorthand-trivy-repository.json
+            /tmp/shorthand-trivy-vulnerable-fixture.json
