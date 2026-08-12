@@ -29,6 +29,10 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
+      - name: Fetch protected master lineage for publication policy
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/master:refs/remotes/origin/master
       - id: policy
         name: Validate immutable version and event policy
         env:
@@ -198,8 +202,26 @@ jobs:
             echo 'DRY_RUN_ONLY: workflow_dispatch can build and verify candidates but cannot publish.'
           fi
 
-  publish:
+  release-policy-preflight:
     needs: [policy, candidate]
+    if: ${{ needs.policy.outputs.publish == 'true' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Verify protected release environment before privileged job admission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/environments/production-release" > /tmp/production-release.environment.json
+          gh api "repos/${GITHUB_REPOSITORY}/environments/production-release/deployment-branch-policies?per_page=100" > /tmp/production-release.policies.json
+          bash scripts/check_protected_release_environment.sh /tmp/production-release.environment.json /tmp/production-release.policies.json
+
+  publish:
+    needs: [policy, candidate, release-policy-preflight]
     if: ${{ needs.policy.outputs.publish == 'true' }}
     runs-on: ubuntu-24.04
     environment: production-release
@@ -217,7 +239,7 @@ jobs:
         with:
           pattern: release-*
           path: release-assets
-      - name: Fail closed unless production-release is protected
+      - name: Revalidate protected environment after admission
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -279,10 +301,12 @@ jobs:
           while IFS= read -r archive; do
             gh attestation verify "$archive" -R "$GITHUB_REPOSITORY" \
               --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
-              --source-ref "$GITHUB_REF" --format json > "${archive}.provenance.attestation.json"
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" \
+              --format json > "${archive}.provenance.attestation.json"
             gh attestation verify "$archive" -R "$GITHUB_REPOSITORY" \
               --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
-              --source-ref "$GITHUB_REF" --predicate-type https://spdx.dev/Document/v2.3 \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" \
+              --predicate-type https://spdx.dev/Document/v2.3 \
               --format json > "${archive}.sbom.attestation.json"
             bash scripts/verify_release_bundle.sh "$(dirname "$archive")" --publication
           done < <(find release-assets -type f -name '*.tar' -print | LC_ALL=C sort)

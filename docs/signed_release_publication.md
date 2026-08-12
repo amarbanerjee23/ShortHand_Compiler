@@ -11,11 +11,11 @@ publication_environment_status_at_pr_start: not_configured
 
 This contract upgrades ShortHand from unsigned candidate supply-chain evidence to a release workflow that can create cryptographically verifiable GitHub artifact attestations and publish only from immutable version tags. Signing proves artifact provenance and integrity. It does not prove functional correctness, external certification, deployment readiness, hardware qualification, or lower energy use than Python.
 
-## Release paths
+## Release paths and source lineage
 
-`workflow_dispatch` is a non-publishing dry run. It validates the requested version, builds the four PR74-qualified platform packages, generates checksums/SBOM/provenance and verifies the unsigned candidate bundles. It cannot enter the publication job.
+`workflow_dispatch` is a non-publishing dry run. It validates the requested version, builds the four PR74-qualified platform packages, generates checksums/SBOM/provenance and verifies the unsigned candidate bundles. It cannot enter either publication-policy admission or publication.
 
-A push of a tag matching `v*` is the only publication-capable event. `scripts/check_release_version_policy.sh` requires the tag to use `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-rc.N`, match the CMake project version and resolve to the exact checked-out commit.
+A push of a tag matching `v*` is the only publication-capable event. `scripts/check_release_version_policy.sh` requires the tag to use `vMAJOR.MINOR.PATCH` or `vMAJOR.MINOR.PATCH-rc.N`, match the CMake project version, resolve to the exact checked-out commit, and be reachable from `refs/remotes/origin/master`. The workflow explicitly fetches `master` before applying this rule. A valid-looking version tag on an unmerged side branch is therefore rejected.
 
 The release workflow builds these qualified tiers:
 
@@ -28,7 +28,11 @@ Every bundle contains the installed SDK plus `short_hand` and `green_ai_tool`, a
 
 ## Privilege boundary
 
-Normal `push` and `pull_request` CI retains read-only repository permissions except its existing status publication capability. The release workflow defaults to `contents: read`. Only the tag-only `publish` job receives:
+Normal `push` and `pull_request` CI retains read-only repository permissions except its existing status publication capability. The release workflow defaults to `contents: read`.
+
+A separate `release-policy-preflight` job runs before privileged publication. It has only `contents: read` and `actions: read`, has no environment binding, and fetches the live `production-release` environment and deployment policies. If that check fails or the environment does not exist, the privileged publication job cannot start.
+
+Only the tag-only `publish` job, after preflight succeeds, receives:
 
 - `contents: write`,
 - `id-token: write`,
@@ -36,9 +40,7 @@ Normal `push` and `pull_request` CI retains read-only repository permissions exc
 - `artifact-metadata: write`,
 - `actions: read`.
 
-The `artifact-metadata` permission is included because the exact pinned `actions/attest` v4 contract lists it alongside OIDC and attestation permissions. All unspecified job permissions remain `none` under GitHub's explicit-permission model.
-
-That job is additionally bound to the GitHub Environment `production-release`.
+The `artifact-metadata` permission is included because the exact pinned `actions/attest` v4 contract lists it alongside OIDC and attestation permissions. All unspecified job permissions remain `none` under GitHub's explicit-permission model. The privileged job is additionally bound to the GitHub Environment `production-release` and revalidates the same environment policy after admission as defense in depth.
 
 ## Required GitHub Environment configuration
 
@@ -50,19 +52,19 @@ Publication deliberately fails closed until a repository administrator configure
 4. generic protected-branch admission disabled for this release environment,
 5. an exact deployment policy pattern `v*`.
 
-The workflow reads the live Environment and deployment-policy REST resources immediately after environment admission and runs `scripts/check_protected_release_environment.sh`. An environment that exists but lacks any requirement above cannot sign or publish.
+The non-privileged preflight reads the live Environment and deployment-policy REST resources and runs `scripts/check_protected_release_environment.sh` before any signing-capable job can run. The privileged publication job repeats this verification after environment admission. An absent or under-protected environment cannot sign or publish.
 
 At the start of GitHub PR76, the repository did not have a `production-release` environment. This is an external repository-administration prerequisite, not a condition that the workflow is allowed to silently bypass. Until the environment is configured and an actual signed tag release is exercised, the compiler test matrix keeps signed protected release evidence at `partial` rather than overstating completion.
 
 ## Signing and verification
 
-The security-sensitive actions in `.github/workflows/release.yml` are pinned to immutable commit SHAs. The publication job creates GitHub artifact build-provenance attestations and SPDX 2.3 SBOM attestations for every platform archive. It then runs `gh attestation verify` for both predicate classes, constrained to this repository, this release workflow and this source ref. Publication-mode bundle verification requires those successful verification records.
+The security-sensitive actions in `.github/workflows/release.yml` are pinned to immutable commit SHAs. The publication job creates GitHub artifact build-provenance attestations and SPDX 2.3 SBOM attestations for every platform archive. It then runs `gh attestation verify` for both predicate classes, constrained to this repository, this release workflow, this source ref and the exact `GITHUB_SHA` source digest. Publication-mode bundle verification requires those successful verification records.
 
 No private signing key is stored in this repository. The workflow depends on GitHub OIDC-backed artifact attestation rather than a long-lived repository signing secret.
 
 ## Draft publication and rollback
 
-After cryptographic verification, the workflow creates a draft GitHub Release with `--verify-tag`. It downloads every staged asset and compares SHA-256 with the local qualified asset. Any failure after draft creation triggers deletion of the draft release while preserving the immutable git tag. Only after the downloaded assets match does the workflow switch the release out of draft state.
+After cryptographic verification, the workflow creates a draft GitHub Release with `--verify-tag`. Release-candidate versions ending in `-rc.N` are explicitly marked prerelease and are not marked latest. The workflow downloads every staged asset and compares SHA-256 with the local qualified asset. Any failure after draft creation triggers deletion of the draft release while preserving the immutable git tag. Only after the downloaded assets match does the workflow switch the release out of draft state.
 
 An already-existing release for the tag is rejected rather than overwritten.
 
@@ -72,12 +74,14 @@ Mandatory enterprise CI executes:
 
 - valid/invalid release-version policy cases,
 - branch-publication rejection,
+- valid protected-master-lineage publication fixture,
+- version-tag-on-unmerged-lineage rejection,
 - missing reviewer rejection,
 - self-review-enabled rejection,
 - missing custom `v*` policy rejection,
 - checksum-tampered artifact rejection,
 - unsigned candidate rejection in publication mode,
-- static release-workflow anti-weakening checks for action pins, OIDC permissions, artifact-metadata permission, protected environment, attestation verification and rollback.
+- static release-workflow anti-weakening checks for immutable action pins, master-lineage fetch, non-privileged preflight, OIDC/artifact-metadata permissions, protected environment, exact-source attestation verification and rollback.
 
 ## Remaining blocker
 

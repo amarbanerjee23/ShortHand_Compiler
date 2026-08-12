@@ -37,15 +37,27 @@ if [[ "${MODE}" == "--publish" ]]; then
     echo "error: requested version does not match GITHUB_REF_NAME" >&2
     exit 1
   fi
+
   head_sha="$(git -C "${ROOT_DIR}" rev-parse HEAD)"
   expected_sha="${GITHUB_SHA:-${head_sha}}"
   if [[ "${head_sha}" != "${expected_sha}" ]]; then
     echo "error: checkout HEAD does not match the GitHub event SHA" >&2
     exit 1
   fi
+
   tag_sha="$(git -C "${ROOT_DIR}" rev-parse "${VERSION}^{commit}" 2>/dev/null || true)"
   if [[ -z "${tag_sha}" || "${tag_sha}" != "${head_sha}" ]]; then
     echo "error: immutable release tag does not resolve to the exact checkout commit" >&2
+    exit 1
+  fi
+
+  release_base_ref="${SHORTHAND_RELEASE_BASE_REF:-refs/remotes/origin/master}"
+  if ! git -C "${ROOT_DIR}" rev-parse --verify --quiet "${release_base_ref}^{commit}" >/dev/null; then
+    echo "error: protected release base ref is unavailable: ${release_base_ref}" >&2
+    exit 1
+  fi
+  if ! git -C "${ROOT_DIR}" merge-base --is-ancestor "${tag_sha}" "${release_base_ref}"; then
+    echo "error: release tag commit is not reachable from protected master lineage: ${release_base_ref}" >&2
     exit 1
   fi
 elif [[ -n "${MODE}" ]]; then
