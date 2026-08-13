@@ -52,7 +52,7 @@ required_status_terms=(
   "Cross-platform reproducibility"
   "Measured ShortHand versus Python energy evidence"
   "Zero-skip production RC gate" "CPU/GPU/TPU/NPU"
-  "CI status hygiene" "MLIR dialect scaffold"
+  "MLIR dialect scaffold"
   "Module/import/package model" "Signed releases" "Protected publication"
   "External vulnerability gate" "Container and Kubernetes hardening"
 )
@@ -85,6 +85,8 @@ grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibi
 grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
 grep -Fq 'external_security_policy_version: shorthand.security.external.v1' docs/external_security_policy.md
 grep -Fq 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1' docs/container_kubernetes_hardening.md
+# CI status hygiene is executable evidence rather than duplicated roadmap prose.
+# The dedicated fail-closed guard remains mandatory here and in ubuntu-core.
 grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
 grep -Fq 'PASS signed release and protected publication contract gate' scripts/check_signed_release_contract.sh
 grep -Fq 'PASS external vulnerability SAST dependency and license policy gate' scripts/check_external_security_policy.sh
