@@ -56,4 +56,7 @@ USER 10001:10001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD ["/opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand", "/opt/shorthand/smoke/core_control.short", "parse"]
 
-CMD ["/opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand", "/opt/shorthand/smoke/core_control.short", "run"]
+# The production image is a compiler worker, not a one-shot demo process. Keep
+# PID 1 alive so Docker/Kubernetes health and termination semantics are real;
+# actual compilation/execution is invoked explicitly by qualification/tests.
+CMD ["/bin/bash", "-lc", "trap 'exit 0' TERM INT; while true; do sleep 3600 & wait $!; done"]
