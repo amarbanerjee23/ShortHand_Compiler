@@ -40,7 +40,11 @@ if ! gid="$(docker run "${common[@]}" "${IMAGE}" id -g 2>"${TMP}/identity_gid.er
 [[ "${uid}" == 10001 ]] || { echo "error: runtime image uid must be 10001, got ${uid}" >&2; exit 1; }
 [[ "${gid}" == 10001 ]] || { echo "error: runtime image gid must be 10001, got ${gid}" >&2; exit 1; }
 
-run_stage interpreter docker run "${common[@]}" "${IMAGE}"
+# The production image now has a durable worker CMD. Exercise language execution
+# explicitly so interpreter correctness is independent of container lifecycle.
+run_stage interpreter docker run "${common[@]}" "${IMAGE}" \
+  /opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand \
+  /opt/shorthand/smoke/core_control.short run
 if ! diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/interpreter.out"; then fail_stage interpreter; fi
 
 run_stage writable docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'touch /tmp/shorthand-writable /work/shorthand-work-writable && test -f /tmp/shorthand-writable && test -f /work/shorthand-work-writable'
@@ -55,8 +59,9 @@ health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}'
   exit 1
 }
 
-CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none \
-  "${IMAGE}" /bin/bash -lc 'trap "exit 0" TERM INT; while true; do sleep 3600 & wait $!; done')"
+# Run the image exactly as shipped. This validates its PID 1, healthcheck and
+# graceful termination contract rather than substituting a test-only command.
+CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none "${IMAGE}")"
 healthy=0
 for _ in $(seq 1 45); do
   status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${CONTAINER_ID}")"
