@@ -141,6 +141,7 @@ spec:
             sizeLimit: 64Mi
         - name: work
           emptyDir:
+            medium: Memory
             sizeLimit: 128Mi
 ---
 apiVersion: policy/v1
