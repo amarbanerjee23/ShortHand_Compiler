@@ -200,13 +200,36 @@ done
 [[ "${network_denied}" == 1 ]] || { echo "error: default-deny NetworkPolicy did not block ShortHand egress" >&2; exit 1; }
 
 before="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -o name | sort)"
-action_kubectl delete pod -n shorthand-system "${pod}" --wait=false
-action_kubectl rollout status deployment/shorthand -n shorthand-system --timeout=150s
-action_kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -n shorthand-system --timeout=150s
-after="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -o name | sort)"
-[[ "${before}" != "${after}" ]] || { echo "error: deployment restart test did not replace the deleted pod" >&2; exit 1; }
-ready_after="$(action_kubectl get deployment shorthand -n shorthand-system -o jsonpath='{.status.readyReplicas}')"
-[[ "${ready_after}" == 2 ]] || { echo "error: deployment failed to restore two ready replicas after restart" >&2; exit 1; }
+action_kubectl delete pod -n shorthand-system "${pod}" --wait=true --timeout=60s >/dev/null
+
+replacement_converged=0
+after=""
+pod_count=0
+ready_after=0
+available_after=0
+for _ in $(seq 1 75); do
+  after="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -o name | sort)"
+  pod_count="$(printf '%s\n' "${after}" | sed '/^$/d' | wc -l | tr -d ' ')"
+  ready_after="$(action_kubectl get deployment shorthand -n shorthand-system -o jsonpath='{.status.readyReplicas}')"
+  available_after="$(action_kubectl get deployment shorthand -n shorthand-system -o jsonpath='{.status.availableReplicas}')"
+
+  if [[ "${pod_count}" == 2 &&
+        "${before}" != "${after}" &&
+        "${ready_after:-0}" == 2 &&
+        "${available_after:-0}" == 2 ]] &&
+     ! printf '%s\n' "${after}" | grep -Fxq "pod/${pod}"; then
+    replacement_converged=1
+    break
+  fi
+  sleep 2
+done
+
+if [[ "${replacement_converged}" != 1 ]]; then
+  echo "error: deployment failed to converge after pod replacement (pods=${pod_count}, ready=${ready_after:-0}, available=${available_after:-0})" >&2
+  action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -o wide >&2 || true
+  action_kubectl describe deployment shorthand -n shorthand-system >&2 || true
+  exit 1
+fi
 
 printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 arch=%s replicas=2 restricted=true native_compile=true native_output_isolated=true quota_negative=true network_negative=true restart=true\n' \
   "${KIND_VERSION}" "${image_arch}"
