@@ -34,7 +34,10 @@ actual_arch="$(docker image inspect --format '{{.Architecture}}' "${IMAGE}")"
   exit 1
 }
 
-common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none)
+# Docker tmpfs mounts are noexec by default. /work is the bounded compiler
+# workspace, so it must explicitly allow execution of the native artifact that
+# this gate has just built. Keep the other hardening controls intact.
+common=(--rm --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,exec,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none)
 if ! uid="$(docker run "${common[@]}" "${IMAGE}" id -u 2>"${TMP}/identity_uid.err")"; then fail_stage identity_uid; fi
 if ! gid="$(docker run "${common[@]}" "${IMAGE}" id -g 2>"${TMP}/identity_gid.err")"; then fail_stage identity_gid; fi
 [[ "${uid}" == 10001 ]] || { echo "error: runtime image uid must be 10001, got ${uid}" >&2; exit 1; }
@@ -61,7 +64,7 @@ health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}'
 
 # Run the image exactly as shipped. This validates its PID 1, healthcheck and
 # graceful termination contract rather than substituting a test-only command.
-CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none "${IMAGE}")"
+CONTAINER_ID="$(docker run -d --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777 --tmpfs /work:rw,exec,nosuid,nodev,size=128m,mode=1777 --cap-drop ALL --security-opt no-new-privileges=true --network none "${IMAGE}")"
 healthy=0
 for _ in $(seq 1 45); do
   status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "${CONTAINER_ID}")"
