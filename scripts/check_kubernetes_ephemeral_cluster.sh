@@ -86,7 +86,7 @@ if action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'touch /etc
 fi
 
 action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc \
-  'cd /work && rm -f core_control core_control.o core_control.bc && short_hand /opt/shorthand/smoke/core_control.short compile-native && test -x ./core_control && ./core_control' \
+  'cd /work && rm -f core_control core_control.o core_control.bc /tmp/shorthand-k8s-native-compile.log && if ! short_hand /opt/shorthand/smoke/core_control.short compile-native > /tmp/shorthand-k8s-native-compile.log 2>&1; then cat /tmp/shorthand-k8s-native-compile.log >&2; exit 1; fi && test -x ./core_control && ./core_control' \
   >"${TMP}/k8s-native.out"
 diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/k8s-native.out"
 
@@ -208,5 +208,5 @@ after="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=s
 ready_after="$(action_kubectl get deployment shorthand -n shorthand-system -o jsonpath='{.status.readyReplicas}')"
 [[ "${ready_after}" == 2 ]] || { echo "error: deployment failed to restore two ready replicas after restart" >&2; exit 1; }
 
-printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 arch=%s replicas=2 restricted=true native_compile=true quota_negative=true network_negative=true restart=true\n' \
+printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 arch=%s replicas=2 restricted=true native_compile=true native_output_isolated=true quota_negative=true network_negative=true restart=true\n' \
   "${KIND_VERSION}" "${image_arch}"
