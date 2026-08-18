@@ -79,7 +79,7 @@ if "${TOOL}" "${TMP}/no_final_newline.short" lint --output "${TMP}/newline.json"
   exit 1
 fi
 grep -Fq '"code":"SHL004"' "${TMP}/newline.json"
-printf 'int x;\r\n' >"${TMP}/crlf.short"
+printf 'int x;\r\nx = 0;\r\n' >"${TMP}/crlf.short"
 if "${TOOL}" "${TMP}/crlf.short" lint --output "${TMP}/crlf.json"; then
   echo "error: CRLF fixture unexpectedly passed lint" >&2
   exit 1
