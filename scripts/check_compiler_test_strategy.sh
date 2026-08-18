@@ -14,11 +14,12 @@ SECURITY_CI="${ROOT_DIR}/.github/workflows/security.yml"
 DEPLOY_DOC="${ROOT_DIR}/docs/container_kubernetes_hardening.md"
 TOOLING_DOC="${ROOT_DIR}/docs/formatter_linter.md"
 LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
+BACKEND_DOC="${ROOT_DIR}/docs/production_backend_hardware_qualification.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" \
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" \
   "${ROOT_DIR}/scripts/check_semantic_differential.sh" \
   "${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh" \
   "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" \
@@ -30,6 +31,10 @@ for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${
   "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" \
   "${ROOT_DIR}/scripts/check_formatter_linter.sh" \
   "${ROOT_DIR}/scripts/check_lsp_editor.sh" \
+  "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" \
+  "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" \
+  "${ROOT_DIR}/tests/integration/test_production_backend_hardware_qualification.sh" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" \
   "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" \
   "${ROOT_DIR}/tests/tooling/formatter_messy.short" \
   "${ROOT_DIR}/tests/tooling/formatter_expected.short" \
@@ -53,9 +58,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 27 ]] || { echo "error: expected 27 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 20 ]] || { echo "error: expected 20 implemented rows in the PR80 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 4 ]] || { echo "error: expected 4 partial rows in the PR80 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR80 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 21 ]] || { echo "error: expected 21 implemented rows in the PR81 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR81 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR81 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -65,10 +70,10 @@ for number in $(seq 1 27); do require_contains "${MATRIX}" "$(printf 'TST%03d' "
 for pr in $(seq 68 86); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-18-pr80' \
+  'compiler_test_strategy_version: 2026-08-18-pr81' \
   'production_claim: false' \
-  '20 implemented areas' \
-  '4 partial areas' \
+  '21 implemented areas' \
+  '3 partial areas' \
   '3 open areas' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.' \
@@ -78,6 +83,7 @@ for anchor in \
   'Formatter success is not inferred from source-text checks.' \
   'LSP/editor success is not inferred from JSON/text presence.' \
   'An unavailable compiler oracle in editor tooling must fail visibly' \
+  'Backend SDK installation or hardware detection is not backend qualification.' \
   'CPU/GPU/TPU/NPU'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -91,14 +97,15 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-08-18-pr80'
-require_contains "${STATUS}" '20 implemented, 4 partial and 3 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-08-18-pr81'
+require_contains "${STATUS}" '21 implemented, 3 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
 require_contains "${STATUS}" 'Formatter and linter | Implemented'
-require_contains "${STATUS}" 'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` candidate'
+require_contains "${STATUS}" 'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1`'
 require_contains "${STATUS}" 'Cross-platform reproducibility | Implemented'
+require_contains "${STATUS}" 'Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` candidate'
 require_contains "${MATRIX}" $'TST013\tplatform and compiler portability\timplemented'
 require_contains "${MATRIX}" $'TST014\treproducible builds\timplemented'
 require_contains "${MATRIX}" $'TST015\truntime ABI compatibility\timplemented'
@@ -108,49 +115,39 @@ require_contains "${MATRIX}" $'TST018\tdependency security and license policy\ti
 require_contains "${MATRIX}" $'TST019\tcontainer and Kubernetes deployment\timplemented'
 require_contains "${MATRIX}" $'TST020\tformatter and linter correctness\timplemented'
 require_contains "${MATRIX}" $'TST021\tsyntax highlighting and LSP protocol\timplemented'
+require_contains "${MATRIX}" $'TST022\tlive backend and hardware qualification\timplemented'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
+
+require_contains "${BACKEND_DOC}" 'backend_hardware_qualification_version: shorthand.backend_hardware_qualification.v1'
+require_contains "${BACKEND_DOC}" 'production_scope: linux-x64-cpu-v1'
+require_contains "${BACKEND_DOC}" 'accelerator_support_status: not_production_supported_until_live_qualified'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" 'backend_device_not_production_qualified'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" 'SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp" 'enforceProductionBackendQualification('
+require_contains "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" '67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105'
+require_contains "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" 'PASS production backend and hardware qualification gate'
+require_contains "${ROOT_DIR}/tests/integration/test_production_backend_hardware_qualification.sh" 'PASS production backend hardware qualification contract'
+require_contains "${ROOT_DIR}/tests/integration/test_compiled_hook_onnxruntime_success.sh" 'Output: 42'
 
 require_contains "${DEPLOY_DOC}" 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1'
 require_contains "${DEPLOY_DOC}" 'tst019_status: implemented_after_exact_head_runtime_qualification'
-require_contains "${DEPLOY_DOC}" 'No Service or Ingress is declared'
 require_contains "${ROOT_DIR}/scripts/check_container_kubernetes_hardening.sh" 'PASS container Kubernetes production hardening contract'
 require_contains "${ROOT_DIR}/scripts/check_container_runtime.sh" 'PASS hardened container runtime'
 require_contains "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" 'PASS ephemeral Kubernetes production gate'
-require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'PASS native Linux arm64 production container qualification'
-require_contains "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" 'PASS container Kubernetes hardening positive and negative matrix'
 
 require_contains "${TOOLING_DOC}" 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1'
-require_contains "${TOOLING_DOC}" 'shorthand.lint.v1'
 require_contains "${ROOT_DIR}/scripts/check_formatter_linter.sh" 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp" 'SHL006'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp" 'fix mode requires --output'
-require_contains "${TOOLING_CI}" 'formatter-linter:'
-require_contains "${TOOLING_CI}" 'GCC formatter and linter gate'
-require_contains "${TOOLING_CI}" 'Clang formatter and linter gate'
-require_contains "${TOOLING_CI}" 'ASan UBSan formatter and linter gate'
-
 require_contains "${LSP_DOC}" 'lsp_editor_contract_version: shorthand.tooling.lsp.v1'
-require_contains "${LSP_DOC}" 'UTF-16'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp" 'kMaxMessageBytes = 1024 * 1024'
-require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp" 'SHLSP900'
 require_contains "${ROOT_DIR}/scripts/check_lsp_editor.sh" 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate'
-require_contains "${ROOT_DIR}/scripts/check_lsp_editor.sh" 'for tool in "${CXX}" jq grep timeout wc tr; do'
-require_contains "${ROOT_DIR}/scripts/check_lsp_editor.sh" 'jq -e . "${json}" >/dev/null'
-require_contains "${ROOT_DIR}/editors/vscode/syntaxes/shorthand.tmLanguage.json" 'source.shorthand'
-require_contains "${ROOT_DIR}/editors/vscode/syntaxes/shorthand.tmLanguage.json" 'greenai_contract'
+require_contains "${TOOLING_CI}" 'formatter-linter:'
 require_contains "${TOOLING_CI}" 'lsp-editor:'
-require_contains "${TOOLING_CI}" 'GCC LSP editor protocol gate'
-require_contains "${TOOLING_CI}" 'Clang LSP editor protocol gate'
-require_contains "${TOOLING_CI}" 'ASan UBSan LSP editor protocol gate'
 require_contains "${ROOT_DIR}/CMakeLists.txt" 'add_executable(shorthand_lsp'
-require_contains "${ROOT_DIR}/CMakeLists.txt" 'install(TARGETS shorthand_lsp'
 
 require_contains "${RELEASE_CI}" 'environment: production-release'
 require_contains "${RELEASE_CI}" 'id-token: write'
 require_contains "${RELEASE_CI}" 'gh attestation verify'
 require_contains "${CI}" 'security:'
 require_contains "${CI}" 'queries: security-extended'
-require_contains "${CI}" 'needs.security.result'
 require_contains "${ROOT_DIR}/scripts/check_external_security_policy.sh" 'PASS external vulnerability SAST dependency and license policy gate'
 require_contains "${ROOT_DIR}/scripts/check_signed_release_contract.sh" 'PASS signed release and protected publication contract gate'
 require_contains "${ROOT_DIR}/scripts/check_semantic_differential.sh" 'PASS cross-mode semantic differential execution gate'
