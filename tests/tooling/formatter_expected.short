@@ -1,0 +1,10 @@
+int x;
+x = 1;
+if true {
+    print "brace { in string", x;  // keep { comment
+    if x == 1 {
+        print "ok";
+    } else {
+        print "bad";
+    }
+}

@@ -1,12 +1,12 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-12-pr77
+production_readiness_plan_version: 2026-08-18-pr78
 PLAN_STATUS: active
-LAST_COMPLETED_PR: 76
+LAST_COMPLETED_PR: 77
 MERGED_OUT_OF_BAND_PR: 71
-CURRENT_IMPLEMENTATION_PR: 77
-GITHUB_IMPLEMENTATION_PR: 78
-NEXT_IMPLEMENTATION_PR_AFTER_PR77: 78
+CURRENT_IMPLEMENTATION_PR: 78
+GITHUB_IMPLEMENTATION_PR: 79
+NEXT_IMPLEMENTATION_PR_AFTER_PR78: 79
 BASELINE_LANGUAGE_VERSION: beta-0.3
 TARGET: enterprise production usage ready language
 
@@ -18,38 +18,40 @@ Unsupported or unavailable paths must never report success. A skipped dependency
 
 ## Current baseline
 
-Roadmap PR69 through PR76 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75 because GitHub PR74 had already been consumed by a duplicate PR73 branch. Roadmap PR75 was implemented and merged as GitHub PR76, establishing immutable release tags, four-platform candidate construction, SHA-256/SPDX/provenance binding, OIDC attestations, protected-environment preflight, cryptographic verification and draft-release rollback.
+Roadmap PR69 through PR77 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75 because GitHub PR74 had already been consumed by a duplicate PR73 branch. Roadmap PR75 was implemented and merged as GitHub PR76, establishing immutable release tags, four-platform candidate construction, SHA-256/SPDX/provenance binding, OIDC attestations, protected-environment preflight, cryptographic verification and draft-release rollback.
 
 Roadmap PR76 was implemented and merged as GitHub PR77. It added mandatory CodeQL C/C++ SAST, Trivy vulnerability/secret/misconfiguration/license scanning, a repository-owned fail-closed dependency-delta gate, redistribution license policy, immutable GitHub Action pins, expiring security exceptions and live vulnerable-dependency evidence.
 
-Roadmap PR77 is now the active implementation and is carried by GitHub PR78. It hardens the production compiler/runtime container and Kubernetes workload, qualifies native Linux amd64 and arm64 images and requires live ephemeral-cluster evidence for restricted execution, health, quota, network denial and restart behavior.
+Roadmap PR77 was implemented and merged as GitHub PR78. It hardened the production compiler/runtime container and Kubernetes workload, qualified native Linux amd64 and arm64 images and added live ephemeral-cluster evidence for restricted execution, health, quota, network denial and restart behavior.
 
-ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. PR78 closes only the CLI/compiler deployment contract and does not claim public ingress or absent AI backends are production-qualified.
+Roadmap PR78 is now the active implementation and is carried by GitHub PR79. It adds a deterministic ShortHand formatter/linter baseline with stable machine diagnostics, explicit-output safe fixes, parser/execution preservation and compiler/sanitizer qualification.
 
-## PR77 completion contract
+ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. TST020 closes only the versioned formatter/linter correctness contract and does not claim LSP/editor completion, live AI backends, measured energy superiority or final release readiness.
 
-Roadmap PR77 - Container and Kubernetes production hardening is IN PROGRESS as GitHub PR78.
+## PR78 completion contract
+
+Roadmap PR78 - Formatter and linter baseline is IN PROGRESS as GitHub PR79.
 
 Implementation requirements:
 
-1. The production Dockerfile must use separate builder/runtime stages and keep build-only tooling out of the runtime image.
-2. The runtime image must execute as fixed non-root uid/gid 10001, own its runtime artifacts and support read-only-root execution with bounded writable `/tmp`.
-3. Docker health must execute the real `short_hand` parser against a bundled valid ShortHand source rather than a shell-only liveness check.
-4. Linux amd64 production image execution must be qualified in the mandatory deployment gate and Linux arm64 image execution must be qualified natively in the existing mandatory arm64 CI lane.
-5. Kubernetes must use a dedicated namespace with Restricted Pod Security enforcement pinned to the qualified Kubernetes version.
-6. The workload must use a dedicated service account with token automount disabled and must not receive secret-reading permission.
-7. Pod/container security must require non-root uid/gid 10001, RuntimeDefault seccomp, no privilege escalation, read-only root filesystem and all capabilities dropped.
-8. CPU/memory requests and limits plus namespace ResourceQuota must be mandatory; an under-specified pod must be rejected in a live cluster.
-9. Startup, readiness and liveness probes must execute the real ShortHand parser inside the restricted workload.
-10. The production workload must use at least two replicas, bounded rolling-update unavailability and a PodDisruptionBudget.
-11. Default-deny NetworkPolicy must cover ingress and egress. Live qualification must prove a positive-control pod can connect while the selected ShortHand workload is denied.
-12. A pod deletion must be repaired back to the desired Ready replica count within a bounded timeout.
-13. The live ephemeral cluster must use version-pinned Kind/Kubernetes inputs with integrity verification; unavailable cluster tooling is a failure in mandatory CI.
-14. Deterministic negative tests must reject root execution, writable root filesystem, missing readiness probes, missing limits, open egress and privileged execution.
-15. Existing PR73 safety, PR74 portability/reproducibility, PR75 signed-release and PR76 external-security gates remain mandatory and unweakened.
+1. Provide a native compiled formatter/linter implementation that does not depend on Python.
+2. Define a versioned formatter/linter contract and stable machine-readable diagnostic schema.
+3. Canonical formatting must be deterministic and idempotent.
+4. Safe formatting/fixes must be limited to source trivia and must not rename identifiers, reorder declarations/imports, change token spelling, rewrite expressions or perform semantic refactors.
+5. The formatter must correctly ignore brace-like content inside strings and comments when computing indentation.
+6. Parser-valid input must remain parser-valid after formatting.
+7. A semantic preservation fixture must produce identical interpreter output before and after formatting/fixing.
+8. Lint must return a non-zero status for non-canonical input while still producing consumable structured diagnostics.
+9. Safe fix mode must require an explicit output path so source files are never mutated implicitly.
+10. Boundary tests must cover tab indentation, trailing whitespace, non-canonical indentation, repeated/trailing blank lines, missing final newline and non-LF line endings.
+11. The exact formatter implementation must execute under GCC and Clang and under ASan/UBSan.
+12. A fast dedicated tooling workflow must run on push and pull request events.
+13. The inherited mandatory `ubuntu-core` path must also execute the formatter/linter gate so stable CI cannot pass when TST020 is broken.
+14. The feature tracker, compiler test strategy, roadmap and 27-area matrix must move together from 18/4/5 to 19/4/4 only on the candidate that contains executable evidence.
+15. Existing parser/semantic, sanitizer/race, portability/reproducibility, signed-release, security and deployment gates remain mandatory and unweakened.
 16. Final PR head must have `ci / ubuntu (push)` successful.
 17. Final PR head must have `ci / ubuntu (pull_request)` successful.
-18. TST019 becomes implemented only after the exact final head passes the static, runtime, native multi-architecture and live-cluster evidence. Public services/backends remain outside this claim.
+18. TST020 becomes implemented only after the exact final head passes all formatter/linter and inherited mandatory evidence. Syntax highlighting and LSP remain TST021 / roadmap PR79.
 
 ## Mandatory rule for every remaining PR
 
@@ -59,7 +61,7 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. PR78 adds exact-head deployment qualification to the mandatory compiler CI: Linux amd64 builds/runs the production image and ephemeral Kind cluster from the existing ubuntu-core path, while the existing native Linux arm64 lane builds/runs the arm64 production image. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification in the mandatory compiler CI: Linux amd64 builds/runs the production image and ephemeral Kind cluster from the existing `ubuntu-core` path, while the native Linux arm64 lane builds/runs the arm64 production image. GitHub PR79 adds a fast `tooling / formatter-linter` workflow with GCC, Clang and ASan/UBSan and also invokes the same formatter correctness gate from `check_feature_plan_status.sh` inside `ubuntu-core`. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -74,8 +76,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR74 - CI/toolchain/platform matrix, CTest parity and reproducible builds | MERGED as GitHub PR75 | GCC12/14, Clang16/18, Linux x64/arm64, macOS arm64, Windows x64, installed consumers and deterministic artifacts. | Multi-job DAG and reproducibility/CTest parity jobs. | Native/platform execution, ABI consumers, SDK lifecycle and clean-build checksums. |
 | PR75 - Signed release and protected publication workflow | MERGED as GitHub PR76 | Immutable tag/version/master-lineage policy, checksums, artifact SBOM/provenance, OIDC attestations, protected publication and rollback. | Separate tag/manual release workflow plus mandatory non-privileged contract tests. | Tamper/unsigned/environment negatives; real protected tag verification still closes TST017 externally. |
 | PR76 - External vulnerability, SAST, dependency and license policy gate | MERGED as GitHub PR77 | CodeQL C++ SAST, Trivy CVE/secret/misconfiguration/license scanning, dependency delta review, license policy, action pins and expiring exceptions. | Dedicated mandatory security job plus daily rescan. | Vulnerable dependency, secret, prohibited-license, SARIF, exception and anti-weakening tests. |
-| PR77 - Container and Kubernetes production hardening | IN PROGRESS as GitHub PR78 | Multi-stage native amd64/arm64 non-root images, read-only runtime, Restricted Pod Security, probes, limits/quota, PDB and default-deny network policy. | Mandatory native container execution plus ephemeral Kind integration in exact-head CI. | Image execution, parser health, runtime security state, quota/network negatives, restart and graceful shutdown. |
-| PR78 - Formatter and linter baseline | PLANNED | Deterministic formatter, semantic-preserving lint rules, machine diagnostics and safe fixes. | Fast frontend format/lint job. | Idempotence, format-parse roundtrip, preservation and fix safety. |
+| PR77 - Container and Kubernetes production hardening | MERGED as GitHub PR78 | Multi-stage native amd64/arm64 non-root images, read-only runtime, Restricted Pod Security, probes, limits/quota, PDB and default-deny network policy. | Mandatory native container execution plus ephemeral Kind integration in exact-head CI. | Image execution, parser health, runtime security state, quota/network negatives, restart and graceful shutdown. |
+| PR78 - Formatter and linter baseline | IN PROGRESS as GitHub PR79 | Native deterministic trivia-only formatter, stable machine lint diagnostics and explicit-output safe fixes. | Fast formatter/linter job plus inherited ubuntu-core execution. | Idempotence, parse roundtrip, execution preservation, diagnostics, fix safety, GCC/Clang and ASan/UBSan. |
 | PR79 - Syntax highlighting and LSP implementation | PLANNED | Editor grammar plus compiler-backed diagnostics, hover, completion, definition and module navigation. | Protocol/golden job with cancellation and latency budget. | Token/protocol goldens, partial docs, cancellation and imported navigation. |
 | PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | PLANNED | Production-supported backends and evidence-driven hardware target selection. | Capability-aware backend matrix. | Numerical outputs, route/fallback and no-false-success tests. |
 | PR81 - Complete C3-ECO language blocks | PLANNED | Complete certification-oriented syntax/AST/semantics/evidence declarations without granting certification. | C3-ECO frontend gate. | Grammar/AST, units, valid/invalid contracts and sanitizer tests. |
@@ -87,17 +89,27 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr77_through_pr86: 10
-remaining_planned_implementation_prs_after_pr77: 9
+remaining_planned_implementation_prs_pr78_through_pr86: 9
+remaining_planned_implementation_prs_after_pr78: 8
 
-Next recommended roadmap PR after PR77 is merged:
+Next recommended roadmap PR after PR78 is merged:
 
-PR78 - Formatter and linter baseline.
+PR79 - Syntax highlighting and LSP implementation.
 
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
 
+- production_readiness_plan_version: 2026-08-12-pr77
+- LAST_COMPLETED_PR: 76
+- CURRENT_IMPLEMENTATION_PR: 77
+- GITHUB_IMPLEMENTATION_PR: 78
+- NEXT_IMPLEMENTATION_PR_AFTER_PR77: 78
+- Roadmap PR77 - Container and Kubernetes production hardening is IN PROGRESS as GitHub PR78.
+- remaining_planned_implementation_prs_pr77_through_pr86: 10
+- remaining_planned_implementation_prs_after_pr77: 9
+- | PR77 - Container and Kubernetes production hardening | IN PROGRESS as GitHub PR78
+- | PR78 - Formatter and linter baseline | PLANNED
 - production_readiness_plan_version: 2026-08-12-pr76
 - LAST_COMPLETED_PR: 75
 - CURRENT_IMPLEMENTATION_PR: 76
