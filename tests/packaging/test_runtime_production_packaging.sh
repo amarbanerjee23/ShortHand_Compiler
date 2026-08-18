@@ -37,6 +37,7 @@ stage build-artifacts
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_runtime shorthand_runtime_shared \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
+  shorthand_lsp \
   shorthand_prometheus_adapter shorthand_otlp_exporter
 
 stage install-artifacts
@@ -61,6 +62,7 @@ require_installed '*/include/shorthand/ai_runtime/AI_Types.h'
 require_installed '*/include/shorthand/abi/shorthand_runtime_abi_v1.h'
 require_installed '*/libshorthand_runtime.a'
 require_installed '*/libshorthand_ai_bridge.a'
+require_installed '*/bin/shorthand_lsp'
 require_installed '*/bin/shorthand_prometheus_adapter'
 require_installed '*/bin/shorthand_otlp_exporter'
 require_installed '*/ShortHandConfig.cmake'
