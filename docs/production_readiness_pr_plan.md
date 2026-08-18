@@ -1,12 +1,12 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-18-pr79
+production_readiness_plan_version: 2026-08-18-pr80
 PLAN_STATUS: active
-LAST_COMPLETED_PR: 78
+LAST_COMPLETED_PR: 79
 MERGED_OUT_OF_BAND_PR: 71
-CURRENT_IMPLEMENTATION_PR: 79
-GITHUB_IMPLEMENTATION_PR: 80
-NEXT_IMPLEMENTATION_PR_AFTER_PR79: 80
+CURRENT_IMPLEMENTATION_PR: 80
+GITHUB_IMPLEMENTATION_PR: 81
+NEXT_IMPLEMENTATION_PR_AFTER_PR80: 81
 BASELINE_LANGUAGE_VERSION: beta-0.3
 TARGET: enterprise production usage ready language
 
@@ -14,44 +14,42 @@ TARGET: enterprise production usage ready language
 
 ShortHand must become a production-grade compiled AI language that lets engineers build and deploy AI software without Python. It must provide predictable semantics, deterministic compilation, honest hardware-aware execution, lower runtime overhead, measurable energy efficiency, portable release artifacts, enterprise security and auditable Green AI evidence.
 
-Unsupported or unavailable paths must never report success. A skipped dependency, absent accelerator, unprotected release environment, cancelled workflow, unavailable security scanner, missing container runtime, unavailable compiler oracle or unavailable deployment cluster is not production execution evidence.
+Unsupported or unavailable paths must never report production success. A skipped dependency, absent accelerator, unprotected release environment, cancelled workflow, unavailable security scanner, missing container runtime, unavailable compiler oracle or unavailable deployment cluster is not production execution evidence.
 
 ## Current baseline
 
-Roadmap PR69 through PR78 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76, establishing immutable release tags, four-platform candidate construction, SHA-256/SPDX/provenance binding, OIDC attestations, protected-environment preflight, cryptographic verification and draft-release rollback. Roadmap PR76 was implemented and merged as GitHub PR77 with mandatory external security/SAST/dependency/license gates. Roadmap PR77 was implemented and merged as GitHub PR78 with native amd64/arm64 hardened containers and live Kubernetes qualification. Roadmap PR78 was implemented and merged as GitHub PR79 with the deterministic formatter/linter baseline.
+Roadmap PR69 through PR79 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75. Roadmap PR75 was implemented as GitHub PR76. Roadmap PR76 was implemented as GitHub PR77. Roadmap PR77 was implemented as GitHub PR78. Roadmap PR78 was implemented as GitHub PR79. Roadmap PR79 was implemented and merged as GitHub PR80 with scanner-aligned syntax highlighting and the native compiler-backed LSP baseline.
 
-Roadmap PR79 is now the active implementation and is carried by GitHub PR80. It adds scanner-aligned syntax highlighting and a native C++ language server with bounded JSON-RPC framing, compiler-backed diagnostics, UTF-16 editor coordinates, deterministic completion/hover/symbols, local/imported definition navigation, cancellation, malformed-input negatives and CMake installation.
+Roadmap PR80 is now the active implementation and is carried by GitHub PR81. It establishes a versioned production backend/device support boundary, makes ONNX Runtime CPU live numerical execution mandatory for the declared Linux x64 CPU production row, and prevents detected or SDK-visible GPU/TPU/NPU paths from becoming production-qualified without real device-backed numerical evidence.
 
-ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. TST021 closes only the versioned editor/LSP contract and does not claim live AI backends, complete C3-ECO evidence, production MLIR lowering, measured energy superiority or final release readiness.
+ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. TST022 closes for the versioned `linux-x64-cpu-v1` support contract only after the exact GitHub PR81 head passes mandatory live ONNX Runtime CPU numerical execution and all inherited CI. GPU, TPU and NPU production support is not claimed by this version.
 
-## PR79 completion contract
+## PR80 completion contract
 
-Roadmap PR79 - Syntax highlighting and LSP implementation is IN PROGRESS as GitHub PR80.
+Roadmap PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix is IN PROGRESS as GitHub PR81.
 
 Implementation requirements:
 
-1. Provide a native compiled C++17 language server with no Python runtime dependency.
-2. Define a versioned editor/LSP contract and explicit claim boundary.
-3. Provide scanner-aligned TextMate syntax highlighting for `.short` files and machine-parseable editor configuration.
-4. Use bounded stdio `Content-Length` framing and bounded JSON parsing; malformed, duplicate, truncated or oversized framing must fail closed.
-5. Advertise and correctly implement UTF-16 editor positions, including multibyte UTF-8 regression evidence.
-6. Publish diagnostics from the real `short_hand` compiler parser rather than an editor-only approximation.
-7. If the compiler oracle is unavailable, publish explicit failure evidence rather than a false clean document.
-8. Implement deterministic completion, hover and document-symbol requests for the v1 baseline.
-9. Implement local definition navigation and imported-module navigation through the existing deterministic `shorthand.package` manifest.
-10. Handle partial/invalid documents and prove recovery after a subsequent valid full-document change.
-11. Support `$/cancelRequest` with the defined cancellation error for a canceled queued request.
-12. Enforce correct initialize/shutdown/exit lifecycle, including non-zero exit without prior shutdown.
-13. Compile the LSP in the normal CMake DAG and install it as a shipped executable.
-14. Execute the exact LSP/editor implementation under GCC and Clang and under ASan/UBSan.
-15. Run a fast dedicated tooling job on push and pull request events.
-16. Execute the same LSP/editor gate from inherited mandatory `ubuntu-core`, so stable CI cannot pass when TST021 is broken.
-17. Use explicit timeouts for protocol sessions and reject unbounded input behavior.
-18. Update the feature tracker, compiler test strategy, roadmap and 27-area matrix together from 19/4/4 to 20/4/3 only on the candidate containing executable evidence.
-19. Existing parser/semantic, formatter, sanitizer/race, portability/reproducibility, signed-release, security and deployment gates remain mandatory and unweakened.
-20. Final PR head must have `ci / ubuntu (push)` successful.
-21. Final PR head must have `ci / ubuntu (pull_request)` successful.
-22. TST021 becomes implemented only after the exact final head passes all LSP/editor and inherited mandatory evidence. Live backend/hardware qualification remains roadmap PR80.
+1. Define a versioned backend/hardware production-support contract and explicit claim boundary.
+2. Keep CPU/GPU/TPU/NPU inventory visible while separating detection from production qualification.
+3. Allow production routing only for backend/device pairs in the qualified support matrix.
+4. Make `onnxruntime_cpu` on CPU the v1 production-supported backend/device pair.
+5. Acquire the CI qualification SDK at a fixed version and verify a pinned SHA-256 before execution.
+6. Execute a real ONNX Runtime C++ inference path through the compiled ShortHand runtime bridge.
+7. Validate numerical output using the identity ONNX fixture with input `42` and required output `42`.
+8. Reject fallback, not-executed, missing-SDK or skip evidence for the production-supported CPU row.
+9. Reject unqualified GPU/NPU/TPU production routes even when a hardware signal or compatible backend is visible.
+10. Preserve an explicit experimental override that remains machine-marked `production_qualified:false`.
+11. Keep TensorRT, ONNX Runtime CUDA/TensorRT EP, OpenVINO NPU, LibTorch GPU, llama.cpp GPU and TPU outside production support until each receives live device-backed numerical qualification.
+12. Emit structured qualification evidence with zero mandatory skips for the declared production scope.
+13. Run deterministic qualification policy tests without requiring accelerator hardware.
+14. Execute the live CPU qualification from inherited mandatory `ubuntu-core` on Linux x64.
+15. Preserve all parser/semantic, sanitizer/race, portability/reproducibility, release, security, deployment and tooling gates.
+16. Update feature status, compiler test strategy, roadmap, third-party inventory and the 27-area coverage matrix together.
+17. Final PR head must have `ci / ubuntu (push)` successful.
+18. Final PR head must have `ci / ubuntu (pull_request)` successful.
+19. TST022 becomes implemented only for the versioned v1 production support set after exact-head evidence passes.
+20. Adding any production-supported backend/device/platform later requires its own live numerical execution fixture before the support matrix can expand.
 
 ## Mandatory rule for every remaining PR
 
@@ -61,7 +59,7 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification in mandatory compiler CI, and GitHub PR79 retains formatter/linter qualification. GitHub PR80 adds `tooling / lsp-editor` under GCC, Clang and ASan/UBSan and also invokes the same LSP/editor contract from `check_feature_plan_status.sh` inside `ubuntu-core`. CMake platform lanes compile `shorthand_lsp` as a first-class target. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification in mandatory compiler CI, GitHub PR79 retains formatter/linter qualification and GitHub PR80 retains LSP/editor qualification. GitHub PR81 adds live versioned backend/hardware qualification to inherited `ubuntu-core`. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -71,15 +69,15 @@ The final head of every implementation PR must have both stable event-specific C
 | PR69 - Module, import and package syntax with AST scaffold | MERGED | Beta-0.3 preamble grammar and AST provenance. | Module syntax gate. | Positive, negative, compatibility, stress and sanitizer tests. |
 | PR70 - Deterministic module resolver, package manifest, lockfile and multi-file codegen | MERGED | Hermetic manifest resolution, lockfiles, graph ordering, visibility and multi-file codegen. | Resolver first-class gate. | Determinism, native binding, negative graph cases, stress, sanitizer and CTest evidence. |
 | PR71 - CI status publication hygiene | MERGED | Cancellation-safe SHA-scoped status handling. | Stable event-specific status contexts. | Push/PR status hygiene and cancellation policy guard. |
-| PR72 - Cross-mode semantic correctness and differential execution suite | MERGED | Reference executable semantics, interpreter calls/control flow, imported execution, LLVM/native parity and deterministic failure domains. | Mandatory semantic differential gate. | Interpreter/lli/native positive and negative parity. |
+| PR72 - Cross-mode semantic correctness and differential execution suite | MERGED | Reference executable semantics and mode parity. | Mandatory semantic differential gate. | Interpreter/lli/native positive and negative parity. |
 | PR73 - Continuous fuzzing, full sanitizer and concurrency race hardening | MERGED | Scanner/parser/module/semantic/lowering fuzzing, ASan/LSan/UBSan and TSan. | First-class safety steps plus scheduled fuzz. | Replayable corpus and no sanitizer/race findings. |
 | PR74 - CI/toolchain/platform matrix, CTest parity and reproducible builds | MERGED as GitHub PR75 | GCC12/14, Clang16/18, Linux x64/arm64, macOS arm64, Windows x64, installed consumers and deterministic artifacts. | Multi-job DAG and reproducibility/CTest parity jobs. | Native/platform execution, ABI consumers, SDK lifecycle and clean-build checksums. |
-| PR75 - Signed release and protected publication workflow | MERGED as GitHub PR76 | Immutable tag/version/master-lineage policy, checksums, artifact SBOM/provenance, OIDC attestations, protected publication and rollback. | Separate tag/manual release workflow plus mandatory non-privileged contract tests. | Tamper/unsigned/environment negatives; real protected tag verification still closes TST017 externally. |
-| PR76 - External vulnerability, SAST, dependency and license policy gate | MERGED as GitHub PR77 | CodeQL C++ SAST, Trivy CVE/secret/misconfiguration/license scanning, dependency delta review, license policy, action pins and expiring exceptions. | Dedicated mandatory security job plus daily rescan. | Vulnerable dependency, secret, prohibited-license, SARIF, exception and anti-weakening tests. |
-| PR77 - Container and Kubernetes production hardening | MERGED as GitHub PR78 | Multi-stage native amd64/arm64 non-root images, read-only runtime, Restricted Pod Security, probes, quota, PDB and default-deny network policy. | Native container execution plus ephemeral Kind exact-head integration. | Image execution, runtime security, quota/network negatives, restart and graceful shutdown. |
-| PR78 - Formatter and linter baseline | MERGED as GitHub PR79 | Native deterministic trivia-only formatter, stable machine diagnostics and explicit-output safe fixes. | Fast formatter/linter job plus inherited ubuntu-core execution. | Idempotence, parse roundtrip, execution preservation, diagnostics, fix safety, GCC/Clang and ASan/UBSan. |
-| PR79 - Syntax highlighting and LSP implementation | IN PROGRESS as GitHub PR80 | Scanner-aligned editor grammar plus native compiler-backed diagnostics, hover, completion, definition, symbols and module navigation. | Dedicated protocol job under GCC/Clang/sanitizers plus inherited ubuntu-core execution and CMake platform compilation. | Protocol/framing, compiler diagnostics, partial docs, UTF-16, cancellation, lifecycle, malformed input and imported navigation. |
-| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | PLANNED | Production-supported backends and evidence-driven hardware target selection. | Capability-aware backend matrix. | Numerical outputs, route/fallback and no-false-success tests. |
+| PR75 - Signed release and protected publication workflow | MERGED as GitHub PR76 | Immutable release policy, SBOM/provenance, OIDC attestations, protected publication and rollback. | Separate tag/manual release workflow plus mandatory contract tests. | Real protected tag verification still closes TST017 externally. |
+| PR76 - External vulnerability, SAST, dependency and license policy gate | MERGED as GitHub PR77 | CodeQL, Trivy, dependency delta review, license policy and immutable action pins. | Dedicated mandatory security job plus daily rescan. | Vulnerability, secret, prohibited-license and anti-weakening tests. |
+| PR77 - Container and Kubernetes production hardening | MERGED as GitHub PR78 | Multi-stage native images, Restricted Pod Security, quota, PDB and default-deny network policy. | Native container execution plus ephemeral Kind integration. | Runtime security, quota/network negatives, restart and graceful shutdown. |
+| PR78 - Formatter and linter baseline | MERGED as GitHub PR79 | Native deterministic formatter/linter and safe explicit-output fixes. | Fast tooling job plus inherited ubuntu-core execution. | Idempotence, parse roundtrip, behavior preservation and sanitizers. |
+| PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80 | Scanner-aligned editor grammar plus native compiler-backed LSP. | Dedicated protocol job plus inherited ubuntu-core execution. | Framing, diagnostics, UTF-16, navigation, cancellation and sanitizers. |
+| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | IN PROGRESS as GitHub PR81 | Versioned production backend/device support with mandatory ONNX Runtime CPU live numerical evidence and fail-closed accelerator boundaries. | Pinned qualification SDK plus mandatory inherited ubuntu-core live gate. | Output `42`, no fallback/skip, route rejection and structured support matrix. |
 | PR81 - Complete C3-ECO language blocks | PLANNED | Complete certification-oriented syntax/AST/semantics/evidence declarations without granting certification. | C3-ECO frontend gate. | Grammar/AST, units, valid/invalid contracts and sanitizer tests. |
 | PR82 - Measured scoring, reports and eco-regression | PLANNED | Energy/carbon/cost calculations with provenance, uncertainty, quality and baselines. | Deterministic eco-regression job. | Equation, threshold, stale-factor, unit and missing-sensor tests. |
 | PR83 - Authority-ready C3-ECO auditor bundle | PLANNED | Signed manifests, source/binary/model/measurement lineage, retention, redaction and verification. | RC bundle verification dependency. | Tamper, lineage, signature, schema, redaction and clean-room replay. |
@@ -89,34 +87,39 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr79_through_pr86: 8
-remaining_planned_implementation_prs_after_pr79: 7
+remaining_planned_implementation_prs_pr80_through_pr86: 7
+remaining_planned_implementation_prs_after_pr80: 6
 
-Next recommended roadmap PR after PR79 is merged:
+Next recommended roadmap PR after PR80 is merged:
 
-PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix.
+PR81 - Complete C3-ECO language blocks.
+
+## External production blocker not counted as an implementation PR
+
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the seven remaining implementation PRs.
 
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
 
+- production_readiness_plan_version: 2026-08-18-pr79
+- LAST_COMPLETED_PR: 78
+- CURRENT_IMPLEMENTATION_PR: 79
+- GITHUB_IMPLEMENTATION_PR: 80
+- NEXT_IMPLEMENTATION_PR_AFTER_PR79: 80
+- Roadmap PR79 - Syntax highlighting and LSP implementation is IN PROGRESS as GitHub PR80.
+- remaining_planned_implementation_prs_pr79_through_pr86: 8
+- remaining_planned_implementation_prs_after_pr79: 7
+- | PR79 - Syntax highlighting and LSP implementation | IN PROGRESS as GitHub PR80
 - production_readiness_plan_version: 2026-08-18-pr78
-- LAST_COMPLETED_PR: 77
 - CURRENT_IMPLEMENTATION_PR: 78
-- GITHUB_IMPLEMENTATION_PR: 79
 - NEXT_IMPLEMENTATION_PR_AFTER_PR78: 79
-- Roadmap PR78 - Formatter and linter baseline is IN PROGRESS as GitHub PR79.
 - remaining_planned_implementation_prs_pr78_through_pr86: 9
-- remaining_planned_implementation_prs_after_pr78: 8
 - | PR78 - Formatter and linter baseline | IN PROGRESS as GitHub PR79
 - production_readiness_plan_version: 2026-08-12-pr77
-- LAST_COMPLETED_PR: 76
 - CURRENT_IMPLEMENTATION_PR: 77
-- GITHUB_IMPLEMENTATION_PR: 78
 - NEXT_IMPLEMENTATION_PR_AFTER_PR77: 78
-- Roadmap PR77 - Container and Kubernetes production hardening is IN PROGRESS as GitHub PR78.
 - remaining_planned_implementation_prs_pr77_through_pr86: 10
-- remaining_planned_implementation_prs_after_pr77: 9
 - | PR77 - Container and Kubernetes production hardening | IN PROGRESS as GitHub PR78
 - production_readiness_plan_version: 2026-08-12-pr76
 - CURRENT_IMPLEMENTATION_PR: 76
