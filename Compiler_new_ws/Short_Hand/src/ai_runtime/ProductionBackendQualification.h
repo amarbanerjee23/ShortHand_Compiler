@@ -13,13 +13,23 @@ namespace shorthand::ai {
 inline constexpr const char *kProductionBackendQualificationSchema =
     "shorthand.backend_hardware_qualification.v1";
 
+inline bool productionBackendPlatformQualified() {
+#if defined(__linux__) && defined(__x86_64__)
+    return true;
+#else
+    return false;
+#endif
+}
+
 inline bool productionBackendDeviceQualified(BackendKind backend, DeviceClass device) {
-    // PR80/PR81 production support contract v1 is intentionally narrow: the
-    // only backend/device pair allowed to carry a production execution claim is
-    // ONNX Runtime CPU on the host CPU. Accelerator backends remain usable only
-    // through the explicit experimental override until live device-backed
-    // numerical qualification exists for that exact pair.
-    return backend == BackendKind::OnnxRuntimeCPU && device == DeviceClass::CPU;
+    // The v1 production support contract is intentionally narrow: the only
+    // backend/device/platform tuple allowed to carry a production execution
+    // claim is ONNX Runtime CPU on a Linux x86_64 host CPU. Accelerator
+    // backends and other platforms remain usable only through the explicit
+    // experimental override until live numerical qualification exists.
+    return productionBackendPlatformQualified() &&
+           backend == BackendKind::OnnxRuntimeCPU &&
+           device == DeviceClass::CPU;
 }
 
 inline bool allowUnqualifiedBackendHardwareFromEnvironment() {
@@ -54,6 +64,7 @@ inline HardwareRoute enforceProductionBackendQualification(HardwareRoute route) 
     std::ostringstream selection;
     selection << "{\"schema\":\"shorthand.hardware.selection.v1\""
               << ",\"qualification_schema\":\"" << kProductionBackendQualificationSchema << "\""
+              << ",\"platform_qualified\":" << (productionBackendPlatformQualified() ? "true" : "false")
               << ",\"selected\":" << (route.selected ? "true" : "false")
               << ",\"device_class\":\""
               << (route.selected ? deviceClassToString(route.device_class) : "none") << "\""
@@ -79,7 +90,7 @@ inline HardwareRoute enforceProductionBackendQualification(HardwareRoute route) 
 inline std::string productionBackendHardwareSupportMatrixJson() {
     return std::string("{\"schema\":\"") + kProductionBackendQualificationSchema +
            "\",\"production_scope\":\"linux-x64-cpu-v1\",\"rows\":["
-           "{\"backend\":\"onnxruntime_cpu\",\"device_class\":\"cpu\",\"status\":\"production_supported_live_qualification_required\"},"
+           "{\"backend\":\"onnxruntime_cpu\",\"device_class\":\"cpu\",\"platform\":\"linux-x64\",\"status\":\"production_supported_live_qualification_required\"},"
            "{\"backend\":\"onnxruntime_cuda\",\"device_class\":\"gpu\",\"status\":\"not_production_supported_live_fixture_required\"},"
            "{\"backend\":\"onnxruntime_tensorrt\",\"device_class\":\"gpu\",\"status\":\"not_production_supported_live_fixture_required\"},"
            "{\"backend\":\"tensorrt\",\"device_class\":\"gpu\",\"status\":\"not_production_supported_live_fixture_required\"},"
