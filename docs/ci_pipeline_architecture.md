@@ -6,7 +6,7 @@ production_claim: false
 
 ## Purpose
 
-The pipeline must prove that ShortHand remains a deterministic, memory-safe, portable compiled AI language while feature work continues. Fast feedback, failure isolation and honest hardware/security evidence are required. A skipped dependency, cancelled run, unavailable accelerator, optional SDK or unavailable security scanner must never be reported as successful production execution.
+The pipeline must prove that ShortHand remains a deterministic, memory-safe, portable compiled AI language while feature work continues. Fast feedback, failure isolation and honest hardware/security/deployment evidence are required. A skipped dependency, cancelled run, unavailable accelerator, optional SDK, unavailable security scanner, unavailable container runtime or missing cluster must never be reported as successful production execution.
 
 ## Non-negotiable merge contract
 
@@ -28,6 +28,7 @@ Runs first and fails quickly.
 - required-file and claim-safety guards,
 - immutable GitHub Action and toolchain version policy,
 - third-party inventory/license/exception policy,
+- container/Kubernetes static and negative policy contract,
 - generated-file freshness checks.
 
 ### Tier 1 - frontend correctness
@@ -63,7 +64,8 @@ Runs first and fails quickly.
 - Linux x86-64 and arm64,
 - macOS Apple Silicon,
 - Windows,
-- installed consumer and ABI checks.
+- installed consumer and ABI checks,
+- native production container execution on Linux amd64 and arm64.
 
 ### Tier 5 - runtime/backend/hardware qualification
 
@@ -86,7 +88,7 @@ Backend jobs must report one of: executed-and-verified, unavailable-with-explici
 
 These expensive tests run nightly/scheduled while PRs retain bounded smoke versions.
 
-### Tier 7 - release integrity and external security
+### Tier 7 - release integrity, external security and deployment
 
 - clean reproducible builds,
 - SBOM,
@@ -97,7 +99,9 @@ These expensive tests run nightly/scheduled while PRs retain bounded smoke versi
 - Trivy vulnerability/secret/misconfiguration/license scan,
 - PR dependency review and redistribution license policy,
 - expiring security exceptions,
-- container/Kubernetes qualification.
+- multi-stage non-root container runtime checks,
+- Restricted Pod Security workload validation,
+- ephemeral Kubernetes deployment, health, quota, default-deny network and restart evidence.
 
 ### Tier 8 - performance and Green AI evidence
 
@@ -110,15 +114,23 @@ These expensive tests run nightly/scheduled while PRs retain bounded smoke versi
 
 ## Failure isolation
 
-The mandatory CI DAG has independently named compiler/platform, CTest/reproducibility and external-security jobs. A final aggregate gate depends on every mandatory job and publishes the stable event-specific status. PR77 adds `security` to that dependency set, so CodeQL/Trivy/dependency-policy failures block the same stable contexts as compiler failures.
+The mandatory CI DAG has independently named compiler/platform, CTest/reproducibility and external-security jobs. A final aggregate gate depends on every mandatory job and publishes the stable event-specific status. GitHub PR77 added `security` to that dependency set, so CodeQL/Trivy/dependency-policy failures block the same stable contexts as compiler failures.
 
-Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release reports.
+GitHub PR78 deliberately reuses already-mandatory exact-head lanes rather than creating an advisory deployment workflow. The `ubuntu-core` feature-plan step executes the amd64 production image and pinned ephemeral Kind cluster. The existing native `linux-arm64` installed-SDK lane additionally builds and executes the arm64 production image. Failure of Docker, image construction, health, cluster creation, policy enforcement, quota/network negatives or replica recovery therefore fails the same stable merge contexts.
+
+Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Security execution model
 
 The normal `security` job is read-only. CodeQL produces SARIF with upload disabled and the repository policy parser makes the fail/pass decision. Trivy similarly emits JSON with scanner exit code reserved for execution errors, followed immediately by a mandatory repository-owned report parser. This split preserves machine-readable evidence without turning findings into warnings.
 
-GitHub dependency review is PR-delta evidence. Trivy runs on both push and PR and also on the daily `security-rescan` workflow so newly published CVEs can be detected without a source change. The generated vulnerable dependency fixture is under `/tmp` so it cannot enter a release or dependency graph accidentally.
+Repository-owned dependency delta review is PR/base-head evidence. Trivy runs on both push and PR and also on the daily `security-rescan` workflow so newly published CVEs can be detected without a source change. The generated vulnerable dependency fixture is under `/tmp` so it cannot enter a release or dependency graph accidentally.
+
+## Deployment execution model
+
+ShortHand is a compiler/CLI workload, not a network service. Production probes execute the real parser against a bundled valid ShortHand source. The production manifest exposes no Service or Ingress and applies default-deny ingress/egress policy. A future network-facing runtime must explicitly add the required protocol, port, authentication and NetworkPolicy contracts rather than weakening this baseline.
+
+The live deployment gate uses version-pinned Kind/Kubernetes inputs and checksum verification. It proves runtime uid/capability/seccomp/no-new-privileges state, ResourceQuota rejection, a positive-control versus denied egress path, two Ready replicas and bounded replacement after pod deletion. Static YAML presence alone does not close TST019.
 
 ## Determinism and caching
 
@@ -128,11 +140,11 @@ Generated parser, lockfile and module-graph outputs must have freshness/determin
 
 ## Timeouts and retries
 
-Every potentially unbounded parser, graph, fuzz, network, scanner or runtime test has a declared timeout. Infrastructure/network acquisition may use bounded retry with backoff. Compiler/test/security finding failures are not retried automatically as a way to obtain green status.
+Every potentially unbounded parser, graph, fuzz, network, scanner, container or runtime test has a declared timeout. Infrastructure/network acquisition may use bounded retry with backoff. Compiler/test/security/deployment finding failures are not retried automatically as a way to obtain green status.
 
 ## PR, nightly and release-candidate profiles
 
-PR profile: deterministic mandatory correctness, bounded sanitizer/fuzz smoke, CPU runtime tests and mandatory external security scanning.
+PR profile: deterministic mandatory correctness, bounded sanitizer/fuzz smoke, CPU runtime tests, external security scanning and exact-head container/Kubernetes deployment qualification.
 
 Nightly profile: full fuzzing, vulnerability rescan, scale, concurrency, platform and available accelerator matrix.
 
@@ -145,7 +157,7 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR74: multi-job DAG, GCC/Clang/platform matrix and reproducibility.
 - PR75: signed release publication.
 - PR76: security/SAST/dependency/license policy.
-- PR77: container/Kubernetes qualification.
+- PR77: hardened multi-architecture containers and ephemeral Kubernetes enforcement.
 - PR80: CPU/GPU/TPU/NPU and backend execution qualification.
 - PR86: performance, energy and zero-skip production RC aggregation.
 

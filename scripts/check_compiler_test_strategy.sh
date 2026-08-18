@@ -10,17 +10,22 @@ TEMPLATE="${ROOT_DIR}/.github/pull_request_template.md"
 CI="${ROOT_DIR}/.github/workflows/ci.yml"
 RELEASE_CI="${ROOT_DIR}/.github/workflows/release.yml"
 SECURITY_CI="${ROOT_DIR}/.github/workflows/security.yml"
+DEPLOY_DOC="${ROOT_DIR}/docs/container_kubernetes_hardening.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${RELEASE_CI}" "${SECURITY_CI}" \
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" \
   "${ROOT_DIR}/scripts/check_semantic_differential.sh" \
   "${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh" \
   "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" \
   "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" \
   "${ROOT_DIR}/scripts/check_signed_release_contract.sh" \
   "${ROOT_DIR}/scripts/check_external_security_policy.sh" \
+  "${ROOT_DIR}/scripts/check_container_kubernetes_hardening.sh" \
+  "${ROOT_DIR}/scripts/check_container_runtime.sh" \
+  "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" \
+  "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" \
   "${ROOT_DIR}/docs/signed_release_publication.md" \
   "${ROOT_DIR}/docs/external_security_policy.md"; do
   require_file "${file}"
@@ -33,9 +38,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 27 ]] || { echo "error: expected 27 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 17 ]] || { echo "error: expected 17 implemented rows in the PR77 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 4 ]] || { echo "error: expected 4 partial rows in the PR77 candidate" >&2; exit 1; }
-[[ "${open_count}" == 6 ]] || { echo "error: expected 6 open rows in the PR77 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 18 ]] || { echo "error: expected 18 implemented rows in the PR78 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 4 ]] || { echo "error: expected 4 partial rows in the PR78 candidate" >&2; exit 1; }
+[[ "${open_count}" == 5 ]] || { echo "error: expected 5 open rows in the PR78 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -45,15 +50,16 @@ for number in $(seq 1 27); do require_contains "${MATRIX}" "$(printf 'TST%03d' "
 for pr in $(seq 68 86); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-12-pr77' \
+  'compiler_test_strategy_version: 2026-08-12-pr78' \
   'production_claim: false' \
-  '17 implemented areas' \
+  '18 implemented areas' \
   '4 partial areas' \
-  '6 open areas' \
+  '5 open areas' \
   'Required test layers for every implementation PR' \
-  'A test passing because a dependency, device, backend or platform was skipped is not production success evidence.' \
+  'A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.' \
   'Signing source code is not signing evidence' \
   'External security scanners are mandatory evidence' \
+  'A deployment manifest is not deployment evidence.' \
   'CPU/GPU/TPU/NPU'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -67,10 +73,11 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-08-12-pr77'
-require_contains "${STATUS}" '17 implemented, 4 partial and 6 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-08-12-pr78'
+require_contains "${STATUS}" '18 implemented, 4 partial and 5 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
+require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
 require_contains "${STATUS}" 'Cross-platform reproducibility | Implemented'
 require_contains "${MATRIX}" $'TST013\tplatform and compiler portability\timplemented'
 require_contains "${MATRIX}" $'TST014\treproducible builds\timplemented'
@@ -78,7 +85,18 @@ require_contains "${MATRIX}" $'TST015\truntime ABI compatibility\timplemented'
 require_contains "${MATRIX}" $'TST016\tpackaging and installed consumers\timplemented'
 require_contains "${MATRIX}" $'TST017\tsigned protected release\tpartial'
 require_contains "${MATRIX}" $'TST018\tdependency security and license policy\timplemented'
+require_contains "${MATRIX}" $'TST019\tcontainer and Kubernetes deployment\timplemented'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
+
+require_contains "${DEPLOY_DOC}" 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1'
+require_contains "${DEPLOY_DOC}" 'tst019_status: implemented_after_exact_head_runtime_qualification'
+require_contains "${DEPLOY_DOC}" 'No Service or Ingress is declared'
+require_contains "${ROOT_DIR}/scripts/check_container_kubernetes_hardening.sh" 'PASS container Kubernetes production hardening contract'
+require_contains "${ROOT_DIR}/scripts/check_container_runtime.sh" 'PASS hardened container runtime'
+require_contains "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" 'PASS ephemeral Kubernetes production gate'
+require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'PASS native Linux arm64 production container qualification'
+require_contains "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" 'PASS container Kubernetes hardening positive and negative matrix'
+
 require_contains "${RELEASE_CI}" 'environment: production-release'
 require_contains "${RELEASE_CI}" 'id-token: write'
 require_contains "${RELEASE_CI}" 'gh attestation verify'

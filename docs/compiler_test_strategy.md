@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-12-pr77
+compiler_test_strategy_version: 2026-08-12-pr78
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
@@ -9,21 +9,21 @@ production_claim: false
 
 ShortHand must become a production-grade compiled AI language that lets engineers build and deploy AI software without Python. It must provide predictable language semantics, honest hardware-aware AI execution, lower runtime overhead, measurable energy efficiency, portable release artifacts, enterprise security and auditable Green AI evidence.
 
-A test passing because a dependency, device, backend or platform was skipped is not production success evidence.
+A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.
 
 ## Current audit
 
 The 27-area production test matrix now records:
 
-- 17 implemented areas,
+- 18 implemented areas,
 - 4 partial areas,
-- 6 open areas.
+- 5 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while `TST017` remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 implements roadmap PR76 and closes `TST018` for the current source/dependency contract with mandatory CodeQL C/C++ SAST, Trivy external scanning, PR dependency review, license inventory/allowlisting, immutable action pins, expiring exceptions and negative/live-vulnerability fixtures.
+Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while `TST017` remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 implemented roadmap PR76 and closed `TST018` for the current source/dependency contract with mandatory CodeQL C/C++ SAST, Trivy external scanning, repository-owned dependency delta review, license inventory/allowlisting, immutable action pins, expiring exceptions and negative/live-vulnerability fixtures. GitHub PR78 implements roadmap PR77 and closes `TST019` for the declared CLI/compiler deployment contract through hardened multi-stage images, native amd64/arm64 runtime execution and a live ephemeral Kubernetes qualification gate.
 
-Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle and fail-closed external source/dependency security scanning.
+Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle, fail-closed external source/dependency security scanning and restricted container/Kubernetes deployment enforcement.
 
-Production-critical gaps remain for protected signed-release execution, hardened deployment, formatter/linter/LSP, live production backend/hardware qualification, complete C3-ECO evidence, production MLIR lowering, measured performance/energy and the final zero-skip release-candidate gate.
+Production-critical gaps remain for protected signed-release execution, formatter/linter/LSP, live production backend/hardware qualification, complete C3-ECO evidence, production MLIR lowering, measured performance/energy and the final zero-skip release-candidate gate.
 
 ## Required test layers for every implementation PR
 
@@ -62,13 +62,15 @@ Every remaining implementation PR through PR86 must include all applicable layer
 15. External security scanners are mandatory evidence, not advisory decoration. A scanner/network execution failure is a gate failure.
 16. Security exceptions are concrete, owned, ticketed, justified and expire within 90 days; wildcard or expired exceptions fail CI.
 17. A committed source SBOM is not a substitute for package-version CVE scanning, and an absent optional SDK is not security qualification.
-18. Final release qualification executes mandatory tests from a clean checkout and reports zero mandatory skips.
+18. A deployment manifest is not deployment evidence. Container and Kubernetes blockers close only after the exact image is built and executed under the declared security constraints and the live cluster enforces the required policy negatives.
+19. Multi-architecture image support requires native or otherwise execution-qualified evidence for each declared architecture. An OCI architecture label alone is insufficient.
+20. Final release qualification executes mandatory tests from a clean checkout and reports zero mandatory skips.
 
 ## CI profiles
 
 ### Pull-request profile
 
-The mandatory DAG runs policy/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility and the PR77 security job. The security job executes local negative-policy tests, dependency-delta review, CodeQL `security-extended`, Trivy source scanning and a live vulnerable-dependency detection fixture. Normal PR jobs do not receive release OIDC or repository-write permissions.
+The mandatory DAG runs policy/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility, external security and deployment qualification. The PR78 deployment path runs its static/negative contract and a live Kind cluster on Linux amd64, while the mandatory Linux arm64 lane builds and executes the same production image natively. Normal PR jobs do not receive release OIDC or repository-write permissions.
 
 ### Scheduled profile
 
@@ -96,6 +98,10 @@ ShortHand may claim enterprise production readiness only when:
 
 The following exact strings are retained only for milestone guards and are not current counts:
 
+- compiler_test_strategy_version: 2026-08-12-pr77
+- 17 implemented areas
+- 4 partial areas
+- 6 open areas
 - compiler_test_strategy_version: 2026-08-12-pr76
 - 16 implemented areas
 - 5 partial areas
@@ -106,4 +112,4 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-08-12-pr77`.
+The current strategy is `2026-08-12-pr78`.
