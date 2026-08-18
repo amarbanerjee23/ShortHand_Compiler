@@ -1,0 +1,30 @@
+{
+  "name": "shorthand-language-baseline",
+  "displayName": "ShortHand Language",
+  "description": "Syntax highlighting and language configuration for ShortHand beta-0.3.",
+  "version": "0.1.0",
+  "publisher": "shorthand-language",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "shorthand",
+        "aliases": ["ShortHand", "shorthand"],
+        "extensions": [".short"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "shorthand",
+        "scopeName": "source.shorthand",
+        "path": "./syntaxes/shorthand.tmLanguage.json"
+      }
+    ]
+  }
+}

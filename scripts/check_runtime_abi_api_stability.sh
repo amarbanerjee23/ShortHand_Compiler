@@ -95,6 +95,15 @@ require_contains "${TEST}" 'short_runtime_is_abi_compatible(1, 0)'
 require_contains "${TEST}" 'short_runtime_is_abi_compatible(2, 0)'
 require_contains "${TEST}" '${CXX:-g++} -pthread'
 
+# The ABI consumer must never inherit an instrumented archive from an earlier
+# sanitizer lane. Force a normal rebuild so symbol and link validation is
+# hermetic regardless of the order in which CI invokes this gate.
+make -C "Compiler_new_ws/Short_Hand/src" -B runtime_lib \
+  >/tmp/shorthand_runtime_abi_clean_rebuild.out 2>&1 || {
+    cat /tmp/shorthand_runtime_abi_clean_rebuild.out >&2 || true
+    exit 1
+  }
+
 bash -n "${TEST}"
 bash "${TEST}"
 

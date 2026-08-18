@@ -1,0 +1,89 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "ShortHand",
+  "scopeName": "source.shorthand",
+  "patterns": [
+    {"include": "#comments"},
+    {"include": "#strings"},
+    {"include": "#modulePreamble"},
+    {"include": "#greenAi"},
+    {"include": "#backends"},
+    {"include": "#control"},
+    {"include": "#types"},
+    {"include": "#constants"},
+    {"include": "#numbers"},
+    {"include": "#operators"},
+    {"include": "#functions"}
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {"name": "comment.line.double-slash.shorthand", "match": "//.*$"},
+        {"name": "comment.line.number-sign.shorthand", "match": "#.*$"},
+        {"name": "comment.block.shorthand", "begin": "/\\*", "end": "\\*/"}
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.shorthand",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {"name": "constant.character.escape.shorthand", "match": "\\\\."}
+      ]
+    },
+    "modulePreamble": {
+      "patterns": [
+        {
+          "match": "\\b(package|module|import)\\s+([A-Za-z_][A-Za-z0-9_.]*)",
+          "captures": {
+            "1": {"name": "keyword.control.module.shorthand"},
+            "2": {"name": "entity.name.namespace.shorthand"}
+          }
+        },
+        {"name": "keyword.control.module.shorthand", "match": "\\bas\\b"}
+      ]
+    },
+    "greenAi": {
+      "patterns": [
+        {"name": "keyword.other.greenai.shorthand", "match": "\\b(greenai_contract|greenai_measure|functional_unit|success_criteria|boundary|measurement_quality|data_quality|carbon_factor|energy_budget_j|carbon_budget_gco2e|evidence_retention|claims_mode|evidence_only|location|ci_cd|thirdparty|accelerator|compute|storage|network)\\b"},
+        {"name": "constant.language.quality.shorthand", "match": "\\b(MQ[1-4]|DQ[1-4])\\b"}
+      ]
+    },
+    "backends": {
+      "patterns": [
+        {"name": "support.type.backend.shorthand", "match": "\\b(onnx|engine|torchscript|openvino_ir|gguf|tensorrt|onnxruntime_tensorrt|onnxruntime_cuda|onnxruntime_cpu|openvino|libtorch|llamacpp|fallback)\\b"},
+        {"name": "support.type.precision.shorthand", "match": "\\b(int8|int4|fp16|fp32|fp64|bf16)\\b"},
+        {"name": "keyword.other.model.shorthand", "match": "\\b(model|format|path|task|precision|input_shape|output_shape|backend_preference|compact|quality_guardrail|infer|tensor)\\b"}
+      ]
+    },
+    "control": {
+      "name": "keyword.control.shorthand",
+      "match": "\\b(def|return|continue|loop|while|if|else|goto|print|read|break)\\b"
+    },
+    "types": {
+      "name": "storage.type.shorthand",
+      "match": "\\b(int|float|double|string|bool|void)\\b"
+    },
+    "constants": {
+      "name": "constant.language.boolean.shorthand",
+      "match": "\\b(true|false)\\b"
+    },
+    "numbers": {
+      "patterns": [
+        {"name": "constant.numeric.float.shorthand", "match": "\\b[0-9]+\\.[0-9]+\\b"},
+        {"name": "constant.numeric.integer.shorthand", "match": "\\b[0-9]+\\b"}
+      ]
+    },
+    "operators": {
+      "name": "keyword.operator.shorthand",
+      "match": "->|<=|>=|==|!=|\\|\\||&&|[+\\-*/%=<>]"
+    },
+    "functions": {
+      "match": "\\bdef\\s+(int|float|double|string|bool|void)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": {"name": "storage.type.shorthand"},
+        "2": {"name": "entity.name.function.shorthand"}
+      }
+    }
+  }
+}

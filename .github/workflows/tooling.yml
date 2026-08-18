@@ -26,8 +26,23 @@ jobs:
 
       - name: Install frontend qualification dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang
+          set -euo pipefail
+          # GitHub-hosted Ubuntu runners may prefer an Azure mirror via
+          # /etc/apt/apt-mirrors.txt. A stalled mirror previously consumed the
+          # entire job timeout before any compiler test could run. Keep the
+          # dependency set unchanged, but use the canonical archive and bounded
+          # network retries/timeouts so infrastructure failure is fail-fast.
+          if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
+          APT_OPTS=(
+            -o Acquire::Retries=3
+            -o Acquire::http::Timeout=20
+            -o Acquire::https::Timeout=20
+          )
+          sudo apt-get "${APT_OPTS[@]}" update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
+            build-essential flex bison libfl-dev llvm llvm-dev clang
 
       - name: Build ShortHand parser/compiler oracle
         run: make -C Compiler_new_ws/Short_Hand/src short_hand
@@ -49,3 +64,46 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: bash scripts/check_formatter_linter.sh
+
+  lsp-editor:
+    name: lsp-editor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install LSP qualification dependencies
+        run: |
+          set -euo pipefail
+          if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
+          APT_OPTS=(
+            -o Acquire::Retries=3
+            -o Acquire::http::Timeout=20
+            -o Acquire::https::Timeout=20
+          )
+          sudo apt-get "${APT_OPTS[@]}" update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
+            build-essential flex bison libfl-dev llvm llvm-dev clang jq
+
+      - name: Build ShortHand compiler diagnostics oracle
+        run: make -C Compiler_new_ws/Short_Hand/src short_hand
+
+      - name: GCC LSP editor protocol gate
+        env:
+          CXX: g++
+        run: bash scripts/check_lsp_editor.sh
+
+      - name: Clang LSP editor protocol gate
+        env:
+          CXX: clang++
+        run: bash scripts/check_lsp_editor.sh
+
+      - name: ASan UBSan LSP editor protocol gate
+        env:
+          CXX: clang++
+          SHORTHAND_LSP_CXXFLAGS: -std=c++17 -O1 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: bash scripts/check_lsp_editor.sh

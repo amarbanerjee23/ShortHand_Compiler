@@ -283,6 +283,15 @@ elseif(FL_LIBRARY)
   target_link_libraries(short_hand PRIVATE ${FL_LIBRARY})
 endif()
 
+# The language server is a first-class native tool. Keeping it dependency-light
+# means every existing CMake platform lane compiles it even when optional AI
+# backends are absent. Protocol qualification remains in the dedicated tooling
+# gate, while normal install consumers receive the executable in bin/.
+add_executable(shorthand_lsp
+  ${SRC_DIR}/tooling/LanguageServerMain.cpp
+)
+target_compile_features(shorthand_lsp PRIVATE cxx_std_17)
+
 add_executable(green_ai_tool ${SRC_DIR}/green_ai/GreenAITool.cpp)
 
 if(DEFINED ENV{ONNXRUNTIME_ROOT})
@@ -307,6 +316,10 @@ install(TARGETS
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
+)
+
+install(TARGETS shorthand_lsp
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 if(TARGET shorthand_prometheus_adapter)
@@ -394,6 +407,11 @@ if(SHORTHAND_BUILD_TESTING)
   add_test(
     NAME cmake_shorthand_runtime_builds
     COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_runtime>"
+  )
+
+  add_test(
+    NAME cmake_shorthand_lsp_builds
+    COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_lsp>"
   )
 
   add_test(
