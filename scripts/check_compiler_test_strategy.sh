@@ -8,14 +8,16 @@ PLAN="${ROOT_DIR}/docs/production_readiness_pr_plan.md"
 STATUS="${ROOT_DIR}/docs/feature_implementation_status.md"
 TEMPLATE="${ROOT_DIR}/.github/pull_request_template.md"
 CI="${ROOT_DIR}/.github/workflows/ci.yml"
+TOOLING_CI="${ROOT_DIR}/.github/workflows/tooling.yml"
 RELEASE_CI="${ROOT_DIR}/.github/workflows/release.yml"
 SECURITY_CI="${ROOT_DIR}/.github/workflows/security.yml"
 DEPLOY_DOC="${ROOT_DIR}/docs/container_kubernetes_hardening.md"
+TOOLING_DOC="${ROOT_DIR}/docs/formatter_linter.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" \
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" \
   "${ROOT_DIR}/scripts/check_semantic_differential.sh" \
   "${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh" \
   "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" \
@@ -25,7 +27,14 @@ for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${
   "${ROOT_DIR}/scripts/check_container_kubernetes_hardening.sh" \
   "${ROOT_DIR}/scripts/check_container_runtime.sh" \
   "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" \
+  "${ROOT_DIR}/scripts/check_formatter_linter.sh" \
   "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" \
+  "${ROOT_DIR}/tests/tooling/formatter_messy.short" \
+  "${ROOT_DIR}/tests/tooling/formatter_expected.short" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp" \
+  "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/Makefile" \
   "${ROOT_DIR}/docs/signed_release_publication.md" \
   "${ROOT_DIR}/docs/external_security_policy.md"; do
   require_file "${file}"
@@ -38,9 +47,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 27 ]] || { echo "error: expected 27 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 18 ]] || { echo "error: expected 18 implemented rows in the PR78 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 4 ]] || { echo "error: expected 4 partial rows in the PR78 candidate" >&2; exit 1; }
-[[ "${open_count}" == 5 ]] || { echo "error: expected 5 open rows in the PR78 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 19 ]] || { echo "error: expected 19 implemented rows in the PR79 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 4 ]] || { echo "error: expected 4 partial rows in the PR79 candidate" >&2; exit 1; }
+[[ "${open_count}" == 4 ]] || { echo "error: expected 4 open rows in the PR79 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -50,16 +59,17 @@ for number in $(seq 1 27); do require_contains "${MATRIX}" "$(printf 'TST%03d' "
 for pr in $(seq 68 86); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-12-pr78' \
+  'compiler_test_strategy_version: 2026-08-18-pr79' \
   'production_claim: false' \
-  '18 implemented areas' \
+  '19 implemented areas' \
   '4 partial areas' \
-  '5 open areas' \
+  '4 open areas' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.' \
   'Signing source code is not signing evidence' \
   'External security scanners are mandatory evidence' \
   'A deployment manifest is not deployment evidence.' \
+  'Formatter success is not inferred from source-text checks.' \
   'CPU/GPU/TPU/NPU'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -73,11 +83,12 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-08-12-pr78'
-require_contains "${STATUS}" '18 implemented, 4 partial and 5 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-08-18-pr79'
+require_contains "${STATUS}" '19 implemented, 4 partial and 4 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
+require_contains "${STATUS}" 'Formatter and linter | Implemented'
 require_contains "${STATUS}" 'Cross-platform reproducibility | Implemented'
 require_contains "${MATRIX}" $'TST013\tplatform and compiler portability\timplemented'
 require_contains "${MATRIX}" $'TST014\treproducible builds\timplemented'
@@ -86,6 +97,8 @@ require_contains "${MATRIX}" $'TST016\tpackaging and installed consumers\timplem
 require_contains "${MATRIX}" $'TST017\tsigned protected release\tpartial'
 require_contains "${MATRIX}" $'TST018\tdependency security and license policy\timplemented'
 require_contains "${MATRIX}" $'TST019\tcontainer and Kubernetes deployment\timplemented'
+require_contains "${MATRIX}" $'TST020\tformatter and linter correctness\timplemented'
+require_contains "${MATRIX}" $'TST021\tsyntax highlighting and LSP protocol\topen'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
 
 require_contains "${DEPLOY_DOC}" 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1'
@@ -96,6 +109,16 @@ require_contains "${ROOT_DIR}/scripts/check_container_runtime.sh" 'PASS hardened
 require_contains "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" 'PASS ephemeral Kubernetes production gate'
 require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'PASS native Linux arm64 production container qualification'
 require_contains "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" 'PASS container Kubernetes hardening positive and negative matrix'
+
+require_contains "${TOOLING_DOC}" 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1'
+require_contains "${TOOLING_DOC}" 'shorthand.lint.v1'
+require_contains "${ROOT_DIR}/scripts/check_formatter_linter.sh" 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp" 'SHL006'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp" 'fix mode requires --output'
+require_contains "${TOOLING_CI}" 'formatter-linter:'
+require_contains "${TOOLING_CI}" 'GCC formatter and linter gate'
+require_contains "${TOOLING_CI}" 'Clang formatter and linter gate'
+require_contains "${TOOLING_CI}" 'ASan UBSan formatter and linter gate'
 
 require_contains "${RELEASE_CI}" 'environment: production-release'
 require_contains "${RELEASE_CI}" 'id-token: write'
