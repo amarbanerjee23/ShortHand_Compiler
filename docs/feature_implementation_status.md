@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-18-pr80
+feature_status_version: 2026-08-18-pr81
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 80
-current_roadmap_pr: 79
+current_github_pr: 81
+current_roadmap_pr: 80
 
 ## Goal
 
@@ -13,9 +13,9 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-PR69 through PR73 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, adding the mandatory compiler/platform DAG, CTest parity, qualified installed consumers and independent clean-build reproducibility. Roadmap PR75 was implemented and merged as GitHub PR76, adding fail-closed signed release publication architecture. GitHub PR77 implemented and merged roadmap PR76, the external vulnerability, C/C++ SAST, dependency and license policy gate. GitHub PR78 implemented and merged roadmap PR77, container and Kubernetes production hardening. GitHub PR79 implemented and merged roadmap PR78, the deterministic formatter and linter baseline. GitHub PR80 now implements roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline.
+Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 now implements roadmap PR80, the versioned production backend and hardware qualification contract.
 
-The compiler test audit records **20 implemented, 4 partial and 3 open** areas for the PR80 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and backend/hardware, C3-ECO, MLIR, performance and measured-energy blockers remain.
+The compiler test audit records **21 implemented, 3 partial and 3 open** areas for the PR81 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and C3-ECO, MLIR, performance and measured-energy blockers remain.
 
 ## Language and compiler status
 
@@ -25,7 +25,7 @@ The compiler test audit records **20 implemented, 4 partial and 3 open** areas f
 | Module/import/package syntax and AST scaffold | Implemented | module AST and source identity contract. |
 | Deterministic module resolver and multi-file codegen | Implemented | manifest/lock graph, confinement, imported execution and native linking. |
 | Cross-mode semantic equivalence | Implemented for defined beta-0.3 core contract | interpreter, `lli` and native differential execution. |
-| Source-aware diagnostics | Implemented for current coded matrix | LSP publication now joins the same compiler diagnostic oracle. |
+| Source-aware diagnostics | Implemented for current coded matrix | LSP publication uses the same compiler diagnostic oracle. |
 | Full sanitizer coverage | Implemented for current baseline | ASan/LSan/UBSan compiler/runtime coverage. |
 | Continuous fuzzing | Implemented for current compiler stages | parser/module/semantic/lowering libFuzzer plus scheduled extension. |
 | Concurrency and race detection | Implemented for current runtime baseline | functional thread-safety plus mandatory TSan. |
@@ -42,23 +42,23 @@ Historical compatibility gate: language versioning and conformance policy gate.
 
 | Area | Status | Evidence / boundary |
 | --- | --- | --- |
-| Real ONNX Runtime CPU backend execution | Implemented when the SDK gate actually runs | optional SDK availability cannot count as production qualification. |
-| Full backend compatibility | Partial | failure/unavailability behavior exists; live production qualification remains PR80. |
+| Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` candidate | Pinned ONNX Runtime SDK, real identity-model execution and numerical output `42`; exact-head CI still determines PR completion. |
+| Full backend compatibility | Implemented for declared v1 production support set | Only `onnxruntime_cpu` + CPU is production-supported. Other backend/device pairs remain experimental or unavailable and are not advertised as production support. |
 | Runtime observability implementation | Partial | JSON, Prometheus and OTLP-shaped adapters exist; public network exposure is not implied. |
-| CPU/GPU/TPU/NPU routing | Partial production evidence | inventory/routing is not accelerator execution proof; PR80 owns execution qualification. |
+| CPU/GPU/TPU/NPU routing | Implemented for qualification-aware v1 policy | Inventory remains available for all device classes. Production routing rejects unqualified accelerator pairs by default. |
 
 ## Security, release, deployment and tooling status
 
 | Area | Status | Boundary |
 | --- | --- | --- |
-| Automated SBOM | Implemented candidate and artifact baseline | SPDX 2.3 source evidence plus per-release-artifact SPDX 2.3 bundle evidence. |
+| Automated SBOM | Implemented candidate and artifact baseline | SPDX 2.3 source evidence plus per-release-artifact bundle evidence. |
 | Secret and claim scanning | Implemented | repository secret baseline plus mandatory Trivy secret scan and release claim safety. |
-| Signed releases | Partial | immutable tag policy, OIDC artifact/SBOM attestations, cryptographic verification, draft verification and rollback exist; real signed publication still requires protected-environment execution. |
-| Protected publication | Partial | workflow fails closed unless required reviewers, prevent-self-review and exact `v*` deployment policy are live. |
+| Signed releases | Partial | Immutable tag policy, OIDC artifact/SBOM attestations, cryptographic verification, draft verification and rollback exist; real signed publication still requires protected-environment execution. |
+| Protected publication | Partial | Workflow fails closed unless required reviewers, prevent-self-review and exact `v*` deployment policy are live. |
 | External vulnerability gate | Implemented for current repository/dependency contract | mandatory CodeQL, Trivy, dependency delta review, license policy and expiring exceptions. |
 | Container and Kubernetes hardening | Implemented for the PR78 CLI/compiler deployment contract | native amd64/arm64 hardened images plus restricted live Kind qualification. |
 | Formatter and linter | Implemented for `shorthand.tooling.format_lint.v1` | deterministic trivia-only formatting, machine diagnostics and safe explicit-output fixes. |
-| Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` candidate | scanner-aligned TextMate grammar; native bounded stdio JSON-RPC server; compiler-backed diagnostics; UTF-16 positions; completion, hover, definitions, document symbols, module navigation, cancellation and malformed-input negatives. Rename/refactor, semantic tokens, workspace-wide indexing and debugger support are not claimed. |
+| Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` | scanner-aligned grammar; native bounded JSON-RPC; compiler diagnostics; UTF-16; completion, hover, definitions, symbols, module navigation and cancellation. |
 
 ## Green AI and compiler-backend status
 
@@ -70,17 +70,23 @@ Historical compatibility gate: language versioning and conformance policy gate.
 | Measured ShortHand versus Python energy evidence | Open | PR86. No lower-energy claim is made by current CI. |
 | Zero-skip production RC gate | Open | PR86. |
 
+## Production backend and hardware qualification PR81 boundary
+
+GitHub PR81 implements roadmap PR80 through `shorthand.backend_hardware_qualification.v1`. The production support scope is deliberately versioned as `linux-x64-cpu-v1`. `onnxruntime_cpu` on CPU is the only production-supported backend/device pair in this contract.
+
+The mandatory qualification path downloads ONNX Runtime 1.20.1 from its fixed release asset, verifies the pinned SHA-256, then runs the real C++ runtime bridge against the checked-in identity ONNX model. Input `42` must produce output `42`, the runtime must report `onnxruntime_cpu`, and fallback, not-executed or skip evidence fails the gate.
+
+Hardware discovery continues to inventory CPU, GPU, TPU and NPU. A detected accelerator, installed SDK or compatible policy row is not enough for production routing. Unqualified GPU/NPU/TPU routes fail closed with `backend_device_not_production_qualified`. `SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE=1` is an explicit development override and its evidence remains `production_qualified:false`.
+
+TST022 becomes implemented only for this declared v1 support set after the exact final PR81 head passes both stable CI contexts. Adding a production GPU, TPU, NPU, backend or platform later requires real device-backed numerical evidence first.
+
 ## Syntax highlighting and LSP PR80 boundary
 
-GitHub PR80 implements roadmap PR79 through the versioned contract `shorthand.tooling.lsp.v1`. `shorthand_lsp` is a native C++17 executable built and installed by CMake. Its stdio protocol is bounded to 1 MiB messages, JSON nesting is bounded, malformed or duplicate framing fails closed, JSON-RPC parse errors remain recoverable when framing is synchronized, and lifecycle semantics distinguish clean shutdown from abnormal exit.
-
-Editor positions are UTF-16 as required by the declared protocol baseline. Diagnostics come from the real `short_hand` parser using isolated temporary documents. An unavailable compiler oracle publishes `SHLSP900` rather than an empty diagnostic set. Definition navigation reuses the deterministic `shorthand.package` model for imported modules. The mandatory tooling gate covers clean and invalid documents, recovery after partial edits, completion, hover, symbols, imported navigation, cancellation, UTF-16 multibyte positions, malformed JSON/framing and missing-oracle behavior under GCC, Clang and ASan/UBSan. The inherited `ubuntu-core` feature-plan gate executes the same contract.
-
-TST021 becomes implemented only when the exact final PR80 head passes both event-specific stable CI contexts and the dedicated tooling evidence. This does not imply live AI backend qualification, complete C3-ECO evidence, MLIR production lowering or measured energy superiority.
+GitHub PR80 implemented roadmap PR79 through `shorthand.tooling.lsp.v1`. `shorthand_lsp` is native C++17, bounded, compiler-backed and installed by CMake. The contract does not claim rename/refactor, semantic tokens, workspace-wide indexing or debugger support.
 
 ## Formatter and linter PR79 boundary
 
-GitHub PR79 implemented roadmap PR78 through native `shorthand_tool` and contract `shorthand.tooling.format_lint.v1`. Formatting is semantic-conservative and changes source trivia only. Parser acceptance, idempotence, interpreted behavior, machine diagnostics and explicit-output safe fixes are mandatory evidence.
+GitHub PR79 implemented roadmap PR78 through native `shorthand_tool` and contract `shorthand.tooling.format_lint.v1`.
 
 ## Signed release PR76 boundary
 
@@ -88,24 +94,30 @@ GitHub PR76 introduced `.github/workflows/release.yml`, immutable release tag/ma
 
 ## External security PR77 boundary
 
-GitHub PR77 implemented roadmap PR76 with mandatory CodeQL C/C++ `security-extended`, Trivy repository scans, a fail-closed dependency delta gate, redistribution license policy, immutable action pins and 90-day maximum security exceptions. Optional AI SDKs absent from CI remain unqualified; PR80 owns live backend/SDK qualification.
+GitHub PR77 implemented roadmap PR76 with mandatory CodeQL C++ `security-extended`, Trivy repository scans, a fail-closed dependency delta gate, redistribution license policy, immutable action pins and 90-day maximum security exceptions.
 
 ## Container and Kubernetes PR78 boundary
 
-GitHub PR78 implemented roadmap PR77 through a multi-stage production image, Restricted Pod Security workload and live ephemeral-cluster evidence for identity, capabilities, seccomp, no-new-privileges, quota, network denial and replica repair. No public service, ingress or accelerator execution claim is introduced.
+GitHub PR78 implemented roadmap PR77 through a multi-stage production image, Restricted Pod Security workload and live ephemeral-cluster evidence. No public service or ingress claim is introduced.
 
 ## Production blockers
 
 1. Configure and exercise the protected signed-release environment for roadmap PR75 / TST017.
-2. Full live backend and CPU/GPU/TPU/NPU success evidence (PR80).
-3. Complete C3-ECO language, measured scoring and authority-ready handoff (PR81-PR83).
-4. Generated MLIR dialect and production lowering (PR84-PR85).
-5. Measured performance/energy comparison and zero-skip production RC gate (PR86).
+2. Complete C3-ECO language, measured scoring and authority-ready handoff (PR81-PR83).
+3. Generated MLIR dialect and production lowering (PR84-PR85).
+4. Measured performance/energy comparison and zero-skip production RC gate (PR86).
+
+GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` production backend contract because those device classes are explicitly not production-supported in v1. Any future support expansion becomes a production blocker for that expanded version until its live device-backed tests pass.
 
 ## Historical audit anchors
 
 These exact strings are retained as audit history only and are not active state:
 
+- feature_status_version: 2026-08-18-pr80
+- 20 implemented, 4 partial and 3 open
+- GitHub PR80 now implements roadmap PR79
+- Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` candidate
+- live production qualification remains PR80
 - feature_status_version: 2026-08-18-pr79
 - 19 implemented, 4 partial and 4 open
 - GitHub PR79 now implements roadmap PR78
