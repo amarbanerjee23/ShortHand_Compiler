@@ -1,0 +1,51 @@
+name: tooling
+
+on:
+  push:
+    branches:
+      - master
+      - 'agent/**'
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tooling-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  formatter-linter:
+    name: formatter-linter
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install frontend qualification dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang
+
+      - name: Build ShortHand parser/compiler oracle
+        run: make -C Compiler_new_ws/Short_Hand/src short_hand
+
+      - name: GCC formatter and linter gate
+        env:
+          CXX: g++
+        run: bash scripts/check_formatter_linter.sh
+
+      - name: Clang formatter and linter gate
+        env:
+          CXX: clang++
+        run: bash scripts/check_formatter_linter.sh
+
+      - name: ASan UBSan formatter and linter gate
+        env:
+          CXX: clang++
+          SHORTHAND_TOOL_CXXFLAGS: -std=c++17 -O1 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: bash scripts/check_formatter_linter.sh
