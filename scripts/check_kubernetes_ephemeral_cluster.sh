@@ -188,22 +188,34 @@ action_kubectl wait --for=condition=Ready pod/network-control -n shorthand-syste
 api_ip="$(action_kubectl get service kubernetes -n default -o jsonpath='{.spec.clusterIP}')"
 [[ -n "${api_ip}" ]] || { echo "error: Kubernetes API service clusterIP unavailable" >&2; exit 1; }
 
+probe_api_from_pod() {
+  local probe_pod="$1"
+  local output
+
+  if ! output="$(
+    action_kubectl exec -n shorthand-system "${probe_pod}" -- /bin/bash -lc \
+      "if timeout 3 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443' >/dev/null 2>&1; then printf '%s\\n' CONNECT_OK; else printf '%s\\n' CONNECT_BLOCKED; fi" \
+      2>/dev/null
+  )"; then
+    printf '%s\n' EXEC_FAILED
+    return 0
+  fi
+
+  case "${output}" in
+    *CONNECT_OK*) printf '%s\n' CONNECT_OK ;;
+    *CONNECT_BLOCKED*) printf '%s\n' CONNECT_BLOCKED ;;
+    *) printf '%s\n' INVALID_PROBE ;;
+  esac
+}
+
 network_policy_converged=0
-control_reaches_api=0
-protected_reaches_api=0
+control_result="NOT_PROBED"
+protected_result="NOT_PROBED"
 for _ in $(seq 1 20); do
-  control_reaches_api=0
-  protected_reaches_api=0
+  control_result="$(probe_api_from_pod network-control)"
+  protected_result="$(probe_api_from_pod "${pod}")"
 
-  if action_kubectl exec -n shorthand-system network-control -- /bin/bash -lc "timeout 3 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443'" >/dev/null 2>&1; then
-    control_reaches_api=1
-  fi
-
-  if action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc "timeout 3 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443'" >/dev/null 2>&1; then
-    protected_reaches_api=1
-  fi
-
-  if [[ "${control_reaches_api}" == 1 && "${protected_reaches_api}" == 0 ]]; then
+  if [[ "${control_result}" == CONNECT_OK && "${protected_result}" == CONNECT_BLOCKED ]]; then
     network_policy_converged=1
     break
   fi
@@ -212,7 +224,7 @@ for _ in $(seq 1 20); do
 done
 
 if [[ "${network_policy_converged}" != 1 ]]; then
-  echo "error: NetworkPolicy enforcement did not converge (control_reaches_api=${control_reaches_api}, protected_reaches_api=${protected_reaches_api})" >&2
+  echo "error: NetworkPolicy enforcement did not converge (control_result=${control_result}, protected_result=${protected_result})" >&2
   action_kubectl get pods -n shorthand-system -o wide >&2 || true
   action_kubectl get networkpolicy shorthand-default-deny -n shorthand-system -o yaml >&2 || true
   action_kubectl describe networkpolicy shorthand-default-deny -n shorthand-system >&2 || true
