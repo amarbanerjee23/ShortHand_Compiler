@@ -46,6 +46,7 @@ stage build
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_runtime shorthand_runtime_shared \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
+  shorthand_lsp \
   shorthand_otlp_exporter
 EXPORTER="${BUILD_DIR}/shorthand_otlp_exporter"
 [[ -x "${EXPORTER}" ]] || { echo "error: OTLP exporter executable was not produced" >&2; exit 1; }
