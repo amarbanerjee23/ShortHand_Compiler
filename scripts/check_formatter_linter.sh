@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 SHORTHAND_BIN="${SHORTHAND_BIN:-${ROOT_DIR}/Compiler_new_ws/Short_Hand/build/short_hand}"
 CXX="${CXX:-g++}"
+TOOL_FLAGS_TEXT="${SHORTHAND_TOOL_CXXFLAGS:--std=c++17 -O2 -Wall -Wextra -Wpedantic}"
+read -r -a TOOL_FLAGS <<<"${TOOL_FLAGS_TEXT}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "${TMP}"' EXIT
 
@@ -12,7 +14,7 @@ command -v "${CXX}" >/dev/null 2>&1 || { echo "error: C++ compiler unavailable f
 [[ -x "${SHORTHAND_BIN}" ]] || { echo "error: ShortHand compiler unavailable for formatter parse-preservation gate: ${SHORTHAND_BIN}" >&2; exit 1; }
 
 TOOL="${TMP}/shorthand_tool"
-"${CXX}" -std=c++17 -O2 -Wall -Wextra -Wpedantic \
+"${CXX}" "${TOOL_FLAGS[@]}" \
   "${SRC_DIR}/tooling/SourceTools.cpp" \
   "${SRC_DIR}/tooling/SourceToolMain.cpp" \
   -o "${TOOL}"
@@ -87,4 +89,4 @@ grep -Fq '"code":"SHL006"' "${TMP}/crlf.json"
 ! grep -q $'\r' "${TMP}/crlf_fixed.short"
 "${SHORTHAND_BIN}" "${TMP}/crlf_fixed.short" parse >/dev/null
 
-printf 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate\n'
+printf 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate compiler=%s\n' "${CXX}"
