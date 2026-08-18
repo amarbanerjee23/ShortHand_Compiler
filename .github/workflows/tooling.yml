@@ -49,3 +49,36 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
         run: bash scripts/check_formatter_linter.sh
+
+  lsp-editor:
+    name: lsp-editor
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install LSP qualification dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang jq
+
+      - name: Build ShortHand compiler diagnostics oracle
+        run: make -C Compiler_new_ws/Short_Hand/src short_hand
+
+      - name: GCC LSP editor protocol gate
+        env:
+          CXX: g++
+        run: bash scripts/check_lsp_editor.sh
+
+      - name: Clang LSP editor protocol gate
+        env:
+          CXX: clang++
+        run: bash scripts/check_lsp_editor.sh
+
+      - name: ASan UBSan LSP editor protocol gate
+        env:
+          CXX: clang++
+          SHORTHAND_LSP_CXXFLAGS: -std=c++17 -O1 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: bash scripts/check_lsp_editor.sh
