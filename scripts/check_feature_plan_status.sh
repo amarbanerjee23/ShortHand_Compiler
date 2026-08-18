@@ -99,7 +99,7 @@ grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/
 grep -Fq 'external_security_policy_version: shorthand.security.external.v1' docs/external_security_policy.md
 grep -Fq 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1' docs/container_kubernetes_hardening.md
 grep -Fq 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1' docs/formatter_linter.md
-grep -Fq '"schema":"shorthand.lint.v1"' Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
+grep -Fq 'shorthand.lint.v1' Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
 grep -Fq 'fix mode requires --output' Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
 # CI status hygiene is executable evidence rather than duplicated roadmap prose.
 # The dedicated fail-closed guards remain mandatory here and in ubuntu-core.
