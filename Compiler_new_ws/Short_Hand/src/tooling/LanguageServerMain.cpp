@@ -450,15 +450,24 @@ static std::string percentDecode(const std::string &value) {
 static fs::path uriToPath(const std::string &uri) {
     const std::string prefix = "file://";
     if (uri.rfind(prefix, 0) != 0) return {};
-    return fs::path(percentDecode(uri.substr(prefix.size())));
+    std::string decoded = percentDecode(uri.substr(prefix.size()));
+#ifdef _WIN32
+    if (decoded.size() >= 3 && decoded[0] == '/' && std::isalpha(static_cast<unsigned char>(decoded[1])) && decoded[2] == ':')
+        decoded.erase(decoded.begin());
+#endif
+    return fs::path(decoded);
 }
 
 static std::string pathToUri(const fs::path &path) {
     std::string raw = fs::absolute(path).generic_string();
     std::ostringstream out;
+#ifdef _WIN32
+    out << "file:///";
+#else
     out << "file://";
+#endif
     for (unsigned char ch : raw) {
-        if (std::isalnum(ch) || ch == '/' || ch == '-' || ch == '_' || ch == '.' || ch == '~') out << static_cast<char>(ch);
+        if (std::isalnum(ch) || ch == '/' || ch == ':' || ch == '-' || ch == '_' || ch == '.' || ch == '~') out << static_cast<char>(ch);
         else out << '%' << std::uppercase << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(ch)
                  << std::nouppercase << std::dec;
     }
@@ -560,7 +569,7 @@ static Json::Array compilerDiagnostics(const std::string &text) {
         if (status == 0) return diagnostics;
 
         const auto sourceLines = splitLines(text);
-        const std::regex structured(R"(([^\n:]+):(\d+):(\d+):\s+(error|warning):\s+\[([^\]]+)\]\s+(.+?)\s+\[range\s+(\d+):(\d+)-(\d+):(\d+)\])");
+        const std::regex structured(R"((.+?):(\d+):(\d+):\s+(error|warning):\s+\[([^\]]+)\]\s+(.+?)\s+\[range\s+(\d+):(\d+)-(\d+):(\d+)\])");
         auto begin = std::sregex_iterator(errors.begin(), errors.end(), structured);
         auto end = std::sregex_iterator();
         for (auto it = begin; it != end; ++it) {
@@ -654,7 +663,20 @@ static std::optional<SourceLocation> importDefinition(const std::string &uri,
         const std::string alias = match[2].matched ? match[2].str() : module.substr(module.find_last_of('.') + 1);
         if (word != alias && module.find(word) == std::string::npos) continue;
         auto found = modules.find(module);
-        if (found != modules.end()) return SourceLocation{pathToUri(found->second), 0, 0, 0};
+        if (found != modules.end()) {
+            const std::string targetText = readFile(found->second);
+            const auto targetLines = splitLines(targetText);
+            const std::string marker = "module " + module;
+            for (std::size_t lineIndex = 0; lineIndex < targetLines.size(); ++lineIndex) {
+                std::size_t markerColumn = targetLines[lineIndex].find(marker);
+                if (markerColumn == std::string::npos) continue;
+                std::size_t nameColumn = markerColumn + std::string("module ").size();
+                return SourceLocation{pathToUri(found->second), static_cast<int>(lineIndex),
+                                      byteColumnToUtf16(targetLines[lineIndex], nameColumn),
+                                      byteColumnToUtf16(targetLines[lineIndex], nameColumn + module.size())};
+            }
+            return SourceLocation{pathToUri(found->second), 0, 0, 0};
+        }
     }
     return std::nullopt;
 }
@@ -664,7 +686,7 @@ static std::optional<SourceLocation> localDefinition(const std::string &uri,
                                                       const std::string &word) {
     if (word.empty()) return std::nullopt;
     const auto lines = splitLines(text);
-    const std::regex declaration(R"((?:^|[^A-Za-z0-9_])(?:def\s+)?(?:int|float|string|bool|tensor|model)\s+([A-Za-z_][A-Za-z0-9_]*))");
+    const std::regex declaration(R"((?:^|[^A-Za-z0-9_])(?:def\s+)?(?:int|float|double|string|bool|void|tensor|model)\s+([A-Za-z_][A-Za-z0-9_]*))");
     for (std::size_t i = 0; i < lines.size(); ++i) {
         auto begin = std::sregex_iterator(lines[i].begin(), lines[i].end(), declaration);
         auto end = std::sregex_iterator();
@@ -682,8 +704,8 @@ static std::optional<SourceLocation> localDefinition(const std::string &uri,
 static Json::Array documentSymbols(const std::string &text) {
     Json::Array symbols;
     const auto lines = splitLines(text);
-    const std::regex functionDecl(R"(\bdef\s+(?:int|float|string|bool)\s+([A-Za-z_][A-Za-z0-9_]*))");
-    const std::regex valueDecl(R"(\b(?:int|float|string|bool|tensor|model)\s+([A-Za-z_][A-Za-z0-9_]*))");
+    const std::regex functionDecl(R"(\bdef\s+(?:int|float|double|string|bool|void)\s+([A-Za-z_][A-Za-z0-9_]*))");
+    const std::regex valueDecl(R"(\b(?:int|float|double|string|bool|void|tensor|model)\s+([A-Za-z_][A-Za-z0-9_]*))");
     const std::regex moduleDecl(R"(^\s*(?:package|module)\s+([A-Za-z_][A-Za-z0-9_.]*))");
     for (std::size_t i = 0; i < lines.size(); ++i) {
         std::smatch match;
@@ -736,7 +758,7 @@ public:
             }
             handle(*parsed);
         }
-        return shutdownRequested_ || exitRequested_ ? 0 : 1;
+        return shutdownRequested_ ? 0 : 1;
     }
 
 private:
