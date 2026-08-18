@@ -97,8 +97,26 @@ no_new_privs="$(action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -l
 seccomp="$(action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc "awk '/Seccomp:/ {print \$2}' /proc/1/status")"
 [[ "${seccomp}" == 2 ]] || { echo "error: seccomp filter is not active: ${seccomp}" >&2; exit 1; }
 
-can_get_secrets="$(action_kubectl auth can-i get secrets -n shorthand-system --as=system:serviceaccount:shorthand-system:shorthand-runtime)"
-[[ "${can_get_secrets}" == no ]] || { echo "error: runtime service account unexpectedly allowed to read secrets" >&2; exit 1; }
+# A denied `kubectl auth can-i` verdict is represented by stdout `no` and a
+# non-zero process status. Capture that status inside a conditional so `set -e`
+# does not turn the expected fail-closed RBAC result into a gate failure. Only
+# the exact denial is accepted; an allowed verdict or command/API error fails.
+can_get_secrets=""
+can_get_secrets_status=0
+if can_get_secrets="$(action_kubectl auth can-i get secrets -n shorthand-system --as=system:serviceaccount:shorthand-system:shorthand-runtime 2>&1)"; then
+  can_get_secrets_status=0
+else
+  can_get_secrets_status=$?
+fi
+if [[ "${can_get_secrets_status}" == 1 && "${can_get_secrets}" == no ]]; then
+  :
+elif [[ "${can_get_secrets_status}" == 0 && "${can_get_secrets}" == yes ]]; then
+  echo "error: runtime service account unexpectedly allowed to read secrets" >&2
+  exit 1
+else
+  echo "error: runtime service account Secret authorization probe failed unexpectedly status=${can_get_secrets_status} output=${can_get_secrets}" >&2
+  exit 1
+fi
 
 cat >"${TMP}/quota-negative.yaml" <<'YAML'
 apiVersion: v1
