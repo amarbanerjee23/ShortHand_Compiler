@@ -33,8 +33,14 @@
     },
     "modulePreamble": {
       "patterns": [
-        {"name": "keyword.control.module.shorthand", "match": "\\b(package|module|import|as)\\b"},
-        {"name": "entity.name.namespace.shorthand", "match": "(?<=\\b(?:package|module|import)\\s)[A-Za-z_][A-Za-z0-9_.]*"}
+        {
+          "match": "\\b(package|module|import)\\s+([A-Za-z_][A-Za-z0-9_.]*)",
+          "captures": {
+            "1": {"name": "keyword.control.module.shorthand"},
+            "2": {"name": "entity.name.namespace.shorthand"}
+          }
+        },
+        {"name": "keyword.control.module.shorthand", "match": "\\bas\\b"}
       ]
     },
     "greenAi": {
@@ -73,8 +79,11 @@
       "match": "->|<=|>=|==|!=|\\|\\||&&|[+\\-*/%=<>]"
     },
     "functions": {
-      "name": "entity.name.function.shorthand",
-      "match": "(?<=\\bdef\\s(?:int|float|double|string|bool|void)\\s)[A-Za-z_][A-Za-z0-9_]*"
+      "match": "\\bdef\\s+(int|float|double|string|bool|void)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": {"name": "storage.type.shorthand"},
+        "2": {"name": "entity.name.function.shorthand"}
+      }
     }
   }
 }
