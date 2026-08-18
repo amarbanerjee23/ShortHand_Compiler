@@ -34,7 +34,7 @@ for json in \
   "${ROOT_DIR}/editors/vscode/language-configuration.json" \
   "${ROOT_DIR}/editors/vscode/syntaxes/shorthand.tmLanguage.json"; do
   jq -e . "${json}" >/dev/null
- done
+done
 
 grep -Fq '"scopeName": "source.shorthand"' "${ROOT_DIR}/editors/vscode/syntaxes/shorthand.tmLanguage.json"
 grep -Fq 'greenai_contract' "${ROOT_DIR}/editors/vscode/syntaxes/shorthand.tmLanguage.json"
@@ -53,7 +53,7 @@ APP="${ROOT_DIR}/tests/modules/resolver/valid_project/src/app.short"
 APP_URI="file://${APP}"
 APP_JSON="$(jq -Rs . <"${APP}")"
 PARTIAL_JSON='"@"'
-RECOVERED_JSON='"int value;\\n"'
+RECOVERED_JSON='"int value;\n"'
 
 # Full protocol/golden session. A single bounded process proves compiler-backed
 # diagnostics, completion, hover, document symbols, imported definition,
@@ -135,7 +135,7 @@ grep -Fq 'bounded LSP message size' "${TMP}/oversized.err"
 
 # The LSP must not report an empty diagnostic set when its compiler oracle is
 # unavailable. This prevents editor tooling from manufacturing false success.
-VALID_JSON='"int value;\\n"'
+VALID_JSON='"int value;\n"'
 MISSING_URI="file://${TMP}/oracle-missing.short"
 {
   send_message '{"jsonrpc":"2.0","id":30,"method":"initialize","params":{}}'
