@@ -219,6 +219,9 @@ std::vector<LintDiagnostic> lintSource(const std::string &source) {
         scanCode(content, state);
     }
 
+    if (previousBlank && !lines.empty())
+        addDiagnostic(diagnostics, "SHL005", "trailing blank line is not canonical", lines.size(), 1);
+
     if (source.empty() || source.back() != '\n')
         addDiagnostic(diagnostics, "SHL004", "source must end with exactly one newline", lines.size(),
                       lines.empty() ? 1 : lines.back().size() + 1);
