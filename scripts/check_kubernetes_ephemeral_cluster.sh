@@ -188,16 +188,37 @@ action_kubectl wait --for=condition=Ready pod/network-control -n shorthand-syste
 api_ip="$(action_kubectl get service kubernetes -n default -o jsonpath='{.spec.clusterIP}')"
 [[ -n "${api_ip}" ]] || { echo "error: Kubernetes API service clusterIP unavailable" >&2; exit 1; }
 
-action_kubectl exec -n shorthand-system network-control -- /bin/bash -lc "timeout 5 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443'"
-network_denied=0
+network_policy_converged=0
+control_reaches_api=0
+protected_reaches_api=0
 for _ in $(seq 1 20); do
-  if ! action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc "timeout 3 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443'" >/dev/null 2>&1; then
-    network_denied=1
+  control_reaches_api=0
+  protected_reaches_api=0
+
+  if action_kubectl exec -n shorthand-system network-control -- /bin/bash -lc "timeout 3 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443'" >/dev/null 2>&1; then
+    control_reaches_api=1
+  fi
+
+  if action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc "timeout 3 bash -lc 'exec 3<>/dev/tcp/${api_ip}/443'" >/dev/null 2>&1; then
+    protected_reaches_api=1
+  fi
+
+  if [[ "${control_reaches_api}" == 1 && "${protected_reaches_api}" == 0 ]]; then
+    network_policy_converged=1
     break
   fi
-  sleep 1
+
+  sleep 2
 done
-[[ "${network_denied}" == 1 ]] || { echo "error: default-deny NetworkPolicy did not block ShortHand egress" >&2; exit 1; }
+
+if [[ "${network_policy_converged}" != 1 ]]; then
+  echo "error: NetworkPolicy enforcement did not converge (control_reaches_api=${control_reaches_api}, protected_reaches_api=${protected_reaches_api})" >&2
+  action_kubectl get pods -n shorthand-system -o wide >&2 || true
+  action_kubectl get networkpolicy shorthand-default-deny -n shorthand-system -o yaml >&2 || true
+  action_kubectl describe networkpolicy shorthand-default-deny -n shorthand-system >&2 || true
+  action_kubectl get service kubernetes -n default -o wide >&2 || true
+  exit 1
+fi
 
 before="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -o name | sort)"
 action_kubectl delete pod -n shorthand-system "${pod}" --wait=true --timeout=60s >/dev/null
