@@ -26,8 +26,23 @@ jobs:
 
       - name: Install frontend qualification dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang
+          set -euo pipefail
+          # GitHub-hosted Ubuntu runners may prefer an Azure mirror via
+          # /etc/apt/apt-mirrors.txt. A stalled mirror previously consumed the
+          # entire job timeout before any compiler test could run. Keep the
+          # dependency set unchanged, but use the canonical archive and bounded
+          # network retries/timeouts so infrastructure failure is fail-fast.
+          if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
+          APT_OPTS=(
+            -o Acquire::Retries=3
+            -o Acquire::http::Timeout=20
+            -o Acquire::https::Timeout=20
+          )
+          sudo apt-get "${APT_OPTS[@]}" update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
+            build-essential flex bison libfl-dev llvm llvm-dev clang
 
       - name: Build ShortHand parser/compiler oracle
         run: make -C Compiler_new_ws/Short_Hand/src short_hand
@@ -59,8 +74,18 @@ jobs:
 
       - name: Install LSP qualification dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang jq
+          set -euo pipefail
+          if [[ -f /etc/apt/apt-mirrors.txt ]]; then
+            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
+          fi
+          APT_OPTS=(
+            -o Acquire::Retries=3
+            -o Acquire::http::Timeout=20
+            -o Acquire::https::Timeout=20
+          )
+          sudo apt-get "${APT_OPTS[@]}" update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
+            build-essential flex bison libfl-dev llvm llvm-dev clang jq
 
       - name: Build ShortHand compiler diagnostics oracle
         run: make -C Compiler_new_ws/Short_Hand/src short_hand
