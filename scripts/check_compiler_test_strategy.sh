@@ -124,7 +124,7 @@ require_contains "${BACKEND_DOC}" 'accelerator_support_status: not_production_su
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" 'backend_device_not_production_qualified'
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" 'SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE'
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp" 'enforceProductionBackendQualification('
-require_contains "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" '67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105'
+require_contains "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" 'b6179dfb9ec297862daa3f30691942fe994441c63df3ff3c1fa94b022bba20d8'
 require_contains "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" 'PASS production backend and hardware qualification gate'
 require_contains "${ROOT_DIR}/tests/integration/test_production_backend_hardware_qualification.sh" 'PASS production backend hardware qualification contract'
 require_contains "${ROOT_DIR}/tests/integration/test_compiled_hook_onnxruntime_success.sh" 'Output: 42'
