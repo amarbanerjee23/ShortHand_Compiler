@@ -1,4 +1,5 @@
 #include "AI_Runtime.h"
+#include "ProductionBackendQualification.h"
 #include "backends/FallbackBackend.h"
 #include "backends/LibTorchBackend.h"
 #include "backends/LlamaCppBackend.h"
@@ -67,7 +68,8 @@ std::vector<BackendCapabilities> AIRuntime::capabilities() const {
 
 InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input) {
     const auto devices = hardware_probe_->probe();
-    const auto route = selectHardwareRoute(devices, registry.capabilities(), model, hardware_policy_);
+    const auto route = enforceProductionBackendQualification(
+        selectHardwareRoute(devices, registry.capabilities(), model, hardware_policy_));
 
     if (!validateInputMatchesShape(input)) {
         InferenceResult result;
@@ -101,13 +103,19 @@ InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &inp
             result.backend = BackendKind::Fallback;
             result.backend_name = "fallback";
             result.provider_name = "none";
-            result.reason = "backend_not_available";
+            result.reason = route.reason == "backend_device_not_production_qualified"
+                                ? route.reason
+                                : "backend_not_available";
             result.output_f32.clear();
             return attachHardwareEvidence(std::move(result), route);
         }
     }
 
-    return attachHardwareEvidence(unavailableResult("no_execution_ready_hardware_backend"), route);
+    return attachHardwareEvidence(
+        unavailableResult(route.reason == "backend_device_not_production_qualified"
+                              ? route.reason
+                              : "no_execution_ready_hardware_backend"),
+        route);
 }
 
 } // namespace shorthand::ai
