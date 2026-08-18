@@ -57,4 +57,13 @@ sed -i '/allowPrivilegeEscalation: false/a\            privileged: true' "${TMP}
 expect_failure privileged-container run_gate
 grep -Fq 'privileged container' "${TMP}/privileged-container.err"
 
+# Regression guard for the live RBAC negative assertion. `kubectl auth can-i`
+# returns status 1 for a legitimate `no` verdict, so the ephemeral gate must
+# capture it inside a conditional rather than letting `set -e` abort first.
+EPHEMERAL_GATE="${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh"
+grep -Fq 'if can_get_secrets="$(action_kubectl auth can-i get secrets' "${EPHEMERAL_GATE}"
+grep -Fq 'can_get_secrets_status=$?' "${EPHEMERAL_GATE}"
+grep -Fq '[[ "${can_get_secrets_status}" == 1 && "${can_get_secrets}" == no ]]' "${EPHEMERAL_GATE}"
+grep -Fq 'Secret authorization probe failed unexpectedly' "${EPHEMERAL_GATE}"
+
 printf 'PASS container Kubernetes hardening positive and negative matrix\n'
