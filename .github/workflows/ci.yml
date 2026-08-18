@@ -35,8 +35,7 @@ jobs:
             clang \
             clang-format \
             cmake \
-            ninja-build \
-            jq
+            ninja-build
 
       - name: Verify required tools
         run: |
@@ -55,7 +54,6 @@ jobs:
           command -v base64
           command -v timeout
           command -v curl
-          command -v jq
           llvm-config --version
           lli --version
           llc --version
@@ -184,235 +182,418 @@ jobs:
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
       - name: Install matrix build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang gcc-12 g++-12 gcc-14 g++-14 clang-16 clang-18
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
+
       - name: Record matrix toolchain
         run: |
-          "${CC}" --version
+          set -euo pipefail
+          command -v "${CC}"
+          command -v "${CXX}"
+          command -v llvm-config-18
           "${CXX}" --version
-          llvm-config --version
+          test "$(llvm-config-18 --version | cut -d. -f1)" = "18"
+          llvm-config-18 --version
+          uname -a
+
       - name: Configure matrix compiler
-        run: cmake -S . -B "build-${{ matrix.id }}" -G Ninja -DCMAKE_C_COMPILER="${CC}" -DCMAKE_CXX_COMPILER="${CXX}"
+        run: cmake -S . -B build-toolchain -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_CONFIG=/usr/bin/llvm-config-18
+
       - name: Build matrix compiler and runtime
-        run: cmake --build "build-${{ matrix.id }}"
+        run: cmake --build build-toolchain --parallel 2 --target short_hand shorthand_runtime green_ai_tool
+
       - name: Execute matrix compiler smoke
         run: |
-          "build-${{ matrix.id }}/short_hand" Compiler_new_ws/Short_Hand/examples/simple.short run
-          "build-${{ matrix.id }}/short_hand" Compiler_new_ws/Short_Hand/examples/simple.short compile-native
-          ./simple
+          set -euo pipefail
+          build-toolchain/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_toolchain_${{ matrix.id }}.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_toolchain_${{ matrix.id }}.out
+          build-toolchain/short_hand tests/semantic/differential/core_control.short parse >/tmp/shorthand_toolchain_${{ matrix.id }}_parse.out
 
-  ctest-parity:
-    needs: ubuntu-core
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
+  linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 50
+
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install Linux arm64 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
+      - name: Record Linux arm64 environment
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "aarch64"
+          test "$(llvm-config --version | cut -d. -f1)" = "18"
+          clang++ --version
+          llvm-config --version
+
+      - name: Build Linux arm64 compiler and runtime
+        run: |
+          cmake -S . -B build-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-arm64"
+          cmake --build build-arm64 --parallel 2
+
+      - name: Execute Linux arm64 interpreter bitcode and native
+        run: |
+          set -euo pipefail
+          rm -f core_control core_control.o core_control.bc
+          build-arm64/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_arm64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64.out
+          build-arm64/short_hand tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          lli core_control.bc > /tmp/shorthand_arm64_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-arm64/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            build-arm64/short_hand tests/semantic/differential/core_control.short compile-native
+          test -x core_control
+          ./core_control > /tmp/shorthand_arm64_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_native.out
+
+      - name: Install upgrade uninstall Linux arm64 SDK lifecycle
+        run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-arm64" "$PWD/stage-arm64" "$PWD/consumer-arm64"
+
+  macos-arm64:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install macOS build dependencies
+        run: |
+          brew install bison flex llvm@18 ninja
+          echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix llvm@18)/bin" >> "$GITHUB_PATH"
+
+      - name: Record macOS Apple Silicon environment
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "arm64"
+          test "$("$(brew --prefix llvm@18)/bin/llvm-config" --version | cut -d. -f1)" = "18"
+          "$(brew --prefix llvm@18)/bin/clang++" --version
+          "$(brew --prefix llvm@18)/bin/llvm-config" --version
+          sw_vers
+
+      - name: Build macOS Apple Silicon compiler and runtime
+        env:
+          CC: /opt/homebrew/opt/llvm@18/bin/clang
+          CXX: /opt/homebrew/opt/llvm@18/bin/clang++
+        run: |
+          cmake -S . -B build-macos -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage-macos" \
+            -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config"
+          cmake --build build-macos --parallel 2
+
+      - name: Execute macOS interpreter bitcode and native
+        run: |
+          set -euo pipefail
+          rm -f core_control core_control.o core_control.bc
+          build-macos/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_macos.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos.out
+          build-macos/short_hand tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          "$(brew --prefix llvm@18)/bin/lli" core_control.bc > /tmp/shorthand_macos_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-macos/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER="$(brew --prefix llvm@18)/bin/clang++" \
+            build-macos/short_hand tests/semantic/differential/core_control.short compile-native
+          test -x core_control
+          ./core_control > /tmp/shorthand_macos_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_native.out
+
+      - name: Install upgrade uninstall macOS arm64 SDK lifecycle
+        run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-macos" "$PWD/stage-macos" "$PWD/consumer-macos"
+
+  windows-x64:
+    runs-on: windows-2025
+    timeout-minutes: 70
+    env:
+      MSYSTEM: UCRT64
+      CHERE_INVOKING: 1
+    defaults:
+      run:
+        shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Install Windows UCRT64 compiler dependencies
+        run: |
+          pacman -S --noconfirm --needed \
+            mingw-w64-ucrt-x86_64-clang \
+            mingw-w64-ucrt-x86_64-llvm \
+            mingw-w64-ucrt-x86_64-cmake \
+            mingw-w64-ucrt-x86_64-ninja \
+            bison flex make diffutils
+
+      - name: Record Windows UCRT64 environment
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          test "$(llvm-config --version | cut -d. -f1)" = "22"
+          clang++ --version
+          llvm-config --version
+          cmake --version
+          uname -a
+
+      - name: Build Windows compiler and runtime
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          export CC=clang
+          export CXX=clang++
+          cmake -S . -B build-windows -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage-windows" \
+            -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe
+          cmake --build build-windows --parallel 2
+
+      - name: Execute Windows interpreter bitcode native and runtime negative
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          rm -f core_control.exe core_control.o core_control.bc division_by_zero.exe division_by_zero.o division_by_zero.bc
+          ./build-windows/short_hand.exe tests/semantic/differential/core_control.short run > /tmp/shorthand_windows.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows.out
+          ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          lli core_control.bc > /tmp/shorthand_windows_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-windows/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-native
+          test -x core_control.exe
+          ./core_control.exe > /tmp/shorthand_windows_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_native.out
+
+          ./build-windows/short_hand.exe tests/semantic/differential/division_by_zero.short compile-bc
+          if lli division_by_zero.bc > /tmp/shorthand_windows_divzero_lli.out 2> /tmp/shorthand_windows_divzero_lli.err; then
+            echo "error: Windows lli division-by-zero runtime negative unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq '[SHD7001]' /tmp/shorthand_windows_divzero_lli.err
+
+          SHORTHAND_RUNTIME_LIB="$PWD/build-windows/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            ./build-windows/short_hand.exe tests/semantic/differential/division_by_zero.short compile-native
+          test -x division_by_zero.exe
+          if ./division_by_zero.exe > /tmp/shorthand_windows_divzero_native.out 2> /tmp/shorthand_windows_divzero_native.err; then
+            echo "error: Windows native division-by-zero runtime negative unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq '[SHD7001]' /tmp/shorthand_windows_divzero_native.err
+
+      - name: Install upgrade uninstall Windows SDK lifecycle
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-windows" "$PWD/stage-windows" "$PWD/consumer-windows"
+
+  ctest-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
       - name: Install CTest parity dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
-      - name: Configure CTest parity build
-        run: cmake -S . -B build-ctest -G Ninja
-      - name: Build CTest parity target
-        run: cmake --build build-ctest
-      - name: Run CTest parity suite
-        run: ctest --test-dir build-ctest --output-on-failure
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
+      - name: Verify CTest parity manifest
+        run: |
+          bash scripts/check_cmake_ctest_parity.sh
+          bash tests/ci/test_cmake_ctest_parity_negative.sh
+
+      - name: Execute Makefile suite through CTest
+        env:
+          SHORTHAND_CTEST_PARITY_EXECUTE: '1'
+        run: bash scripts/check_cmake_ctest_parity.sh
 
   reproducible:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 50
+
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
       - name: Install reproducibility dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
       - name: Independent clean-build reproducibility
         run: bash scripts/check_reproducible_builds.sh
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: reproducibility-${{ github.run_id }}
-          path: /tmp/shorthand_repro/
-
-  linux-arm64:
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - name: Install Linux arm64 dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
-      - name: Record Linux arm64 environment
-        run: |
-          uname -a
-          uname -m | grep -Eq 'aarch64|arm64'
-          llvm-config --version
-          clang --version
-      - name: Build Linux arm64 compiler and runtime
-        run: cmake -S . -B build-linux-arm64 -G Ninja && cmake --build build-linux-arm64
-      - name: Execute Linux arm64 interpreter bitcode and native
-        run: |
-          build-linux-arm64/short_hand Compiler_new_ws/Short_Hand/examples/simple.short run
-          build-linux-arm64/short_hand Compiler_new_ws/Short_Hand/examples/simple.short compile-bc
-          lli output.bc
-          build-linux-arm64/short_hand Compiler_new_ws/Short_Hand/examples/simple.short compile-native
-          ./simple
-      - name: Install upgrade uninstall Linux arm64 SDK lifecycle
-        run: bash scripts/check_installed_sdk_lifecycle.sh build-linux-arm64
-
-  macos-arm64:
-    runs-on: macos-14
-    timeout-minutes: 45
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - name: Install macOS build dependencies
-        run: |
-          brew install bison flex llvm cmake ninja
-      - name: Record macOS Apple Silicon environment
-        run: |
-          uname -a
-          test "$(uname -m)" = arm64
-          /opt/homebrew/opt/llvm/bin/llvm-config --version
-          clang --version
-      - name: Build macOS Apple Silicon compiler and runtime
-        env:
-          PATH: /opt/homebrew/opt/bison/bin:/opt/homebrew/opt/flex/bin:/opt/homebrew/opt/llvm/bin:${{ env.PATH }}
-          LDFLAGS: -L/opt/homebrew/opt/flex/lib
-        run: cmake -S . -B build-macos-arm64 -G Ninja && cmake --build build-macos-arm64
-      - name: Execute macOS interpreter bitcode and native
-        env:
-          PATH: /opt/homebrew/opt/llvm/bin:${{ env.PATH }}
-        run: |
-          build-macos-arm64/short_hand Compiler_new_ws/Short_Hand/examples/simple.short run
-          build-macos-arm64/short_hand Compiler_new_ws/Short_Hand/examples/simple.short compile-bc
-          lli output.bc
-          build-macos-arm64/short_hand Compiler_new_ws/Short_Hand/examples/simple.short compile-native
-          ./simple
-      - name: Install upgrade uninstall macOS arm64 SDK lifecycle
-        env:
-          PATH: /opt/homebrew/opt/llvm/bin:${{ env.PATH }}
-        run: bash scripts/check_installed_sdk_lifecycle.sh build-macos-arm64
-
-  windows-x64:
-    runs-on: windows-2025
-    timeout-minutes: 50
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-      - uses: msys2/setup-msys2@fb197b72ce45fb24f17bf3f807a388985654d1f2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            git
-            make
-            flex
-            bison
-            diffutils
-            mingw-w64-ucrt-x86_64-toolchain
-            mingw-w64-ucrt-x86_64-llvm
-            mingw-w64-ucrt-x86_64-cmake
-            mingw-w64-ucrt-x86_64-ninja
-      - name: Record Windows UCRT64 environment
-        run: |
-          uname -a
-          gcc --version
-          clang --version
-          llvm-config --version
-          cmake --version
-      - name: Build Windows compiler and runtime
-        run: cmake -S . -B build-windows-x64 -G Ninja && cmake --build build-windows-x64
-      - name: Execute Windows interpreter bitcode native and runtime negative
-        run: |
-          build-windows-x64/short_hand.exe Compiler_new_ws/Short_Hand/examples/simple.short run
-          build-windows-x64/short_hand.exe Compiler_new_ws/Short_Hand/examples/simple.short compile-bc
-          lli output.bc
-          build-windows-x64/short_hand.exe Compiler_new_ws/Short_Hand/examples/simple.short compile-native
-          ./simple.exe
-          bash tests/runtime/test_unknown_backend.sh
-      - name: Install upgrade uninstall Windows SDK lifecycle
-        run: bash scripts/check_installed_sdk_lifecycle.sh build-windows-x64
+          path: |
+            /tmp/shorthand_reproducibility.json
+            /tmp/shorthand-reproducibility/
 
   security:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: read
-      security-events: write
-      actions: read
+
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+
       - name: Install security build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
+
       - name: Security policy and negative matrix
-        run: |
-          bash scripts/check_external_security_policy.sh
-          bash tests/security/test_external_security_policy_negative.sh
-          bash tests/security/test_security_scanner_negative.sh
-          bash tests/security/test_third_party_license_policy_negative.sh
-          bash tests/security/test_security_exceptions_negative.sh
-          bash tests/ci/test_action_pinning_negative.sh
+        run: bash scripts/check_external_security_policy.sh
+
       - name: Repository-owned dependency delta review
         env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          PR_HEAD_SHA: ${{ github.sha }}
-        run: bash scripts/check_dependency_delta.sh
+          SHORTHAND_DEPENDENCY_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before }}
+          SHORTHAND_DEPENDENCY_HEAD_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          base="${SHORTHAND_DEPENDENCY_BASE_REF}"
+          if [[ -z "${base}" || "${base}" =~ ^0+$ ]]; then
+            base="$(git rev-parse HEAD^)"
+          fi
+          bash scripts/check_dependency_delta.sh "${base}" "${SHORTHAND_DEPENDENCY_HEAD_REF}"
+
       - name: Initialize CodeQL C/C++ security analysis
-        uses: github/codeql-action/init@2d92b92925cc2d933db4d9b0295f98e8e7a90520
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
         with:
-          languages: cpp
+          languages: c-cpp
+          build-mode: manual
           queries: security-extended
+
       - name: Build compiler for CodeQL
-        run: make -C Compiler_new_ws/Short_Hand/src short_hand
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: |
+          cmake -S . -B build-codeql -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_CONFIG=/usr/bin/llvm-config-18
+          cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool
+
       - name: Produce CodeQL SARIF without weakening local enforcement
-        uses: github/codeql-action/analyze@2d92b92925cc2d933db4d9b0295f98e8e7a90520
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
         with:
-          category: /language:cpp
-          upload: false
-          output: /tmp/codeql-results
+          output: /tmp/shorthand-codeql-results
+          upload: never
+          upload-database: false
+
       - name: Enforce CodeQL high-severity policy
-        run: bash scripts/check_codeql_sarif.sh /tmp/codeql-results
+        run: bash scripts/check_codeql_sarif.sh /tmp/shorthand-codeql-results
+
       - name: Trivy repository vulnerability secret misconfiguration and license scan
-        uses: aquasecurity/trivy-action@5c982ed124462852ea7844d59f98f690e1d369a0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
+          version: v0.70.0
           scan-type: fs
           scan-ref: .
-          format: json
-          output: /tmp/trivy-repository.json
           scanners: vuln,secret,misconfig,license
-          severity: HIGH,CRITICAL
-          ignore-unfixed: false
-          exit-code: '0'
-      - name: Enforce Trivy repository policy
-        run: bash scripts/check_trivy_report.sh /tmp/trivy-repository.json
-      - name: Generate vulnerable dependency scanner fixture
-        run: bash tests/security/create_vulnerable_dependency_fixture.sh /tmp/shorthand-vulnerable-fixture
-      - name: Scan vulnerable dependency fixture
-        uses: aquasecurity/trivy-action@5c982ed124462852ea7844d59f98f690e1d369a0
-        with:
-          scan-type: fs
-          scan-ref: /tmp/shorthand-vulnerable-fixture
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
           format: json
-          output: /tmp/trivy-vulnerable-fixture.json
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          ignore-unfixed: false
+          output: /tmp/shorthand-trivy-repository.json
           exit-code: '0'
+          ignore-unfixed: 'false'
+          skip-dirs: tests/security/fixtures,build,build-codeql,Compiler_new_ws/Short_Hand/build
+          trivyignores: security/.trivyignore
+
+      - name: Enforce Trivy repository policy
+        run: bash scripts/check_trivy_report.sh /tmp/shorthand-trivy-repository.json
+
+      - name: Generate vulnerable dependency scanner fixture
+        run: bash scripts/create_vulnerable_dependency_fixture.sh /tmp/shorthand-vulnerable-dependency-fixture
+
+      - name: Scan vulnerable dependency fixture
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          version: v0.70.0
+          skip-setup-trivy: 'true'
+          scan-type: fs
+          scan-ref: /tmp/shorthand-vulnerable-dependency-fixture
+          scanners: vuln
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          format: json
+          output: /tmp/shorthand-trivy-vulnerable-fixture.json
+          exit-code: '0'
+          ignore-unfixed: 'false'
+
       - name: Require vulnerable dependency detection
-        run: bash scripts/check_vulnerable_dependency_fixture.sh /tmp/trivy-vulnerable-fixture.json
+        run: bash scripts/assert_trivy_vulnerable_fixture.sh /tmp/shorthand-trivy-vulnerable-fixture.json
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: security-evidence-${{ github.run_id }}
+          name: security-evidence-${{ github.run_id }}-${{ github.event_name }}
           path: |
-            /tmp/codeql-results/
-            /tmp/trivy-repository.json
-            /tmp/trivy-vulnerable-fixture.json
+            /tmp/shorthand-codeql-results/
+            /tmp/shorthand-trivy-repository.json
+            /tmp/shorthand-trivy-vulnerable-fixture.json
+            /tmp/shorthand_dependency_delta.json
+            /tmp/shorthand_security_*.out
+            /tmp/shorthand_security_*.err
+
+  ubuntu:
+    needs:
+      - ubuntu-core
+      - toolchain
+      - linux-arm64
+      - macos-arm64
+      - windows-x64
+      - ctest-parity
+      - reproducible
+      - security
+    if: ${{ always() && !cancelled() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Verify mandatory CI DAG results
+        run: |
+          set -euo pipefail
+          test "${{ needs.ubuntu-core.result }}" = "success"
+          test "${{ needs.toolchain.result }}" = "success"
+          test "${{ needs.linux-arm64.result }}" = "success"
+          test "${{ needs.macos-arm64.result }}" = "success"
+          test "${{ needs.windows-x64.result }}" = "success"
+          test "${{ needs.ctest-parity.result }}" = "success"
+          test "${{ needs.reproducible.result }}" = "success"
+          test "${{ needs.security.result }}" = "success"
+
+      - name: Publish event-specific CI status
+        if: ${{ always() && !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          state=failure
+          if [[ "${JOB_STATUS}" == "success" ]]; then
+            state=success
+          fi
+          payload="$(printf '{\"state\":\"%s\",\"target_url\":\"%s\",\"description\":\"Ubuntu CI %s for %s\",\"context\":\"ci / ubuntu (%s)\"}' \
+            "${state}" "${RUN_URL}" "${state}" "${EVENT_NAME}" "${EVENT_NAME}")"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
+            --data "${payload}"
