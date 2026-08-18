@@ -6,7 +6,6 @@ SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 SHORTHAND_BIN="${SHORTHAND_BIN:-${ROOT_DIR}/Compiler_new_ws/Short_Hand/build/short_hand}"
 CXX="${CXX:-g++}"
 TOOL_FLAGS_TEXT="${SHORTHAND_TOOL_CXXFLAGS:--std=c++17 -O2 -Wall -Wextra -Wpedantic}"
-read -r -a TOOL_FLAGS <<<"${TOOL_FLAGS_TEXT}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "${TMP}"' EXIT
 
@@ -14,10 +13,11 @@ command -v "${CXX}" >/dev/null 2>&1 || { echo "error: C++ compiler unavailable f
 [[ -x "${SHORTHAND_BIN}" ]] || { echo "error: ShortHand compiler unavailable for formatter parse-preservation gate: ${SHORTHAND_BIN}" >&2; exit 1; }
 
 TOOL="${TMP}/shorthand_tool"
-"${CXX}" "${TOOL_FLAGS[@]}" \
-  "${SRC_DIR}/tooling/SourceTools.cpp" \
-  "${SRC_DIR}/tooling/SourceToolMain.cpp" \
-  -o "${TOOL}"
+make -C "${SRC_DIR}/tooling" \
+  BIN="${TOOL}" \
+  CXX="${CXX}" \
+  CXXFLAGS="${TOOL_FLAGS_TEXT}"
+[[ -x "${TOOL}" ]] || { echo "error: formatter/linter build did not produce an executable" >&2; exit 1; }
 
 MESSY="${ROOT_DIR}/tests/tooling/formatter_messy.short"
 EXPECTED="${ROOT_DIR}/tests/tooling/formatter_expected.short"
