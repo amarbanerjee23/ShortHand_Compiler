@@ -8,7 +8,7 @@ cmake	>=3.16	build-tool	BSD-3-Clause	no	https://github.com/Kitware/CMake
 ninja	distribution-supported	build-tool	Apache-2.0	no	https://github.com/ninja-build/ninja
 kind	0.32.0	build-tool	Apache-2.0	no	https://github.com/kubernetes-sigs/kind
 kindest-node	1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5	build-tool	Apache-2.0	no	https://github.com/kubernetes-sigs/kind
-onnxruntime	1.20.1@sha256:67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105;qualification=PR80	qualification-sdk	MIT	no	https://github.com/microsoft/onnxruntime
+onnxruntime	1.20.1@sha256:67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105;qualification=PR80	optional-sdk	MIT	no	https://github.com/microsoft/onnxruntime
 tensorrt	external-root;qualification=PR80	optional-sdk	LicenseRef-NVIDIA-TensorRT	no	https://developer.nvidia.com/tensorrt
 openvino	external-root;qualification=PR80	optional-sdk	Apache-2.0	no	https://github.com/openvinotoolkit/openvino
 libtorch	external-root;qualification=PR80	optional-sdk	BSD-3-Clause	no	https://github.com/pytorch/pytorch
