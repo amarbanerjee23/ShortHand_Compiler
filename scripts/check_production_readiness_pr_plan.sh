@@ -3,11 +3,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PLAN="${ROOT_DIR}/docs/production_readiness_pr_plan.md"
 PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
+LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing required file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${PLAN}" "${PIPELINE}" \
+for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" \
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
@@ -16,28 +17,31 @@ for file in "${PLAN}" "${PIPELINE}" \
   "${ROOT_DIR}/docs/signed_release_publication.md" \
   "${ROOT_DIR}/docs/external_security_policy.md" \
   "${ROOT_DIR}/docs/container_kubernetes_hardening.md" \
+  "${ROOT_DIR}/docs/formatter_linter.md" \
   "${ROOT_DIR}/docs/compiler_test_strategy.md" \
   "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" \
   "${ROOT_DIR}/scripts/check_signed_release_contract.sh" \
   "${ROOT_DIR}/scripts/check_external_security_policy.sh" \
   "${ROOT_DIR}/scripts/check_container_kubernetes_hardening.sh" \
-  "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh"; do
+  "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" \
+  "${ROOT_DIR}/scripts/check_formatter_linter.sh" \
+  "${ROOT_DIR}/scripts/check_lsp_editor.sh"; do
   require_file "${file}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-12-pr77' \
+  'production_readiness_plan_version: 2026-08-18-pr79' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 76' \
+  'LAST_COMPLETED_PR: 78' \
   'MERGED_OUT_OF_BAND_PR: 71' \
-  'CURRENT_IMPLEMENTATION_PR: 77' \
-  'GITHUB_IMPLEMENTATION_PR: 78' \
-  'NEXT_IMPLEMENTATION_PR_AFTER_PR77: 78' \
+  'CURRENT_IMPLEMENTATION_PR: 79' \
+  'GITHUB_IMPLEMENTATION_PR: 80' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR79: 80' \
   'BASELINE_LANGUAGE_VERSION: beta-0.3' \
   'TARGET: enterprise production usage ready language' \
-  'Roadmap PR77 - Container and Kubernetes production hardening is IN PROGRESS as GitHub PR78.' \
-  'remaining_planned_implementation_prs_pr77_through_pr86: 10' \
-  'remaining_planned_implementation_prs_after_pr77: 9' \
+  'Roadmap PR79 - Syntax highlighting and LSP implementation is IN PROGRESS as GitHub PR80.' \
+  'remaining_planned_implementation_prs_pr79_through_pr86: 8' \
+  'remaining_planned_implementation_prs_after_pr79: 7' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -51,8 +55,10 @@ require_contains "${PLAN}" '| PR73 - Continuous fuzzing, full sanitizer and conc
 require_contains "${PLAN}" '| PR74 - CI/toolchain/platform matrix, CTest parity and reproducible builds | MERGED as GitHub PR75'
 require_contains "${PLAN}" '| PR75 - Signed release and protected publication workflow | MERGED as GitHub PR76'
 require_contains "${PLAN}" '| PR76 - External vulnerability, SAST, dependency and license policy gate | MERGED as GitHub PR77'
-require_contains "${PLAN}" '| PR77 - Container and Kubernetes production hardening | IN PROGRESS as GitHub PR78'
-require_contains "${PLAN}" '| PR78 - Formatter and linter baseline | PLANNED'
+require_contains "${PLAN}" '| PR77 - Container and Kubernetes production hardening | MERGED as GitHub PR78'
+require_contains "${PLAN}" '| PR78 - Formatter and linter baseline | MERGED as GitHub PR79'
+require_contains "${PLAN}" '| PR79 - Syntax highlighting and LSP implementation | IN PROGRESS as GitHub PR80'
+require_contains "${PLAN}" '| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | PLANNED'
 
 for anchor in \
   'ci_pipeline_architecture_version: 2026-08-09-v1' \
@@ -76,14 +82,29 @@ require_contains "${ROOT_DIR}/docs/toolchain_platform_reproducibility.md" 'toolc
 require_contains "${ROOT_DIR}/docs/signed_release_publication.md" 'signed_release_contract_version: shorthand.release.protected.v1'
 require_contains "${ROOT_DIR}/docs/external_security_policy.md" 'external_security_policy_version: shorthand.security.external.v1'
 require_contains "${ROOT_DIR}/docs/container_kubernetes_hardening.md" 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1'
+require_contains "${ROOT_DIR}/docs/formatter_linter.md" 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1'
+require_contains "${LSP_DOC}" 'lsp_editor_contract_version: shorthand.tooling.lsp.v1'
+require_contains "${LSP_DOC}" '1 MiB'
 require_contains "${ROOT_DIR}/scripts/check_signed_release_contract.sh" 'PASS signed release and protected publication contract gate'
 require_contains "${ROOT_DIR}/scripts/check_external_security_policy.sh" 'PASS external vulnerability SAST dependency and license policy gate'
 require_contains "${ROOT_DIR}/scripts/check_container_kubernetes_hardening.sh" 'PASS container Kubernetes production hardening contract'
 require_contains "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" 'PASS ephemeral Kubernetes production gate'
+require_contains "${ROOT_DIR}/scripts/check_formatter_linter.sh" 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate'
+require_contains "${ROOT_DIR}/scripts/check_lsp_editor.sh" 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate'
 require_contains "${ROOT_DIR}/scripts/check_compiler_test_strategy.sh" 'PASS compiler test strategy and coverage audit gate'
 
 # Historical milestones remain auditable without being mistaken for active state.
 for anchor in \
+  'production_readiness_plan_version: 2026-08-18-pr78' \
+  'CURRENT_IMPLEMENTATION_PR: 78' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR78: 79' \
+  'remaining_planned_implementation_prs_pr78_through_pr86: 9' \
+  '| PR78 - Formatter and linter baseline | IN PROGRESS as GitHub PR79' \
+  'production_readiness_plan_version: 2026-08-12-pr77' \
+  'CURRENT_IMPLEMENTATION_PR: 77' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR77: 78' \
+  'remaining_planned_implementation_prs_pr77_through_pr86: 10' \
+  '| PR77 - Container and Kubernetes production hardening | IN PROGRESS as GitHub PR78' \
   'production_readiness_plan_version: 2026-08-12-pr76' \
   'CURRENT_IMPLEMENTATION_PR: 76' \
   'NEXT_IMPLEMENTATION_PR_AFTER_PR76: 77' \
