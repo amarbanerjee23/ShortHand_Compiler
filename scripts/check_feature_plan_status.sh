@@ -15,6 +15,7 @@ required_files=(
   docs/toolchain_platform_reproducibility.md
   docs/container_kubernetes_hardening.md
   docs/formatter_linter.md
+  docs/syntax_highlighting_lsp.md
   tests/coverage/compiler_test_coverage_matrix.tsv
   tests/tooling/formatter_messy.short
   tests/tooling/formatter_expected.short
@@ -33,10 +34,15 @@ required_files=(
   scripts/check_container_runtime.sh
   scripts/check_kubernetes_ephemeral_cluster.sh
   scripts/check_formatter_linter.sh
+  scripts/check_lsp_editor.sh
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
   Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
+  Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
   Compiler_new_ws/Short_Hand/src/tooling/Makefile
+  editors/vscode/package.json
+  editors/vscode/language-configuration.json
+  editors/vscode/syntaxes/shorthand.tmLanguage.json
   tests/deployment/test_container_kubernetes_hardening_negative.sh
   deploy/k8s/production.yaml
   .github/workflows/tooling.yml
@@ -44,7 +50,9 @@ required_files=(
   .github/workflows/security.yml
   .github/dependency-review-config.yml
 )
-for file in "${required_files[@]}"; do [[ -s "${file}" ]] || { echo "error: required feature/status evidence missing: ${file}" >&2; exit 1; }; done
+for file in "${required_files[@]}"; do
+  [[ -s "${file}" ]] || { echo "error: required feature/status evidence missing: ${file}" >&2; exit 1; }
+done
 
 required_status_terms=(
   "Implemented" "Partial" "Open" "Production blockers"
@@ -71,22 +79,23 @@ for term in "${required_status_terms[@]}"; do
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-18-pr79' \
+  'feature_status_version: 2026-08-18-pr80' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  '19 implemented, 4 partial and 4 open' \
+  '20 implemented, 4 partial and 3 open' \
   'Roadmap PR75 was implemented and merged as GitHub PR76' \
   'GitHub PR77 implemented and merged roadmap PR76' \
   'GitHub PR78 implemented and merged roadmap PR77' \
-  'GitHub PR79 now implements roadmap PR78' \
+  'GitHub PR79 implemented and merged roadmap PR78' \
+  'GitHub PR80 now implements roadmap PR79' \
   'Cross-platform portability | Implemented for PR74 tiers' \
   'Cross-platform reproducibility | Implemented' \
   'Signed releases | Partial' \
   'External vulnerability gate | Implemented' \
   'Container and Kubernetes hardening | Implemented' \
   'Formatter and linter | Implemented' \
-  'Syntax highlighting and LSP | Open' \
+  'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` candidate' \
   'live production qualification remains PR80'; do
   grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing current anchor: ${anchor}" >&2; exit 1; }
 done
@@ -99,10 +108,14 @@ grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/
 grep -Fq 'external_security_policy_version: shorthand.security.external.v1' docs/external_security_policy.md
 grep -Fq 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1' docs/container_kubernetes_hardening.md
 grep -Fq 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1' docs/formatter_linter.md
+grep -Fq 'lsp_editor_contract_version: shorthand.tooling.lsp.v1' docs/syntax_highlighting_lsp.md
 grep -Fq 'shorthand.lint.v1' Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
 grep -Fq 'fix mode requires --output' Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
-# CI status hygiene is executable evidence rather than duplicated roadmap prose.
-# The dedicated fail-closed guards remain mandatory here and in ubuntu-core.
+grep -Fq 'constexpr std::size_t kMaxMessageBytes = 1024 * 1024' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
+grep -Fq 'SHLSP900' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
+grep -Fq 'shorthand_lsp' CMakeLists.txt
+
+# CI status hygiene and all prior production guards remain executable evidence.
 grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
 grep -Fq 'PASS signed release and protected publication contract gate' scripts/check_signed_release_contract.sh
 grep -Fq 'PASS external vulnerability SAST dependency and license policy gate' scripts/check_external_security_policy.sh
@@ -111,25 +124,24 @@ grep -Fq 'PASS hardened container runtime' scripts/check_container_runtime.sh
 grep -Fq 'PASS ephemeral Kubernetes production gate' scripts/check_kubernetes_ephemeral_cluster.sh
 grep -Fq 'PASS native Linux arm64 production container qualification' scripts/check_installed_sdk_lifecycle.sh
 grep -Fq 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate' scripts/check_formatter_linter.sh
+grep -Fq 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate' scripts/check_lsp_editor.sh
 
 grep -Fq 'GCC formatter and linter gate' .github/workflows/tooling.yml
 grep -Fq 'Clang formatter and linter gate' .github/workflows/tooling.yml
 grep -Fq 'ASan UBSan formatter and linter gate' .github/workflows/tooling.yml
+grep -Fq 'GCC LSP editor protocol gate' .github/workflows/tooling.yml
+grep -Fq 'Clang LSP editor protocol gate' .github/workflows/tooling.yml
+grep -Fq 'ASan UBSan LSP editor protocol gate' .github/workflows/tooling.yml
 
 bash scripts/check_container_kubernetes_hardening.sh
 bash tests/deployment/test_container_kubernetes_hardening_negative.sh
 
-# TST020 is not closed by source-text presence. Execute the actual formatter and
-# linter against the compiler parser/execution oracle inside the inherited
-# mandatory ubuntu-core path. The fast tooling workflow independently repeats
-# this under GCC, Clang and ASan/UBSan.
+# TST020 and TST021 are executable contracts. Run the exact formatter/linter
+# and LSP/editor gates inside inherited ubuntu-core in addition to fast tooling CI.
 bash scripts/check_formatter_linter.sh
+bash scripts/check_lsp_editor.sh
 
-# `check_feature_plan_status.sh` is a mandatory ubuntu-core CI step. The live
-# cluster test therefore remains exact-head merge evidence without adding a
-# weaker side workflow. Outside GitHub CI the deterministic static/negative
-# contract still runs, while local machines are not silently treated as
-# production cluster evidence.
+# Live Kubernetes qualification remains exact-head merge evidence on Linux amd64.
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "x86_64" ]]; then
   bash scripts/check_kubernetes_ephemeral_cluster.sh
 fi
@@ -145,6 +157,8 @@ unsupported_claim_patterns=(
   "all dependencies are vulnerability-free"
   "all Kubernetes workloads are production qualified"
   "formatter proves semantic equivalence for all future grammar"
+  "LSP supports all IDE features"
+  "editor tooling proves backend execution"
 )
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
@@ -160,4 +174,4 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. PR78 formatter/linter is implemented for shorthand.tooling.format_lint.v1; PR75 signed publication remains fail-closed pending protected-environment execution."
+echo "Feature plan status check passed. PR79 LSP/editor contract shorthand.tooling.lsp.v1 is implemented for the candidate; PR75 signed publication and later production blockers remain fail-closed."
