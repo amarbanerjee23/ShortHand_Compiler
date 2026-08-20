@@ -4,7 +4,7 @@ set -euo pipefail
 VERSION="1.20.1"
 ARCHIVE="onnxruntime-linux-x64-${VERSION}.tgz"
 URL="https://github.com/microsoft/onnxruntime/releases/download/v${VERSION}/${ARCHIVE}"
-SHA256="b6179dfb9ec297862daa3f30691942fe994441c63df3ff3c1fa94b022bba20d8"
+SHA256="67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105"
 DESTINATION="${1:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-${VERSION}}"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
