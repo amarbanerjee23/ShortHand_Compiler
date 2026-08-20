@@ -56,7 +56,7 @@ ONNXRUNTIME_ROOT="${ONNXRUNTIME_ROOT}" bash "${LIVE_TEST}" \
     cat /tmp/shorthand_production_backend_onnx_cpu.err >&2 || true
     exit 1
   }
-grep -Fq 'Output: 42' /tmp/shorthand_production_backend_onnx_cpu.out
+grep -Fq 'Output: 42' /tmp/shorthand_compiled_hook_onnxruntime_success.out
 grep -Fq 'PASS compiled hook ONNX Runtime success gate' /tmp/shorthand_production_backend_onnx_cpu.out
 if grep -Eqi 'SKIP|fallback|backend_not_available|not_executed' \
     /tmp/shorthand_production_backend_onnx_cpu.out /tmp/shorthand_production_backend_onnx_cpu.err; then
@@ -93,6 +93,7 @@ JSON
 grep -Fq '"mandatory_skips":0' "${REPORT}"
 grep -Fq '"backend":"onnxruntime_cpu","device_class":"cpu","status":"qualified_live"' "${REPORT}"
 
+cat /tmp/shorthand_compiled_hook_onnxruntime_success.out
 cat /tmp/shorthand_production_backend_onnx_cpu.out
 printf 'PRODUCTION_BACKEND_QUALIFIED backend=onnxruntime_cpu device=cpu platform=linux-x64 output=42\n'
 printf 'PRODUCTION_ACCELERATOR_BOUNDARY gpu=not_production_supported npu=not_production_supported tpu=not_production_supported\n'
