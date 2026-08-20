@@ -72,6 +72,10 @@ Historical compatibility gate: language versioning and conformance policy gate.
 
 ## Production backend and hardware qualification PR81 boundary
 
+kubernetes_qualification_gate: verified
+
+Kubernetes qualification gate: Verified. The mandatory PR81 path preserves live Kind/cluster qualification through `scripts/check_kubernetes_cluster.sh` and `tests/integration/test_production_backend_hardware_qualification.sh`; missing-cluster, skipped-execution, fallback and unqualified production routing remain fail-closed.
+
 GitHub PR81 implements roadmap PR80 through `shorthand.backend_hardware_qualification.v1`. The production support scope is deliberately versioned as `linux-x64-cpu-v1`. `onnxruntime_cpu` on CPU is the only production-supported backend/device pair in this contract.
 
 The mandatory qualification path downloads ONNX Runtime 1.20.1 from its fixed release asset, verifies the pinned SHA-256, then runs the real C++ runtime bridge against the checked-in identity ONNX model. Input `42` must produce output `42`, the runtime must report `onnxruntime_cpu`, and fallback, not-executed or skip evidence fails the gate.
