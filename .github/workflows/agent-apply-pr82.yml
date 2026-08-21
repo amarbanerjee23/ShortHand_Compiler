@@ -6,6 +6,10 @@ on:
       - agent/pr82-c3eco-language-blocks
     paths:
       - .agent-pr82-payload.b64
+      - .agent-pr82-payload.part00
+      - .agent-pr82-payload.part01
+      - .agent-pr82-payload.part02
+      - .agent-pr82-payload.part03
       - .github/workflows/agent-apply-pr82.yml
 
 permissions:
@@ -26,18 +30,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode .agent-pr82-payload.b64 > "${RUNNER_TEMP}/pr82-payload.tar.gz"
+          cat .agent-pr82-payload.part00 \
+              .agent-pr82-payload.part01 \
+              .agent-pr82-payload.part02 \
+              .agent-pr82-payload.part03 \
+            | base64 --decode > "${RUNNER_TEMP}/pr82-payload.tar.gz"
+          echo "606499a5995c4ac1ea36abc3146a16695a58eb41e5a6b2c6da56965155a6cfcb  ${RUNNER_TEMP}/pr82-payload.tar.gz" | sha256sum --check --strict
+          gzip -t "${RUNNER_TEMP}/pr82-payload.tar.gz"
           mkdir -p "${RUNNER_TEMP}/pr82-payload"
           tar -xzf "${RUNNER_TEMP}/pr82-payload.tar.gz" -C "${RUNNER_TEMP}/pr82-payload"
           git apply --check "${RUNNER_TEMP}/pr82-payload/changes.patch"
           git apply --index "${RUNNER_TEMP}/pr82-payload/changes.patch"
           cp "${RUNNER_TEMP}/pr82-payload/ci.yml" .github/workflows/ci.yml
           git add -- .github/workflows/ci.yml
-          git rm -- .agent-pr82-payload.b64 .github/workflows/agent-apply-pr82.yml
+          git rm -- \
+            .agent-pr82-payload.b64 \
+            .agent-pr82-payload.part00 \
+            .agent-pr82-payload.part01 \
+            .agent-pr82-payload.part02 \
+            .agent-pr82-payload.part03 \
+            .github/workflows/agent-apply-pr82.yml
           git diff --cached --check
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "PR82: implement C3-ECO language and restore qualification CI"
           git push origin HEAD:agent/pr82-c3eco-language-blocks
-
-# connector ref-update trigger
