@@ -1,0 +1,98 @@
+name: agent-fix-pr82-onnx-exceptions
+
+on:
+  push:
+    branches:
+      - agent/pr82-c3eco-language-blocks
+    paths:
+      - .github/workflows/agent-fix-pr82-onnx-exceptions.yml
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/agent-fix-pr82-onnx-exceptions.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-fix-pr82-onnx-exceptions-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  apply:
+    if: github.event_name == 'push' || github.head_ref == 'agent/pr82-c3eco-language-blocks'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: agent/pr82-c3eco-language-blocks
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+
+      - name: Enable recoverable ONNX C++ exceptions after LLVM flags
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          makefile = Path('Compiler_new_ws/Short_Hand/src/Makefile')
+          text = makefile.read_text()
+          old = '$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)'
+          new = '$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) $(ONNX_EXCEPTION_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)'
+          if text.count(old) != 1:
+              raise SystemExit('expected short_hand Makefile compiler command exactly once')
+          text = text.replace(old, new)
+          anchor = 'AI_CXXFLAGS := $(OPTIONAL_BACKEND_DEFS)\nifneq ($(ONNXRUNTIME_ROOT),)\nAI_CXXFLAGS += -I$(ONNXRUNTIME_ROOT)/include\nendif\n'
+          replacement = 'AI_CXXFLAGS := $(OPTIONAL_BACKEND_DEFS)\nONNX_EXCEPTION_CXXFLAGS :=\nifneq ($(ONNXRUNTIME_ROOT),)\nAI_CXXFLAGS += -I$(ONNXRUNTIME_ROOT)/include\n# llvm-config may inject -fno-exceptions; ONNX Runtime C++ uses Ort::Exception.\n# Keep recoverable backend failures by making -fexceptions the final policy flag.\nONNX_EXCEPTION_CXXFLAGS := -fexceptions\nendif\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('expected ONNX Makefile flags block exactly once')
+          makefile.write_text(text.replace(anchor, replacement))
+
+          cmake = Path('CMakeLists.txt')
+          text = cmake.read_text()
+          anchor = '''if(SHORTHAND_HAS_ONNXRUNTIME)\n  target_include_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/include)\n  target_link_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/lib)\n  target_link_libraries(short_hand PRIVATE onnxruntime)\nendif()\n'''
+          replacement = '''if(SHORTHAND_HAS_ONNXRUNTIME)\n  target_include_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/include)\n  target_link_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/lib)\n  target_link_libraries(short_hand PRIVATE onnxruntime)\n  # llvm-config commonly contributes -fno-exceptions. The ONNX Runtime C++ API\n  # throws Ort::Exception, and ShortHand deliberately catches it to return a\n  # recoverable inference result instead of terminating the process.\n  if(MSVC)\n    target_compile_options(short_hand PRIVATE /EHsc)\n  else()\n    target_compile_options(short_hand PRIVATE -fexceptions)\n  endif()\nendif()\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('expected ONNX CMake target block exactly once')
+          cmake.write_text(text.replace(anchor, replacement))
+          PY
+          git diff --check
+
+      - name: Validate live ONNX Make and CMake builds
+        shell: bash
+        run: |
+          set -euo pipefail
+          ORT_ROOT="${RUNNER_TEMP}/shorthand-onnxruntime-1.20.1"
+          bash scripts/install_ci_onnxruntime_cpu.sh "${ORT_ROOT}"
+          export ONNXRUNTIME_ROOT="${ORT_ROOT}"
+          export LD_LIBRARY_PATH="${ORT_ROOT}/lib:${LD_LIBRARY_PATH:-}"
+          make -C Compiler_new_ws/Short_Hand/src clean compiler ONNXRUNTIME_ROOT="${ORT_ROOT}"
+          bash tests/integration/test_onnxruntime_sdk_gate.sh
+          Compiler_new_ws/Short_Hand/build/short_hand tests/conformance/beta_0_2/greenai_language.short parse >/dev/null
+          SHORTHAND_BIN=Compiler_new_ws/Short_Hand/build/short_hand bash scripts/check_c3eco_language_blocks.sh
+          cmake -S . -B /tmp/shorthand-pr82-onnx-cmake -G Ninja \
+            -DSHORTHAND_ENABLE_ONNXRUNTIME=ON \
+            -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
+            -DONNXRUNTIME_ROOT="${ORT_ROOT}"
+          cmake --build /tmp/shorthand-pr82-onnx-cmake --parallel 2 --target short_hand
+
+      - name: Commit validated build-system fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/agent-fix-pr82-onnx-exceptions.yml
+          git add Compiler_new_ws/Short_Hand/src/Makefile CMakeLists.txt
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "PR82: support ONNX exceptions in LLVM-linked builds"
+          git push origin HEAD:agent/pr82-c3eco-language-blocks
