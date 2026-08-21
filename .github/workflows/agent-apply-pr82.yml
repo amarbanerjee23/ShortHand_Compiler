@@ -39,3 +39,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "PR82: implement C3-ECO language and restore qualification CI"
           git push origin HEAD:agent/pr82-c3eco-language-blocks
+
+# connector ref-update trigger
