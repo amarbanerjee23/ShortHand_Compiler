@@ -3,7 +3,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KIND_VERSION="v0.32.0"
+KIND_SHA256_AMD64="50030de23cf40a18505f20426f6a8506bedf13c6e509244bd1fa9463721b0f54"
+KIND_SHA256_ARM64="b92cd615e97585de8ddade28ed5cd7feb4248d717c233eea5b03c37298900f5d"
 KIND_NODE_IMAGE="kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5"
+CALICO_VERSION="v3.31.6"
+CALICO_COMMIT="cc4364f81fbb6dc6fe6e140456c98169dac99f1c"
+CALICO_MANIFEST_URL="https://raw.githubusercontent.com/projectcalico/calico/${CALICO_COMMIT}/manifests/calico.yaml"
 CLUSTER_NAME="shorthand-pr78-${GITHUB_RUN_ID:-local}-$$"
 IMAGE="shorthand:pr78"
 TMP="$(mktemp -d)"
@@ -22,22 +27,38 @@ done
 docker info >/dev/null 2>&1 || { echo "error: Docker daemon unavailable for mandatory deployment qualification" >&2; exit 1; }
 
 case "$(uname -m)" in
-  x86_64) kind_arch=amd64; image_arch=amd64 ;;
-  aarch64|arm64) kind_arch=arm64; image_arch=arm64 ;;
+  x86_64)
+    kind_arch=amd64
+    image_arch=amd64
+    kind_sha256="${KIND_SHA256_AMD64}"
+    ;;
+  aarch64|arm64)
+    kind_arch=arm64
+    image_arch=arm64
+    kind_sha256="${KIND_SHA256_ARM64}"
+    ;;
   *) echo "error: unsupported kind qualification host architecture: $(uname -m)" >&2; exit 1 ;;
 esac
 
-curl --fail-with-body --location --silent --show-error \
-  -o "${TMP}/kind-linux-${kind_arch}" \
-  "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-${kind_arch}"
-curl --fail-with-body --location --silent --show-error \
-  -o "${TMP}/kind-linux-${kind_arch}.sha256sum" \
-  "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-${kind_arch}.sha256sum"
-(
-  cd "${TMP}"
-  sha256sum --check "kind-linux-${kind_arch}.sha256sum"
-)
-mv "${TMP}/kind-linux-${kind_arch}" "${KIND_BIN}"
+kind_download="${TMP}/kind-linux-${kind_arch}"
+kind_url="https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-${kind_arch}"
+echo "INFO acquiring pinned kind ${KIND_VERSION} arch=${kind_arch} from GitHub release assets"
+if ! curl --fail-with-body --location --silent --show-error \
+  --retry 4 --retry-all-errors --retry-delay 2 \
+  --connect-timeout 15 --max-time 120 \
+  -o "${kind_download}" "${kind_url}"; then
+  echo "error: failed to download mandatory kind ${KIND_VERSION} binary for ${kind_arch}" >&2
+  exit 1
+fi
+
+actual_kind_sha256="$(sha256sum "${kind_download}" | awk '{print $1}')"
+if [[ "${actual_kind_sha256}" != "${kind_sha256}" ]]; then
+  echo "error: kind ${KIND_VERSION} SHA-256 mismatch for ${kind_arch}: expected=${kind_sha256} actual=${actual_kind_sha256}" >&2
+  exit 1
+fi
+echo "PASS verified pinned kind ${KIND_VERSION} SHA-256 arch=${kind_arch}"
+
+mv "${kind_download}" "${KIND_BIN}"
 chmod +x "${KIND_BIN}"
 "${KIND_BIN}" version
 
@@ -48,11 +69,20 @@ bash tests/deployment/test_container_kubernetes_hardening_negative.sh
 docker build --pull --platform "linux/${image_arch}" -t "${IMAGE}" .
 bash scripts/check_container_runtime.sh "${IMAGE}" "${image_arch}"
 
+cat >"${TMP}/kind-config.yaml" <<'YAML'
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  disableDefaultCNI: true
+  podSubnet: "192.168.0.0/16"
+nodes:
+  - role: control-plane
+YAML
+
 "${KIND_BIN}" create cluster \
   --name "${CLUSTER_NAME}" \
   --image "${KIND_NODE_IMAGE}" \
-  --wait 150s
-"${KIND_BIN}" load docker-image "${IMAGE}" --name "${CLUSTER_NAME}"
+  --config "${TMP}/kind-config.yaml"
 
 action_kubectl() {
   docker exec "${CONTROL_PLANE}" kubectl --kubeconfig=/etc/kubernetes/admin.conf "$@"
@@ -61,9 +91,28 @@ apply_stdin() {
   docker exec -i "${CONTROL_PLANE}" kubectl --kubeconfig=/etc/kubernetes/admin.conf apply -f -
 }
 
+calico_manifest="${TMP}/calico.yaml"
+echo "INFO acquiring commit-pinned Calico ${CALICO_VERSION} commit=${CALICO_COMMIT}"
+if ! curl --fail-with-body --location --silent --show-error \
+  --retry 4 --retry-all-errors --retry-delay 2 \
+  --connect-timeout 15 --max-time 120 \
+  -o "${calico_manifest}" "${CALICO_MANIFEST_URL}"; then
+  echo "error: failed to download mandatory Calico ${CALICO_VERSION} manifest commit=${CALICO_COMMIT}" >&2
+  exit 1
+fi
+[[ -s "${calico_manifest}" ]] || { echo "error: downloaded Calico manifest is empty" >&2; exit 1; }
+
+apply_stdin <"${calico_manifest}"
+action_kubectl rollout status daemonset/calico-node -n kube-system --timeout=180s
+action_kubectl rollout status deployment/calico-kube-controllers -n kube-system --timeout=180s
+action_kubectl wait --for=condition=Ready node --all --timeout=180s
+action_kubectl get nodes --no-headers | grep -Eq '[[:space:]]Ready[[:space:]]'
+echo "PASS Calico CNI ready version=${CALICO_VERSION} commit=${CALICO_COMMIT}"
+
+"${KIND_BIN}" load docker-image "${IMAGE}" --name "${CLUSTER_NAME}"
+
 action_kubectl version --client
 action_kubectl get nodes -o wide
-action_kubectl get nodes --no-headers | grep -Eq '[[:space:]]Ready[[:space:]]'
 
 apply_stdin < deploy/k8s/production.yaml
 action_kubectl rollout status deployment/shorthand -n shorthand-system --timeout=150s
@@ -282,5 +331,5 @@ if [[ "${replacement_converged}" != 1 ]]; then
   exit 1
 fi
 
-printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 arch=%s replicas=2 restricted=true native_compile=true native_output_isolated=true quota_negative=true network_negative=true restart=true\n' \
-  "${KIND_VERSION}" "${image_arch}"
+printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 cni=%s arch=%s replicas=2 restricted=true native_compile=true native_output_isolated=true quota_negative=true network_negative=true restart=true\n' \
+  "${KIND_VERSION}" "${CALICO_VERSION}" "${image_arch}"

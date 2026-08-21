@@ -8,6 +8,7 @@ required_files=(
   "${STATUS_FILE}"
   docs/compiler_test_strategy.md
   docs/production_readiness_pr_plan.md
+  docs/production_backend_hardware_qualification.md
   docs/execution_semantics_beta_0_3.md
   docs/fuzz_sanitizer_race_hardening.md
   docs/signed_release_publication.md
@@ -19,6 +20,8 @@ required_files=(
   tests/coverage/compiler_test_coverage_matrix.tsv
   tests/tooling/formatter_messy.short
   tests/tooling/formatter_expected.short
+  tests/integration/test_production_backend_hardware_qualification.sh
+  tests/integration/test_compiled_hook_onnxruntime_success.sh
   scripts/check_module_resolution.sh
   scripts/check_semantic_differential.sh
   scripts/check_fuzz_sanitizers.sh
@@ -35,6 +38,9 @@ required_files=(
   scripts/check_kubernetes_ephemeral_cluster.sh
   scripts/check_formatter_linter.sh
   scripts/check_lsp_editor.sh
+  scripts/install_ci_onnxruntime_cpu.sh
+  scripts/check_production_backend_hardware_qualification.sh
+  Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
   Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
@@ -45,6 +51,7 @@ required_files=(
   editors/vscode/syntaxes/shorthand.tmLanguage.json
   tests/deployment/test_container_kubernetes_hardening_negative.sh
   deploy/k8s/production.yaml
+  security/third_party_inventory.tsv
   .github/workflows/tooling.yml
   .github/workflows/release.yml
   .github/workflows/security.yml
@@ -79,24 +86,25 @@ for term in "${required_status_terms[@]}"; do
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-18-pr80' \
+  'feature_status_version: 2026-08-18-pr81' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  '20 implemented, 4 partial and 3 open' \
+  '21 implemented, 3 partial and 3 open' \
   'Roadmap PR75 was implemented and merged as GitHub PR76' \
   'GitHub PR77 implemented and merged roadmap PR76' \
   'GitHub PR78 implemented and merged roadmap PR77' \
   'GitHub PR79 implemented and merged roadmap PR78' \
-  'GitHub PR80 now implements roadmap PR79' \
+  'GitHub PR80 implemented and merged roadmap PR79' \
+  'GitHub PR81 now implements roadmap PR80' \
   'Cross-platform portability | Implemented for PR74 tiers' \
   'Cross-platform reproducibility | Implemented' \
   'Signed releases | Partial' \
   'External vulnerability gate | Implemented' \
   'Container and Kubernetes hardening | Implemented' \
   'Formatter and linter | Implemented' \
-  'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` candidate' \
-  'live production qualification remains PR80'; do
+  'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1`' \
+  'Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` candidate'; do
   grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing current anchor: ${anchor}" >&2; exit 1; }
 done
 
@@ -109,6 +117,11 @@ grep -Fq 'external_security_policy_version: shorthand.security.external.v1' docs
 grep -Fq 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1' docs/container_kubernetes_hardening.md
 grep -Fq 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1' docs/formatter_linter.md
 grep -Fq 'lsp_editor_contract_version: shorthand.tooling.lsp.v1' docs/syntax_highlighting_lsp.md
+grep -Fq 'backend_hardware_qualification_version: shorthand.backend_hardware_qualification.v1' docs/production_backend_hardware_qualification.md
+grep -Fq 'production_scope: linux-x64-cpu-v1' docs/production_backend_hardware_qualification.md
+grep -Fq 'shorthand.backend_hardware_qualification.v1' Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+grep -Fq 'backend_device_not_production_qualified' Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+grep -Fq 'enforceProductionBackendQualification(' Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp
 grep -Fq 'shorthand.lint.v1' Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
 grep -Fq 'fix mode requires --output' Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
 grep -Fq 'constexpr std::size_t kMaxMessageBytes = 1024 * 1024' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
@@ -125,6 +138,8 @@ grep -Fq 'PASS ephemeral Kubernetes production gate' scripts/check_kubernetes_ep
 grep -Fq 'PASS native Linux arm64 production container qualification' scripts/check_installed_sdk_lifecycle.sh
 grep -Fq 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate' scripts/check_formatter_linter.sh
 grep -Fq 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate' scripts/check_lsp_editor.sh
+grep -Fq 'PASS production backend and hardware qualification gate' scripts/check_production_backend_hardware_qualification.sh
+grep -Fq 'PASS verified ONNX Runtime CPU qualification SDK acquisition' scripts/install_ci_onnxruntime_cpu.sh
 
 grep -Fq 'GCC formatter and linter gate' .github/workflows/tooling.yml
 grep -Fq 'Clang formatter and linter gate' .github/workflows/tooling.yml
@@ -133,16 +148,19 @@ grep -Fq 'GCC LSP editor protocol gate' .github/workflows/tooling.yml
 grep -Fq 'Clang LSP editor protocol gate' .github/workflows/tooling.yml
 grep -Fq 'ASan UBSan LSP editor protocol gate' .github/workflows/tooling.yml
 
+# TST019-TST022 are executable contracts. Run deterministic portions on every
+# invocation. Live device/SDK evidence is mandatory on the inherited Linux x64
+# ubuntu-core CI lane and is never represented as a skip.
 bash scripts/check_container_kubernetes_hardening.sh
 bash tests/deployment/test_container_kubernetes_hardening_negative.sh
-
-# TST020 and TST021 are executable contracts. Run the exact formatter/linter
-# and LSP/editor gates inside inherited ubuntu-core in addition to fast tooling CI.
 bash scripts/check_formatter_linter.sh
 bash scripts/check_lsp_editor.sh
+bash tests/integration/test_production_backend_hardware_qualification.sh
 
-# Live Kubernetes qualification remains exact-head merge evidence on Linux amd64.
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "x86_64" ]]; then
+  ORT_ROOT="${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.20.1"
+  bash scripts/install_ci_onnxruntime_cpu.sh "${ORT_ROOT}"
+  ONNXRUNTIME_ROOT="${ORT_ROOT}" bash scripts/check_production_backend_hardware_qualification.sh
   bash scripts/check_kubernetes_ephemeral_cluster.sh
 fi
 
@@ -159,10 +177,13 @@ unsupported_claim_patterns=(
   "formatter proves semantic equivalence for all future grammar"
   "LSP supports all IDE features"
   "editor tooling proves backend execution"
+  "GPU production support is implemented"
+  "TPU production support is implemented"
+  "NPU production support is implemented"
 )
 for pattern in "${unsupported_claim_patterns[@]}"; do
   if grep -qi "${pattern}" "${STATUS_FILE}"; then
-    echo "error: status file contains unsupported readiness/safety/signing/security/deployment/tooling claim: ${pattern}" >&2
+    echo "error: status file contains unsupported readiness/safety/signing/security/deployment/tooling/backend claim: ${pattern}" >&2
     exit 1
   fi
 done
@@ -174,4 +195,4 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. PR79 LSP/editor contract shorthand.tooling.lsp.v1 is implemented for the candidate; PR75 signed publication and later production blockers remain fail-closed."
+echo "Feature plan status check passed. Roadmap PR80 backend/hardware contract shorthand.backend_hardware_qualification.v1 is implemented for the versioned Linux x64 CPU candidate; signed publication and later production blockers remain fail-closed."
