@@ -40,10 +40,10 @@ require_file scripts/check_openvino_optional_fixture.sh
 require_file scripts/check_libtorch_optional_fixture.sh
 require_file scripts/check_llamacpp_optional_fixture.sh
 
-require_contains docs/backend_live_sdk_matrix.md 'backend_live_sdk_matrix_status: optional_matrix_harness'
+require_contains docs/backend_live_sdk_matrix.md 'backend_live_sdk_matrix_status: fail_closed_qualification_matrix'
 require_contains docs/backend_live_sdk_matrix.md 'shorthand.backend_live_sdk_matrix.v1'
 require_contains docs/backend_live_sdk_matrix.md 'live_success'
-require_contains docs/backend_live_sdk_matrix.md 'skip_safe'
+require_contains docs/backend_live_sdk_matrix.md 'negative_qualified'
 require_contains docs/backend_live_sdk_matrix.md 'policy_compatible_only'
 require_contains docs/backend_live_sdk_matrix.md 'dedicated_fixture_planned'
 require_contains docs/backend_live_sdk_matrix.md 'unavailable_path_proved'
@@ -59,7 +59,7 @@ require_contains docs/libtorch_optional_fixture.md 'libtorch_optional_fixture_st
 require_contains docs/llamacpp_optional_fixture.md 'llamacpp_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/llamacpp_optional_fixture.md 'production_claim_boundary: not production-executing yet'
 require_contains docs/backend_compatibility_matrix.md 'Backend live SDK matrix harness'
-require_contains docs/backend_compatibility_matrix.md 'backend_live_sdk_matrix_status: optional_matrix_harness'
+require_contains docs/backend_compatibility_matrix.md 'backend_live_sdk_matrix_status: fail_closed_qualification_matrix'
 require_contains docs/backend_compatibility_matrix.md 'llamacpp_optional_fixture_status: unavailable_path_proof_no_false_success'
 require_contains docs/backend_compatibility_matrix.md 'Hardware capability discovery boundary'
 

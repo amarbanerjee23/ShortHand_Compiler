@@ -396,6 +396,15 @@ if(SHORTHAND_BUILD_TESTING)
   set_tests_properties(green_ai_tool_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   add_test(
+    NAME c3eco_language_blocks
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_language_blocks.sh
+  )
+  set_tests_properties(c3eco_language_blocks PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>"
+  )
+
+  add_test(
     NAME cmake_short_hand_greenai_run
     COMMAND $<TARGET_FILE:short_hand> ${CMAKE_CURRENT_SOURCE_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short run
   )

@@ -1,0 +1,7 @@
+int seed;
+token_budget budget {
+  input_tokens_p95 "2048";
+  output_tokens_p95 "512";
+  cache_hit_rate_min_percent "20";
+  unlimited_tokens "true";
+};

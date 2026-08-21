@@ -658,6 +658,11 @@ int Interpreter::visit(AST_GREENAI_MEASUREMENT *n)
     return 0;
 }
 
+int Interpreter::visit(AST_C3ECO_DECLARATION *)
+{
+    return 0;
+}
+
 int Interpreter::visit(AST_INFER_STATEMENT *n)
 {
     auto modelIt = aiModels.find(n->model_name);

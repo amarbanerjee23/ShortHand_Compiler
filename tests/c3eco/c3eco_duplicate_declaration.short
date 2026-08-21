@@ -1,0 +1,11 @@
+int seed;
+functional_unit request {
+  denominator "successful_inference";
+  success_condition "response_returned";
+  quality_threshold "accuracy>=0.90";
+};
+functional_unit request {
+  denominator "successful_inference";
+  success_condition "response_returned";
+  quality_threshold "accuracy>=0.90";
+};

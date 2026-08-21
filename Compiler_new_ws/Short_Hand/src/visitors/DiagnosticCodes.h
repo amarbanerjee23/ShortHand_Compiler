@@ -69,6 +69,10 @@ inline constexpr const char *GreenAIInvalidClaimsMode = "SHD5007";
 inline constexpr const char *GreenAIInvalidBudget = "SHD5008";
 inline constexpr const char *GreenAIMeasureUnknownContract = "SHD5009";
 inline constexpr const char *GreenAIMeasureExternalBackend = "SHD5010";
+inline constexpr const char *C3EcoDuplicateDeclaration = "SHD5101";
+inline constexpr const char *C3EcoMissingRequiredField = "SHD5102";
+inline constexpr const char *C3EcoInvalidField = "SHD5103";
+inline constexpr const char *C3EcoUnsafeCertificationClaim = "SHD5104";
 
 inline constexpr const char *LoweringUndefinedFunction = "SHD6001";
 

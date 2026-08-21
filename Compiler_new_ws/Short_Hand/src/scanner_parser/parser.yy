@@ -12,6 +12,7 @@
 static ModelDeclarationData current_model;
 static GreenAIContractData current_contract;
 static GreenAIMeasurementData current_measure;
+static C3EcoDeclarationData current_c3eco;
 static std::string current_module_path;
 static std::string current_import_alias;
 using namespace std;
@@ -114,6 +115,34 @@ static AST_MODULE_PREAMBLE *shorthand_ensure_module_preamble(const YYLTYPE &loc)
     }
     return main_module_preamble;
 }
+
+static void shorthand_begin_c3eco(C3EcoDeclarationKind kind, const char *name) {
+    current_c3eco = C3EcoDeclarationData();
+    current_c3eco.kind = kind;
+    current_c3eco.name = name == nullptr ? "" : std::string(name);
+}
+
+static std::string shorthand_unquote(const char *value) {
+    if (value == nullptr) return "";
+    std::string text(value);
+    if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
+        return text.substr(1, text.size() - 2);
+    return text;
+}
+
+static void shorthand_add_c3eco_field(const char *name, const char *value) {
+    const std::string field_name = name == nullptr ? "" : std::string(name);
+    for (auto &field : current_c3eco.fields) {
+        if (field.name == field_name) {
+            field.values.push_back(shorthand_unquote(value));
+            return;
+        }
+    }
+    C3EcoFieldData field;
+    field.name = field_name;
+    field.values.push_back(shorthand_unquote(value));
+    current_c3eco.fields.push_back(field);
+}
 }
 
 %start PROGRAMME_RULE
@@ -134,9 +163,10 @@ static AST_MODULE_PREAMBLE *shorthand_ensure_module_preamble(const YYLTYPE &loc)
 %type <tensor_decl> TENSOR_DECLARATION
 %type <greenai_contract> GREENAI_CONTRACT
 %type <greenai_measure> GREENAI_MEASUREMENT
+%type <c3eco_decl> C3ECO_DECLARATION
 %type <infer_statement> INFER_STATEMENT
 %type <return_statement> RETURN_STATEMENT
-%type <string_val> BACKEND_NAME FORMAT_NAME PRECISION_NAME MQ_NAME DQ_NAME BOUNDARY_NAME
+%type <string_val> BACKEND_NAME FORMAT_NAME PRECISION_NAME MQ_NAME DQ_NAME BOUNDARY_NAME C3ECO_FIELD_NAME
 %type <expression> EXPRESSION_RULE
 %type <type> ShortType
 
@@ -159,6 +189,7 @@ static AST_MODULE_PREAMBLE *shorthand_ensure_module_preamble(const YYLTYPE &loc)
 %token PACKAGE MODULE IMPORT AS
 %token MODEL FORMAT PATH TASK PRECISION INPUT_SHAPE OUTPUT_SHAPE BACKEND_PREFERENCE COMPACT QUALITY_GUARDRAIL
 %token GREENAI_CONTRACT_T FUNCTIONAL_UNIT SUCCESS_CRITERIA BOUNDARY MEASUREMENT_QUALITY DATA_QUALITY CARBON_FACTOR ENERGY_BUDGET_J CARBON_BUDGET_GCO2E EVIDENCE_RETENTION CLAIMS_MODE EVIDENCE_ONLY GREENAI_MEASURE INFER TENSOR
+%token CERTIFICATION WORKLOAD MEASUREMENT_PLAN AI_LIFECYCLE RAG_PIPELINE TOKEN_BUDGET MODEL_ROUTING GUARDRAILS
 %token INT8 FP16 FP32 BF16 INT4 FP64 ONNX ENGINE TORCHSCRIPT OPENVINO_IR GGUF TENSORRT ONNXRUNTIME_TENSORRT ONNXRUNTIME_CUDA ONNXRUNTIME_CPU OPENVINO LIBTORCH LLAMACPP FALLBACK
 %token MQ1 MQ2 MQ3 MQ4 DQ1 DQ2 DQ3 DQ4 LOCATION CI_CD THIRDPARTY ACCELERATOR COMPUTE STORAGE NETWORK
 
@@ -278,6 +309,7 @@ STATEMENT_RULE:
     | TENSOR_DECLARATION { $$=$1; }
     | GREENAI_CONTRACT { $$=$1; }
     | GREENAI_MEASUREMENT { $$=$1; }
+    | C3ECO_DECLARATION { $$=$1; }
     | INFER_STATEMENT { $$=$1; }
     | RETURN_STATEMENT { $$=$1; }
     | CONTINUE ';' { $$=located(new AST_CONTINUE(), @$); }
@@ -327,6 +359,27 @@ BOUNDARY_LIST: BOUNDARY_LIST ',' BOUNDARY_NAME { current_contract.boundary.push_
 GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER '{' { current_measure=GreenAIMeasurementData(); current_measure.workload=$2; } MEASURE_FIELD_LIST '}' ';' { $$=located(new AST_GREENAI_MEASUREMENT(current_measure), @$); };
 MEASURE_FIELD_LIST: MEASURE_FIELD_LIST MEASURE_FIELD | %empty;
 MEASURE_FIELD: IDENTIFIER INT_LITERAL ';' { string n=$1; if(n=="inferences") current_measure.inferences=$2; else if(n=="watts") current_measure.watts=$2; else if(n=="seconds") current_measure.seconds=$2; } | IDENTIFIER IDENTIFIER ';' { if(string($1)=="backend") current_measure.backend=$2; };
+
+C3ECO_DECLARATION:
+      CERTIFICATION IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Certification, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | FUNCTIONAL_UNIT IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::FunctionalUnit, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | WORKLOAD IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Workload, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | BOUNDARY IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Boundary, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | MEASUREMENT_PLAN IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::MeasurementPlan, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | AI_LIFECYCLE IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::AILifecycle, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | RAG_PIPELINE IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::RAGPipeline, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | TOKEN_BUDGET IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::TokenBudget, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | MODEL_ROUTING IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::ModelRouting, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | GUARDRAILS IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Guardrails, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); };
+C3ECO_FIELD_LIST: C3ECO_FIELD_LIST C3ECO_FIELD | %empty;
+C3ECO_FIELD: C3ECO_FIELD_NAME STRING_LITERAL ';' { shorthand_add_c3eco_field($1, $2); };
+C3ECO_FIELD_NAME:
+      IDENTIFIER { $$=$1; }
+    | CARBON_FACTOR { $$=(char*)"carbon_factor"; }
+    | FALLBACK { $$=(char*)"fallback"; }
+    | QUALITY_GUARDRAIL { $$=(char*)"quality_guardrail"; }
+    | FUNCTIONAL_UNIT { $$=(char*)"functional_unit"; }
+    | BOUNDARY { $$=(char*)"boundary"; };
 
 FORMAT_NAME: ONNX {$$=(char*)"onnx";} | ENGINE {$$=(char*)"engine";} | TORCHSCRIPT {$$=(char*)"torchscript";} | OPENVINO_IR {$$=(char*)"openvino_ir";} | GGUF {$$=(char*)"gguf";};
 PRECISION_NAME: INT8 {$$=(char*)"int8";} | INT4 {$$=(char*)"int4";} | FP16 {$$=(char*)"fp16";} | FP32 {$$=(char*)"fp32";} | BF16 {$$=(char*)"bf16";} | FP64 {$$=(char*)"fp64";} | FLOAT {$$=(char*)"float";};

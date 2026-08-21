@@ -29,7 +29,7 @@ public:
     int visit(AST_LABEL_RULE * label_statement);
     int visit(AST_GREENAI_REPORT_RULE * greenai_report);
     int visit(AST_AI_INFER_RULE * ai_infer);
-    int visit(AST_MODEL_DECLARATION *); int visit(AST_TENSOR_DECLARATION *); int visit(AST_GREENAI_CONTRACT *); int visit(AST_GREENAI_MEASUREMENT *); int visit(AST_INFER_STATEMENT *); int visit(AST_CONTINUE *); int visit(AST_RETURN_STATEMENT *);
+    int visit(AST_MODEL_DECLARATION *); int visit(AST_TENSOR_DECLARATION *); int visit(AST_GREENAI_CONTRACT *); int visit(AST_GREENAI_MEASUREMENT *); int visit(AST_C3ECO_DECLARATION *); int visit(AST_INFER_STATEMENT *); int visit(AST_CONTINUE *); int visit(AST_RETURN_STATEMENT *);
 
     int visit(AST_BINARY_EXPRESSION_RULE * binary_operator_expression);
     int visit(AST_UNARY_EXPRESSION_RULE * unary_operator_expression);

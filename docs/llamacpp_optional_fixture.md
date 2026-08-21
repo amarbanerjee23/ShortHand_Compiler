@@ -30,7 +30,7 @@ The fixture must prove:
 5. Runtime success counters remain zero.
 6. Hardware inventory may detect CPU, GPU, TPU, or NPU, but no device may be treated as execution-ready without an available compatible Llama.cpp backend.
 7. Runtime telemetry and bridge evidence remain non-success.
-8. The shared backend matrix records `llamacpp` as `skip_safe`, never `live_success`.
+8. The shared backend matrix records `llamacpp` as `negative_qualified`, never `live_success`.
 
 ## Default CI behavior
 

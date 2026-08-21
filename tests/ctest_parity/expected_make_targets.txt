@@ -1,6 +1,7 @@
 test-unit
 test-integration
 test-green
+test-c3eco
 test-compiler
 test-negative
 test-diagnostics

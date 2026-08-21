@@ -103,8 +103,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 67 ]] || {
-  echo "error: expected 67 stable diagnostics after the PR72 semantic/runtime expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 71 ]] || {
+  echo "error: expected 71 stable diagnostics after the PR82 C3-ECO language expansion" >&2
   exit 1
 }
 
@@ -118,7 +118,7 @@ awk -F '\t' '
   $2 !~ /^(parser|module|semantic|ai|greenai|lowering|runtime)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 68) exit 16 }
+  END { if (NR != 72) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1

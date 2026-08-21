@@ -1,12 +1,12 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-18-pr80
+production_readiness_plan_version: 2026-08-21-pr81
 PLAN_STATUS: active
-LAST_COMPLETED_PR: 79
+LAST_COMPLETED_PR: 80
 MERGED_OUT_OF_BAND_PR: 71
-CURRENT_IMPLEMENTATION_PR: 80
-GITHUB_IMPLEMENTATION_PR: 81
-NEXT_IMPLEMENTATION_PR_AFTER_PR80: 81
+CURRENT_IMPLEMENTATION_PR: 81
+GITHUB_IMPLEMENTATION_PR: 82
+NEXT_IMPLEMENTATION_PR_AFTER_PR81: 82
 BASELINE_LANGUAGE_VERSION: beta-0.3
 TARGET: enterprise production usage ready language
 
@@ -20,13 +20,13 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 Roadmap PR69 through PR79 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75. Roadmap PR75 was implemented as GitHub PR76. Roadmap PR76 was implemented as GitHub PR77. Roadmap PR77 was implemented as GitHub PR78. Roadmap PR78 was implemented as GitHub PR79. Roadmap PR79 was implemented and merged as GitHub PR80 with scanner-aligned syntax highlighting and the native compiler-backed LSP baseline.
 
-Roadmap PR80 is now the active implementation and is carried by GitHub PR81. It establishes a versioned production backend/device support boundary, makes ONNX Runtime CPU live numerical execution mandatory for the declared Linux x64 CPU production row, and prevents detected or SDK-visible GPU/TPU/NPU paths from becoming production-qualified without real device-backed numerical evidence.
+Roadmap PR80 was implemented and merged as GitHub PR81 with the versioned production backend/device support boundary and mandatory ONNX Runtime CPU live qualification. Roadmap PR81 is now the active implementation and is carried by GitHub PR82. It makes C3-ECO certification-oriented declarations first-class parser/AST/semantic/evidence constructs while preserving fail-closed backend and Kubernetes qualification.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. TST022 closes for the versioned `linux-x64-cpu-v1` support contract only after the exact GitHub PR81 head passes mandatory live ONNX Runtime CPU numerical execution and all inherited CI. GPU, TPU and NPU production support is not claimed by this version.
 
-## PR80 completion contract
+## PR81 completion contract
 
-Roadmap PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix is IN PROGRESS as GitHub PR81.
+Roadmap PR81 - Complete C3-ECO language blocks is IN PROGRESS as GitHub PR82.
 
 Implementation requirements:
 
@@ -59,7 +59,7 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification in mandatory compiler CI, GitHub PR79 retains formatter/linter qualification and GitHub PR80 retains LSP/editor qualification. GitHub PR81 adds live versioned backend/hardware qualification to inherited `ubuntu-core`. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification in mandatory compiler CI, GitHub PR79 retains formatter/linter qualification and GitHub PR80 retains LSP/editor qualification. GitHub PR81 retains live versioned backend/hardware qualification in inherited `ubuntu-core`. GitHub PR82 adds the first-class C3-ECO frontend/semantic/evidence gate and mandatory zero-skip qualification policy. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -77,8 +77,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR77 - Container and Kubernetes production hardening | MERGED as GitHub PR78 | Multi-stage native images, Restricted Pod Security, quota, PDB and default-deny network policy. | Native container execution plus ephemeral Kind integration. | Runtime security, quota/network negatives, restart and graceful shutdown. |
 | PR78 - Formatter and linter baseline | MERGED as GitHub PR79 | Native deterministic formatter/linter and safe explicit-output fixes. | Fast tooling job plus inherited ubuntu-core execution. | Idempotence, parse roundtrip, behavior preservation and sanitizers. |
 | PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80 | Scanner-aligned editor grammar plus native compiler-backed LSP. | Dedicated protocol job plus inherited ubuntu-core execution. | Framing, diagnostics, UTF-16, navigation, cancellation and sanitizers. |
-| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | IN PROGRESS as GitHub PR81 | Versioned production backend/device support with mandatory ONNX Runtime CPU live numerical evidence and fail-closed accelerator boundaries. | Pinned qualification SDK plus mandatory inherited ubuntu-core live gate. | Output `42`, no fallback/skip, route rejection and structured support matrix. |
-| PR81 - Complete C3-ECO language blocks | PLANNED | Complete certification-oriented syntax/AST/semantics/evidence declarations without granting certification. | C3-ECO frontend gate. | Grammar/AST, units, valid/invalid contracts and sanitizer tests. |
+| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | MERGED as GitHub PR81 | Versioned production backend/device support with mandatory ONNX Runtime CPU live numerical evidence and fail-closed accelerator boundaries. | Pinned qualification SDK plus mandatory inherited ubuntu-core live gate. | Output `42`, no fallback/skip, route rejection and structured support matrix. |
+| PR81 - Complete C3-ECO language blocks | IN PROGRESS as GitHub PR82 | Complete certification-oriented syntax/AST/semantics/evidence declarations without granting certification. | C3-ECO frontend gate. | Grammar/AST, units, valid/invalid contracts and sanitizer tests. |
 | PR82 - Measured scoring, reports and eco-regression | PLANNED | Energy/carbon/cost calculations with provenance, uncertainty, quality and baselines. | Deterministic eco-regression job. | Equation, threshold, stale-factor, unit and missing-sensor tests. |
 | PR83 - Authority-ready C3-ECO auditor bundle | PLANNED | Signed manifests, source/binary/model/measurement lineage, retention, redaction and verification. | RC bundle verification dependency. | Tamper, lineage, signature, schema, redaction and clean-room replay. |
 | PR84 - Generated MLIR dialect build integration | PLANNED | TableGen-generated dialect, operations, types, verifiers, installation and downstream consumption. | MLIR build/lit job. | FileCheck, verifiers, roundtrip, installed consumer and freshness. |
@@ -87,12 +87,12 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr80_through_pr86: 7
-remaining_planned_implementation_prs_after_pr80: 6
+remaining_planned_implementation_prs_pr81_through_pr86: 6
+remaining_planned_implementation_prs_after_pr81: 5
 
-Next recommended roadmap PR after PR80 is merged:
+Next recommended roadmap PR after PR81 is merged:
 
-PR81 - Complete C3-ECO language blocks.
+PR82 - Measured scoring, reports and eco-regression.
 
 ## External production blocker not counted as an implementation PR
 
@@ -101,6 +101,15 @@ TST017 remains partial until repository administration configures the `productio
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
+
+- production_readiness_plan_version: 2026-08-18-pr80
+- CURRENT_IMPLEMENTATION_PR: 80
+- GITHUB_IMPLEMENTATION_PR: 81
+- NEXT_IMPLEMENTATION_PR_AFTER_PR80: 81
+- remaining_planned_implementation_prs_pr80_through_pr86: 7
+- remaining_planned_implementation_prs_after_pr80: 6
+- | PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | IN PROGRESS as GitHub PR81
+- | PR81 - Complete C3-ECO language blocks | PLANNED
 
 - production_readiness_plan_version: 2026-08-18-pr79
 - LAST_COMPLETED_PR: 78

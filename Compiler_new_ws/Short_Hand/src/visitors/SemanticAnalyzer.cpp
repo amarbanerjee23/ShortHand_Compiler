@@ -48,6 +48,58 @@ static const char *shortTypeName(ShortType type) {
     return "unknown";
 }
 
+static std::set<std::string> c3EcoRequiredFields(C3EcoDeclarationKind kind) {
+    switch (kind) {
+        case C3EcoDeclarationKind::Certification:
+            return {"version", "owner", "software_class", "deployment_mode", "geography", "validity_period"};
+        case C3EcoDeclarationKind::FunctionalUnit:
+            return {"denominator", "success_condition", "quality_threshold"};
+        case C3EcoDeclarationKind::Workload:
+            return {"traffic_profile", "batch_size", "concurrency", "warmup_runs", "measured_runs", "cache_state"};
+        case C3EcoDeclarationKind::Boundary:
+            return {"include"};
+        case C3EcoDeclarationKind::MeasurementPlan:
+            return {"instrument", "carbon_factor", "sampling", "uncertainty", "retention"};
+        case C3EcoDeclarationKind::AILifecycle:
+            return {"role", "model_provider", "lifecycle_scope", "training_included", "fine_tuning_included", "evaluation_included"};
+        case C3EcoDeclarationKind::RAGPipeline:
+            return {"embedding_model", "vector_db", "retrieval_top_k", "cache_policy"};
+        case C3EcoDeclarationKind::TokenBudget:
+            return {"input_tokens_p95", "output_tokens_p95", "cache_hit_rate_min_percent"};
+        case C3EcoDeclarationKind::ModelRouting:
+            return {"route", "fallback"};
+        case C3EcoDeclarationKind::Guardrails:
+            return {"functional_tests", "accuracy", "p95_latency_ms", "error_rate_percent", "security_scan", "accessibility", "privacy_telemetry"};
+    }
+    return {};
+}
+
+static std::set<std::string> c3EcoAllowedFields(C3EcoDeclarationKind kind) {
+    std::set<std::string> allowed = c3EcoRequiredFields(kind);
+    if (kind == C3EcoDeclarationKind::Boundary) {
+        allowed.insert("exclude");
+        allowed.insert("evidence");
+    }
+    return allowed;
+}
+
+static bool c3EcoHasField(const C3EcoDeclarationData &data, const std::string &name) {
+    for (const auto &field : data.fields) if (field.name == name) return true;
+    return false;
+}
+
+static std::string c3EcoFieldText(const C3EcoDeclarationData &data, const std::string &name) {
+    std::string text;
+    for (const auto &field : data.fields) {
+        if (field.name != name) continue;
+        for (const auto &value : field.values) {
+            if (!text.empty()) text += " ";
+            text += value;
+        }
+    }
+    return text;
+}
+
 std::set<std::string> SemanticAnalyzer::functionNames(AST_PROGRAM *program) {
     std::set<std::string> names;
     if (program == nullptr || program->functions == nullptr) return names;
@@ -328,6 +380,64 @@ int SemanticAnalyzer::visit(AST_GREENAI_MEASUREMENT *n) {
             n, diag::GreenAIMeasureExternalBackend,
             "greenai_measure backend " + n->data.backend +
             " is not a declared model; treating as external measurement source");
+    return 0;
+}
+
+int SemanticAnalyzer::visit(AST_C3ECO_DECLARATION *n) {
+    const auto &data = n->data;
+    const std::string kind = c3EcoDeclarationKindName(data.kind);
+    const std::string key = kind + ":" + data.name;
+    if (!c3eco_declarations.insert(key).second) {
+        diagnostics.errorAtNode(n, diag::C3EcoDuplicateDeclaration,
+                                "duplicate C3-ECO declaration: " + key);
+    }
+
+    const std::set<std::string> required = c3EcoRequiredFields(data.kind);
+    const std::set<std::string> allowed = c3EcoAllowedFields(data.kind);
+    static const std::set<std::string> unsafe = {
+        "official_certification_granted", "certified_level", "certificate_id", "certified"};
+
+    for (const auto &field : data.fields) {
+        if (unsafe.count(field.name) != 0U) {
+            diagnostics.errorAtNode(
+                n, diag::C3EcoUnsafeCertificationClaim,
+                "C3-ECO declaration must not self-assert certification field `" + field.name + "`");
+            continue;
+        }
+        if (allowed.count(field.name) == 0U) {
+            diagnostics.errorAtNode(
+                n, diag::C3EcoInvalidField,
+                "invalid field `" + field.name + "` for C3-ECO " + kind + " declaration");
+        }
+    }
+
+    for (const auto &field : required) {
+        if (!c3EcoHasField(data, field)) {
+            diagnostics.errorAtNode(
+                n, diag::C3EcoMissingRequiredField,
+                "C3-ECO " + kind + " declaration `" + data.name + "` missing required field `" + field + "`");
+        }
+    }
+
+    if (data.kind == C3EcoDeclarationKind::MeasurementPlan && c3EcoHasField(data, "carbon_factor")) {
+        const std::string carbon = c3EcoFieldText(data, "carbon_factor");
+        if (carbon.find("source") == std::string::npos || carbon.find("unit") == std::string::npos) {
+            diagnostics.errorAtNode(
+                n, diag::C3EcoInvalidField,
+                "measurement_plan carbon_factor must name both source and unit");
+        }
+    }
+
+    if (data.kind == C3EcoDeclarationKind::Boundary && c3EcoHasField(data, "exclude")) {
+        const std::string evidence = c3EcoFieldText(data, "evidence");
+        if (evidence.find("component") == std::string::npos ||
+            evidence.find("reason") == std::string::npos ||
+            evidence.find("materiality") == std::string::npos) {
+            diagnostics.errorAtNode(
+                n, diag::C3EcoInvalidField,
+                "boundary exclusions require evidence naming component, reason and materiality");
+        }
+    }
     return 0;
 }
 

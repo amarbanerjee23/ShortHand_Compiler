@@ -102,6 +102,7 @@ public:
     int visit(AST_TENSOR_DECLARATION *);
     int visit(AST_GREENAI_CONTRACT *);
     int visit(AST_GREENAI_MEASUREMENT *);
+    int visit(AST_C3ECO_DECLARATION *);
     int visit(AST_INFER_STATEMENT *);
     int visit(AST_CONTINUE *);
     int visit(AST_RETURN_STATEMENT *);

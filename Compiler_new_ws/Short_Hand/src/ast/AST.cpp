@@ -237,6 +237,23 @@ AST_GREENAI_CONTRACT::AST_GREENAI_CONTRACT(const GreenAIContractData &data){ thi
 int AST_GREENAI_CONTRACT::accept(Visitor & v){ return v.visit(this); }
 AST_GREENAI_MEASUREMENT::AST_GREENAI_MEASUREMENT(const GreenAIMeasurementData &data){ this->data = data; }
 int AST_GREENAI_MEASUREMENT::accept(Visitor & v){ return v.visit(this); }
+const char *c3EcoDeclarationKindName(C3EcoDeclarationKind kind) {
+    switch (kind) {
+        case C3EcoDeclarationKind::Certification: return "certification";
+        case C3EcoDeclarationKind::FunctionalUnit: return "functional_unit";
+        case C3EcoDeclarationKind::Workload: return "workload";
+        case C3EcoDeclarationKind::Boundary: return "boundary";
+        case C3EcoDeclarationKind::MeasurementPlan: return "measurement_plan";
+        case C3EcoDeclarationKind::AILifecycle: return "ai_lifecycle";
+        case C3EcoDeclarationKind::RAGPipeline: return "rag_pipeline";
+        case C3EcoDeclarationKind::TokenBudget: return "token_budget";
+        case C3EcoDeclarationKind::ModelRouting: return "model_routing";
+        case C3EcoDeclarationKind::Guardrails: return "guardrails";
+    }
+    return "unknown";
+}
+AST_C3ECO_DECLARATION::AST_C3ECO_DECLARATION(const C3EcoDeclarationData &data){ this->data = data; }
+int AST_C3ECO_DECLARATION::accept(Visitor & v){ return v.visit(this); }
 AST_INFER_STATEMENT::AST_INFER_STATEMENT(string m,string i,string o){ model_name=m; input_name=i; output_name=o; }
 int AST_INFER_STATEMENT::accept(Visitor & v){ return v.visit(this); }
 AST_BOOL_LITERAL::AST_BOOL_LITERAL(bool value){ this->value = value; }

@@ -18,8 +18,8 @@ record() {
 
 run_onnxruntime_cpu() {
   if [[ -z "${ONNXRUNTIME_ROOT:-}" ]]; then
-    record "onnxruntime_cpu" "onnx" "skip_safe" "ONNXRUNTIME_ROOT_not_set" "compiled_hook_onnxruntime_success"
-    return 0
+    echo "error: ONNXRUNTIME_ROOT is mandatory for the production-supported ONNX Runtime CPU matrix row" >&2
+    return 1
   fi
 
   if bash "${ROOT_DIR}/tests/integration/test_compiled_hook_onnxruntime_success.sh" \
@@ -47,8 +47,8 @@ run_tensorrt_rows() {
       2>/tmp/shorthand_backend_matrix_tensorrt.err; then
     if grep -q 'PASS tensorrt optional fixture gate' /tmp/shorthand_backend_matrix_tensorrt.out && \
        grep -q 'TENSORRT_FIXTURE backend=tensorrt status=unavailable_path_proved' /tmp/shorthand_backend_matrix_tensorrt.out; then
-      record "onnxruntime_tensorrt" "onnx" "skip_safe" "onnxruntime_tensorrt_ep_fixture_not_enabled_no_false_success" "tensorrt_optional_fixture"
-      record "tensorrt" "engine" "skip_safe" "tensorrt_unavailable_path_proved_no_false_success" "tensorrt_optional_fixture"
+      record "onnxruntime_tensorrt" "onnx" "negative_qualified" "onnxruntime_tensorrt_ep_fixture_not_enabled_no_false_success" "tensorrt_optional_fixture"
+      record "tensorrt" "engine" "negative_qualified" "tensorrt_unavailable_path_proved_no_false_success" "tensorrt_optional_fixture"
     else
       echo "error: TensorRT optional fixture completed without required proof markers" >&2
       cat /tmp/shorthand_backend_matrix_tensorrt.out >&2 || true
@@ -69,7 +69,7 @@ run_openvino_row() {
       2>/tmp/shorthand_backend_matrix_openvino.err; then
     if grep -q 'PASS openvino optional fixture gate' /tmp/shorthand_backend_matrix_openvino.out && \
        grep -q 'OPENVINO_FIXTURE backend=openvino status=unavailable_path_proved' /tmp/shorthand_backend_matrix_openvino.out; then
-      record "openvino" "openvino_ir" "skip_safe" "openvino_unavailable_path_proved_no_false_success" "openvino_optional_fixture"
+      record "openvino" "openvino_ir" "negative_qualified" "openvino_unavailable_path_proved_no_false_success" "openvino_optional_fixture"
     else
       echo "error: OpenVINO optional fixture completed without required proof markers" >&2
       cat /tmp/shorthand_backend_matrix_openvino.out >&2 || true
@@ -90,7 +90,7 @@ run_libtorch_row() {
       2>/tmp/shorthand_backend_matrix_libtorch.err; then
     if grep -q 'PASS libtorch optional fixture gate' /tmp/shorthand_backend_matrix_libtorch.out && \
        grep -q 'LIBTORCH_FIXTURE backend=libtorch status=unavailable_path_proved' /tmp/shorthand_backend_matrix_libtorch.out; then
-      record "libtorch" "torchscript" "skip_safe" "libtorch_unavailable_path_proved_no_false_success" "libtorch_optional_fixture"
+      record "libtorch" "torchscript" "negative_qualified" "libtorch_unavailable_path_proved_no_false_success" "libtorch_optional_fixture"
     else
       echo "error: LibTorch optional fixture completed without required proof markers" >&2
       cat /tmp/shorthand_backend_matrix_libtorch.out >&2 || true
@@ -111,7 +111,7 @@ run_llamacpp_row() {
       2>/tmp/shorthand_backend_matrix_llamacpp.err; then
     if grep -q 'PASS llamacpp optional fixture gate' /tmp/shorthand_backend_matrix_llamacpp.out && \
        grep -q 'LLAMACPP_FIXTURE backend=llamacpp status=unavailable_path_proved' /tmp/shorthand_backend_matrix_llamacpp.out; then
-      record "llamacpp" "gguf" "skip_safe" "llamacpp_unavailable_path_proved_no_false_success" "llamacpp_optional_fixture"
+      record "llamacpp" "gguf" "negative_qualified" "llamacpp_unavailable_path_proved_no_false_success" "llamacpp_optional_fixture"
     else
       echo "error: Llama.cpp optional fixture completed without required proof markers" >&2
       cat /tmp/shorthand_backend_matrix_llamacpp.out >&2 || true
@@ -134,9 +134,9 @@ planned_backend() {
   local value="${!env_var-}"
 
   if [[ -n "${value}" ]]; then
-    record "${backend}" "${format}" "skip_safe" "${env_var}_set_but_dedicated_fixture_planned_${planned_pr}" "dedicated_fixture_planned"
+    record "${backend}" "${format}" "not_production_qualified" "${env_var}_set_but_dedicated_fixture_planned_${planned_pr}" "dedicated_fixture_planned"
   else
-    record "${backend}" "${format}" "skip_safe" "${env_var}_not_set_policy_compatible_only" "policy_compatible_only"
+    record "${backend}" "${format}" "not_production_qualified" "${env_var}_not_set_policy_compatible_only" "policy_compatible_only"
   fi
 }
 
@@ -170,7 +170,7 @@ if grep -E '"backend":"(onnxruntime_cuda|onnxruntime_tensorrt|tensorrt|openvino|
   exit 1
 fi
 
-if ! grep -Eq '"status":"(live_success|skip_safe)"' "${REPORT}"; then
+if ! grep -Eq '"status":"(live_success|negative_qualified|not_production_qualified)"' "${REPORT}"; then
   echo "error: matrix harness produced no usable row status" >&2
   cat "${REPORT}" >&2 || true
   exit 1

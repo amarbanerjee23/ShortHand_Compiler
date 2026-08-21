@@ -36,6 +36,7 @@ class AST_MODEL_DECLARATION;
 class AST_TENSOR_DECLARATION;
 class AST_GREENAI_CONTRACT;
 class AST_GREENAI_MEASUREMENT;
+class AST_C3ECO_DECLARATION;
 class AST_INFER_STATEMENT;
 class AST_CONTINUE;
 class AST_RETURN_STATEMENT;
@@ -103,6 +104,7 @@ union _NODE_
     AST_TENSOR_DECLARATION * tensor_decl;
     AST_GREENAI_CONTRACT * greenai_contract;
     AST_GREENAI_MEASUREMENT * greenai_measure;
+    AST_C3ECO_DECLARATION * c3eco_decl;
     AST_INFER_STATEMENT * infer_statement;
     AST_RETURN_STATEMENT * return_statement;
     AST_EXPRESSION_RULE * expression;
@@ -148,6 +150,7 @@ public:
     virtual int visit(AST_TENSOR_DECLARATION *) = 0;
     virtual int visit(AST_GREENAI_CONTRACT *) = 0;
     virtual int visit(AST_GREENAI_MEASUREMENT *) = 0;
+    virtual int visit(AST_C3ECO_DECLARATION *) = 0;
     virtual int visit(AST_INFER_STATEMENT *) = 0;
     virtual int visit(AST_CONTINUE *) = 0;
     virtual int visit(AST_RETURN_STATEMENT *) = 0;
@@ -410,10 +413,37 @@ struct TensorDeclarationData { std::string name, element_type, shape_csv; bool d
 struct GreenAIContractData { std::string name, functional_unit, success_criteria, measurement_quality, data_quality, carbon_factor_scope, evidence_retention, claims_mode; std::vector<std::string> boundary; double carbon_factor=0, energy_budget_j=0, carbon_budget_gco2e=0; bool has_functional_unit=false, has_success_criteria=false, has_boundary=false, has_mq=false, has_dq=false, has_carbon_factor=false, has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
 struct GreenAIMeasurementData { std::string workload, backend; int inferences=0; double watts=0, seconds=0; };
 
+enum class C3EcoDeclarationKind {
+    Certification,
+    FunctionalUnit,
+    Workload,
+    Boundary,
+    MeasurementPlan,
+    AILifecycle,
+    RAGPipeline,
+    TokenBudget,
+    ModelRouting,
+    Guardrails
+};
+
+const char *c3EcoDeclarationKindName(C3EcoDeclarationKind kind);
+
+struct C3EcoFieldData {
+    std::string name;
+    std::vector<std::string> values;
+};
+
+struct C3EcoDeclarationData {
+    C3EcoDeclarationKind kind = C3EcoDeclarationKind::Certification;
+    std::string name;
+    std::vector<C3EcoFieldData> fields;
+};
+
 class AST_MODEL_DECLARATION : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; ModelDeclarationData data; public: AST_MODEL_DECLARATION(const ModelDeclarationData &data); int accept(Visitor &); };
 class AST_TENSOR_DECLARATION : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; TensorDeclarationData data; public: AST_TENSOR_DECLARATION(const TensorDeclarationData &data); int accept(Visitor &); };
 class AST_GREENAI_CONTRACT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; GreenAIContractData data; public: AST_GREENAI_CONTRACT(const GreenAIContractData &data); int accept(Visitor &); };
 class AST_GREENAI_MEASUREMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; GreenAIMeasurementData data; public: AST_GREENAI_MEASUREMENT(const GreenAIMeasurementData &data); int accept(Visitor &); };
+class AST_C3ECO_DECLARATION : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; C3EcoDeclarationData data; public: AST_C3ECO_DECLARATION(const C3EcoDeclarationData &data); int accept(Visitor &); };
 class AST_INFER_STATEMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; std::string model_name,input_name,output_name; public: AST_INFER_STATEMENT(std::string m,std::string i,std::string o); int accept(Visitor &); };
 
 class AST_GREENAI_REPORT_RULE : public AST_STATEMENT_RULE

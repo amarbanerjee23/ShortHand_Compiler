@@ -9,8 +9,8 @@ WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT
 
 if [[ -z "${ONNXRUNTIME_ROOT:-}" ]]; then
-  echo "SKIP onnxruntime_sdk_gate: ONNXRUNTIME_ROOT is not set"
-  exit 0
+  echo "error: onnxruntime_sdk_gate requires ONNXRUNTIME_ROOT; mandatory production qualification cannot skip" >&2
+  exit 1
 fi
 
 if [[ ! -f "${ONNXRUNTIME_ROOT}/include/onnxruntime_cxx_api.h" ]]; then

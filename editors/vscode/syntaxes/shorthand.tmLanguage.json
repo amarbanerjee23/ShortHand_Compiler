@@ -45,7 +45,7 @@
     },
     "greenAi": {
       "patterns": [
-        {"name": "keyword.other.greenai.shorthand", "match": "\\b(greenai_contract|greenai_measure|functional_unit|success_criteria|boundary|measurement_quality|data_quality|carbon_factor|energy_budget_j|carbon_budget_gco2e|evidence_retention|claims_mode|evidence_only|location|ci_cd|thirdparty|accelerator|compute|storage|network)\\b"},
+        {"name": "keyword.other.greenai.shorthand", "match": "\\b(greenai_contract|greenai_measure|certification|functional_unit|workload|boundary|measurement_plan|ai_lifecycle|rag_pipeline|token_budget|model_routing|guardrails|success_criteria|measurement_quality|data_quality|carbon_factor|energy_budget_j|carbon_budget_gco2e|evidence_retention|claims_mode|evidence_only|location|ci_cd|thirdparty|accelerator|compute|storage|network)\\b"},
         {"name": "constant.language.quality.shorthand", "match": "\\b(MQ[1-4]|DQ[1-4])\\b"}
       ]
     },

@@ -161,8 +161,9 @@ c3eco_gate: green_ai_tool
 	../build/green_ai_tool report ../../../examples/green_ai/image_classification.greenai --output /tmp/short_hand_c3eco_report.json --strict strict
 	grep -q "Evidence report only; this tool does not grant certification." /tmp/short_hand_c3eco_report.json
 
-test-c3eco: c3eco_gate
+test-c3eco: c3eco_gate short_hand
 	../build/green_ai_tool check ../../../examples/green_ai/image_classification.greenai --baseline /tmp/short_hand_c3eco_report.json --threshold-percent 10
+	SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
@@ -175,7 +176,7 @@ clean:
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-unit test-integration test-green test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai
+test: test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -220,6 +221,7 @@ sanitize:
 	$(MAKE) clean
 	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool runtime_lib
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \

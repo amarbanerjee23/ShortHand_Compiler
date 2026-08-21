@@ -4,7 +4,7 @@ This matrix defines which model formats may be routed to which runtime backends.
 
 Matrix guardrail marker: `full_backend_matrix_claim: false`.
 
-Backend live SDK matrix marker: `backend_live_sdk_matrix_status: optional_matrix_harness`.
+Backend live SDK matrix marker: `backend_live_sdk_matrix_status: fail_closed_qualification_matrix`.
 
 Backend failure-mode marker: `backend_failure_mode_matrix_status: finalized_v1`.
 
@@ -22,7 +22,7 @@ Llama.cpp fixture marker: `llamacpp_optional_fixture_status: unavailable_path_pr
 
 | Model format | Compatible production backends | Fallback allowed | Current execution status |
 | --- | --- | --- | --- |
-| ONNX | `onnxruntime_cpu`, `onnxruntime_cuda`, `onnxruntime_tensorrt`, `tensorrt` | Yes, but fallback must report `not_executed` | `onnxruntime_cpu` has SDK-backed execution when `ONNXRUNTIME_ROOT` is configured; the matrix harness records row-level status. `onnxruntime_tensorrt` is skip-safe until live TensorRT EP support exists. |
+| ONNX | `onnxruntime_cpu`, `onnxruntime_cuda`, `onnxruntime_tensorrt`, `tensorrt` | Yes, but fallback must report `not_executed` | `onnxruntime_cpu` has SDK-backed execution when `ONNXRUNTIME_ROOT` is configured; the matrix harness records row-level status. `onnxruntime_tensorrt` is not production-qualified until live TensorRT EP support exists. |
 | TensorRT engine | `tensorrt`, `onnxruntime_tensorrt` | Yes, but fallback must report `not_executed` | PR #53 adds a TensorRT unavailable-path proof with no false success. This is not live TensorRT execution. |
 | TorchScript | `libtorch` | Yes, but fallback must report `not_executed` | PR #55 adds a LibTorch unavailable-path proof with no false success. This is not live TorchScript execution and remains not production-executing yet. |
 | OpenVINO IR | `openvino` | Yes, but fallback must report `not_executed` | PR #54 adds an OpenVINO unavailable-path proof with no false success. This is not live OpenVINO execution and remains not production-executing yet. |
@@ -36,7 +36,7 @@ The backend matrix has four separate validation tiers. These tiers must not be c
 | --- | --- | --- | --- |
 | `policy_compatible` | The language/runtime understands that a model format can be associated with a backend family. | `AI_Types.cpp` parses model formats and backend aliases, and `backendSupportsFormat` encodes compatibility. | This is compatibility policy, not proof of live backend execution. |
 | `sdk_execution_optional` | A backend can execute when its SDK is present and configured. | `tests/integration/test_onnxruntime_sdk_gate.sh` runs the ONNX identity fixture only when `ONNXRUNTIME_ROOT` is set, and fails if fallback is used during that SDK-enabled run. | Default CI may skip SDK execution when the SDK is absent. |
-| `backend_live_sdk_matrix_harness` | One matrix runner records a row for each marketed backend as `live_success`, `skip_safe`, `policy_compatible_only`, or `dedicated_fixture_planned`. | `tests/integration/test_backend_live_sdk_matrix.sh` writes `/tmp/shorthand_backend_live_sdk_matrix.jsonl` and runs backend row gates. | Only rows with real fixture execution may claim `live_success`. |
+| `backend_live_sdk_matrix_harness` | One matrix runner records a row for each marketed backend as `live_success`, `negative_qualified`, or `not_production_qualified`. | `tests/integration/test_backend_live_sdk_matrix.sh` writes `/tmp/shorthand_backend_live_sdk_matrix.jsonl` and runs backend row gates. | Only rows with real fixture execution may claim `live_success`. |
 | `compiled_hook_bridge_pending` | Legacy compatibility tier name retained for no-SDK and fallback paths where compiled metadata and typed float32 buffers exist but no backend execution result is available. | `short_ai_infer_f32` records `shorthand.runtime.typed_infer_buffer_bridge_request.v1`; no-SDK and unsupported-backend paths return `SHORTHAND_RUNTIME_NOT_EXECUTED` or an honest unavailable/error status. | A bridge request is not a successful inference execution path unless backend execution returns success. |
 
 ## Backend live SDK matrix harness

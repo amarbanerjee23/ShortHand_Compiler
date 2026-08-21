@@ -109,6 +109,14 @@ extern "C" void shorthand_release_scanner_strings() {
 "backend_preference" return BACKEND_PREFERENCE;
 "compact" return COMPACT;
 "quality_guardrail" return QUALITY_GUARDRAIL;
+"certification" return CERTIFICATION;
+"workload" return WORKLOAD;
+"measurement_plan" return MEASUREMENT_PLAN;
+"ai_lifecycle" return AI_LIFECYCLE;
+"rag_pipeline" return RAG_PIPELINE;
+"token_budget" return TOKEN_BUDGET;
+"model_routing" return MODEL_ROUTING;
+"guardrails" return GUARDRAILS;
 "greenai_contract" return GREENAI_CONTRACT_T;
 "functional_unit" return FUNCTIONAL_UNIT;
 "success_criteria" return SUCCESS_CRITERIA;

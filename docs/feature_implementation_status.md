@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-18-pr81
+feature_status_version: 2026-08-21-pr82
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 81
-current_roadmap_pr: 80
+current_github_pr: 82
+current_roadmap_pr: 81
 
 ## Goal
 
@@ -13,9 +13,9 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 now implements roadmap PR80, the versioned production backend and hardware qualification contract.
+Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 implemented and merged roadmap PR80, the versioned production backend and hardware qualification contract. GitHub PR82 now implements roadmap PR81, first-class C3-ECO language declarations and the zero-skip mandatory qualification contract.
 
-The compiler test audit records **21 implemented, 3 partial and 3 open** areas for the PR81 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and C3-ECO, MLIR, performance and measured-energy blockers remain.
+The compiler test audit records **21 implemented, 3 partial and 3 open** areas for the PR82 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and measured C3-ECO scoring/auditor lineage, MLIR, performance and measured-energy blockers remain.
 
 ## Language and compiler status
 
@@ -64,11 +64,19 @@ Historical compatibility gate: language versioning and conformance policy gate.
 
 | Area | Status | Boundary |
 | --- | --- | --- |
-| Green AI contract/evidence syntax | Implemented for current beta syntax | complete C3-ECO blocks remain PR81. |
-| C3-ECO scoring/auditor evidence | Partial | PR81-PR83. |
+| Green AI contract/evidence syntax | Implemented for current beta syntax and first-class C3-ECO declarations | GitHub PR82 adds the versioned `shorthand.c3eco.language.v1` declaration contract; measured scoring remains separate. |
+| C3-ECO scoring/auditor evidence | Partial | First-class language blocks are implemented in GitHub PR82; measured scoring and authority-ready auditor lineage remain roadmap PR82-PR83. |
 | MLIR dialect scaffold | Partial | generated dialect and production lowering remain PR84-PR85. |
 | Measured ShortHand versus Python energy evidence | Open | PR86. No lower-energy claim is made by current CI. |
 | Zero-skip production RC gate | Open | PR86. |
+
+## C3-ECO language PR82 boundary
+
+c3eco_language_contract: shorthand.c3eco.language.v1
+
+GitHub PR82 implements roadmap PR81 with ten first-class declaration kinds: `certification`, `functional_unit`, `workload`, `boundary`, `measurement_plan`, `ai_lifecycle`, `rag_pipeline`, `token_budget`, `model_routing` and `guardrails`. The parser, AST, semantic analyzer, IR metadata and evidence emitter carry the same structured declaration data. Required fields fail closed with `SHD5102`, duplicate declarations with `SHD5101`, invalid fields with `SHD5103`, and attempted self-certification claims with `SHD5104`.
+
+These declarations are evidence inputs only. They cannot grant certification, create a certificate identifier or mark a candidate as officially certified; generated C3-ECO candidate evidence keeps `official_certification_granted:false`. Measured scoring and external authority/auditor handoff remain later roadmap work.
 
 ## Production backend and hardware qualification PR81 boundary
 
@@ -107,7 +115,7 @@ GitHub PR78 implemented roadmap PR77 through a multi-stage production image, Res
 ## Production blockers
 
 1. Configure and exercise the protected signed-release environment for roadmap PR75 / TST017.
-2. Complete C3-ECO language, measured scoring and authority-ready handoff (PR81-PR83).
+2. Complete measured C3-ECO scoring and authority-ready handoff (roadmap PR82-PR83); first-class language blocks are implemented in GitHub PR82.
 3. Generated MLIR dialect and production lowering (PR84-PR85).
 4. Measured performance/energy comparison and zero-skip production RC gate (PR86).
 

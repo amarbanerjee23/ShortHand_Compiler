@@ -44,6 +44,7 @@ public:
     int visit(AST_TENSOR_DECLARATION*) override;
     int visit(AST_GREENAI_CONTRACT*) override;
     int visit(AST_GREENAI_MEASUREMENT*) override;
+    int visit(AST_C3ECO_DECLARATION*) override;
     int visit(AST_INFER_STATEMENT*) override;
     int visit(AST_CONTINUE*) override;
     int visit(AST_RETURN_STATEMENT*) override;
@@ -61,6 +62,7 @@ private:
     std::map<std::string, ModelDeclarationData> models;
     std::map<std::string, TensorDeclarationData> tensors;
     std::map<std::string, GreenAIContractData> contracts;
+    std::set<std::string> c3eco_declarations;
     std::set<std::string> functions;
     std::map<std::string, std::size_t> function_arity;
     std::set<std::string> imported_functions;

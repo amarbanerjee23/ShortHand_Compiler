@@ -28,7 +28,7 @@ The OpenVINO fixture gate must prove all of the following:
 3. No output values are copied on the unavailable path.
 4. Runtime success counters remain zero.
 5. Runtime telemetry records a non-success status.
-6. The shared backend live SDK matrix records the OpenVINO row as `skip_safe`, not `live_success`.
+6. The shared backend live SDK matrix records the OpenVINO row as `negative_qualified`, not `live_success`.
 
 ## Default CI behavior
 

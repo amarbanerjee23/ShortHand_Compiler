@@ -61,6 +61,10 @@ SHD5007	greenai	error	required	catalogued	run	invalid_claims_mode
 SHD5008	greenai	error	required	catalogued	run	invalid_budget
 SHD5009	greenai	error	required	catalogued	run	measurement_unknown_contract
 SHD5010	greenai	warning	required	catalogued	run	measurement_external_backend
+SHD5101	greenai	error	required	tests/c3eco/c3eco_duplicate_declaration.short	c3eco-report	duplicate_c3eco_declaration
+SHD5102	greenai	error	required	tests/c3eco/c3eco_missing_required_field.short	c3eco-report	missing_required_c3eco_field
+SHD5103	greenai	error	required	tests/c3eco/c3eco_invalid_field.short	c3eco-report	invalid_c3eco_field
+SHD5104	greenai	error	required	tests/c3eco/c3eco_unsafe_claim.short	c3eco-report	unsafe_self_certification_claim
 SHD6001	lowering	error	required	tests/diagnostics/fixtures/lowering_undefined_function.short	compile	representative
 SHD7001	runtime	error	required	tests/semantic/differential/division_by_zero.short	run	semantic_differential_gate
 SHD7002	runtime	error	required	tests/semantic/differential/array_bounds.short	run	semantic_differential_gate

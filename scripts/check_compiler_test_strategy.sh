@@ -15,11 +15,12 @@ DEPLOY_DOC="${ROOT_DIR}/docs/container_kubernetes_hardening.md"
 TOOLING_DOC="${ROOT_DIR}/docs/formatter_linter.md"
 LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
 BACKEND_DOC="${ROOT_DIR}/docs/production_backend_hardware_qualification.md"
+C3ECO_DOC="${ROOT_DIR}/docs/c3eco_language_contract.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" \
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" \
   "${ROOT_DIR}/scripts/check_semantic_differential.sh" \
   "${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh" \
   "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" \
@@ -33,6 +34,8 @@ for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${
   "${ROOT_DIR}/scripts/check_lsp_editor.sh" \
   "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" \
   "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" \
+  "${ROOT_DIR}/scripts/check_c3eco_language_blocks.sh" \
+  "${ROOT_DIR}/scripts/check_no_mandatory_test_skips.sh" \
   "${ROOT_DIR}/tests/integration/test_production_backend_hardware_qualification.sh" \
   "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" \
   "${ROOT_DIR}/tests/deployment/test_container_kubernetes_hardening_negative.sh" \
@@ -58,9 +61,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 27 ]] || { echo "error: expected 27 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 21 ]] || { echo "error: expected 21 implemented rows in the PR81 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR81 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR81 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 21 ]] || { echo "error: expected 21 implemented rows in the PR82 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR82 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR82 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -70,7 +73,7 @@ for number in $(seq 1 27); do require_contains "${MATRIX}" "$(printf 'TST%03d' "
 for pr in $(seq 68 86); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-18-pr81' \
+  'compiler_test_strategy_version: 2026-08-21-pr82' \
   'production_claim: false' \
   '21 implemented areas' \
   '3 partial areas' \
@@ -97,7 +100,7 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-08-18-pr81'
+require_contains "${STATUS}" 'feature_status_version: 2026-08-21-pr82'
 require_contains "${STATUS}" '21 implemented, 3 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
@@ -117,6 +120,12 @@ require_contains "${MATRIX}" $'TST020\tformatter and linter correctness\timpleme
 require_contains "${MATRIX}" $'TST021\tsyntax highlighting and LSP protocol\timplemented'
 require_contains "${MATRIX}" $'TST022\tlive backend and hardware qualification\timplemented'
 require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
+
+require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\tpartial\tFirst-class C3-ECO grammar AST semantics evidence and SHD5101-SHD5104 claim-safety gate'
+require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
+require_contains "${C3ECO_DOC}" 'official_certification_granted: false'
+require_contains "${ROOT_DIR}/scripts/check_c3eco_language_blocks.sh" 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'
+require_contains "${ROOT_DIR}/scripts/check_no_mandatory_test_skips.sh" 'PASS mandatory qualification zero-skip policy gate'
 
 require_contains "${BACKEND_DOC}" 'backend_hardware_qualification_version: shorthand.backend_hardware_qualification.v1'
 require_contains "${BACKEND_DOC}" 'production_scope: linux-x64-cpu-v1'
