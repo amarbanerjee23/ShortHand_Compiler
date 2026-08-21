@@ -1,9 +1,10 @@
 FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
+RUN apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update \
+    && apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 install -y --no-install-recommends \
        build-essential \
        make \
        g++ \
@@ -27,6 +28,13 @@ RUN bash /usr/local/share/shorthand/install_ci_onnxruntime_cpu.sh /opt/shorthand
 
 ENV ONNXRUNTIME_ROOT=/opt/shorthand/onnxruntime-1.20.1
 ENV LD_LIBRARY_PATH=/opt/shorthand/onnxruntime-1.20.1/lib
+
+# Match the GitHub-hosted runner UID so checked-out workspace mounts remain writable,
+# and keep the reusable qualification image unprivileged at runtime.
+RUN groupadd --gid 1001 shorthandci \
+    && useradd --uid 1001 --gid 1001 --create-home --shell /bin/bash shorthandci
+ENV HOME=/home/shorthandci
+USER shorthandci
 
 RUN set -euo pipefail; \
     command -v make; command -v g++; command -v flex; command -v bison; \
