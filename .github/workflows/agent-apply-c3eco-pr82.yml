@@ -6,13 +6,22 @@ on:
       - agent/pr82-c3eco-language-blocks
     paths:
       - .github/workflows/agent-apply-c3eco-pr82.yml
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/agent-apply-c3eco-pr82.yml
 
 permissions:
   contents: write
 
+concurrency:
+  group: agent-apply-c3eco-pr82-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   apply:
-    if: github.repository == 'amarbanerjee23/ShortHand_Compiler'
+    if: github.repository == 'amarbanerjee23/ShortHand_Compiler' && (github.event_name == 'push' || github.head_ref == 'agent/pr82-c3eco-language-blocks')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
