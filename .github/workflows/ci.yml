@@ -525,7 +525,7 @@ jobs:
           done
 
       - name: Publish stable event-specific CI status
-        if: ${{ success() }}
+        if: ${{ always() && !cancelled() && success() }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
@@ -566,7 +566,7 @@ jobs:
           PY
 
       - name: Publish stable event-specific CI failure
-        if: ${{ failure() }}
+        if: ${{ always() && !cancelled() && failure() }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
