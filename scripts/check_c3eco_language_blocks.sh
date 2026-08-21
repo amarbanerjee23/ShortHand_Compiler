@@ -3,6 +3,9 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SHORT="${SHORTHAND_BIN:-${ROOT_DIR}/Compiler_new_ws/Short_Hand/build/short_hand}"
+if [[ "${SHORT}" != /* ]]; then
+  SHORT="$(pwd)/${SHORT}"
+fi
 VALID="${ROOT_DIR}/tests/c3eco/c3eco_all_blocks.short"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}" "${ROOT_DIR}/c3eco_all_blocks.bc"' EXIT
