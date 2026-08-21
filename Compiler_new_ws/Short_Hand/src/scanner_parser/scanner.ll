@@ -87,6 +87,10 @@ extern "C" void shorthand_release_scanner_strings() {
 }
 %}
 
+C3NAME [a-zA-Z_][a-zA-Z0-9_]*
+C3GAP [ \t\r\n]+
+C3OPTGAP [ \t\r\n]*
+
 %%
 
 "package" return PACKAGE;
@@ -109,14 +113,14 @@ extern "C" void shorthand_release_scanner_strings() {
 "backend_preference" return BACKEND_PREFERENCE;
 "compact" return COMPACT;
 "quality_guardrail" return QUALITY_GUARDRAIL;
-"certification" return CERTIFICATION;
-"workload" return WORKLOAD;
-"measurement_plan" return MEASUREMENT_PLAN;
-"ai_lifecycle" return AI_LIFECYCLE;
-"rag_pipeline" return RAG_PIPELINE;
-"token_budget" return TOKEN_BUDGET;
-"model_routing" return MODEL_ROUTING;
-"guardrails" return GUARDRAILS;
+"certification"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return CERTIFICATION;
+"workload"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return WORKLOAD;
+"measurement_plan"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return MEASUREMENT_PLAN;
+"ai_lifecycle"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return AI_LIFECYCLE;
+"rag_pipeline"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return RAG_PIPELINE;
+"token_budget"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return TOKEN_BUDGET;
+"model_routing"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return MODEL_ROUTING;
+"guardrails"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return GUARDRAILS;
 "greenai_contract" return GREENAI_CONTRACT_T;
 "functional_unit" return FUNCTIONAL_UNIT;
 "success_criteria" return SUCCESS_CRITERIA;

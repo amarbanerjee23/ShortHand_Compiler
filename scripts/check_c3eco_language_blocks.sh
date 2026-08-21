@@ -65,4 +65,25 @@ expect_code c3eco_missing_required_field.short SHD5102
 expect_code c3eco_invalid_field.short SHD5103
 expect_code c3eco_unsafe_claim.short SHD5104
 
+"${SHORT}" "${ROOT_DIR}/tests/conformance/beta_0_2/greenai_language.short" parse >/dev/null
+cat >"${WORK_DIR}/contextual_keywords.short" <<'EOF'
+int certification;
+int workload;
+int measurement_plan;
+int ai_lifecycle;
+int rag_pipeline;
+int token_budget;
+int model_routing;
+int guardrails;
+certification = 1;
+workload = 2;
+measurement_plan = 3;
+ai_lifecycle = 4;
+rag_pipeline = 5;
+token_budget = 6;
+model_routing = 7;
+guardrails = 8;
+EOF
+"${SHORT}" "${WORK_DIR}/contextual_keywords.short" parse >/dev/null
+
 echo "PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate"
