@@ -273,6 +273,14 @@ if(SHORTHAND_HAS_ONNXRUNTIME)
   target_include_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/include)
   target_link_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/lib)
   target_link_libraries(short_hand PRIVATE onnxruntime)
+  # llvm-config commonly contributes -fno-exceptions. The ONNX Runtime C++ API
+  # throws Ort::Exception, and ShortHand deliberately catches it to return a
+  # recoverable inference result instead of terminating the process.
+  if(MSVC)
+    target_compile_options(short_hand PRIVATE /EHsc)
+  else()
+    target_compile_options(short_hand PRIVATE -fexceptions)
+  endif()
 endif()
 target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS})
 

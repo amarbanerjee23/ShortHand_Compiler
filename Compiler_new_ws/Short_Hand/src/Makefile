@@ -53,8 +53,12 @@ endif
 
 OPTIONAL_BACKEND_DEFS := -DSHORTHAND_HAS_ONNXRUNTIME=$(SHORTHAND_HAS_ONNXRUNTIME) -DSHORTHAND_HAS_TENSORRT=$(SHORTHAND_HAS_TENSORRT) -DSHORTHAND_HAS_OPENVINO=$(SHORTHAND_HAS_OPENVINO) -DSHORTHAND_HAS_LIBTORCH=$(SHORTHAND_HAS_LIBTORCH) -DSHORTHAND_HAS_LLAMACPP=$(SHORTHAND_HAS_LLAMACPP) -DSHORTHAND_HAS_OPENBLAS=$(SHORTHAND_HAS_OPENBLAS) -DSHORTHAND_HAS_EIGEN=$(SHORTHAND_HAS_EIGEN)
 AI_CXXFLAGS := $(OPTIONAL_BACKEND_DEFS)
+ONNX_EXCEPTION_CXXFLAGS :=
 ifneq ($(ONNXRUNTIME_ROOT),)
 AI_CXXFLAGS += -I$(ONNXRUNTIME_ROOT)/include
+# llvm-config may inject -fno-exceptions; ONNX Runtime C++ uses Ort::Exception.
+# Keep recoverable backend failures by making -fexceptions the final policy flag.
+ONNX_EXCEPTION_CXXFLAGS := -fexceptions
 endif
 ifneq ($(LIBTORCH_ROOT),)
 AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
@@ -131,7 +135,7 @@ short_hand: patch-generated-parser runtime-source-lowering $(SRC)
 		echo "error: llvm-config not found or LLVM flags unavailable. Install LLVM with llvm-config in PATH."; \
 		exit 1; \
 	fi
-	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) $(ONNX_EXCEPTION_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)
 
 runtime_lib: $(SHORTHAND_RUNTIME_LIB)
 
