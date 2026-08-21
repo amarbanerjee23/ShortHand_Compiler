@@ -79,9 +79,10 @@ jobs:
             "${patch}"
           git rm -- .github/workflows/agent-apply-c3eco-pr82.yml
           git diff --cached --check
-          if git diff --cached --name-only | grep -Eq '^(\.github/|ci/|scripts/check_ci_status_hygiene\.sh$|\.agent-)'; then
+          protected_changes="$(git diff --cached --name-only | grep -Ev '^\.github/workflows/agent-apply-c3eco-pr82\.yml$' | grep -E '^(\.github/|ci/|scripts/check_ci_status_hygiene\.sh$|\.agent-)' || true)"
+          if [[ -n "${protected_changes}" ]]; then
             echo "error: historical payload attempted to stage protected CI/staging paths" >&2
-            git diff --cached --name-only >&2
+            printf '%s\n' "${protected_changes}" >&2
             exit 1
           fi
           while IFS= read -r script; do
