@@ -6,12 +6,22 @@ on:
       - agent/pr82-c3eco-language-blocks
     paths:
       - .github/workflows/agent-fix-pr82-contextual-keywords.yml
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/agent-fix-pr82-contextual-keywords.yml
 
 permissions:
   contents: write
 
+concurrency:
+  group: agent-fix-pr82-contextual-keywords-${{ github.event.pull_request.head.ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   apply:
+    if: github.event_name == 'push' || github.head_ref == 'agent/pr82-c3eco-language-blocks'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -136,12 +146,13 @@ echo "PASS C3-ECO first-class language blocks grammar AST semantics evidence cla
               raise SystemExit('expected C3-ECO gate completion marker exactly once')
           gate_path.write_text(gate.replace(marker, replacement))
 
-          for doc_path in [Path('scripts/check_feature_plan_status.sh')]:
-              doc = doc_path.read_text()
-              old = 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'
-              new = 'PASS C3-ECO first-class language blocks grammar AST semantics evidence claim-safety and contextual-keyword compatibility gate'
-              if old in doc:
-                  doc_path.write_text(doc.replace(old, new))
+          feature_plan_path = Path('scripts/check_feature_plan_status.sh')
+          feature_plan = feature_plan_path.read_text()
+          old = 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'
+          new = 'PASS C3-ECO first-class language blocks grammar AST semantics evidence claim-safety and contextual-keyword compatibility gate'
+          if feature_plan.count(old) != 1:
+              raise SystemExit('expected feature-plan C3 marker exactly once')
+          feature_plan_path.write_text(feature_plan.replace(old, new))
           PY
 
       - name: Validate grammar compatibility and C3 contract
