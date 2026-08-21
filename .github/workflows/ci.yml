@@ -185,18 +185,8 @@ jobs:
 
       - name: Install matrix build dependencies
         run: |
-          set -euo pipefail
-          if [[ -f /etc/apt/apt-mirrors.txt ]]; then
-            sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' /etc/apt/apt-mirrors.txt
-          fi
-          APT_OPTS=(
-            -o Acquire::Retries=3
-            -o Acquire::http::Timeout=20
-            -o Acquire::https::Timeout=20
-          )
-          sudo apt-get "${APT_OPTS[@]}" update
-          sudo DEBIAN_FRONTEND=noninteractive apt-get "${APT_OPTS[@]}" install -y --no-install-recommends \
-            build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
+          sudo apt-get update
+          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
 
       - name: Record matrix toolchain
         run: |
@@ -238,112 +228,177 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = "aarch64"
-          command -v llvm-config
+          test "$(llvm-config --version | cut -d. -f1)" = "18"
+          clang++ --version
           llvm-config --version
-          clang --version
-
-      - name: Configure Linux arm64 compiler
-        run: cmake -S . -B build-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-arm64"
 
       - name: Build Linux arm64 compiler and runtime
         run: |
+          cmake -S . -B build-arm64 -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-arm64"
           cmake --build build-arm64 --parallel 2
 
       - name: Execute Linux arm64 interpreter bitcode and native
         run: |
           set -euo pipefail
-          build-arm64/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_arm64_run.out
-          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_run.out
-          build-arm64/short_hand tests/semantic/differential/core_control.short compile-bc > /tmp/shorthand_arm64_compile_bc.out
-          lli output.bc > /tmp/shorthand_arm64_lli.out
+          rm -f core_control core_control.o core_control.bc
+          build-arm64/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_arm64.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64.out
+          build-arm64/short_hand tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          lli core_control.bc > /tmp/shorthand_arm64_lli.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_lli.out
-          build-arm64/short_hand tests/semantic/differential/core_control.short compile-native > /tmp/shorthand_arm64_compile_native.out
-          ./output.native > /tmp/shorthand_arm64_native.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-arm64/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            build-arm64/short_hand tests/semantic/differential/core_control.short compile-native
+          test -x core_control
+          ./core_control > /tmp/shorthand_arm64_native.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_arm64_native.out
-          cmake --install build-arm64
-          "$PWD/stage-arm64/bin/short_hand" tests/semantic/differential/core_control.short parse > /tmp/shorthand_arm64_install_smoke.out
+
+      - name: Install upgrade uninstall Linux arm64 SDK lifecycle
+        run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-arm64" "$PWD/stage-arm64" "$PWD/consumer-arm64"
 
   macos-arm64:
-    runs-on: macos-14
-    timeout-minutes: 50
+    runs-on: macos-15
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
-      - name: Install macOS ARM64 dependencies
-        run: brew install flex bison llvm cmake ninja
+      - name: Install macOS build dependencies
+        run: |
+          brew install bison flex llvm@18 ninja
+          echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix llvm@18)/bin" >> "$GITHUB_PATH"
 
-      - name: Record macOS ARM64 environment
+      - name: Record macOS Apple Silicon environment
         run: |
           set -euo pipefail
           test "$(uname -m)" = "arm64"
-          BREW_PREFIX="$(brew --prefix)"
-          LLVM_CONFIG="${BREW_PREFIX}/opt/llvm/bin/llvm-config"
-          test -x "${LLVM_CONFIG}"
-          "${LLVM_CONFIG}" --version
-          clang++ --version
+          test "$("$(brew --prefix llvm@18)/bin/llvm-config" --version | cut -d. -f1)" = "18"
+          "$(brew --prefix llvm@18)/bin/clang++" --version
+          "$(brew --prefix llvm@18)/bin/llvm-config" --version
+          sw_vers
 
-      - name: Configure macOS ARM64 compiler
+      - name: Build macOS Apple Silicon compiler and runtime
+        env:
+          CC: /opt/homebrew/opt/llvm@18/bin/clang
+          CXX: /opt/homebrew/opt/llvm@18/bin/clang++
         run: |
-          BREW_PREFIX="$(brew --prefix)"
           cmake -S . -B build-macos -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DLLVM_CONFIG="${BREW_PREFIX}/opt/llvm/bin/llvm-config"
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage-macos" \
+            -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config"
+          cmake --build build-macos --parallel 2
 
-      - name: Build macOS ARM64 compiler and runtime
-        run: cmake --build build-macos --parallel 2 --target short_hand shorthand_runtime green_ai_tool
-
-      - name: Execute macOS ARM64 interpreter bitcode and native
+      - name: Execute macOS interpreter bitcode and native
         run: |
           set -euo pipefail
-          export PATH="$(brew --prefix llvm)/bin:${PATH}"
-          build-macos/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_macos_run.out
-          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_run.out
-          build-macos/short_hand tests/semantic/differential/core_control.short compile-bc > /tmp/shorthand_macos_compile_bc.out
-          lli output.bc > /tmp/shorthand_macos_lli.out
+          rm -f core_control core_control.o core_control.bc
+          build-macos/short_hand tests/semantic/differential/core_control.short run > /tmp/shorthand_macos.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos.out
+          build-macos/short_hand tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          "$(brew --prefix llvm@18)/bin/lli" core_control.bc > /tmp/shorthand_macos_lli.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_lli.out
-          build-macos/short_hand tests/semantic/differential/core_control.short compile-native > /tmp/shorthand_macos_compile_native.out
-          ./output.native > /tmp/shorthand_macos_native.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-macos/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER="$(brew --prefix llvm@18)/bin/clang++" \
+            build-macos/short_hand tests/semantic/differential/core_control.short compile-native
+          test -x core_control
+          ./core_control > /tmp/shorthand_macos_native.out
           diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_macos_native.out
+
+      - name: Install upgrade uninstall macOS arm64 SDK lifecycle
+        run: bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-macos" "$PWD/stage-macos" "$PWD/consumer-macos"
 
   windows-x64:
     runs-on: windows-2025
-    timeout-minutes: 50
+    timeout-minutes: 70
+    env:
+      MSYSTEM: UCRT64
+      CHERE_INVOKING: 1
+    defaults:
+      run:
+        shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
-      - name: Configure Windows x64 compiler
-        shell: pwsh
+      - name: Install Windows UCRT64 compiler dependencies
         run: |
-          $llvmDir = Get-ChildItem 'C:\Program Files\LLVM' -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($llvmDir) {
-            $llvmConfig = Join-Path $llvmDir.FullName 'bin\llvm-config.exe'
-          } else {
-            $llvmConfig = (Get-Command llvm-config.exe -ErrorAction Stop).Source
-          }
-          cmake -S . -B build-windows -G Ninja `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_C_COMPILER=clang-cl `
-            -DCMAKE_CXX_COMPILER=clang-cl `
-            -DLLVM_CONFIG="$llvmConfig"
+          pacman -S --noconfirm --needed \
+            mingw-w64-ucrt-x86_64-clang \
+            mingw-w64-ucrt-x86_64-llvm \
+            mingw-w64-ucrt-x86_64-cmake \
+            mingw-w64-ucrt-x86_64-ninja \
+            bison flex make diffutils
 
-      - name: Build Windows x64 compiler and runtime
-        shell: pwsh
-        run: cmake --build build-windows --parallel 2 --target short_hand shorthand_runtime green_ai_tool
-
-      - name: Execute Windows x64 interpreter and compiler parse
-        shell: pwsh
+      - name: Record Windows UCRT64 environment
         run: |
-          .\build-windows\short_hand.exe tests\semantic\differential\core_control.short run | Out-File -Encoding ascii $env:TEMP\shorthand_windows_run.out
-          $actual = (Get-Content $env:TEMP\shorthand_windows_run.out -Raw).Trim()
-          $expected = (Get-Content tests\semantic\differential\core_control.expected -Raw).Trim()
-          if ($actual -ne $expected) { throw "Windows interpreter output mismatch" }
-          .\build-windows\short_hand.exe tests\semantic\differential\core_control.short parse | Out-File -Encoding ascii $env:TEMP\shorthand_windows_parse.out
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          test "$(llvm-config --version | cut -d. -f1)" = "22"
+          clang++ --version
+          llvm-config --version
+          cmake --version
+          uname -a
+
+      - name: Build Windows compiler and runtime
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          export CC=clang
+          export CXX=clang++
+          cmake -S . -B build-windows -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/stage-windows" \
+            -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe
+          cmake --build build-windows --parallel 2
+
+      - name: Execute Windows interpreter bitcode native and runtime negative
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          rm -f core_control.exe core_control.o core_control.bc division_by_zero.exe division_by_zero.o division_by_zero.bc
+          ./build-windows/short_hand.exe tests/semantic/differential/core_control.short run > /tmp/shorthand_windows.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows.out
+          ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-bc
+          test -s core_control.bc
+          lli core_control.bc > /tmp/shorthand_windows_lli.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_lli.out
+          SHORTHAND_RUNTIME_LIB="$PWD/build-windows/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            ./build-windows/short_hand.exe tests/semantic/differential/core_control.short compile-native
+          test -x core_control.exe
+          ./core_control.exe > /tmp/shorthand_windows_native.out
+          diff -u tests/semantic/differential/core_control.expected /tmp/shorthand_windows_native.out
+
+          ./build-windows/short_hand.exe tests/semantic/differential/division_by_zero.short compile-bc
+          if lli division_by_zero.bc > /tmp/shorthand_windows_divzero_lli.out 2> /tmp/shorthand_windows_divzero_lli.err; then
+            echo "error: Windows lli division-by-zero runtime negative unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq '[SHD7001]' /tmp/shorthand_windows_divzero_lli.err
+
+          SHORTHAND_RUNTIME_LIB="$PWD/build-windows/libshorthand_runtime.a" \
+          SHORTHAND_NATIVE_LINKER=clang++ \
+            ./build-windows/short_hand.exe tests/semantic/differential/division_by_zero.short compile-native
+          test -x division_by_zero.exe
+          if ./division_by_zero.exe > /tmp/shorthand_windows_divzero_native.out 2> /tmp/shorthand_windows_divzero_native.err; then
+            echo "error: Windows native division-by-zero runtime negative unexpectedly succeeded" >&2
+            exit 1
+          fi
+          grep -Fq '[SHD7001]' /tmp/shorthand_windows_divzero_native.err
+
+      - name: Install upgrade uninstall Windows SDK lifecycle
+        run: |
+          set -euo pipefail
+          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
+          bash scripts/check_installed_sdk_lifecycle.sh "$PWD/build-windows" "$PWD/stage-windows" "$PWD/consumer-windows"
 
   ctest-parity:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -353,7 +408,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
-      - name: Make-vs-CTest parity gate
+      - name: Verify CTest parity manifest
+        run: |
+          bash scripts/check_cmake_ctest_parity.sh
+          bash tests/ci/test_cmake_ctest_parity_negative.sh
+
+      - name: Execute Makefile suite through CTest
+        env:
+          SHORTHAND_CTEST_PARITY_EXECUTE: '1'
         run: bash scripts/check_cmake_ctest_parity.sh
 
   reproducible:
@@ -500,108 +562,38 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Require all Ubuntu CI prerequisites
-        env:
-          UBUNTU_CORE_RESULT: ${{ needs.ubuntu-core.result }}
-          TOOLCHAIN_RESULT: ${{ needs.toolchain.result }}
-          LINUX_ARM64_RESULT: ${{ needs.linux-arm64.result }}
-          MACOS_ARM64_RESULT: ${{ needs.macos-arm64.result }}
-          WINDOWS_X64_RESULT: ${{ needs.windows-x64.result }}
-          CTEST_PARITY_RESULT: ${{ needs.ctest-parity.result }}
-          REPRODUCIBLE_RESULT: ${{ needs.reproducible.result }}
-          SECURITY_RESULT: ${{ needs.security.result }}
+      - name: Verify mandatory CI DAG results
         run: |
           set -euo pipefail
-          for result in \
-            "${UBUNTU_CORE_RESULT}" \
-            "${TOOLCHAIN_RESULT}" \
-            "${LINUX_ARM64_RESULT}" \
-            "${MACOS_ARM64_RESULT}" \
-            "${WINDOWS_X64_RESULT}" \
-            "${CTEST_PARITY_RESULT}" \
-            "${REPRODUCIBLE_RESULT}" \
-            "${SECURITY_RESULT}"; do
-            test "${result}" = "success"
-          done
+          test "${{ needs.ubuntu-core.result }}" = "success"
+          test "${{ needs.toolchain.result }}" = "success"
+          test "${{ needs.linux-arm64.result }}" = "success"
+          test "${{ needs.macos-arm64.result }}" = "success"
+          test "${{ needs.windows-x64.result }}" = "success"
+          test "${{ needs.ctest-parity.result }}" = "success"
+          test "${{ needs.reproducible.result }}" = "success"
+          test "${{ needs.security.result }}" = "success"
 
-      - name: Publish stable event-specific CI status
-        if: ${{ always() && !cancelled() && success() }}
+      - name: Publish event-specific CI status
+        if: ${{ always() && !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           EVENT_NAME: ${{ github.event_name }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          import urllib.request
-
-          token = os.environ["GH_TOKEN"]
-          repository = os.environ["REPOSITORY"]
-          sha = os.environ["HEAD_SHA"]
-          event = os.environ["EVENT_NAME"]
-          context = f"ci / ubuntu ({event})"
-          body = json.dumps({
-              "state": "success",
-              "context": context,
-              "description": f"Ubuntu CI passed for {event}",
-              "target_url": f"https://github.com/{repository}/actions/runs/{os.environ.get('GITHUB_RUN_ID', '')}",
-          }).encode("utf-8")
-          request = urllib.request.Request(
-              f"https://api.github.com/repos/{repository}/statuses/{sha}",
-              data=body,
-              method="POST",
-              headers={
-                  "Authorization": f"Bearer {token}",
-                  "Accept": "application/vnd.github+json",
-                  "X-GitHub-Api-Version": "2022-11-28",
-                  "Content-Type": "application/json",
-              },
-          )
-          with urllib.request.urlopen(request) as response:
-              if response.status != 201:
-                  raise SystemExit(f"status publish failed: HTTP {response.status}")
-          PY
-
-      - name: Publish stable event-specific CI failure
-        if: ${{ always() && !cancelled() && failure() }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import os
-          import urllib.request
-
-          token = os.environ["GH_TOKEN"]
-          repository = os.environ["REPOSITORY"]
-          sha = os.environ["HEAD_SHA"]
-          event = os.environ["EVENT_NAME"]
-          context = f"ci / ubuntu ({event})"
-          body = json.dumps({
-              "state": "failure",
-              "context": context,
-              "description": f"Ubuntu CI failure for {event}",
-              "target_url": f"https://github.com/{repository}/actions/runs/{os.environ.get('GITHUB_RUN_ID', '')}",
-          }).encode("utf-8")
-          request = urllib.request.Request(
-              f"https://api.github.com/repos/{repository}/statuses/{sha}",
-              data=body,
-              method="POST",
-              headers={
-                  "Authorization": f"Bearer {token}",
-                  "Accept": "application/vnd.github+json",
-                  "X-GitHub-Api-Version": "2022-11-28",
-                  "Content-Type": "application/json",
-              },
-          )
-          with urllib.request.urlopen(request) as response:
-              if response.status != 201:
-                  raise SystemExit(f"status publish failed: HTTP {response.status}")
-          PY
+          state=failure
+          if [[ "${JOB_STATUS}" == "success" ]]; then
+            state=success
+          fi
+          payload="$(printf '{\"state\":\"%s\",\"target_url\":\"%s\",\"description\":\"Ubuntu CI %s for %s\",\"context\":\"ci / ubuntu (%s)\"}' \
+            "${state}" "${RUN_URL}" "${state}" "${EVENT_NAME}" "${EVENT_NAME}")"
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${GH_TOKEN}" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" \
+            --data "${payload}"
