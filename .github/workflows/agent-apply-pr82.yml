@@ -1,0 +1,41 @@
+name: agent-apply-pr82
+
+on:
+  push:
+    branches:
+      - agent/pr82-c3eco-language-blocks
+    paths:
+      - .agent-pr82-payload.b64
+      - .github/workflows/agent-apply-pr82.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.repository == 'amarbanerjee23/ShortHand_Compiler'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: agent/pr82-c3eco-language-blocks
+          fetch-depth: 0
+
+      - name: Apply consolidated PR82 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 --decode .agent-pr82-payload.b64 > "${RUNNER_TEMP}/pr82-payload.tar.gz"
+          mkdir -p "${RUNNER_TEMP}/pr82-payload"
+          tar -xzf "${RUNNER_TEMP}/pr82-payload.tar.gz" -C "${RUNNER_TEMP}/pr82-payload"
+          git apply --check "${RUNNER_TEMP}/pr82-payload/changes.patch"
+          git apply --index "${RUNNER_TEMP}/pr82-payload/changes.patch"
+          cp "${RUNNER_TEMP}/pr82-payload/ci.yml" .github/workflows/ci.yml
+          git add -- .github/workflows/ci.yml
+          git rm -- .agent-pr82-payload.b64 .github/workflows/agent-apply-pr82.yml
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "PR82: implement C3-ECO language and restore qualification CI"
+          git push origin HEAD:agent/pr82-c3eco-language-blocks
