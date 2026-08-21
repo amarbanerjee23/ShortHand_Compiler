@@ -77,6 +77,9 @@ jobs:
           export LD_LIBRARY_PATH="${ORT_ROOT}/lib:${LD_LIBRARY_PATH:-}"
           make -C Compiler_new_ws/Short_Hand/src clean compiler ONNXRUNTIME_ROOT="${ORT_ROOT}"
           bash tests/integration/test_onnxruntime_sdk_gate.sh
+          # The SDK gate intentionally cleans the Make build before building its
+          # dedicated ai_app, so restore short_hand for the language regressions.
+          make -C Compiler_new_ws/Short_Hand/src compiler ONNXRUNTIME_ROOT="${ORT_ROOT}"
           Compiler_new_ws/Short_Hand/build/short_hand tests/conformance/beta_0_2/greenai_language.short parse >/dev/null
           SHORTHAND_BIN=Compiler_new_ws/Short_Hand/build/short_hand bash scripts/check_c3eco_language_blocks.sh
           cmake -S . -B /tmp/shorthand-pr82-onnx-cmake -G Ninja \
