@@ -19,24 +19,37 @@ require_text() {
   fi
 }
 
+extract_step() {
+  local step_name="$1"
+  awk -v target="- name: ${step_name}" '
+    index($0, target) { capture=1 }
+    capture && index($0, "- name: ") && !index($0, target) { exit }
+    capture { print }
+  ' "${WORKFLOW}"
+}
+
 workflow_text="$(cat "${WORKFLOW}")"
-publish_block="$(awk '
-  /- name: Publish event-specific CI status/ { capture=1 }
-  capture { print }
-' "${WORKFLOW}")"
+success_block="$(extract_step 'Publish stable event-specific CI status')"
+failure_block="$(extract_step 'Publish stable event-specific CI failure')"
 
 require_text "${workflow_text}" 'group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}' \
   "CI concurrency must remain isolated by event and ref"
 require_text "${workflow_text}" 'cancel-in-progress: true' \
   "superseded CI runs must remain cancellable"
-require_text "${publish_block}" 'if: ${{ always() && !cancelled() }}' \
-  "cancelled runs must not publish a terminal commit status"
-require_text "${publish_block}" 'TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}' \
-  "event-specific status must target the intended source SHA"
-require_text "${publish_block}" 'ci / ubuntu (%s)' \
-  "required event-specific status context must remain stable"
 
-if grep -Fq -- 'if: always()' <<<"${publish_block}"; then
+require_text "${success_block}" 'if: ${{ always() && !cancelled() && success() }}' \
+  "successful terminal status must not publish after cancellation"
+require_text "${failure_block}" 'if: ${{ always() && !cancelled() && failure() }}' \
+  "failed terminal status must not publish after cancellation"
+
+for publish_block in "${success_block}" "${failure_block}"; do
+  require_text "${publish_block}" 'HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}' \
+    "event-specific status must target the intended source SHA"
+  require_text "${publish_block}" 'context = f"ci / ubuntu ({event})"' \
+    "required event-specific status context must remain stable"
+done
+
+if grep -Fq -- 'if: always()' <<<"${success_block}${failure_block}"; then
   echo "error: status publisher must not run unconditionally after cancellation" >&2
   exit 1
 fi
