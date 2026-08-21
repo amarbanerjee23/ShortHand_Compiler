@@ -10,6 +10,12 @@ on:
       - .agent-pr82-payload.part01
       - .agent-pr82-payload.part02
       - .agent-pr82-payload.part03
+      - .agent-pr82-payload.part020
+      - .agent-pr82-payload.part021
+      - .agent-pr82-payload.part022
+      - .agent-pr82-payload.part023
+      - .agent-pr82-payload.part0230
+      - .agent-pr82-payload.part0231
       - .github/workflows/agent-apply-pr82.yml
 
 permissions:
@@ -32,7 +38,11 @@ jobs:
           set -euo pipefail
           cat .agent-pr82-payload.part00 \
               .agent-pr82-payload.part01 \
-              .agent-pr82-payload.part02 \
+              .agent-pr82-payload.part020 \
+              .agent-pr82-payload.part021 \
+              .agent-pr82-payload.part022 \
+              .agent-pr82-payload.part0230 \
+              .agent-pr82-payload.part0231 \
               .agent-pr82-payload.part03 \
             | base64 --decode > "${RUNNER_TEMP}/pr82-payload.tar.gz"
           echo "606499a5995c4ac1ea36abc3146a16695a58eb41e5a6b2c6da56965155a6cfcb  ${RUNNER_TEMP}/pr82-payload.tar.gz" | sha256sum --check --strict
@@ -49,6 +59,12 @@ jobs:
             .agent-pr82-payload.part01 \
             .agent-pr82-payload.part02 \
             .agent-pr82-payload.part03 \
+            .agent-pr82-payload.part020 \
+            .agent-pr82-payload.part021 \
+            .agent-pr82-payload.part022 \
+            .agent-pr82-payload.part023 \
+            .agent-pr82-payload.part0230 \
+            .agent-pr82-payload.part0231 \
             .github/workflows/agent-apply-pr82.yml
           git diff --cached --check
           git config user.name "github-actions[bot]"
