@@ -6,11 +6,14 @@ PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
 LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
 BACKEND_DOC="${ROOT_DIR}/docs/production_backend_hardware_qualification.md"
 C3ECO_DOC="${ROOT_DIR}/docs/c3eco_language_contract.md"
+TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
+TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
+TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing required file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" \
+for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
@@ -28,29 +31,35 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
   "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" \
   "${ROOT_DIR}/scripts/check_formatter_linter.sh" \
   "${ROOT_DIR}/scripts/check_lsp_editor.sh" \
-  "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh"; do
+  "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" \
+  "${ROOT_DIR}/scripts/check_production_truth.sh" \
+  "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"; do
   require_file "${file}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-21-pr81' \
+  'production_readiness_plan_version: 2026-08-22-pr83' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 80' \
-  'MERGED_OUT_OF_BAND_PR: 71' \
-  'CURRENT_IMPLEMENTATION_PR: 81' \
-  'GITHUB_IMPLEMENTATION_PR: 82' \
-  'NEXT_IMPLEMENTATION_PR_AFTER_PR81: 82' \
+  'LAST_MERGED_GITHUB_PR: 82' \
+  'CURRENT_GITHUB_PR: 83' \
+  'LAST_PLANNED_GITHUB_PR: 96' \
+  'CURRENT_IMPLEMENTATION_SCOPE: production_truth_and_c3eco_traceability' \
   'BASELINE_LANGUAGE_VERSION: beta-0.3' \
   'TARGET: enterprise production usage ready language' \
-  'Roadmap PR81 - Complete C3-ECO language blocks is IN PROGRESS as GitHub PR82.' \
-  'remaining_planned_implementation_prs_pr81_through_pr86: 6' \
-  'remaining_planned_implementation_prs_after_pr81: 5' \
+  'PR83 - Production truth baseline and C3-ECO traceability is IN PROGRESS.' \
+  'remaining_planned_implementation_prs_pr83_through_pr96: 14' \
+  'remaining_planned_implementation_prs_after_pr83: 13' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
-for pr in $(seq 68 86); do
+for pr in $(seq 68 80); do
+  require_contains "${PLAN}" "PR${pr} -"
+  require_contains "${PLAN}" "| PR${pr} -"
+done
+require_contains "${PLAN}" '| Roadmap PR81 / GitHub PR82 - C3-ECO language blocks and zero-skip CI | MERGED'
+for pr in $(seq 83 96); do
   require_contains "${PLAN}" "PR${pr} -"
   require_contains "${PLAN}" "| PR${pr} -"
 done
@@ -62,10 +71,10 @@ require_contains "${PLAN}" '| PR77 - Container and Kubernetes production hardeni
 require_contains "${PLAN}" '| PR78 - Formatter and linter baseline | MERGED as GitHub PR79'
 require_contains "${PLAN}" '| PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80'
 require_contains "${PLAN}" '| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | MERGED as GitHub PR81'
-require_contains "${PLAN}" '| PR81 - Complete C3-ECO language blocks | IN PROGRESS as GitHub PR82'
+require_contains "${PLAN}" '| PR83 - Production truth baseline and C3-ECO traceability | IN PROGRESS'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-08-09-v1' \
+  'ci_pipeline_architecture_version: 2026-08-22-pr83' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \
@@ -74,7 +83,8 @@ for anchor in \
   'PR74: multi-job DAG, GCC/Clang/platform matrix and reproducibility.' \
   'PR76: security/SAST/dependency/license policy.' \
   'PR77: hardened multi-architecture containers and ephemeral Kubernetes enforcement.' \
-  'PR86: performance, energy and zero-skip production RC aggregation.'; do
+  'PR83: production truth and C3-ECO traceability.' \
+  'PR96: enterprise pilot and zero-skip production RC aggregation.'; do
   require_contains "${PIPELINE}" "${anchor}"
 done
 
@@ -99,6 +109,8 @@ require_contains "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh" 'PA
 require_contains "${ROOT_DIR}/scripts/check_formatter_linter.sh" 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate'
 require_contains "${ROOT_DIR}/scripts/check_lsp_editor.sh" 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate'
 require_contains "${ROOT_DIR}/scripts/check_compiler_test_strategy.sh" 'PASS compiler test strategy and coverage audit gate'
+require_contains "${ROOT_DIR}/scripts/check_production_truth.sh" 'PASS production truth and C3-ECO traceability gate'
+require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, completeness, mapping and evidence cases'
 
 # Historical milestones remain auditable without being mistaken for active state.
 for anchor in \
@@ -138,7 +150,10 @@ for anchor in \
   require_contains "${PLAN}" "${anchor}"
 done
 
-printf 'PASS production readiness PR plan gate\n'
-
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
 require_contains "${ROOT_DIR}/scripts/check_c3eco_language_blocks.sh" 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'
+
+bash "${ROOT_DIR}/scripts/check_production_truth.sh"
+bash "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"
+
+printf 'PASS production readiness PR plan gate\n'

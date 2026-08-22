@@ -1,118 +1,43 @@
 # Enterprise Release Readiness Scorecard
 
-This scorecard is the control document for deciding whether ShortHand can move from internal engineering review to an enterprise release candidate. A release is not enterprise-ready unless every mandatory item marked `MUST` is satisfied with retained evidence.
+enterprise_release_scorecard_version: 2026-08-22-pr83
+current_maturity: controlled_beta
+production_claim: false
+current_state: ER3-controlled-beta
+target_state: ER4-enterprise-release-candidate
 
-## Readiness state labels
+This scorecard summarizes active release controls. The machine-readable authority is `docs/production_truth.tsv`; test coverage is `tests/coverage/compiler_test_coverage_matrix.tsv`; C3-ECO coverage is `docs/c3eco_traceability.tsv`.
 
-| Label | Meaning | Public wording |
+## State model
+
+| State | Meaning | Current claim boundary |
 | --- | --- | --- |
-| ER0 | Internal engineering review | Research artifact / internal review only |
-| ER1 | Compiler hardening candidate | Internal pilot candidate |
-| ER2 | Real AI backend pilot | Controlled AI pilot candidate |
-| ER3 | Enterprise beta candidate | Limited enterprise beta candidate |
-| ER4 | Enterprise release candidate | Enterprise release candidate after all gates pass |
+| ER0 | Internal engineering review | No external pilot claim. |
+| ER1 | Compiler hardening candidate | Core compiler validation only. |
+| ER2 | Real-backend pilot | At least one scoped live backend, no enterprise claim. |
+| ER3 | Controlled enterprise beta | Qualified narrow scope with explicit open blockers. |
+| ER4 | Enterprise release candidate | All mandatory blockers closed and retained release evidence verified. |
 
-## Mandatory gates
+## Control families
 
-| Gate | Requirement | Evidence | Status |
-| --- | --- | --- | --- |
-| G1 | Clean checkout build passes | CI run link and local reproduction command | Open |
-| G2 | Strict language validation passes | `bash scripts/validate_language.sh --strict` | Open |
-| G3 | Smoke tests pass | `bash scripts/smoke_test.sh` | Open |
-| G4 | Full Makefile suite passes | `make -C Compiler_new_ws/Short_Hand/src test` | Open |
-| G5 | Sanitizer suite passes | `make -C Compiler_new_ws/Short_Hand/src sanitize` | Open |
-| G6 | CMake build and CTest pass | `cmake --build build` and `ctest --test-dir build --output-on-failure` | Open |
-| G7 | Language specification is versioned | `docs/language_spec.md` with version and grammar coverage | Open |
-| G8 | Compatibility and deprecation policy exists | policy document | Open |
-| G9 | Positive and negative conformance tests cover all syntax | test matrix | Open |
-| G10 | Parser and semantic diagnostics include file and line information | diagnostics test results | Open |
-| G11 | At least one real AI backend executes in documented workflow | model execution evidence | Open |
-| G12 | Fallback never claims executed inference | fallback tests and report evidence | Partially satisfied |
-| G13 | Backend failure cases are covered | missing model, bad shape, unsupported runtime tests | Open |
-| G14 | GreenAI evidence report is traceable | generated JSON and source manifest | Partially satisfied |
-| G15 | Energy/carbon telemetry does not fabricate unavailable values | telemetry tests and report policy | Partially satisfied |
-| G16 | Measurement plan exists for AI examples | measurement plan file | Open |
-| G17 | SBOM generation is available | SBOM artifact | Open |
-| G18 | Release artifacts are signed | signature artifact | Open |
-| G19 | Dependency and secret scanning are configured | CI/security logs | Open |
-| G20 | Security policy and disclosure process exist | security policy file | Open |
-| G21 | Container image build exists | Dockerfile and image build CI | Open |
-| G22 | Kubernetes/OpenShift deployment example exists | manifests and deployment docs | Open |
-| G23 | Observability hooks exist | logs, metrics, health endpoints | Open |
-| G24 | Governance and RFC process exists | RFC template and maintainer policy | Open |
-| G25 | Unsupported public claims are blocked | claim scan gate | Partially satisfied |
+| Control family | Status | Evidence / remaining condition |
+| --- | --- | --- |
+| Build, grammar, diagnostics and cross-mode tests | Implemented for defined beta-0.3 core | CI, Make, CMake/CTest, conformance and differential gates; PR84-PR85 expand the language. |
+| Memory, UB, fuzz and concurrency safety | Implemented for current baseline | ASan/LSan/UBSan, libFuzzer and TSan; PR87 adds serving load/fault/soak evidence. |
+| Toolchain, platform, ABI and packaging | Implemented for declared tiers | Reproducible clean builds, frozen ABI and installed consumers; PR86 adds enterprise packages/stdlib/FFI. |
+| Security and dependency governance | Implemented for current contract | CodeQL, Trivy, dependency delta, license policy, pinned actions and expiring exceptions. |
+| Container and Kubernetes | Implemented for CLI/compiler deployment contract | Hardened multi-arch image and live Kind checks; no public service/ingress claim. |
+| Backend execution | Implemented for `linux-x64-cpu-v1` | ONNX Runtime CPU output `42`; PR94 adds a representative AI workload. |
+| SBOM and provenance generation | Implemented | SPDX 2.3 source/artifact bundles and candidate provenance. |
+| Protected signed publication | Partial | Source contract exists; real protected tag exercise and verified attestations remain. |
+| Runtime observability | Partial | JSON, Prometheus and OTLP-shaped exports exist; PR87 adds production serving operations. |
+| C3-ECO readiness | Partial | Candidate language/evidence and full traceability exist; PR88-PR91 close typed profile, measurement, scoring and auditor lifecycle. |
+| MLIR production lowering | Partial | Hand-authored foundation exists; PR92-PR93 add generated dialect and full lowering. |
+| Measured performance and energy | Open | PR95 requires equivalent work, repeated trials, raw data, provenance and uncertainty. |
+| Final production RC aggregate | Open | PR96 requires zero mandatory skips, enterprise pilot, upgrade/rollback/DR and retained evidence. |
 
-## Current assessment
+## ER4 promotion rule
 
-Current readiness state: ER0.
+ER4 requires every production blocker in both matrices to be closed, PR96 to pass on its final head in `ci / ubuntu (push)` and `ci / ubuntu (pull_request)`, and TST017 to be closed by a verified protected release. A high C3-ECO score cannot override a failed critical gate. No efficiency improvement counts if required functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened.
 
-ShortHand should remain in internal engineering review until the following minimum improvements are complete:
-
-1. PR-level CI must pass consistently.
-2. A real ONNX Runtime CPU backend must execute a model.
-3. Compiler diagnostics and conformance tests must cover the language surface.
-4. Security, SBOM, signing, and release provenance must be added.
-5. Deployment examples must exist for container and Kubernetes/OpenShift usage.
-6. GreenAI evidence must include traceable runtime and measurement fields for at least one real AI workload.
-
-## Promotion rules
-
-### ER0 to ER1
-
-Required:
-
-- G1 to G10 pass.
-- Known limitations remain documented.
-- Unsupported claims remain blocked.
-
-### ER1 to ER2
-
-Required:
-
-- ER1 complete.
-- G11 to G16 pass.
-- One real backend executes a model.
-- Fallback and real execution are clearly separated in evidence.
-
-### ER2 to ER3
-
-Required:
-
-- ER2 complete.
-- G17 to G23 pass.
-- Release artifacts have SBOM and signatures.
-- Deployment example is reproducible.
-
-### ER3 to ER4
-
-Required:
-
-- ER3 complete.
-- G24 to G25 pass.
-- Governance and long-term compatibility processes are active.
-- Evidence bundle is retained.
-- Maintainer sign-off is recorded.
-
-## Required release evidence bundle
-
-A release candidate evidence bundle must contain:
-
-- CI run IDs.
-- Toolchain versions.
-- Build logs.
-- Test reports.
-- Sanitizer logs.
-- CMake/CTest logs.
-- AI backend execution report.
-- GreenAI evidence JSON.
-- Measurement plan.
-- Carbon factor references.
-- Security scan logs.
-- SBOM.
-- Signature/provenance files.
-- Known limitations.
-- Claims approval checklist.
-
-## Merge policy for readiness PRs
-
-A readiness PR may be merged only when it improves measurable gates without weakening safeguards. This scorecard PR itself should remain unmerged until reviewers agree that it correctly defines the readiness target and does not overstate current maturity.
+The retained release bundle must include exact commit/run identity, toolchains, build/test/sanitizer results, backend/workload evidence, measurement and uncertainty records, security results, SBOM/provenance/signatures, deployment/pilot/rollback evidence, known limitations and approved claim wording.

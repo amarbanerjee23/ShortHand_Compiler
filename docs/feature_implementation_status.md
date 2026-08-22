@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-21-pr82
+feature_status_version: 2026-08-22-pr83
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 82
-current_roadmap_pr: 81
+current_github_pr: 83
+current_roadmap_scope: production_truth_and_c3eco_traceability
 
 ## Goal
 
@@ -13,9 +13,15 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 implemented and merged roadmap PR80, the versioned production backend and hardware qualification contract. GitHub PR82 now implements roadmap PR81, first-class C3-ECO language declarations and the zero-skip mandatory qualification contract.
+Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 implemented and merged roadmap PR80, the versioned production backend and hardware qualification contract. GitHub PR82 implemented and merged roadmap PR81, first-class C3-ECO language declarations and the zero-skip mandatory qualification contract. GitHub PR83 now implements the machine-readable production truth and C3-ECO traceability contract.
 
-The compiler test audit records **21 implemented, 3 partial and 3 open** areas for the PR82 candidate. ShortHand remains a controlled beta because protected release signing has not yet been exercised and measured C3-ECO scoring/auditor lineage, MLIR, performance and measured-energy blockers remain.
+The compiler test audit records **22 implemented, 3 partial and 3 open** areas for the PR83 candidate. ShortHand remains a controlled beta because the production language, serving runtime, complete C3-ECO preparation, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
+
+## Production truth authority
+
+The active state is machine-readable in `docs/production_truth.tsv`. C3-ECO readiness is tracked in `docs/c3eco_traceability.tsv` across mandatory gates G1-G14, scoring domains A-K and the applicable S9/S12 software classes. `scripts/check_production_truth.sh` fails when active documents contradict the source, required rows are missing, evidence paths are invalid or an implemented certification row lacks verification evidence.
+
+The current certification profile treats the supplied C3-ECO draft v0.6 as the normative candidate and the 2026-07-18 v0.7 all-inclusive and eligibility documents as an overlay. These are consultation drafts. The compiler produces candidate evidence only and does not grant certification.
 
 ## Language and compiler status
 
@@ -29,11 +35,12 @@ The compiler test audit records **21 implemented, 3 partial and 3 open** areas f
 | Full sanitizer coverage | Implemented for current baseline | ASan/LSan/UBSan compiler/runtime coverage. |
 | Continuous fuzzing | Implemented for current compiler stages | parser/module/semantic/lowering libFuzzer plus scheduled extension. |
 | Concurrency and race detection | Implemented for current runtime baseline | functional thread-safety plus mandatory TSan. |
-| Compiled-code metadata/runtime lowering | Partial | production MLIR lowering remains PR85. |
+| Compiled-code metadata/runtime lowering | Partial | generated MLIR and production lowering remain PR92-PR93. |
 | Cross-platform portability | Implemented for PR74 tiers | GCC12/14, Clang16/18, Linux x64/arm64, macOS arm64, Windows x64. |
 | Cross-platform reproducibility | Implemented | independent clean builds and checksum/tamper gate. |
 | Runtime ABI compatibility | Implemented v1 | frozen 25-symbol ABI consumer plus multi-platform installed consumers. |
 | Packaging and installed consumers | Implemented | install/reinstall/uninstall lifecycle on qualified platforms. |
+| Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1` | Active maturity/roadmap authority plus G1-G14, A-K and S9/S12 evidence ownership. |
 
 Historical compatibility term: Module/import/package model.
 Historical compatibility gate: language versioning and conformance policy gate.
@@ -42,7 +49,7 @@ Historical compatibility gate: language versioning and conformance policy gate.
 
 | Area | Status | Evidence / boundary |
 | --- | --- | --- |
-| Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` candidate | Pinned ONNX Runtime SDK, real identity-model execution and numerical output `42`; exact-head CI still determines PR completion. |
+| Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` | Pinned ONNX Runtime SDK, real identity-model execution and numerical output `42`; representative production AI workload qualification remains PR94. |
 | Full backend compatibility | Implemented for declared v1 production support set | Only `onnxruntime_cpu` + CPU is production-supported. Other backend/device pairs remain experimental or unavailable and are not advertised as production support. |
 | Runtime observability implementation | Partial | JSON, Prometheus and OTLP-shaped adapters exist; public network exposure is not implied. |
 | CPU/GPU/TPU/NPU routing | Implemented for qualification-aware v1 policy | Inventory remains available for all device classes. Production routing rejects unqualified accelerator pairs by default. |
@@ -65,16 +72,16 @@ Historical compatibility gate: language versioning and conformance policy gate.
 | Area | Status | Boundary |
 | --- | --- | --- |
 | Green AI contract/evidence syntax | Implemented for current beta syntax and first-class C3-ECO declarations | GitHub PR82 adds the versioned `shorthand.c3eco.language.v1` declaration contract; measured scoring remains separate. |
-| C3-ECO scoring/auditor evidence | Partial | First-class language blocks are implemented in GitHub PR82; measured scoring and authority-ready auditor lineage remain roadmap PR82-PR83. |
-| MLIR dialect scaffold | Partial | generated dialect and production lowering remain PR84-PR85. |
-| Measured ShortHand versus Python energy evidence | Open | PR86. No lower-energy claim is made by current CI. |
-| Zero-skip production RC gate | Open | PR86. |
+| C3-ECO scoring/auditor evidence | Partial | First-class language blocks are implemented in GitHub PR82; typed profiles, measurement, scoring and auditor lineage remain PR88-PR91. |
+| MLIR dialect scaffold | Partial | the hand-authored foundation exists; generated dialect and production lowering remain PR92-PR93. |
+| Measured ShortHand versus Python energy evidence | Open | PR95. No lower-energy claim is made by current CI. |
+| Zero-skip production RC gate | Open | PR96. |
 
 ## C3-ECO language PR82 boundary
 
 c3eco_language_contract: shorthand.c3eco.language.v1
 
-GitHub PR82 implements roadmap PR81 with ten first-class declaration kinds: `certification`, `functional_unit`, `workload`, `boundary`, `measurement_plan`, `ai_lifecycle`, `rag_pipeline`, `token_budget`, `model_routing` and `guardrails`. The parser, AST, semantic analyzer, IR metadata and evidence emitter carry the same structured declaration data. Required fields fail closed with `SHD5102`, duplicate declarations with `SHD5101`, invalid fields with `SHD5103`, and attempted self-certification claims with `SHD5104`.
+GitHub PR82 implemented roadmap PR81 with ten first-class declaration kinds: `certification`, `functional_unit`, `workload`, `boundary`, `measurement_plan`, `ai_lifecycle`, `rag_pipeline`, `token_budget`, `model_routing` and `guardrails`. The parser, AST, semantic analyzer, IR metadata and evidence emitter carry the same structured declaration data. Required fields fail closed with `SHD5102`, duplicate declarations with `SHD5101`, invalid fields with `SHD5103`, and attempted self-certification claims with `SHD5104`.
 
 These declarations are evidence inputs only. They cannot grant certification, create a certificate identifier or mark a candidate as officially certified; generated C3-ECO candidate evidence keeps `official_certification_granted:false`. Measured scoring and external authority/auditor handoff remain later roadmap work.
 
@@ -90,7 +97,7 @@ The mandatory qualification path downloads ONNX Runtime 1.20.1 from its fixed re
 
 Hardware discovery continues to inventory CPU, GPU, TPU and NPU. A detected accelerator, installed SDK or compatible policy row is not enough for production routing. Unqualified GPU/NPU/TPU routes fail closed with `backend_device_not_production_qualified`. `SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE=1` is an explicit development override and its evidence remains `production_qualified:false`.
 
-TST022 becomes implemented only for this declared v1 support set after the exact final PR81 head passes both stable CI contexts. Adding a production GPU, TPU, NPU, backend or platform later requires real device-backed numerical evidence first.
+TST022 is implemented for this declared v1 support set after the final GitHub PR81 head passed both stable CI contexts. Adding a production GPU, TPU, NPU, backend or platform later requires real device-backed numerical evidence first.
 
 ## Syntax highlighting and LSP PR80 boundary
 
@@ -114,10 +121,15 @@ GitHub PR78 implemented roadmap PR77 through a multi-stage production image, Res
 
 ## Production blockers
 
-1. Configure and exercise the protected signed-release environment for roadmap PR75 / TST017.
-2. Complete measured C3-ECO scoring and authority-ready handoff (roadmap PR82-PR83); first-class language blocks are implemented in GitHub PR82.
-3. Generated MLIR dialect and production lowering (PR84-PR85).
-4. Measured performance/energy comparison and zero-skip production RC gate (PR86).
+1. Production type system and memory model (PR84).
+2. Functions, structured control flow and deterministic error semantics (PR85).
+3. Enterprise packages, standard library and FFI (PR86).
+4. Concurrent serving and operational runtime (PR87).
+5. Typed C3-ECO profile, measurement, scoring and auditor lifecycle (PR88-PR91).
+6. Generated MLIR dialect and production lowering (PR92-PR93).
+7. Representative production AI workload qualification (PR94).
+8. Measured performance/energy comparison and zero-skip production RC gate (PR95-PR96).
+9. Configure and exercise the protected signed-release environment for TST017 after the implementation backlog closes.
 
 GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` production backend contract because those device classes are explicitly not production-supported in v1. Any future support expansion becomes a production blocker for that expanded version until its live device-backed tests pass.
 

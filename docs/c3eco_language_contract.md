@@ -3,10 +3,16 @@
 c3eco_language_contract_version: shorthand.c3eco.language.v1
 production_claim: false
 official_certification_granted: false
+normative_candidate: C3-ECO draft v0.6
+inclusion_overlay: C3-ECO draft v0.7 dated 2026-07-18
 
 ## Purpose
 
 This contract makes certification-oriented sustainability evidence declarations first-class ShortHand syntax without allowing the compiler or generated software to grant an external certification. The declarations are compiled metadata/evidence inputs, not a certification decision.
+
+The supplied C3-ECO materials are consultation and pilot drafts. The v0.6 standard is the canonical gate/domain source for this repository; the v0.7 eligibility and all-inclusive documents are an overlay for inclusive software classes, commercial routing and claim wording. Bronze is the first certification level. Registered and Measured Candidate are readiness states, not certified levels.
+
+C3-ECO assessment is technology-neutral. A programming language, framework, cloud, backend or model is not inherently green. Evidence must compare required useful work within a declared product/version, workload, functional unit, system boundary, deployment/hardware context, relevant geography and validity period.
 
 ## Declaration kinds
 
@@ -52,3 +58,11 @@ Fields such as `official_certification_granted`, `certified_level`, `certificate
 The AST preserves declaration kind, name and fields. The semantic analyzer validates the contract. LLVM generation emits `shorthand.c3eco_declaration` metadata, so declarations do not introduce accidental runtime work. Candidate evidence serializes the same structure under `c3eco_language_contract: shorthand.c3eco.language.v1`.
 
 Measured energy/carbon/cost scoring and authority-ready signed auditor lineage are deliberately outside this contract and remain subsequent roadmap work.
+
+## Measurement and claims boundary
+
+Candidate metrics may use units such as Wh per API request, kWh per 1,000 successful requests, J per inference, gCO2e per inference or kWh per GB processed. The claim chain is energy per functional unit, carbon per functional unit using a disclosed factor, and electricity cost using a disclosed tariff. PR82 declarations do not perform that calculation. PR89 owns measurement, carbon allocation, uncertainty and cost-workbook evidence.
+
+Evidence quality must increase with the claimed certification level, from transparent MQ1 estimation/basic telemetry at Bronze toward independently verified lifecycle evidence at Diamond. A score cannot override a failed critical gate. No improvement counts when required functionality, accuracy, reliability, security, privacy, safety or accessibility is degraded. Offsets, renewable hosting and avoided-impact claims remain separate from the product-level footprint.
+
+Draft v0.7 adds cost calculation where claimed as G6 and shifts its G7-G12 numbering relative to v0.6. `docs/c3eco_traceability.tsv` keeps the v0.6 G1-G14 keys, records each v0.7 alias and maps conditional cost calculation into canonical G5. This prevents the overlay from silently changing the security, safeguard, repeatability, retention, claim-integrity, offset or recertification controls.

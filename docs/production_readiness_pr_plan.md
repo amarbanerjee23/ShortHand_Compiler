@@ -1,12 +1,11 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-21-pr81
+production_readiness_plan_version: 2026-08-22-pr83
 PLAN_STATUS: active
-LAST_COMPLETED_PR: 80
-MERGED_OUT_OF_BAND_PR: 71
-CURRENT_IMPLEMENTATION_PR: 81
-GITHUB_IMPLEMENTATION_PR: 82
-NEXT_IMPLEMENTATION_PR_AFTER_PR81: 82
+LAST_MERGED_GITHUB_PR: 82
+CURRENT_GITHUB_PR: 83
+LAST_PLANNED_GITHUB_PR: 96
+CURRENT_IMPLEMENTATION_SCOPE: production_truth_and_c3eco_traceability
 BASELINE_LANGUAGE_VERSION: beta-0.3
 TARGET: enterprise production usage ready language
 
@@ -18,48 +17,43 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-Roadmap PR69 through PR79 are merged. PR71 was the out-of-band CI status-publication correction. Roadmap PR74 was implemented as GitHub PR75. Roadmap PR75 was implemented as GitHub PR76. Roadmap PR76 was implemented as GitHub PR77. Roadmap PR77 was implemented as GitHub PR78. Roadmap PR78 was implemented as GitHub PR79. Roadmap PR79 was implemented and merged as GitHub PR80 with scanner-aligned syntax highlighting and the native compiler-backed LSP baseline.
+GitHub PR82 is merged. It implemented first-class C3-ECO declarations and preserved the zero-skip ONNX Runtime CPU and Kubernetes qualification contracts. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
 
-Roadmap PR80 was implemented and merged as GitHub PR81 with the versioned production backend/device support boundary and mandatory ONNX Runtime CPU live qualification. Roadmap PR81 is now the active implementation and is carried by GitHub PR82. It makes C3-ECO certification-oriented declarations first-class parser/AST/semantic/evidence constructs while preserving fail-closed backend and Kubernetes qualification.
+ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-ShortHand remains `controlled_beta` with `production_claim: false`. TST017 signed protected release remains partial until `production-release` is configured and a real version tag is successfully attested. TST022 closes for the versioned `linux-x64-cpu-v1` support contract only after the exact GitHub PR81 head passes mandatory live ONNX Runtime CPU numerical execution and all inherited CI. GPU, TPU and NPU production support is not claimed by this version.
+The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. It covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
 
-## PR81 completion contract
+## PR83 completion contract
 
-Roadmap PR81 - Complete C3-ECO language blocks is IN PROGRESS as GitHub PR82.
+PR83 - Production truth baseline and C3-ECO traceability is IN PROGRESS.
 
 Implementation requirements:
 
-1. Define a versioned backend/hardware production-support contract and explicit claim boundary.
-2. Keep CPU/GPU/TPU/NPU inventory visible while separating detection from production qualification.
-3. Allow production routing only for backend/device pairs in the qualified support matrix.
-4. Make `onnxruntime_cpu` on CPU the v1 production-supported backend/device pair.
-5. Acquire the CI qualification SDK at a fixed version and verify a pinned SHA-256 before execution.
-6. Execute a real ONNX Runtime C++ inference path through the compiled ShortHand runtime bridge.
-7. Validate numerical output using the identity ONNX fixture with input `42` and required output `42`.
-8. Reject fallback, not-executed, missing-SDK or skip evidence for the production-supported CPU row.
-9. Reject unqualified GPU/NPU/TPU production routes even when a hardware signal or compatible backend is visible.
-10. Preserve an explicit experimental override that remains machine-marked `production_qualified:false`.
-11. Keep TensorRT, ONNX Runtime CUDA/TensorRT EP, OpenVINO NPU, LibTorch GPU, llama.cpp GPU and TPU outside production support until each receives live device-backed numerical qualification.
-12. Emit structured qualification evidence with zero mandatory skips for the declared production scope.
-13. Run deterministic qualification policy tests without requiring accelerator hardware.
-14. Execute the live CPU qualification from inherited mandatory `ubuntu-core` on Linux x64.
-15. Preserve all parser/semantic, sanitizer/race, portability/reproducibility, release, security, deployment and tooling gates.
-16. Update feature status, compiler test strategy, roadmap, third-party inventory and the 27-area coverage matrix together.
-17. Final PR head must have `ci / ubuntu (push)` successful.
-18. Final PR head must have `ci / ubuntu (pull_request)` successful.
-19. TST022 becomes implemented only for the versioned v1 production support set after exact-head evidence passes.
-20. Adding any production-supported backend/device/platform later requires its own live numerical execution fixture before the support matrix can expand.
+1. Establish `shorthand.production.truth.v1` as the machine-readable active maturity and roadmap authority.
+2. Record merged PR82, active PR83, final planned PR96 and the corrected count of fourteen remaining implementation PRs including PR83.
+3. Keep `controlled_beta` and `production_claim: false` until all production blockers and the protected release exercise close.
+4. Record beta-0.3 as the active language contract, with beta-0.2 as its base grammar and `shorthand.c3eco.language.v1` as an extension.
+5. Record `linux-x64-cpu-v1` as the only qualified backend scope and reject any active GPU/TPU/NPU production claim.
+6. Version the supplied C3-ECO draft v0.6 as the normative candidate and the 2026-07-18 v0.7 documents as the inclusion/eligibility overlay.
+7. Map every mandatory gate G1-G14, scoring domain A-K, and applicable S9/S12 software class to status, implementation evidence, verification evidence, owner, closure target and blocker state.
+8. Fail CI on missing traceability rows, duplicate identifiers, invalid evidence paths or an implemented row without executable verification evidence.
+9. Reconcile the roadmap, feature tracker, compiler strategy, language specification, compatibility notes, known limitations, release status and public readiness wording.
+10. Add TST028 for the production truth and certification traceability contract.
+11. Add the production-truth gate to direct CI, Makefile test parity and CTest.
+12. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend and C3-ECO gates.
+13. Do not grant certification, claim standards adoption, claim inherent language greenness or convert financial estimates into guaranteed savings.
+14. Final PR head must have `ci / ubuntu (push)` successful.
+15. Final PR head must have `ci / ubuntu (pull_request)` successful.
 
 ## Mandatory rule for every remaining PR
 
-Every PR through PR86 must include all applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability and performance tests. It must update the feature tracker, this roadmap and the compiler coverage matrix. No mandatory production test may be converted to an unconditional skip, warning-only success or `continue-on-error` success.
+Every PR through PR96 must include all applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability, performance and energy tests. It must update the production truth, traceability, feature tracker, this roadmap and the compiler coverage matrix. No mandatory production test may be converted to an unconditional skip, warning-only success or `continue-on-error` success.
 
 The final head of every implementation PR must have both stable event-specific CI statuses green before merge.
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification in mandatory compiler CI, GitHub PR79 retains formatter/linter qualification and GitHub PR80 retains LSP/editor qualification. GitHub PR81 retains live versioned backend/hardware qualification in inherited `ubuntu-core`. GitHub PR82 adds the first-class C3-ECO frontend/semantic/evidence gate and mandatory zero-skip qualification policy. Release publication remains separated from PR CI so OIDC/repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification, PR79 formatter/linter qualification, PR80 LSP/editor qualification, PR81 live versioned backend qualification and PR82 first-class C3-ECO language plus zero-skip qualification. PR83 adds the production-truth and certification-traceability tier. Release publication remains separated from PR CI so OIDC and repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -78,29 +72,48 @@ The final head of every implementation PR must have both stable event-specific C
 | PR78 - Formatter and linter baseline | MERGED as GitHub PR79 | Native deterministic formatter/linter and safe explicit-output fixes. | Fast tooling job plus inherited ubuntu-core execution. | Idempotence, parse roundtrip, behavior preservation and sanitizers. |
 | PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80 | Scanner-aligned editor grammar plus native compiler-backed LSP. | Dedicated protocol job plus inherited ubuntu-core execution. | Framing, diagnostics, UTF-16, navigation, cancellation and sanitizers. |
 | PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | MERGED as GitHub PR81 | Versioned production backend/device support with mandatory ONNX Runtime CPU live numerical evidence and fail-closed accelerator boundaries. | Pinned qualification SDK plus mandatory inherited ubuntu-core live gate. | Output `42`, no fallback/skip, route rejection and structured support matrix. |
-| PR81 - Complete C3-ECO language blocks | IN PROGRESS as GitHub PR82 | Complete certification-oriented syntax/AST/semantics/evidence declarations without granting certification. | C3-ECO frontend gate. | Grammar/AST, units, valid/invalid contracts and sanitizer tests. |
-| PR82 - Measured scoring, reports and eco-regression | PLANNED | Energy/carbon/cost calculations with provenance, uncertainty, quality and baselines. | Deterministic eco-regression job. | Equation, threshold, stale-factor, unit and missing-sensor tests. |
-| PR83 - Authority-ready C3-ECO auditor bundle | PLANNED | Signed manifests, source/binary/model/measurement lineage, retention, redaction and verification. | RC bundle verification dependency. | Tamper, lineage, signature, schema, redaction and clean-room replay. |
-| PR84 - Generated MLIR dialect build integration | PLANNED | TableGen-generated dialect, operations, types, verifiers, installation and downstream consumption. | MLIR build/lit job. | FileCheck, verifiers, roundtrip, installed consumer and freshness. |
-| PR85 - Semantic IR to MLIR lowering and production backend handoff | PLANNED | AST/SemanticIR lowering, canonicalization, verification, LLVM lowering and AI/Green AI runtime handoff. | MLIR differential lowering tied to PR72 oracle. | Invalid ops/shapes, differential execution and optimization preservation. |
-| PR86 - Measured energy, performance and zero-skip production RC gate | PLANNED | Equivalent ShortHand/Python workloads, latency, throughput, memory, energy, metadata and blocker aggregation. | Final zero-skip release-candidate aggregate. | Calibration, equivalent workloads, repeated measurements, uncertainty and clean RC matrix. |
+| Roadmap PR81 / GitHub PR82 - C3-ECO language blocks and zero-skip CI | MERGED | Ten first-class C3-ECO parser/AST/semantic/evidence declarations without granting certification. | C3-ECO language and zero-skip policy gates. | Positive/negative grammar, semantics, evidence, sanitizer and exact-head CI. |
+| PR83 - Production truth baseline and C3-ECO traceability | IN PROGRESS | Machine-readable active state and G1-G14/A-K/S9/S12 evidence ownership. | First-class production-truth gate in CI, Make and CTest. | Schema, duplicate, missing-row, evidence-path and contradiction tests. |
+| PR84 - Production type system and memory model | PLANNED | Executable floats, strings, arrays/slices, records, enums, option/result, conversions and ownership. | Expanded differential and sanitizer gates. | Cross-mode values, lifetime, overflow, bounds and ABI evidence. |
+| PR85 - Functions, structured control flow and error semantics | PLANNED | Expression calls, arbitrary arguments, scopes, loops, deterministic errors and `goto` resolution. | Language conformance and differential expansion. | Positive, negative, recursion, cleanup and compatibility tests. |
+| PR86 - Enterprise packages, standard library and FFI | PLANNED | Versioned cryptographic dependencies, offline builds, namespaces, core libraries and safe C/C++ interop. | Package supply-chain and installed-consumer gates. | Tamper, reproducibility, ABI, license, SBOM and portability tests. |
+| PR87 - Concurrent serving and operational runtime | PLANNED | Cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification. | TSan, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
+| PR88 - Typed C3-ECO certification profile | PLANNED | Typed identities, units, functional links, boundary/materiality, AI roles, validity and migration. | Certification-profile conformance gate. | G1-G3/G7/G14 positive, negative, migration and claim-safety evidence. |
+| PR89 - Measurement, carbon accounting and cost workbook | PLANNED | Real instrumentation, allocation, PUE, component accounting, MQ/DQ, uncertainty and tariff provenance. | Deterministic measurement/workbook gate. | Calibration, missing-instrument, unit, factor, double-counting and reconciliation tests. |
+| PR90 - Eligibility, scoring, claims and eco-regression | PLANNED | G1-G14 algorithm, A-K scoring, level caps, AI routes, permitted claims and surveillance thresholds. | Golden scoring and claim-control gate. | Tier boundaries, critical-gate precedence, restricted claims and regression tests. |
+| PR91 - Auditor bundle, retention, surveillance and reporting | PLANNED | Signed lineage, canonical schemas, redaction, replay, retention, expiry, recertification and public reports. | Auditor-bundle verification dependency. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
+| PR92 - Generated ShortHand MLIR dialect | PLANNED | TableGen-generated operations, types, attributes, verifiers, installation and downstream use. | MLIR build/lit gate. | FileCheck, verifiers, roundtrip, installed consumer and freshness tests. |
+| PR93 - SemanticIR to MLIR and LLVM lowering | PLANNED | Full semantic lowering, canonicalization, verification and runtime handoff. | MLIR differential lowering gate. | Invalid ops/shapes, execution equivalence and optimization preservation. |
+| PR94 - Representative production AI qualification | PLANNED | Realistic models, tensor types/shapes, batching, concurrency, timeouts and numerical tolerances. | Live workload/backend qualification. | Numerical, load, malformed-model, recovery and evidence tests. |
+| PR95 - Performance and measured-energy qualification | PLANNED | Compiler/runtime performance and equivalent-workload ShortHand/Python energy evidence. | Performance and eco-regression qualification. | Calibration, repeated trials, uncertainty, quality equivalence and raw traces. |
+| PR96 - Enterprise pilot and production RC | PLANNED | Clean install/upgrade/rollback, deployment, security, evidence and final blocker aggregation. | Final zero-skip RC aggregate. | Pilot, soak, disaster recovery, retained evidence and release decision. |
 
 ## Current count
 
-remaining_planned_implementation_prs_pr81_through_pr86: 6
-remaining_planned_implementation_prs_after_pr81: 5
+remaining_planned_implementation_prs_pr83_through_pr96: 14
+remaining_planned_implementation_prs_after_pr83: 13
 
-Next recommended roadmap PR after PR81 is merged:
+Next recommended PR after PR83 is merged:
 
-PR82 - Measured scoring, reports and eco-regression.
+PR84 - Production type system and memory model.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the seven remaining implementation PRs.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the fourteen remaining implementation PRs.
 
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
+
+- production_readiness_plan_version: 2026-08-21-pr81
+- LAST_COMPLETED_PR: 80
+- MERGED_OUT_OF_BAND_PR: 71
+- CURRENT_IMPLEMENTATION_PR: 81
+- GITHUB_IMPLEMENTATION_PR: 82
+- NEXT_IMPLEMENTATION_PR_AFTER_PR81: 82
+- Roadmap PR81 - Complete C3-ECO language blocks is IN PROGRESS as GitHub PR82.
+- remaining_planned_implementation_prs_pr81_through_pr86: 6
+- remaining_planned_implementation_prs_after_pr81: 5
 
 - production_readiness_plan_version: 2026-08-18-pr80
 - CURRENT_IMPLEMENTATION_PR: 80

@@ -1,5 +1,10 @@
 # Diagnostics, Runtime Linking, MLIR, and Enterprise Release Plan
 
+document_status: historical_superseded
+superseded_by: docs/production_readiness_pr_plan.md
+
+This document preserves the earlier diagnostics/runtime-linking plan. Its current-scope and remaining-work statements are historical; the active PR83-PR96 state is controlled by `docs/production_truth.tsv` and the production readiness plan.
+
 This document records the next compiler and enterprise engineering sequence after the backend/telemetry hardening work.
 
 ## Current PR scope

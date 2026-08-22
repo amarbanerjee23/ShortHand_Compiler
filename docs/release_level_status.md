@@ -1,27 +1,28 @@
 # Release Level Status
 
-This branch implements the first release-level infrastructure layer.
+release_level_status_version: 2026-08-22-pr83
+current_maturity: controlled_beta
+production_claim: false
+current_github_pr: 83
+final_planned_github_pr: 96
 
-## Added in this branch
+ShortHand is a controlled beta with a versioned `linux-x64-cpu-v1` backend qualification scope. It is not an enterprise production release, an external certification, or a general accelerator-support claim.
 
-- security policy
-- language compatibility notes
-- container build scaffold
-- Kubernetes pilot manifest
-- SBOM plan
-- observability plan
-- evidence bundle plan
+## Implemented release infrastructure
 
-## Still open before wider enterprise use
+- deterministic multi-toolchain builds and installed consumers,
+- frozen runtime ABI 1.0.0,
+- mandatory sanitizer, fuzz and race gates,
+- CodeQL, dependency, secret and license policy gates,
+- hardened amd64/arm64 container and live Kubernetes qualification,
+- SPDX 2.3 source and release-artifact SBOM generation,
+- candidate provenance, signing workflow and rollback logic,
+- runtime JSON, Prometheus and OTLP-shaped observability exports,
+- live ONNX Runtime CPU numerical qualification for `linux-x64-cpu-v1`,
+- machine-readable production truth and C3-ECO traceability.
 
-- real ONNX Runtime CPU backend execution
-- full backend compatibility matrix
-- automated SBOM generation
-- signed artifacts
-- runtime metrics implementation
-- container health endpoint
-- full release checklist automation
+## Open before enterprise production use
 
-## Current maturity
+PR84-PR96 close the production type/memory model, control flow, packages/standard library/FFI, concurrent serving, complete C3-ECO preparation, generated MLIR/lowering, representative workload, performance/energy and final release-candidate blockers. TST017 separately requires a real protected tag publication whose attestations verify cryptographically.
 
-This branch is a release-level preparation branch for controlled pilots. It is not a final industrial release.
+Only executed checks and retained artifacts are release evidence. Workflow source, a detected device, an installed SDK, a skipped test or a candidate evidence bundle is not proof of production readiness.

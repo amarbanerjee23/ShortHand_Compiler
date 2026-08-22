@@ -1,7 +1,18 @@
 # Known Limitations
 
-Optional ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, and OpenBLAS SDKs are not vendored and are not required in CI. Real backend inference and real energy telemetry require those SDKs or external instrumentation. Fallback evidence reports `not_executed` and does not pretend inference occurred.
+known_limitations_version: 2026-08-22-pr83
+current_maturity: controlled_beta
+production_claim: false
+production_backend_scope: linux-x64-cpu-v1
+
+The active beta-0.3 language has a complete cross-mode executable core for `int` and `bool`; the production type/memory model, general functions/control flow, package ecosystem, standard library and stable FFI are not complete. Concurrent multi-tenant serving, production MLIR lowering, representative AI workloads and measured performance/energy evidence are also open.
+
+ONNX Runtime CPU is mandatory live numerical evidence for the declared `linux-x64-cpu-v1` production backend scope on the inherited Linux x64 CI lane. TensorRT, OpenVINO, LibTorch, llama.cpp, GPU, TPU and NPU paths remain experimental or inventory-only. Their absent SDKs or devices are never counted as production execution evidence.
 
 ## AI runtime abstraction limitations
 
-Default CI exercises the deterministic fallback backend. Fallback is always available but never claims successful inference; it reports `not_executed` with `backend_not_available`. Real SDK execution requires locally installed SDK roots and does not imply certification, zero-carbon validation, or production readiness. Evidence output is an evidence report only and does not grant certification.
+Fallback is always available for deterministic negative behavior but never claims successful inference; it reports `not_executed` with `backend_not_available`. A locally installed SDK or detected accelerator does not imply qualification. The only qualified v1 pair is ONNX Runtime CPU on Linux x64 CPU.
+
+Runtime JSON, Prometheus and OTLP-shaped observability exports exist, but the default process-wide context is not multi-tenant isolation and the loopback metrics adapter is not hardened public ingress. The signed-release workflow remains partial until a real protected tag publication produces cryptographically verified attestations.
+
+C3-ECO outputs are candidate evidence only. ShortHand is not officially certified and does not claim that a language, runtime, cloud or model is inherently green. Energy, carbon or electricity-cost claims require a declared functional unit/boundary, real measurement or transparent estimation, provenance, uncertainty and quality equivalence.

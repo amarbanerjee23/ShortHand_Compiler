@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-08-09-v1
+ci_pipeline_architecture_version: 2026-08-22-pr83
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -24,6 +24,7 @@ Cancelled superseded runs do not publish a terminal custom status. Mandatory tes
 Runs first and fails quickly.
 
 - workflow/status hygiene,
+- machine-readable production truth and C3-ECO traceability,
 - roadmap and feature-plan consistency,
 - required-file and claim-safety guards,
 - immutable GitHub Action and toolchain version policy,
@@ -129,6 +130,8 @@ GitHub PR79 added the independent `formatter-linter` tooling job under GCC, Clan
 
 GitHub PR80 adds the independent `lsp-editor` tooling job under GCC, Clang and ASan/UBSan. The exact same `scripts/check_lsp_editor.sh` contract also executes inside `ubuntu-core`, while all normal CMake platform lanes compile `shorthand_lsp`. A green side workflow therefore cannot mask a broken stable merge context, and a platform-specific C++ build failure cannot hide behind Linux-only protocol tests.
 
+GitHub PR83 adds `scripts/check_production_truth.sh` and its negative mutation suite directly to `ubuntu-core`, Make parity and CTest. The gate rejects contradictory maturity/version/scope/roadmap claims, incomplete G1-G14/A-K/S9/S12 coverage, incorrect v0.6-to-v0.7 gate aliases, invalid evidence paths and implemented controls without verification evidence.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -176,6 +179,13 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR78: deterministic formatter/linter qualification.
 - PR79: syntax highlighting and native LSP/editor protocol qualification.
 - PR80: CPU/GPU/TPU/NPU and backend execution qualification.
-- PR86: performance, energy and zero-skip production RC aggregation.
+- PR83: production truth and C3-ECO traceability.
+- PR84-PR87: production language, packages/FFI and concurrent serving.
+- PR88-PR91: typed C3-ECO profile, measurement, scoring and auditor evidence.
+- PR92-PR94: generated MLIR, lowering and representative AI qualification.
+- PR95: performance and measured-energy qualification.
+- PR96: enterprise pilot and zero-skip production RC aggregation.
 
-The remaining C3-ECO and MLIR PRs add their own mandatory jobs as they become executable contracts.
+Every remaining implementation PR adds its applicable mandatory jobs as executable contracts become available. Release publication remains isolated from pull-request permissions and closes only with a verified protected tag exercise.
+
+Historical architecture marker: ci_pipeline_architecture_version: 2026-08-09-v1. Historical roadmap marker: PR86: performance, energy and zero-skip production RC aggregation.

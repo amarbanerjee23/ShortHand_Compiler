@@ -112,6 +112,11 @@ jobs:
       - name: Parser robustness and negative corpus
         run: bash scripts/check_parser_robustness.sh
 
+      - name: Production truth and C3-ECO traceability
+        run: |
+          bash scripts/check_production_truth.sh
+          bash tests/governance/test_production_truth_negative.sh
+
       - name: Compiler test strategy and coverage audit
         run: bash scripts/check_compiler_test_strategy.sh
 

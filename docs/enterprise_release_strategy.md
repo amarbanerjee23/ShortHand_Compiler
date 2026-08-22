@@ -1,21 +1,21 @@
 # Enterprise Release Readiness Strategy
 
-ShortHand is currently an internal engineering and research artifact. This document defines the strategy for moving it toward enterprise use for AI software development without making unsupported public-readiness, certification, or absolute defect-freedom claims.
+ShortHand is currently a controlled beta with `production_claim: false`. This document defines the strategy for moving it toward enterprise use for AI software development without making unsupported public-readiness, certification, inherent-greenness or absolute defect-freedom claims.
 
 ## Current status
 
-Current maturity: internal engineering review only.
+Current maturity: controlled enterprise beta (ER3), not an enterprise release candidate.
 
 The repository has useful foundations:
 
 - C++17, Flex/Bison, Make/CMake, and LLVM-based implementation path.
 - GreenAI evidence syntax and report generation.
 - AI model, tensor, and inference syntax.
-- Deterministic fallback backend for validation when optional SDKs are absent.
+- Live ONNX Runtime CPU numerical qualification for the narrow `linux-x64-cpu-v1` support set, plus deterministic fail-closed fallback behavior.
 - CI gates for setup, strict validation, smoke tests, Makefile tests, sanitizer checks, CMake build, and CTest.
-- Explicit evidence-only policy for GreenAI and C3-ECO-aligned reports.
+- Explicit evidence-only policy and complete G1-G14/A-K/S9/S12 traceability for C3-ECO-aligned candidate reports.
 
-It is not yet ready for enterprise application development because real backend execution, hardening, packaging, observability, security release controls, and long-term compatibility guarantees are incomplete.
+It is not yet ready for general enterprise production use because the complete language/type/memory/control-flow contract, enterprise packages/stdlib/FFI, concurrent serving, full C3-ECO preparation, generated MLIR lowering, representative AI workload, measured performance/energy, final RC aggregate and protected publication exercise remain incomplete.
 
 ## Enterprise target
 
@@ -229,7 +229,7 @@ Exit criteria:
 
 ## Suggested milestones
 
-### Milestone ER0: Current baseline
+### Milestone ER0: Historical baseline
 
 Purpose: internal engineering review.
 
@@ -260,7 +260,7 @@ Required:
 - Evidence distinguishes successful execution from fallback.
 - Backend failure cases covered.
 
-### Milestone ER3: Enterprise beta candidate
+### Milestone ER3: Controlled enterprise beta (current)
 
 Purpose: controlled enterprise pilot.
 
@@ -269,7 +269,7 @@ Required:
 - Containerized runtime.
 - Security scans.
 - SBOM.
-- Signed artifacts.
+- Signed-publication workflow source; the protected tag exercise remains open.
 - Telemetry and GreenAI evidence bundle.
 - Deployment guide.
 
@@ -280,7 +280,7 @@ Purpose: release candidate for external engineering teams.
 Required:
 
 - All mandatory scorecard items pass.
-- At least two real AI backends or one real backend plus documented extension interface.
+- Every backend/device/platform pair included in the declared production support set has live workload and numerical evidence.
 - Compatibility policy active.
 - Governance process active.
 - Release evidence reviewed and retained.

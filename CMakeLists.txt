@@ -398,6 +398,18 @@ if(SHORTHAND_BUILD_TESTING)
   enable_testing()
 
   add_test(
+    NAME production_truth_traceability
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_production_truth.sh
+  )
+  set_tests_properties(production_truth_traceability PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_test(
+    NAME production_truth_negative
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/governance/test_production_truth_negative.sh
+  )
+  set_tests_properties(production_truth_negative PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_test(
     NAME green_ai_tool_tests
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/green_ai/test_green_ai_tool.sh
   )
