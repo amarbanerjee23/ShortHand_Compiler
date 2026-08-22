@@ -4,8 +4,17 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 BUILD_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/build"
-SHORT="${SHORTHAND_BIN:-${BUILD_DIR}/short_hand}"
-RUNTIME_LIB="${SHORTHAND_RUNTIME_LIB:-${BUILD_DIR}/libshorthand_runtime.a}"
+INVOCATION_DIR="${PWD}"
+
+anchor_invocation_path() {
+  case "$1" in
+    /*) printf '%s\n' "$1" ;;
+    *) printf '%s/%s\n' "${INVOCATION_DIR}" "$1" ;;
+  esac
+}
+
+SHORT="$(anchor_invocation_path "${SHORTHAND_BIN:-${BUILD_DIR}/short_hand}")"
+RUNTIME_LIB="$(anchor_invocation_path "${SHORTHAND_RUNTIME_LIB:-${BUILD_DIR}/libshorthand_runtime.a}")"
 FIXTURE_DIR="${ROOT_DIR}/tests/semantic/functions_control"
 MATRIX="${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv"
 ARTIFACT="${SHORTHAND_CONTROL_FLOW_ARTIFACT:-/tmp/shorthand_control_flow_differential.json}"
