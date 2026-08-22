@@ -71,7 +71,7 @@ awk -F '\t' '
     next
   }
   NF != 7 { print "bad matrix row: " $0 > "/dev/stderr"; exit 11 }
-  $1 !~ /^[A-Z]{2,3}[0-9]{3}$/ { print "bad matrix id: " $1 > "/dev/stderr"; exit 12 }
+  $1 !~ /^[A-Z][A-Z][A-Z]?[0-9][0-9][0-9]$/ { print "bad matrix id: " $1 > "/dev/stderr"; exit 12 }
   $2 !~ /^(lexical|program|declarations|functions|statements|expressions|ai|greenai|compatibility|boundary)$/ { print "bad area: " $2 > "/dev/stderr"; exit 13 }
   $3 !~ /^(parser|scanner|cli)$/ { print "bad source: " $3 > "/dev/stderr"; exit 14 }
   $6 !~ /^(accept|reject)$/ { print "bad expectation: " $6 > "/dev/stderr"; exit 15 }

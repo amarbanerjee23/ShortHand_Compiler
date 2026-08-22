@@ -1,28 +1,9 @@
-# Observability Plan
+# Observability Status and Production Plan
 
-ShortHand release-level branches should make runtime and evidence behavior easy to inspect.
+observability_status_version: 2026-08-22-pr83
+current_status: partial_dependency_free_exports
+production_claim: false
 
-## Minimum pilot signals
+The runtime exposes bounded JSON snapshots, Prometheus-format metrics and OTLP-shaped span JSON for inference totals, success/not-executed/error state, backend/reason, latency and bridge context. A loopback HTTP adapter serves Prometheus metrics. Candidate evidence records execution and measurement availability without fabricating energy values.
 
-- compiler command
-- input file path
-- selected execution mode
-- backend selection result
-- fallback reason when fallback is used
-- evidence report path
-- validation result
-- error message and exit code
-
-## Future metrics
-
-- compile duration
-- runtime duration
-- inference duration
-- token count where applicable
-- memory peak
-- energy source status
-- report generation duration
-
-## Current status
-
-The current repository already records fallback and evidence output in validation flows. Structured runtime metrics remain future work.
+This is not yet a production serving observability claim. The runtime uses a serialized process-wide default context, the loopback adapter is not hardened public ingress, and multi-tenant isolation requires process boundaries. PR87 owns request correlation, deadlines, cancellation, bounded concurrency, backpressure, health/readiness, resource limits, tenant isolation, fault/load/soak evidence and operator runbooks. PR89 and PR95 own measurement provenance, energy sensors, uncertainty and performance/energy regression telemetry.

@@ -41,6 +41,7 @@ required_files=(
   scripts/check_runtime_production_packaging.sh
   scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
+  scripts/check_production_truth.sh
   scripts/check_semantic_differential.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
@@ -63,6 +64,9 @@ required_files=(
   docs/feature_implementation_status.md
   docs/pr_task_stability_strategy.md
   docs/production_readiness_pr_plan.md
+  docs/production_truth.md
+  docs/production_truth.tsv
+  docs/c3eco_traceability.tsv
   docs/production_readiness_history.md
   docs/execution_semantics_beta_0_3.md
   docs/language_grammar_ebnf.md
@@ -113,12 +117,14 @@ required_files=(
   tests/integration/test_openvino_optional_fixture.sh
   tests/integration/test_libtorch_optional_fixture.sh
   tests/integration/test_llamacpp_optional_fixture.sh
+  tests/governance/test_production_truth_negative.sh
 )
 for file in "${required_files[@]}"; do require_file "${file}"; done
 
 for task in \
   'Strict language validation' \
   'Semantic differential execution' \
+  'Production truth and C3-ECO traceability' \
   'Smoke tests' \
   'Feature plan status check' \
   'Enterprise hardening check' \
@@ -157,6 +163,11 @@ for gate in \
   require_contains scripts/check_enterprise_hardening.sh "${gate}"
 done
 
+require_contains scripts/check_enterprise_hardening.sh 'check_production_truth.sh'
+require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-governance'
+require_contains CMakeLists.txt 'NAME production_truth_traceability'
+require_contains CMakeLists.txt 'NAME production_truth_negative'
+
 require_contains scripts/check_language_correctness.sh 'check_runtime_abi_api_stability.sh'
 require_contains scripts/check_language_correctness.sh 'check_runtime_state_thread_safety.sh'
 require_contains scripts/check_backend_compatibility_matrix.sh 'check_hardware_capability_routing.sh'
@@ -176,6 +187,7 @@ shell_files=(
   scripts/check_runtime_production_packaging.sh
   scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
+  scripts/check_production_truth.sh
   scripts/check_semantic_differential.sh
   scripts/check_c3eco_claims_and_schema.sh
   scripts/check_mlir_foundation.sh
@@ -200,6 +212,7 @@ shell_files=(
   tests/packaging/test_runtime_production_packaging.sh
   tests/operations/test_prometheus_scrape_adapter.sh
   tests/integration/test_backend_failure_mode_matrix.sh
+  tests/governance/test_production_truth_negative.sh
 )
 for script in "${shell_files[@]}"; do require_bash_syntax "${script}"; done
 

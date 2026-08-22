@@ -8,6 +8,9 @@ required_files=(
   "${STATUS_FILE}"
   docs/compiler_test_strategy.md
   docs/production_readiness_pr_plan.md
+  docs/production_truth.md
+  docs/production_truth.tsv
+  docs/c3eco_traceability.tsv
   docs/production_backend_hardware_qualification.md
   docs/c3eco_language_contract.md
   docs/execution_semantics_beta_0_3.md
@@ -43,6 +46,8 @@ required_files=(
   scripts/check_production_backend_hardware_qualification.sh
   scripts/check_c3eco_language_blocks.sh
   scripts/check_no_mandatory_test_skips.sh
+  scripts/check_production_truth.sh
+  tests/governance/test_production_truth_negative.sh
   Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
@@ -89,18 +94,20 @@ for term in "${required_status_terms[@]}"; do
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-21-pr82' \
+  'feature_status_version: 2026-08-22-pr83' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  '21 implemented, 3 partial and 3 open' \
+  'current_github_pr: 83' \
+  'current_roadmap_scope: production_truth_and_c3eco_traceability' \
+  '22 implemented, 3 partial and 3 open' \
   'Roadmap PR75 was implemented and merged as GitHub PR76' \
   'GitHub PR77 implemented and merged roadmap PR76' \
   'GitHub PR78 implemented and merged roadmap PR77' \
   'GitHub PR79 implemented and merged roadmap PR78' \
   'GitHub PR80 implemented and merged roadmap PR79' \
   'GitHub PR81 implemented and merged roadmap PR80' \
-  'GitHub PR82 now implements roadmap PR81' \
+  'GitHub PR82 implemented and merged roadmap PR81' \
   'Cross-platform portability | Implemented for PR74 tiers' \
   'Cross-platform reproducibility | Implemented' \
   'Signed releases | Partial' \
@@ -108,7 +115,8 @@ for anchor in \
   'Container and Kubernetes hardening | Implemented' \
   'Formatter and linter | Implemented' \
   'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1`' \
-  'Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` candidate'; do
+  'Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1`' \
+  'Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1`'; do
   grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing current anchor: ${anchor}" >&2; exit 1; }
 done
 
@@ -161,6 +169,8 @@ bash scripts/check_formatter_linter.sh
 bash scripts/check_lsp_editor.sh
 bash scripts/check_no_mandatory_test_skips.sh
 bash scripts/check_c3eco_language_blocks.sh
+bash scripts/check_production_truth.sh
+bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "x86_64" ]]; then
@@ -203,7 +213,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR82 implements roadmap PR81 C3-ECO language contract shorthand.c3eco.language.v1 while preserving the roadmap PR80 backend/hardware qualification; signed publication and later production blockers remain fail-closed."
+echo "Feature plan status check passed. GitHub PR83 establishes shorthand.production.truth.v1 and complete C3-ECO control ownership while preserving all PR82 language and zero-skip qualification gates; PR84-PR96 and the protected release exercise remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

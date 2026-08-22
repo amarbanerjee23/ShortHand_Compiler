@@ -1,5 +1,11 @@
 # Release Plan v3 Beta
 
+document_status: historical_superseded
+superseded_by: docs/production_readiness_pr_plan.md
+active_truth_source: docs/production_truth.tsv
+
+This document records the early v3 beta planning baseline. Its ER0 state, open-backlog list and next-PR sequence are historical and must not be used as current repository status. The active PR83-PR96 plan and `controlled_beta` maturity are defined by the sources above.
+
 This release plan defines the v3 beta path for ShortHand. It turns the enterprise readiness strategy into ordered beta work items and acceptance evidence.
 
 ## Beta objective

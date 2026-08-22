@@ -173,14 +173,18 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai
+test: test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai
+
+test-governance:
+	bash ../../../scripts/check_production_truth.sh
+	bash ../../../tests/governance/test_production_truth_negative.sh
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit

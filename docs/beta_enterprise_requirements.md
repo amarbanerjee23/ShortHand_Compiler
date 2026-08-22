@@ -1,5 +1,11 @@
 # ShortHand Beta Enterprise Requirements
 
+document_status: historical_baseline
+active_truth_source: docs/production_truth.tsv
+active_scorecard: docs/enterprise_release_scorecard.md
+
+This checklist is retained to audit the original beta entry requirements. Its per-section fulfillment statements are historical. Current implementation evidence and open production blockers are recorded in `docs/feature_implementation_status.md`, `tests/coverage/compiler_test_coverage_matrix.tsv` and `docs/c3eco_traceability.tsv`.
+
 This document defines the beta-level enterprise requirements for ShortHand. It is written as an implementation checklist for moving the language from internal engineering review toward controlled enterprise pilots.
 
 ## Release positioning

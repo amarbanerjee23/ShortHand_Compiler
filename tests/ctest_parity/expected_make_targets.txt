@@ -1,3 +1,4 @@
+test-governance
 test-unit
 test-integration
 test-green

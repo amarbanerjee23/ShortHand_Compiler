@@ -170,6 +170,19 @@ check_contains scripts/generate_release_sbom.sh 'SPDX-2.3'
 check_contains scripts/check_release_supply_chain.sh 'PASS release supply-chain gate'
 check_contains schemas/release/release_provenance.schema.json 'shorthand.release.provenance.v1'
 check_contains docs/release_supply_chain_hardening.md 'candidate release evidence'
+check_contains docs/production_truth.tsv $'current_github_pr\t83'
+check_contains docs/c3eco_traceability.tsv $'G14\tmandatory_gate\tmateriality_control'
+check_contains scripts/check_production_truth.sh 'PASS production truth and C3-ECO traceability gate'
+check_contains tests/governance/test_production_truth_negative.sh 'PASS production truth negative contradiction, completeness, mapping and evidence cases'
+
+if bash scripts/check_production_truth.sh >/tmp/shorthand_production_truth.out 2>&1 \
+   && bash tests/governance/test_production_truth_negative.sh >>/tmp/shorthand_production_truth.out 2>&1; then
+  log "PASS production truth and C3-ECO traceability gate completed"
+  cat /tmp/shorthand_production_truth.out | tee -a "${LOG_FILE}"
+else
+  fail_check "production truth and C3-ECO traceability gate failed"
+  cat /tmp/shorthand_production_truth.out | tee -a "${LOG_FILE}" || true
+fi
 
 if bash tests/integration/test_onnxruntime_sdk_gate.sh >/tmp/shorthand_onnx_sdk_gate.out 2>&1; then
   log "PASS ONNX Runtime SDK gate command completed"

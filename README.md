@@ -1,13 +1,15 @@
 # ShortHand Compiler
 
-ShortHand is a C++/LLVM-first programming-language research artifact. It combines a legacy interpreter, LLVM IR/bitcode/native code generation, first-class Green AI evidence constructs, and an optional C++ AI runtime abstraction for model/tensor/inference workloads.
+ShortHand is a C++/LLVM-first controlled-beta programming language. It combines an interpreter, LLVM IR/bitcode/native code generation, first-class Green AI candidate-evidence constructs, and a C++ AI runtime abstraction for model/tensor/inference workloads.
+
+Current maturity: `controlled_beta`. Production claim: `false`. Active language: beta-0.3 over the beta-0.2 base grammar. The only qualified backend scope is `linux-x64-cpu-v1` with live ONNX Runtime CPU numerical execution. See `docs/production_truth.tsv` for the machine-readable authority.
 
 The implementation goal is to keep the language syntax simple for end users while allowing advanced C/C++ AI libraries such as ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, and OpenBLAS to be integrated behind a stable compiler/runtime abstraction.
 
 ## What this repository is
 
 - A compiled-language artifact centered on C++17, Flex, Bison, Make/CMake, and LLVM.
-- A research platform for language implementation, AI-runtime integration, and Green AI evidence reporting.
+- A controlled-beta platform for language implementation, AI-runtime integration, and Green AI evidence reporting.
 - A C++/LLVM-first codebase. Python is not required for official compiler, runtime, Green AI, validation, report-generation, or test workflows.
 - A work-in-progress artifact with explicit validation gates and known limitations.
 
@@ -76,6 +78,8 @@ Use these commands before opening or merging a PR:
 
 ```bash
 make -C Compiler_new_ws/Short_Hand/src compiler green_ai_tool
+bash scripts/check_production_truth.sh
+bash tests/governance/test_production_truth_negative.sh
 bash scripts/validate_language.sh --strict
 bash scripts/smoke_test.sh
 make -C Compiler_new_ws/Short_Hand/src test
@@ -96,14 +100,14 @@ The GitHub Actions CI is expected to run the following gates:
 
 1. Install required dependencies.
 2. Verify required tools are on `PATH`.
-3. Run `bash setup_build_infra.sh`.
-4. Run strict language validation.
-5. Run smoke tests.
-6. Run the Makefile test suite.
-7. Run sanitizer tests.
-8. Configure and build through CMake.
-9. Run CTest.
-10. Upload CI artifacts when configured.
+3. Run production-truth and C3-ECO traceability guards.
+4. Run `bash setup_build_infra.sh`.
+5. Run strict language validation.
+6. Run smoke tests.
+7. Run the Makefile test suite.
+8. Run sanitizer tests.
+9. Configure and build through CMake.
+10. Run CTest and upload retained CI artifacts.
 
 A PR should not be considered merge-ready until these gates pass on the PR branch.
 
@@ -153,7 +157,7 @@ Optional AI SDKs are disabled by default. The fallback backend always builds wit
 | Backend family | Purpose | Default behavior |
 | --- | --- | --- |
 | TensorRT | GPU inference through TensorRT engines or ONNX Runtime TensorRT EP | Disabled unless SDK/root is configured |
-| ONNX Runtime CPU/CUDA/TensorRT | ONNX model execution | Disabled unless `ONNXRUNTIME_ROOT` is configured |
+| ONNX Runtime CPU/CUDA/TensorRT | ONNX model execution | CPU is provisioned and mandatory in the Linux x64 production-qualification lane; local and accelerator paths require an explicit SDK root |
 | OpenVINO | OpenVINO IR execution | Disabled unless OpenVINO root/options are configured |
 | LibTorch | TorchScript/C++ tensor runtime experiments | Disabled unless `LIBTORCH_ROOT` is configured |
 | llama.cpp | GGUF/LLM runtime experiments | Disabled unless llama.cpp root/options are configured |
@@ -168,7 +172,7 @@ export LIBTORCH_ROOT=/path/to/libtorch
 make -C Compiler_new_ws/Short_Hand/src ai_app ai_train
 ```
 
-Default builds define optional backend feature macros as disabled, for example:
+Local builds without SDK roots define optional backend feature macros as disabled, for example:
 
 ```text
 SHORTHAND_HAS_ONNXRUNTIME=0
@@ -180,7 +184,7 @@ SHORTHAND_HAS_OPENBLAS=0
 SHORTHAND_HAS_EIGEN=0
 ```
 
-When optional SDKs are absent, the runtime must fail honestly with fallback diagnostics instead of pretending that real inference happened.
+When experimental SDKs are absent, the runtime must fail honestly with fallback diagnostics instead of pretending that real inference happened. Absence or fallback cannot satisfy the mandatory `linux-x64-cpu-v1` production-qualification lane.
 
 Expected fallback evidence includes values such as:
 
@@ -256,7 +260,7 @@ short_hand Compiler_new_ws/Short_Hand/examples/greenai_report.short run
 short_hand Compiler_new_ws/Short_Hand/examples/ai_library_abstraction.short run
 ```
 
-The AI abstraction example is allowed to use fallback diagnostics when real SDKs are not configured.
+The AI abstraction example is allowed to use fallback diagnostics for local experimentation when real SDKs are not configured. That path is not production execution evidence.
 
 ## Documentation map
 

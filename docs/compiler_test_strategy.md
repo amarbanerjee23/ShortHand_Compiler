@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-21-pr82
+compiler_test_strategy_version: 2026-08-22-pr83
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
@@ -13,17 +13,17 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 27-area production test matrix records for the GitHub PR82 candidate:
+The 28-area production test matrix records for the GitHub PR83 candidate:
 
-- 21 implemented areas,
+- 22 implemented areas,
 - 3 partial areas,
 - 3 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the current security contract. GitHub PR78 closed TST019 for the declared deployment contract. GitHub PR79 closed TST020 for formatter/linter. GitHub PR80 closed TST021 for the native LSP/editor baseline. GitHub PR81 closed TST022 for the versioned `linux-x64-cpu-v1` production backend support set. GitHub PR82 adds executable first-class C3-ECO language declarations to TST023 while keeping that area partial until measured scoring and authority-ready lineage are implemented.
+Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the current security contract. GitHub PR78 closed TST019 for the declared deployment contract. GitHub PR79 closed TST020 for formatter/linter. GitHub PR80 closed TST021 for the native LSP/editor baseline. GitHub PR81 closed TST022 for the versioned `linux-x64-cpu-v1` production backend support set. GitHub PR82 added executable first-class C3-ECO language declarations to TST023. GitHub PR83 closes TST028 with the machine-readable production truth and complete G1-G14/A-K/S9/S12 traceability contract while keeping incomplete certification areas explicit.
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 compiler execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, formatter/linter preservation, native LSP/editor qualification and qualification-aware AI backend routing.
 
-Production-critical gaps remain for protected signed-release execution, measured C3-ECO scoring and authority-ready evidence lineage, production MLIR lowering, measured performance/energy and the final release-candidate gate.
+Production-critical gaps remain for the production type/memory and function contracts, enterprise packages and libraries, concurrent serving operations, measured C3-ECO scoring and authority-ready evidence lineage, production MLIR lowering, representative AI workloads, measured performance/energy and the final release-candidate gate.
 
 ## Production backend and hardware qualification contract
 
@@ -62,7 +62,7 @@ Roadmap PR78 was implemented as GitHub PR79 through native `shorthand_tool` and 
 
 ## Required test layers for every implementation PR
 
-Every remaining implementation PR through PR86 must include all applicable layers below. A PR description must explicitly mark non-applicable layers and explain why.
+Every remaining implementation PR through PR96 must include all applicable layers below. A PR description must explicitly mark non-applicable layers and explain why.
 
 | Layer | Required evidence |
 | --- | --- |
@@ -110,7 +110,7 @@ Every remaining implementation PR through PR86 must include all applicable layer
 
 ### Pull-request profile
 
-The mandatory DAG runs policy/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility, external security and deployment qualification. Tooling runs formatter/linter and LSP/editor jobs under GCC, Clang and ASan/UBSan. The inherited `ubuntu-core` feature-plan gate repeats the tooling contracts and, for GitHub PR81, performs the mandatory pinned ONNX Runtime CPU live qualification. Normal PR jobs do not receive release OIDC or repository-write permissions.
+The mandatory DAG runs production-truth/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility, external security and deployment qualification. Tooling runs formatter/linter and LSP/editor jobs under GCC, Clang and ASan/UBSan. The inherited `ubuntu-core` feature-plan gate preserves the mandatory pinned ONNX Runtime CPU live qualification introduced by GitHub PR81. Normal PR jobs do not receive release OIDC or repository-write permissions.
 
 ### Scheduled profile
 
@@ -126,17 +126,22 @@ ShortHand may move from `controlled_beta` to release candidate only when every r
 
 ShortHand may claim enterprise production readiness only when:
 
-1. PR70 and all PR72 through PR86 implementation completion gates are merged, with PR71 CI hygiene already merged,
+1. all implementation completion gates through PR96 are merged,
 2. no mandatory test in the declared production support set is skipped,
 3. every production-supported backend/device/platform row has live numerical success evidence,
 4. all release platforms pass installed-consumer tests,
 5. reproducible and signed artifacts are produced and cryptographically verified,
 6. measured performance and energy evidence supports any published claim,
-7. the final PR86 RC gate reports zero open production blockers.
+7. the final PR96 RC gate reports zero open production blockers.
 
 ## Historical strategy audit anchors
 
 The following exact strings are retained only for milestone guards and are not current counts:
+
+- compiler_test_strategy_version: 2026-08-21-pr82
+- 21 implemented areas
+- 3 partial areas
+- 3 open areas
 
 - compiler_test_strategy_version: 2026-08-18-pr81
 - 21 implemented areas
@@ -165,4 +170,4 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-08-21-pr82`.
+The current strategy is `2026-08-22-pr83`.
