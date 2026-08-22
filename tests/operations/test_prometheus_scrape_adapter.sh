@@ -43,6 +43,7 @@ stage build
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_runtime shorthand_runtime_shared \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
+  shorthand_core shorthand_core_shared \
   shorthand_lsp \
   shorthand_prometheus_adapter
 
