@@ -17,7 +17,7 @@ DEC007	declarations	parser	IDENTIFIER '[' INT_LITERAL ']'	tests/conformance/beta
 FUN001	functions	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER	tests/conformance/beta_0_2/core_control.short	accept	Typed function declaration.
 FUN002	functions	parser	FUNCTION_LIST_RULE FUNCTION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Function terminator.
 FUN003	functions	parser	RETURN EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Return with value.
-FUN004	functions	parser	IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';'	tests/conformance/beta_0_2/core_control.short	accept	Function call statement.
+FUN004	functions	parser	IDENTIFIER '(' EXPRESSION_LIST_OPT ')'	tests/conformance/beta_0_2/core_control.short	accept	Function calls remain valid as expression statements and now accept expression arguments.
 STA001	statements	parser	VARIABLE_RULE '=' EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Assignment statement.
 STA002	statements	parser	EXPRESSION_RULE ';'	tests/conformance/beta_0_2/core_control.short	accept	Expression statement.
 STA003	statements	parser	STATEMENT_BLOCK_RULE	tests/conformance/beta_0_2/core_control.short	accept	Nested statement block.
