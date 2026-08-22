@@ -1,0 +1,6 @@
+language shorthand.enterprise_language.v1;
+namespace policyclub.invalid;
+record Evidence {
+    string id;
+    int32 id;
+};

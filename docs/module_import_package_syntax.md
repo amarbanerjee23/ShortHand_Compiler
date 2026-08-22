@@ -78,7 +78,7 @@ PR70 package graph inspection uses:
 short_hand source.short module-graph
 ```
 
-and the separate `shorthand.module.graph.v1` schema.
+and the separate `shorthand.module.graph.v1` schema. Beta-0.6 package v2 graphs use `shorthand.module.graph.v2`, retain module/package ownership and include exact offline dependency metadata.
 
 ## Stable parser diagnostics
 
@@ -91,7 +91,7 @@ and the separate `shorthand.module.graph.v1` schema.
 | `SHD2015` | Invalid package, module or import ordering |
 | `SHD2016` | Module declaration required for the preamble |
 
-Malformed dotted paths continue to use the stable parser syntax code `SHD2001`. Resolver diagnostics `SHD2020` through `SHD2030` are documented separately in `docs/module_resolution_and_lockfile.md`.
+Malformed dotted paths continue to use the stable parser syntax code `SHD2001`. Resolver diagnostics `SHD2020` through `SHD2034` are documented separately in `docs/module_resolution_and_lockfile.md`.
 
 ## Compatibility
 

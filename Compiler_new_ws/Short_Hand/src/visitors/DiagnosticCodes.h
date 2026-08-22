@@ -31,6 +31,10 @@ inline constexpr const char *ModulePackageMismatch = "SHD2027";
 inline constexpr const char *ModuleLockfileMismatch = "SHD2028";
 inline constexpr const char *ModuleSymbolCollision = "SHD2029";
 inline constexpr const char *ModuleExternalRunUnsupported = "SHD2030";
+inline constexpr const char *ModuleDependencyIntegrity = "SHD2031";
+inline constexpr const char *ModuleLicensePolicy = "SHD2032";
+inline constexpr const char *ModuleVersionPolicy = "SHD2033";
+inline constexpr const char *ModuleSbomReproducibility = "SHD2034";
 
 inline constexpr const char *SemanticBreakOutsideLoop = "SHD3001";
 inline constexpr const char *SemanticContinueOutsideLoop = "SHD3002";
@@ -55,6 +59,8 @@ inline constexpr const char *SemanticMissingReturn = "SHD3020";
 inline constexpr const char *SemanticDuplicateDeclaration = "SHD3021";
 inline constexpr const char *SemanticVoidValueUsed = "SHD3022";
 inline constexpr const char *SemanticUndefinedFunction = "SHD3023";
+inline constexpr const char *SemanticEnterpriseSyntax = "SHD3024";
+inline constexpr const char *SemanticEnterpriseDuplicate = "SHD3025";
 
 inline constexpr const char *AIModelRedeclared = "SHD4001";
 inline constexpr const char *AIModelInvalidFormat = "SHD4002";

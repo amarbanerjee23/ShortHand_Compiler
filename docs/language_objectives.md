@@ -141,7 +141,8 @@ The objectives are satisfied for enterprise production usage only when:
 - Production truth and certification traceability: PR83.
 - Production type and memory model: PR84.
 - Functions, lexical scopes, structured control flow and deterministic errors: PR85.
-- Remaining source composites/ownership, enterprise packages/stdlib/FFI and concurrent serving: PR86 through PR87.
+- Enterprise composite/ownership schemas, cryptographic offline packages, core library and safe FFI: PR86.
+- Concurrent serving and operational runtime: PR87.
 - Typed C3-ECO profile, measurement, scoring, claims and auditor lifecycle: PR88 through PR91.
 - Generated MLIR dialect, production lowering and representative AI qualification: PR92 through PR94.
 - Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.

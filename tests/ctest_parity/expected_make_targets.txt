@@ -10,5 +10,6 @@ test-runtime-linking
 test-conformance
 test-semantic-differential
 test-control-flow
+test-enterprise-language
 test-llvm
 test-ai

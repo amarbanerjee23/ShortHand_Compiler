@@ -10,6 +10,8 @@ resolution_status: deterministic_manifest_locked_multi_file_codegen
 interpreter_imported_call_status: typed_interpreter_llvm_native_equivalent
 production_claim: false
 
+Enterprise extension: `shorthand.package.v2`, `shorthand.lock.v2` and `shorthand.module.graph.v2` are the beta-0.6 offline dependency contracts. Version 1 remains accepted unchanged. The normative v2 requirements are in `docs/enterprise_packages_stdlib_ffi.md`.
+
 ## Purpose
 
 PR70 turns the PR69 module/import/package AST scaffold into a deterministic package graph. A ShortHand package does not search the host filesystem, user home directory, environment variables or language-specific global package paths to guess where an import lives. Every resolvable module is explicitly mapped by a package manifest, every resolved source must remain under that package root, and executable module modes require an exact lockfile for the reachable graph.
@@ -149,6 +151,10 @@ This allows an entry module to bind direct imported functions in generated LLVM/
 | `SHD2028` | Missing or stale lockfile |
 | `SHD2029` | Graph-wide symbol collision |
 | `SHD2030` | Reserved historical PR70 imported-interpreter boundary; not reused after equivalence support |
+| `SHD2031` | Vendored dependency identity or SHA-256 integrity failure |
+| `SHD2032` | Package or dependency license is not allowlisted |
+| `SHD2033` | Package or dependency version is not exact |
+| `SHD2034` | Reproducible package SBOM timestamp is absent or invalid |
 
 ## Security properties
 
@@ -160,6 +166,7 @@ The resolver is designed around untrusted package input:
 - canonical root-confinement checks,
 - no `..` traversal,
 - no manifest execution hooks,
+- package manifests bounded to 1 MiB, 16 KiB per line and 4,096 lines,
 - deterministic graph traversal,
 - bounded parser limits still apply to every resolved source,
 - cycle and collision rejection occurs before lowering,
@@ -193,4 +200,4 @@ The same gate is included in compiler, negative, LLVM and sanitizer test paths.
 
 ## Boundary after PR70
 
-PR70 closed deterministic resolution, lockfile and multi-file LLVM/native graph construction. PR72 closed the guarded imported-call interpreter/native equivalence gap, and PR84 carries exact beta-0.4 scalar signatures across that boundary. The package registry, standard library and stable FFI remain assigned to PR86; production serving, C3-ECO completion, MLIR lowering and measured energy remain later roadmap work.
+PR70 closed deterministic resolution, lockfile and multi-file LLVM/native graph construction. PR72 closed the guarded imported-call interpreter/native equivalence gap, and PR84 carries exact beta-0.4 scalar signatures across that boundary. PR86 adds exact vendored dependencies, SHA-256 locks, license checks and package SBOMs without adding a network registry. Production serving, C3-ECO completion, MLIR lowering and measured energy remain later roadmap work.

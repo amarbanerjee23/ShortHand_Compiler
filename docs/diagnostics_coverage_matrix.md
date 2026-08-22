@@ -1,6 +1,6 @@
 # Diagnostics coverage matrix
 
-diagnostics_coverage_contract_version: 1.4.0
+diagnostics_coverage_contract_version: 1.5.0
 diagnostics_coverage_status: stable_coded_stage_matrix_guarded
 diagnostic_code_prefix: SHD
 covered_stages: parser, module, semantic, ai, greenai, lowering, runtime
@@ -11,14 +11,14 @@ runtime_failure_status: stable_code_cross_mode_differential_guarded
 runtime_abi_change: none
 production_claim_boundary: matrix_is_not_parser_recovery_or_localization_completion
 
-PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 added exact type, storage, conversion, operator, condition and ownership failures. PR85 adds deterministic function, scope, return and label-resolution failures.
+PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 added exact type, storage, conversion, operator, condition and ownership failures. PR85 added deterministic function, scope, return and label-resolution failures. PR86 adds package dependency integrity, license, version, reproducible-SBOM and enterprise schema failures.
 
 ## Code allocation
 
 | Range | Stage | Purpose |
 | --- | --- | --- |
 | `SHD2001` to `SHD2016` | Parser | Syntax, lexical, module-preamble and parser-resource failures |
-| `SHD2020` to `SHD2030` | Module | Package manifest, deterministic resolution, graph, lockfile and historical imported-execution boundary failures |
+| `SHD2020` to `SHD2034` | Module | Package manifest, deterministic resolution, graph, lockfile, dependency integrity, license, version and reproducible-SBOM failures |
 | `SHD3001` to `SHD3999` | Semantic | Core executable-language semantic failures |
 | `SHD4001` to `SHD4999` | AI | Model, tensor, backend and inference validation |
 | `SHD5001` to `SHD5999` | Green AI | Contract, measurement and claim-safety validation |
@@ -46,6 +46,8 @@ These codes are executed by `scripts/check_parser_robustness.sh`.
 `SHD2011` through `SHD2016` cover module-preamble uniqueness and ordering. `SHD2020` through `SHD2029` cover the PR70 package manifest, resolver, graph, lockfile, package identity and graph-wide symbol contracts.
 
 `SHD2030` is retained as a historical compatibility code because PR70 intentionally rejected imported interpreter calls before semantic equivalence existed. PR72 does not delete or reuse the code. The PR70 resolver fixture is instead upgraded to require imported-call interpreter/native equivalence, and the new semantic differential gate compares interpreter, `lli` and native execution.
+
+`SHD2031` identifies vendored dependency identity or SHA-256 failure. `SHD2032` identifies a non-allowlisted redistributed license, `SHD2033` identifies a non-exact version, and `SHD2034` requires an explicit valid `SOURCE_DATE_EPOCH` for reproducible SPDX creation metadata.
 
 ## PR72 semantic allocation
 
@@ -96,6 +98,15 @@ Runtime errors are deterministic language failures, not sanitizer crashes. `scri
 | `SHD3022` | A void function result is consumed by a value-requiring context. |
 | `SHD3023` | A function call cannot be resolved during semantic analysis. |
 
+## PR86 enterprise allocation
+
+| Code | Contract |
+| --- | --- |
+| `SHD3024` | Enterprise source syntax is malformed or unsupported by the versioned schema. |
+| `SHD3025` | An enterprise type or ownership identity is duplicated. |
+
+Ownership-state failures continue to use `SHD3016` so the reusable state-machine meaning remains stable.
+
 ## Output contract
 
 A ranged compile-time error is rendered as:
@@ -114,7 +125,7 @@ Undefined function calls are validated before LLVM IR generation and emit `SHD30
 
 ## Guarded evidence
 
-The live diagnostics gate proves representative behavior for parser syntax, core semantics, undefined functions, AI warnings, AI shape validation and Green AI contracts. Parser robustness proves deterministic resource and lexical failures. Module gates prove package and resolver failures. The PR72 differential gate adds semantic negatives and runtime-domain failures across interpreter, `lli` and native execution. The PR85 control-flow gate covers SHD3017 through SHD3023 in run, bitcode and native compilation modes.
+The live diagnostics gate proves representative behavior for parser syntax, core semantics, undefined functions, enterprise schemas, AI warnings, AI shape validation and Green AI contracts. Parser robustness proves deterministic resource and lexical failures. Module gates prove package and resolver failures. The PR72 differential gate adds semantic negatives and runtime-domain failures across interpreter, `lli` and native execution. The PR85 control-flow gate covers SHD3017 through SHD3023, and the PR86 enterprise gate covers SHD2031-SHD2034 and SHD3024-SHD3025.
 
 Each error case must fail, each warning-only case must succeed, and every catalogued code must remain unique and stage-owned.
 

@@ -1,0 +1,8 @@
+language shorthand.enterprise_language.v1;
+namespace policyclub.invalid;
+record Evidence {
+    string id;
+};
+owned Evidence item;
+borrow shared item as reader;
+borrow mutable item as writer;

@@ -26,6 +26,10 @@ SHD2027	module	error	required	generated_package_mismatch	lock	module_resolution_
 SHD2028	module	error	required	generated_stale_lock	run	module_resolution_gate
 SHD2029	module	error	required	generated_symbol_collision	lock	module_resolution_gate
 SHD2030	module	error	required	historical_pr70_imported_run_boundary	run	historical_boundary
+SHD2031	module	error	required	generated_dependency_tamper	lock	enterprise_package_gate
+SHD2032	module	error	required	generated_prohibited_license	lock	enterprise_package_gate
+SHD2033	module	error	required	generated_unbounded_version	lock	enterprise_package_gate
+SHD2034	module	error	required	generated_missing_source_date_epoch	package-sbom	enterprise_package_gate
 SHD3001	semantic	error	required	tests/diagnostics/fixtures/break_outside_loop.short	run	representative
 SHD3002	semantic	error	required	catalogued	run	continue_outside_loop
 SHD3003	semantic	error	required	tests/semantic/differential/unsupported_owned_string_array.short	run	semantic_differential_gate
@@ -49,6 +53,8 @@ SHD3020	semantic	error	required	tests/semantic/functions_control/missing_return.
 SHD3021	semantic	error	required	tests/semantic/functions_control/duplicate_local.short	run	functions_control_gate
 SHD3022	semantic	error	required	tests/semantic/functions_control/void_value.short	run	functions_control_gate
 SHD3023	semantic	error	required	tests/semantic/functions_control/undefined_function.short	compile	representative
+SHD3024	semantic	error	required	tests/enterprise/invalid_enterprise_syntax.enterprise.short	enterprise-check	enterprise_language_gate
+SHD3025	semantic	error	required	tests/enterprise/invalid_duplicate_type.enterprise.short	enterprise-check	enterprise_language_gate
 SHD4001	ai	error	required	catalogued	run	model_redeclared
 SHD4002	ai	error	required	catalogued	run	invalid_model_format
 SHD4003	ai	error	required	catalogued	run	invalid_model_precision

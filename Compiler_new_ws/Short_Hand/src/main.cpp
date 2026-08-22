@@ -1,4 +1,7 @@
 #include <iostream>
+#include <cerrno>
+#include <cstdlib>
+#include <ctime>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +11,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <limits>
 #include <set>
 #include <string>
 #include <vector>
@@ -21,6 +25,7 @@
 #include "./visitors/IR_Generator.h"
 #include "./visitors/SemanticAnalyzer.h"
 #include "./evidence/EvidenceEmitter.h"
+#include "./enterprise/EnterpriseLanguage.h"
 
 namespace fs = std::filesystem;
 namespace diag = shorthand::diagnostics;
@@ -45,7 +50,7 @@ struct ParsedSourceUnit {
 };
 
 static void print_usage() {
-    fprintf(stderr, "Correct usage: short_hand filename [parse|module-info|module-graph|lock|run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook] [--output file]\n");
+    fprintf(stderr, "Correct usage: short_hand filename [parse|enterprise-check|module-info|module-graph|package-sbom|lock|run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook] [--output file]\n");
 }
 
 static bool has_output_arg(int argc, char *argv[]) {
@@ -53,7 +58,7 @@ static bool has_output_arg(int argc, char *argv[]) {
 }
 
 static bool supported_mode(const std::string &mode) {
-    return mode == "parse" || mode == "module-info" || mode == "module-graph" || mode == "lock" ||
+    return mode == "parse" || mode == "enterprise-check" || mode == "module-info" || mode == "module-graph" || mode == "package-sbom" || mode == "lock" ||
            mode == "run" || mode == "print" || mode == "compile" || mode == "compile-bc" ||
            mode == "compile-native" || mode == "evidence" || mode == "c3eco-report" ||
            mode == "c3eco-check" || mode == "c3eco-workbook";
@@ -93,6 +98,29 @@ static void emit_module_error(const std::string &source_path,
                               const std::string &message) {
     if (!source_path.empty()) std::cerr << source_path << ":1:1: ";
     std::cerr << "error: [" << code << "] " << message << " [range 1:1-1:1]\n";
+}
+
+static bool source_date_epoch_timestamp(std::string &timestamp) {
+    const char *raw = std::getenv("SOURCE_DATE_EPOCH");
+    if (raw == nullptr || *raw == '\0') return false;
+    for (const char *digit = raw; *digit != '\0'; ++digit)
+        if (*digit < '0' || *digit > '9') return false;
+    errno = 0;
+    char *end = nullptr;
+    const unsigned long long seconds = std::strtoull(raw, &end, 10);
+    if (errno != 0 || end == raw || *end != '\0' ||
+        seconds > static_cast<unsigned long long>(std::numeric_limits<std::time_t>::max())) return false;
+    const std::time_t epoch = static_cast<std::time_t>(seconds);
+    std::tm utc{};
+#if defined(_WIN32)
+    if (gmtime_s(&utc, &epoch) != 0) return false;
+#else
+    if (gmtime_r(&epoch, &utc) == nullptr) return false;
+#endif
+    char rendered[21]{};
+    if (std::strftime(rendered, sizeof(rendered), "%Y-%m-%dT%H:%M:%SZ", &utc) == 0U) return false;
+    timestamp = rendered;
+    return true;
 }
 
 static bool parse_source_unit(const std::string &path, ParsedSourceUnit &out) {
@@ -279,6 +307,38 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    if (mode == "enterprise-check") {
+        shorthand::parser::resetParserGuard();
+        if (!validate_regular_file_size(argv[1])) return 1;
+        shorthand::enterprise::ValidationSummary summary;
+        std::string code;
+        std::string message;
+        std::size_t line = 1;
+        if (!shorthand::enterprise::validateSourceFile(argv[1], summary, code, message, line)) {
+            fprintf(stderr,
+                    "%s:%zu:1: error: [%s] %s [range %zu:1-%zu:1]\n",
+                    argv[1], line, code.c_str(), message.c_str(), line, line);
+            return 1;
+        }
+        if (has_output_arg(argc, argv)) {
+            std::ofstream out(argv[4]);
+            if (!out) {
+                fprintf(stderr, "Could not open output file: %s\n", argv[4]);
+                return 1;
+            }
+            shorthand::enterprise::writeSummaryJson(summary, out);
+            out << '\n';
+            if (!out.good()) {
+                fprintf(stderr, "Could not write output file: %s\n", argv[4]);
+                return 1;
+            }
+        } else {
+            shorthand::enterprise::writeSummaryJson(summary, std::cout);
+            std::cout << '\n';
+        }
+        return 0;
+    }
+
     flex_output = tmpfile();
     bison_output = tmpfile();
     if (!flex_output || !bison_output) {
@@ -356,11 +416,41 @@ int main(int argc, char *argv[])
             emit_module_error(path, module_code, module_message);
             return finish_with(1);
         }
+        if (mode == "package-sbom") {
+            if (resolver.manifest().format != "shorthand.package.v2") {
+                emit_module_error(path, diag::ModuleManifestInvalid,
+                                  "package-sbom requires shorthand.package.v2");
+                return finish_with(1);
+            }
+            std::string created_timestamp;
+            if (!source_date_epoch_timestamp(created_timestamp)) {
+                emit_module_error(path, diag::ModuleSbomReproducibility,
+                                  "package-sbom requires a valid non-negative SOURCE_DATE_EPOCH");
+                return finish_with(1);
+            }
+            if (has_output_arg(argc, argv)) {
+                std::ofstream out(argv[4]);
+                if (!out) {
+                    fprintf(stderr, "Could not open output file: %s\n", argv[4]);
+                    return finish_with(1);
+                }
+                resolver.writePackageSbom(created_timestamp, out);
+                out << '\n';
+                if (!out.good()) {
+                    fprintf(stderr, "Could not write output file: %s\n", argv[4]);
+                    return finish_with(1);
+                }
+            } else {
+                resolver.writePackageSbom(created_timestamp, std::cout);
+                std::cout << '\n';
+            }
+            return finish_with(0);
+        }
         if (!analyze_module_graph(parsed_units, descriptors, ordered_modules)) return finish_with(1);
     } else {
-        if (mode == "lock" || mode == "module-graph") {
+        if (mode == "lock" || mode == "module-graph" || mode == "package-sbom") {
             emit_module_error(path, diag::ModuleIdentityMismatch,
-                              "lock and module-graph modes require a package/module source unit");
+                              "lock, module-graph and package-sbom modes require a package/module source unit");
             return finish_with(1);
         }
         SemanticAnalyzer semantic;

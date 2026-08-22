@@ -1,8 +1,8 @@
 # ShortHand Language Specification
 
-Language version: beta-0.5
+Language version: beta-0.6
 
-Conformance contract: beta-0.5
+Conformance contract: beta-0.6
 
 Base grammar version: beta-0.2
 
@@ -16,9 +16,9 @@ Historical stability marker retained for earlier gates: Language version: beta-0
 
 ShortHand is a C++ and LLVM-first compiled Green AI language. Python is not required for the official compiler, runtime, validation, conformance, tests or evidence path.
 
-## Beta-0.5 objective
+## Beta-0.6 objective
 
-Beta-0.5 is the active layered language contract. It combines the beta-0.2 base grammar, the beta-0.3 module/package extension and deterministic resolver, the beta-0.4 executable type extension, the beta-0.5 function/control-flow extension, and the `shorthand.c3eco.language.v1` candidate-evidence declaration extension. The accepted base scanner/parser surface is documented in `docs/language_grammar_ebnf.md` and traced by `tests/conformance/grammar_matrix_beta_0_2.tsv`. Modules are traced by `tests/conformance/module_matrix_beta_0_3.tsv` and `scripts/check_module_resolution.sh`. Type behavior is traced by `tests/conformance/type_matrix_beta_0_4.tsv`; function and control-flow behavior is traced by `tests/conformance/functions_control_matrix_beta_0_5.tsv` and `docs/functions_control_error_semantics.md`.
+Beta-0.6 is the active layered language contract. It combines the beta-0.2 base grammar, beta-0.3 modules, beta-0.4 executable types, beta-0.5 functions/control flow, the `shorthand.c3eco.language.v1` candidate-evidence declarations, and the bounded `shorthand.enterprise_language.v1` schema/ownership surface. Package v2 and the core FFI are defined in `docs/enterprise_packages_stdlib_ffi.md` and traced by `tests/conformance/enterprise_matrix_beta_0_6.tsv`.
 
 The matrix covers:
 
@@ -34,6 +34,7 @@ The matrix covers:
 - beta-0.3 module, import and package declarations,
 - beta-0.4 float, string and typed-array execution,
 - beta-0.5 expression calls, lexical declarations, recursion, cleanup and resolved labels,
+- beta-0.6 enterprise composite schemas, ownership plans, offline packages and safe FFI,
 - first-class C3-ECO candidate-evidence declarations,
 - explicit parser and execution boundaries that remain unsupported.
 
@@ -61,7 +62,7 @@ Function parameter declarations remain semicolon-terminated for compatibility. E
 
 ## Modules, packages and deterministic resolution
 
-Beta-0.3 accepts `module`, `import` and `package` preamble declarations. `shorthand.package.v1` and `shorthand.lock.v1` define the manifest and lock contracts. Resolution is confined to declared roots, locked by content digest, ordered deterministically, cycle-checked and verified by multi-file interpreter/bitcode/native tests. The extension does not yet provide the production package registry, standard library or stable FFI planned for PR86.
+Beta-0.3 accepts `module`, `import` and `package` preamble declarations. Legacy `shorthand.package.v1` and `shorthand.lock.v1` remain compatible. Beta-0.6 adds `shorthand.package.v2` and `shorthand.lock.v2` for exact semantic versions, allowlisted SPDX licenses, package namespaces, local vendored dependencies, SHA-256 module locks and SPDX dependency output. Resolution is offline-only and confined to declared roots. No registry client is implied.
 
 ## AI model, tensor and inference syntax
 
@@ -117,7 +118,15 @@ Beta-0.3 also provides the ten first-class `shorthand.c3eco.language.v1` declara
 
 `int`, `bool`, binary64 `float`/`double`, immutable `string` and fixed numeric or boolean arrays are covered by `docs/execution_semantics_beta_0_4.md`. `float` and `double` name the same binary64 type. Assignments, function arguments, returns, operators and indices are checked exactly, with no implicit narrowing. String literals are general expressions and string equality is content-based.
 
-`shorthand.type_memory.v1` also defines deterministic descriptors for slices, records, enums, options and results plus a guarded ownership state machine. Their source syntax is not exposed in beta-0.5. Arrays of owned strings remain rejected until generated element destruction and move semantics exist. Parser acceptance or descriptor availability must not be presented as executable support.
+`shorthand.type_memory.v1` also defines deterministic descriptors for slices, records, enums, options and results plus a guarded ownership state machine. Beta-0.6 exposes these as ABI schemas and ownership plans through `enterprise-check`; it does not expose composite execution in the base parser, interpreter or LLVM lowering. Arrays of owned strings and by-value composite FFI remain rejected. Schema acceptance must not be presented as executable support.
+
+## Enterprise schema and FFI surface
+
+```text
+short_hand schema.enterprise.short enterprise-check
+```
+
+This mode requires `language shorthand.enterprise_language.v1;`, a dotted namespace, at least one record/enum/slice/option/result declaration and balanced ownership operations. It emits deterministic JSON and never sets a production claim. The installable core library provides the separate `shorthand_core_ffi_v1.h` C ABI and `shorthand::core::v1` C++ wrapper described in `docs/enterprise_packages_stdlib_ffi.md`.
 
 ## Functions and structured control flow
 
@@ -127,7 +136,7 @@ Interpreter frames and LLVM lexical symbol tables implement the same shadowing a
 
 ## Compatibility and boundaries
 
-Beta-0.5 is additive over valid beta-0.4, beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest. The former empty-parameter-list rejection is intentionally superseded by the beta-0.5 function contract.
+Beta-0.6 is additive over valid beta-0.5, beta-0.4, beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest. The former empty-parameter-list rejection remains intentionally superseded by the beta-0.5 function contract.
 
 The following are explicitly outside the current grammar contract:
 
@@ -135,15 +144,15 @@ The following are explicitly outside the current grammar contract:
 - empty blocks,
 - `for` syntax,
 - parsed `while` syntax,
-- slice, record, enum, option/result and ownership syntax,
+- slice, record, enum, option/result and ownership syntax in the executable base grammar,
 - implicit numeric conversions,
 - non-`>=` quality guardrail operators,
 - precision and backend aliases that are not scanner keywords,
 - production registry publication and remote dependency resolution,
-- a stable standard library or general-purpose C/C++ FFI.
+- general-purpose or by-value composite C/C++ FFI beyond core ABI 1.0.0.
 
-These are documented constraints, not production-readiness claims. Parser robustness, modules, deterministic multi-file resolution and the guarded beta-0.5 typed/control-flow subset are implemented. PR86 owns the remaining source-level composite/ownership, package, standard-library and FFI boundaries and must preserve or explicitly version `shorthand.type_memory.v1`.
+These are documented constraints, not production-readiness claims. Parser robustness, deterministic multi-file resolution, the guarded beta-0.5 executable subset and the beta-0.6 enterprise schema/package/core contract are implemented. Composite execution remains a production-lowering boundary and must preserve or explicitly version `shorthand.type_memory.v1`.
 
 ## Runtime and ABI boundary
 
-Beta-0.5 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols.
+Beta-0.6 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols. Core FFI ABI 1.0.0 is separately versioned and frozen.

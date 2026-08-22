@@ -15,7 +15,7 @@ This contract defines stable type identities, checked storage arithmetic and own
 
 `ProductionTypeSystem` provides descriptors for `void`, `bool`, signed 32-bit `int`, IEEE-754 binary64 `float`, UTF-8 byte-string values, fixed arrays, borrowed slices, records, enums, options and results. Composite descriptors reject empty identities, duplicate fields or variants, zero extents and unsupported payloads. Their canonical names are deterministic and exact type identity is required for assignment.
 
-The beta-0.4 source surface directly executes scalar `int`, `bool`, `float`/`double`, `string` and fixed arrays of numeric or boolean scalars. Records, enums, option/result and slice syntax are not yet exposed by the parser. Their descriptor and ownership contracts are implemented now so later syntax and lowering cannot invent incompatible layouts or lifetime rules.
+The beta-0.5 executable source surface directly executes scalar `int`, `bool`, `float`/`double`, `string` and fixed arrays of numeric or boolean scalars. Beta-0.6 exposes records, enums, option/result and slices as versioned ABI schemas plus ownership plans through `enterprise-check`. They are not yet executable parser/interpreter/LLVM values. This boundary prevents later lowering or FFI work from inventing incompatible identities or lifetime rules without presenting schema validation as composite execution.
 
 Logical `bool` values have the canonical observable values 0 and 1. LLVM may use `i1` for transient predicates, but storage, function ABI and variadic calls use a zero-extended `i32` representation. Lowering performs this conversion only at exact boolean boundaries; it is not an implicit numeric source conversion.
 
@@ -74,6 +74,6 @@ The current scalar source language uses value semantics, so these state transiti
 
 ## Evidence
 
-`tests/types/test_production_type_memory_model.cpp` exercises descriptor validation, canonical identity, storage overflow, checked conversion, slice bounds, exclusive borrowing and move safety under strict C++ warnings with both GCC and Clang in the primary CI lane. `scripts/check_semantic_differential.sh` adds typed positive and negative programs and requires exact interpreter, LLVM and native agreement. The module-resolution gate additionally proves that imported float and string signatures remain exact and that a cross-module mismatch fails with `SHD3013` before lowering. Sanitizer suites compile the same compiler sources, and CI treats missing tools as failure.
+`tests/types/test_production_type_memory_model.cpp` exercises descriptor validation, canonical identity, storage overflow, checked conversion, slice bounds, exclusive borrowing and move safety under strict C++ warnings with both GCC and Clang in the primary CI lane. `scripts/check_enterprise_packages_stdlib_ffi.sh` connects every guarded descriptor family and the ownership state machine to the beta-0.6 schema source. `scripts/check_semantic_differential.sh` keeps typed executable programs in exact interpreter, LLVM and native agreement. Sanitizer suites compile the same compiler sources, and CI treats missing tools as failure.
 
-The frozen runtime ABI remains version 1.0.0 with its existing 25 public `short_*` symbols. This PR adds no exported ABI symbol.
+The frozen runtime ABI remains version 1.0.0 with its existing 25 public `short_*` symbols. Beta-0.6 adds a separate core FFI ABI 1.0.0 with its own exact symbol manifest; it does not add or rename a runtime ABI symbol.

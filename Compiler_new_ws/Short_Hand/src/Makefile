@@ -65,7 +65,7 @@ AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/
 endif
 
 AI_RUNTIME_CORE_SRC := ai_runtime/AI_Runtime.cpp ai_runtime/AI_Types.cpp ai_runtime/AI_Telemetry.cpp ai_runtime/AI_Backend.cpp ai_runtime/backends/FallbackBackend.cpp ai_runtime/backends/OnnxRuntimeBackend.cpp ai_runtime/backends/TensorRTBackend.cpp ai_runtime/backends/OpenVINOBackend.cpp ai_runtime/backends/LibTorchBackend.cpp ai_runtime/backends/LlamaCppBackend.cpp
-SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp module/ModuleResolver.cpp type_system/ProductionTypeSystem.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/IR_Generator_Module.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
+SRC := main.cpp parser.tab.cc lex.yy.c ast/AST.cpp module/ModuleResolver.cpp module/Sha256.cpp type_system/ProductionTypeSystem.cpp enterprise/EnterpriseLanguage.cpp visitors/AST_Printer.cpp visitors/Interpreter.cpp visitors/IR_Generator.cpp visitors/IR_Generator_Module.cpp visitors/SemanticAnalyzer.cpp visitors/Diagnostics.cpp evidence/EvidenceEmitter.cpp $(AI_RUNTIME_CORE_SRC)
 BIN := ../build/short_hand
 AI_RUNTIME_SRC := $(AI_RUNTIME_CORE_SRC)
 AI_TRAIN_SRC := ai_runtime/TorchTrainer.cpp
@@ -173,20 +173,21 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-llvm test-ai
+test: test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-llvm test-ai
 
 test-governance:
 	bash ../../../scripts/check_production_truth.sh
 	bash ../../../tests/governance/test_production_truth_negative.sh
 	bash ../../../scripts/check_production_type_memory_model.sh
 	bash ../../../scripts/check_functions_control_error_semantics.sh
+	bash ../../../scripts/check_enterprise_packages_stdlib_ffi.sh
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -214,6 +215,9 @@ test-semantic-differential: short_hand runtime_lib
 
 test-control-flow: short_hand runtime_lib
 	SHORTHAND_BIN=$(BIN) SHORTHAND_RUNTIME_LIB=$(SHORTHAND_RUNTIME_LIB) bash ../../../scripts/check_functions_control_error_semantics.sh
+
+test-enterprise-language: short_hand
+	SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_enterprise_packages_stdlib_ffi.sh
 
 test-fuzz-sanitizers: short_hand
 	bash ../../../scripts/check_fuzz_sanitizers.sh
