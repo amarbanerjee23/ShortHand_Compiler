@@ -17,3 +17,4 @@ TYP015	slice-safety	type-system	checkedSliceRange	tests/types/test_production_ty
 TYP016	conversion-safety	type-system	checkedFloatToInt	tests/types/test_production_type_memory_model.cpp	accept	Checked narrowing rejects non-finite and out-of-range values.
 TYP017	ownership-safety	type-system	OwnershipTracker::moveValue	tests/types/test_production_type_memory_model.cpp	accept	Moves and borrows follow the guarded ownership state machine.
 TYP018	module-signature	semantic	functionSignatures	tests/modules/resolver/valid_project/src/typed_app.short	accept	Imported float and string signatures remain exact across module execution and native lowering.
+TYP019	bool-abi	llvm	asExactLoweredType	tests/semantic/differential/production_types.short	accept	Boolean predicates are canonicalized to 0 or 1 at storage, function and variadic ABI boundaries.

@@ -30,7 +30,7 @@ awk -F '\t' '
   $3 !~ /^(parser|semantic|interpreter|llvm|type-system)$/ { exit 13 }
   $6 !~ /^(accept|reject)$/ { exit 14 }
   $4 == "" || $5 == "" || $7 == "" { exit 15 }
-  END { if (NR != 19) exit 16 }
+  END { if (NR != 20) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed beta-0.4 type conformance matrix" >&2
   exit 1

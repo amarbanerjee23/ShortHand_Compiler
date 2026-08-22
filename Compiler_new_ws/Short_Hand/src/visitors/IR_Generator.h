@@ -48,6 +48,9 @@ private:
     std::map<std::string, ShortType> global_scalar_types;
     std::map<std::string, ShortType> global_array_types;
     std::map<std::string, ShortType> active_local_types;
+    std::map<std::string, ShortType> function_return_types;
+    std::map<std::string, std::vector<ShortType>> function_parameter_types;
+    ShortType active_function_return_type;
     ShortType ret_type;
     ShortType load_type;
 

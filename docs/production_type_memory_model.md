@@ -17,6 +17,8 @@ This contract defines stable type identities, checked storage arithmetic and own
 
 The beta-0.4 source surface directly executes scalar `int`, `bool`, `float`/`double`, `string` and fixed arrays of numeric or boolean scalars. Records, enums, option/result and slice syntax are not yet exposed by the parser. Their descriptor and ownership contracts are implemented now so later syntax and lowering cannot invent incompatible layouts or lifetime rules.
 
+Logical `bool` values have the canonical observable values 0 and 1. LLVM may use `i1` for transient predicates, but storage, function ABI and variadic calls use a zero-extended `i32` representation. Lowering performs this conversion only at exact boolean boundaries; it is not an implicit numeric source conversion.
+
 ## C3-ECO and sustainable AI alignment
 
 Exact types, checked extents and deterministic failures protect the correctness, repeatability and evidence-integrity safeguards in the repository's C3-ECO candidate profile. A measurement, functional unit, quality result or carbon factor must not change meaning through silent narrowing, unchecked overflow, out-of-bounds access or use-after-move. These controls support G6 security, G7 safety/privacy/accessibility, G8 repeatability and G13 no-quality-degradation evidence, but they do not prove lower energy use or grant certification. Any efficiency claim still requires equivalent useful work, measured or transparently estimated energy/carbon data, provenance and uncertainty under the separate C3-ECO gates.

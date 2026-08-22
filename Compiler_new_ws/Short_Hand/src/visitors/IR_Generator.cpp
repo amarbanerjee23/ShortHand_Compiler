@@ -60,6 +60,22 @@ static Value *asBool(Value *value) {
     return Builder.CreateICmpNE(asI32(value), ConstantInt::get(i32Ty(), 0, true), "tobool");
 }
 
+static Value *asExactLoweredType(Value *value, ShortType expected) {
+    if (!value) return value;
+    if (expected == ShortType::Boolean) {
+        if (value->getType()->isIntegerTy(1))
+            return Builder.CreateZExt(value, i32Ty(), "bool_storage");
+        if (value->getType()->isIntegerTy(32)) return value;
+    } else if (expected == ShortType::Int && value->getType()->isIntegerTy(32)) {
+        return value;
+    } else if (expected == ShortType::Float && value->getType()->isDoubleTy()) {
+        return value;
+    } else if (expected == ShortType::String && value->getType()->isPointerTy()) {
+        return value;
+    }
+    return ShowError("exact type mismatch reached lowering after semantic validation");
+}
+
 static AllocaInst *createEntryBlockAlloca(Function *function, Type *type, const std::string &name) {
     IRBuilder<> tmp(&function->getEntryBlock(), function->getEntryBlock().begin());
     return tmp.CreateAlloca(type, nullptr, name);
@@ -196,6 +212,7 @@ IR_Generator::IR_Generator() {
     main_function = nullptr;
     ret_type = ShortType::Int;
     load_type = ShortType::Int;
+    active_function_return_type = ShortType::Void;
 }
 
 IR_Generator::~IR_Generator() {
@@ -400,6 +417,11 @@ int IR_Generator::visit(AST_DATA_DECLARATION_BLOCK *decl_block) {
 int IR_Generator::visit(AST_FUNCTION_LIST_RULE *functions) {
     for (AST_FUNCTION_RULE *function : functions->functions) {
         if (!function || !function->function_name) continue;
+        function_return_types[function->function_name] = function->type;
+        std::vector<ShortType> parameter_types;
+        for (const auto &parameter : function->parameters->typed_scalars)
+            parameter_types.push_back(parameter.type);
+        function_parameter_types[function->function_name] = parameter_types;
         if (module->getFunction(function->function_name)) continue;
         std::vector<Type*> args;
         for (const auto &parameter : function->parameters->typed_scalars)
@@ -414,6 +436,11 @@ int IR_Generator::visit(AST_FUNCTION_LIST_RULE *functions) {
 }
 
 int IR_Generator::visit(AST_FUNCTION_RULE *function) {
+    function_return_types[function->function_name] = function->type;
+    std::vector<ShortType> parameter_types;
+    for (const auto &parameter : function->parameters->typed_scalars)
+        parameter_types.push_back(parameter.type);
+    function_parameter_types[function->function_name] = parameter_types;
     Function *llvm_function = module->getFunction(function->function_name);
     if (!llvm_function) {
         std::vector<Type*> args;
@@ -428,6 +455,8 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
     symbol_table_obj.push_block(BB);
     Builder.SetInsertPoint(BB);
     active_local_types.clear();
+    const ShortType saved_return_type = active_function_return_type;
+    active_function_return_type = function->type;
 
     unsigned idx = 0;
     for (Function::arg_iterator ai = llvm_function->arg_begin(); ai != llvm_function->arg_end(); ++ai, ++idx) {
@@ -451,6 +480,7 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
     continue_targets.resize(saved_continue);
     symbol_table_obj.pop_block();
     active_local_types.clear();
+    active_function_return_type = saved_return_type;
     return 0;
 }
 
@@ -471,16 +501,22 @@ int IR_Generator::visit(AST_FUNCTION_CALL_RULE *function_called) {
         return 0;
     }
     vector<Value*> args;
+    const auto parameter_types = function_parameter_types.find(function_called->function_name);
+    std::size_t argument_index = 0;
     for (auto *variable : function_called->parameters->variables) {
         variable->accept(*this);
         Value *arg = get_expression();
         if (!arg) return 0;
+        if (parameter_types != function_parameter_types.end() &&
+            argument_index < parameter_types->second.size())
+            arg = asExactLoweredType(arg, parameter_types->second[argument_index]);
+        if (!arg) return 0;
         args.push_back(arg);
+        ++argument_index;
     }
     ret = Builder.CreateCall(func, args);
-    if (func->getReturnType()->isDoubleTy()) ret_type = ShortType::Float;
-    else if (func->getReturnType()->isPointerTy()) ret_type = ShortType::String;
-    else ret_type = ShortType::Int;
+    const auto return_type = function_return_types.find(function_called->function_name);
+    ret_type = return_type == function_return_types.end() ? ShortType::Int : return_type->second;
     load_variable = 0;
     is_expression = !func->getReturnType()->isVoidTy();
     return 0;
@@ -497,6 +533,9 @@ int IR_Generator::visit(AST_ASSIGNMENT_RULE *assignment_statement) {
     Value *expr_value = get_expression();
     assignment_statement->variable->accept(*this);
     Value *variable_value = ret;
+    const ShortType target_type = ret_type;
+    expr_value = asExactLoweredType(expr_value, target_type);
+    if (!expr_value) return 0;
     ret = Builder.CreateStore(expr_value, variable_value);
     load_variable = 0;
     return 0;
@@ -639,7 +678,8 @@ int IR_Generator::visit(AST_RETURN_STATEMENT *statement) {
     }
     if (statement->expression) {
         statement->expression->accept(*this);
-        Builder.CreateRet(get_expression());
+        Value *value = asExactLoweredType(get_expression(), active_function_return_type);
+        if (value) Builder.CreateRet(value);
     } else {
         Builder.CreateRet(Constant::getNullValue(function->getReturnType()));
     }
@@ -681,7 +721,9 @@ int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
                 args.push_back(safeStringPointer(v));
             } else {
                 args.push_back(Builder.CreateGlobalStringPtr("%d"));
-                args.push_back(v);
+                Value *print_value = asExactLoweredType(v, ret_type);
+                if (!print_value) return 0;
+                args.push_back(print_value);
             }
         } else {
             p.string_literal->accept(*this);
@@ -750,6 +792,11 @@ int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) 
     binary_operator_expression->right->accept(*this);
     Value *R = get_expression();
     const ShortType right_type = ret_type;
+
+    if (left_type == ShortType::Boolean && right_type == ShortType::Boolean) {
+        L = asExactLoweredType(L, ShortType::Boolean);
+        R = asExactLoweredType(R, ShortType::Boolean);
+    }
     is_condition = is_expression = 0;
     if (left_type != right_type) {
         ret = ShowError("type mismatch reached lowering after semantic validation");
@@ -998,16 +1045,22 @@ int IR_Generator::visit(AST_FUNCTION_CALL_EXPRESSION *call){
         return 0;
     }
     vector<Value*> args;
+    const auto parameter_types = function_parameter_types.find(call->function_name);
+    std::size_t argument_index = 0;
     for (AST_EXPRESSION_RULE *argument : call->arguments) {
         argument->accept(*this);
         Value *value = get_expression();
         if (!value) return 0;
+        if (parameter_types != function_parameter_types.end() &&
+            argument_index < parameter_types->second.size())
+            value = asExactLoweredType(value, parameter_types->second[argument_index]);
+        if (!value) return 0;
         args.push_back(value);
+        ++argument_index;
     }
     ret = Builder.CreateCall(func, args, "calltmp");
-    if (func->getReturnType()->isDoubleTy()) ret_type = ShortType::Float;
-    else if (func->getReturnType()->isPointerTy()) ret_type = ShortType::String;
-    else ret_type = ShortType::Int;
+    const auto return_type = function_return_types.find(call->function_name);
+    ret_type = return_type == function_return_types.end() ? ShortType::Int : return_type->second;
     load_variable = 0;
     is_expression = !func->getReturnType()->isVoidTy();
     return 0;

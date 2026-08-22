@@ -12,6 +12,8 @@ Beta-0.4 preserves the complete beta-0.3 execution contract and adds exact typed
 
 The executable scalar types are signed 32-bit `int`, logical `bool`, binary64 `float`/`double` and immutable `string`. `float` and `double` are aliases for one binary64 source type. Variables are zero or empty initialized. Assignments, function parameters and function returns require exact type identity. There are no implicit numeric conversions.
 
+LLVM predicates use `i1` only while evaluating conditions. A `bool` crossing a storage, return, argument or variadic-print boundary is canonically zero-extended to `i32` with value 0 or 1. This explicit boundary rule avoids target-ABI-dependent variadic behavior and is exercised by the Windows, Linux and macOS differential lanes.
+
 Integer behavior, control flow, module visibility and runtime failure behavior remain as specified by beta-0.3. Fixed arrays preserve their element type and extent. Arrays of owned strings are not executable until generated destruction and move semantics exist.
 
 ## Floating-point behavior
