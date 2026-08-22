@@ -82,6 +82,7 @@ COMMON_SOURCES=(
   "${SRC_DIR}/lex.yy.c"
   "${SRC_DIR}/ast/AST.cpp"
   "${SRC_DIR}/module/ModuleResolver.cpp"
+  "${SRC_DIR}/module/Sha256.cpp"
   "${SRC_DIR}/type_system/ProductionTypeSystem.cpp"
   "${SRC_DIR}/visitors/SemanticAnalyzer.cpp"
   "${SRC_DIR}/visitors/Diagnostics.cpp"
