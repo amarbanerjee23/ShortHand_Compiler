@@ -1,7 +1,7 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-22-pr83
-language_version: beta-0.3
+compiler_test_strategy_version: 2026-08-22-pr84
+language_version: beta-0.4
 current_maturity: controlled_beta
 production_claim: false
 
@@ -13,17 +13,17 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 28-area production test matrix records for the GitHub PR83 candidate:
+The 29-area production test matrix records for the GitHub PR84 candidate:
 
-- 22 implemented areas,
+- 23 implemented areas,
 - 3 partial areas,
 - 3 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the current security contract. GitHub PR78 closed TST019 for the declared deployment contract. GitHub PR79 closed TST020 for formatter/linter. GitHub PR80 closed TST021 for the native LSP/editor baseline. GitHub PR81 closed TST022 for the versioned `linux-x64-cpu-v1` production backend support set. GitHub PR82 added executable first-class C3-ECO language declarations to TST023. GitHub PR83 closes TST028 with the machine-readable production truth and complete G1-G14/A-K/S9/S12 traceability contract while keeping incomplete certification areas explicit.
+Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the current security contract. GitHub PR78 closed TST019 for the declared deployment contract. GitHub PR79 closed TST020 for formatter/linter. GitHub PR80 closed TST021 for the native LSP/editor baseline. GitHub PR81 closed TST022 for the versioned `linux-x64-cpu-v1` production backend support set. GitHub PR82 added executable first-class C3-ECO language declarations to TST023. GitHub PR83 closed TST028 with the machine-readable production truth and complete G1-G14/A-K/S9/S12 traceability contract. GitHub PR84 closes TST029 with `shorthand.type_memory.v1`, strict descriptor and ownership tests, and beta-0.4 cross-mode float, string and typed-array evidence.
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 compiler execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, formatter/linter preservation, native LSP/editor qualification and qualification-aware AI backend routing.
 
-Production-critical gaps remain for the production type/memory and function contracts, enterprise packages and libraries, concurrent serving operations, measured C3-ECO scoring and authority-ready evidence lineage, production MLIR lowering, representative AI workloads, measured performance/energy and the final release-candidate gate.
+Production-critical gaps remain for source-level composite and ownership integration, the general function/control-flow contract, enterprise packages and libraries, concurrent serving operations, measured C3-ECO scoring and authority-ready evidence lineage, production MLIR lowering, representative AI workloads, measured performance/energy and the final release-candidate gate.
 
 ## Production backend and hardware qualification contract
 
@@ -170,4 +170,4 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-08-22-pr83`.
+The current strategy is `2026-08-22-pr84`.

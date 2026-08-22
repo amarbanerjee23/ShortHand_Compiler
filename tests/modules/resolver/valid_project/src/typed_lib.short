@@ -1,0 +1,12 @@
+package acme.demo;
+module acme.demo.typed_lib;
+float typed_state;
+def float typed_float(float value;) {
+    print "typed import float", value;
+    return value;
+};
+def string typed_string(string value;) {
+    print "typed import string", value;
+    return value;
+};
+typed_state = 0.0;

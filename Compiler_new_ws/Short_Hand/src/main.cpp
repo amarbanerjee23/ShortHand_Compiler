@@ -217,15 +217,15 @@ static bool validate_graph_symbols(const std::map<std::string, ParsedSourceUnit>
 static bool analyze_module_graph(const std::map<std::string, ParsedSourceUnit> &units,
                                  const std::map<std::string, shmod::ModuleUnitDescriptor> &descriptors,
                                  const std::vector<std::string> &ordered_modules) {
-    std::map<std::string, std::map<std::string, std::size_t>> function_arities;
+    std::map<std::string, std::map<std::string, SemanticAnalyzer::FunctionSignature>> function_signatures;
     for (const std::string &module_name : ordered_modules)
-        function_arities[module_name] = SemanticAnalyzer::functionArities(units.at(module_name).program);
+        function_signatures[module_name] = SemanticAnalyzer::functionSignatures(units.at(module_name).program);
 
     bool failed = false;
     for (const std::string &module_name : ordered_modules) {
-        std::map<std::string, std::size_t> imported;
+        std::map<std::string, SemanticAnalyzer::FunctionSignature> imported;
         for (const std::string &dependency : descriptors.at(module_name).imports) {
-            const auto &dependency_functions = function_arities[dependency];
+            const auto &dependency_functions = function_signatures[dependency];
             imported.insert(dependency_functions.begin(), dependency_functions.end());
         }
         SemanticAnalyzer semantic;

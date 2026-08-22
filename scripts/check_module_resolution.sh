@@ -52,6 +52,8 @@ expect_failure() {
 cp -R "${FIXTURE}" "${WORK_DIR}/valid"
 APP="${WORK_DIR}/valid/src/app.short"
 NATIVE_APP="${WORK_DIR}/valid/src/native_app.short"
+TYPED_APP="${WORK_DIR}/valid/src/typed_app.short"
+TYPED_MISMATCH="${WORK_DIR}/valid/src/typed_mismatch.short"
 
 "${SHORT}" "${APP}" lock >"${WORK_DIR}/lock-path-1.out" 2>"${WORK_DIR}/lock-1.err"
 cp "${WORK_DIR}/valid/shorthand.lock" "${WORK_DIR}/lock-first"
@@ -95,6 +97,27 @@ cmp -s "${WORK_DIR}/interpreter-import-run.out" "${WORK_DIR}/native-run.out" || 
   diff -u "${WORK_DIR}/interpreter-import-run.out" "${WORK_DIR}/native-run.out" >&2 || true
   exit 1
 }
+
+# Beta-0.4 imported signatures retain exact float and string parameter types
+# through semantic analysis, interpreter frames and LLVM/native prototypes.
+"${SHORT}" "${TYPED_APP}" lock >"${WORK_DIR}/typed-lock.out" 2>"${WORK_DIR}/typed-lock.err"
+"${SHORT}" "${TYPED_APP}" run >"${WORK_DIR}/typed-interpreter.out" 2>"${WORK_DIR}/typed-interpreter.err"
+grep -Fq 'typed import float 6.5' "${WORK_DIR}/typed-interpreter.out"
+grep -Fq 'typed import string hello' "${WORK_DIR}/typed-interpreter.out"
+grep -Fq 'typed root 6.5 hello' "${WORK_DIR}/typed-interpreter.out"
+(
+  cd "${WORK_DIR}/valid"
+  "${SHORT}" "${TYPED_APP}" compile-native >"${WORK_DIR}/typed-native-compile.out" 2>"${WORK_DIR}/typed-native-compile.err"
+  ./typed_app >"${WORK_DIR}/typed-native.out" 2>"${WORK_DIR}/typed-native.err"
+)
+cmp -s "${WORK_DIR}/typed-interpreter.out" "${WORK_DIR}/typed-native.out" || {
+  echo "error: beta-0.4 imported typed interpreter/native output differs" >&2
+  diff -u "${WORK_DIR}/typed-interpreter.out" "${WORK_DIR}/typed-native.out" >&2 || true
+  exit 1
+}
+
+"${SHORT}" "${TYPED_MISMATCH}" lock >"${WORK_DIR}/typed-mismatch-lock.out" 2>"${WORK_DIR}/typed-mismatch-lock.err"
+expect_failure SHD3013 "${SHORT}" "${TYPED_MISMATCH}" run
 
 # A changed source invalidates the exact graph fingerprint.
 cp -R "${FIXTURE}" "${WORK_DIR}/stale"

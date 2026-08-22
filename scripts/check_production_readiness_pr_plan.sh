@@ -17,6 +17,8 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
+  "${ROOT_DIR}/docs/execution_semantics_beta_0_4.md" \
+  "${ROOT_DIR}/docs/production_type_memory_model.md" \
   "${ROOT_DIR}/docs/fuzz_sanitizer_race_hardening.md" \
   "${ROOT_DIR}/docs/toolchain_platform_reproducibility.md" \
   "${ROOT_DIR}/docs/signed_release_publication.md" \
@@ -33,22 +35,23 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
   "${ROOT_DIR}/scripts/check_lsp_editor.sh" \
   "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" \
   "${ROOT_DIR}/scripts/check_production_truth.sh" \
+  "${ROOT_DIR}/scripts/check_production_type_memory_model.sh" \
   "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"; do
   require_file "${file}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-22-pr83' \
+  'production_readiness_plan_version: 2026-08-22-pr84' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 82' \
-  'CURRENT_GITHUB_PR: 83' \
+  'LAST_MERGED_GITHUB_PR: 83' \
+  'CURRENT_GITHUB_PR: 84' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'CURRENT_IMPLEMENTATION_SCOPE: production_truth_and_c3eco_traceability' \
-  'BASELINE_LANGUAGE_VERSION: beta-0.3' \
+  'CURRENT_IMPLEMENTATION_SCOPE: production_type_system_and_memory_model' \
+  'BASELINE_LANGUAGE_VERSION: beta-0.4' \
   'TARGET: enterprise production usage ready language' \
-  'PR83 - Production truth baseline and C3-ECO traceability is IN PROGRESS.' \
-  'remaining_planned_implementation_prs_pr83_through_pr96: 14' \
-  'remaining_planned_implementation_prs_after_pr83: 13' \
+  'PR84 - Production type system and memory model is IN PROGRESS.' \
+  'remaining_planned_implementation_prs_pr84_through_pr96: 13' \
+  'remaining_planned_implementation_prs_after_pr84: 12' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -71,10 +74,11 @@ require_contains "${PLAN}" '| PR77 - Container and Kubernetes production hardeni
 require_contains "${PLAN}" '| PR78 - Formatter and linter baseline | MERGED as GitHub PR79'
 require_contains "${PLAN}" '| PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80'
 require_contains "${PLAN}" '| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | MERGED as GitHub PR81'
-require_contains "${PLAN}" '| PR83 - Production truth baseline and C3-ECO traceability | IN PROGRESS'
+require_contains "${PLAN}" '| PR83 - Production truth baseline and C3-ECO traceability | MERGED'
+require_contains "${PLAN}" '| PR84 - Production type system and memory model | IN PROGRESS'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-08-22-pr83' \
+  'ci_pipeline_architecture_version: 2026-08-22-pr84' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \
@@ -84,6 +88,7 @@ for anchor in \
   'PR76: security/SAST/dependency/license policy.' \
   'PR77: hardened multi-architecture containers and ephemeral Kubernetes enforcement.' \
   'PR83: production truth and C3-ECO traceability.' \
+  'PR84: production type and memory model plus beta-0.4 typed execution.' \
   'PR96: enterprise pilot and zero-skip production RC aggregation.'; do
   require_contains "${PIPELINE}" "${anchor}"
 done
@@ -91,6 +96,8 @@ done
 require_contains "${ROOT_DIR}/docs/language_objectives.md" 'production_claim: false'
 require_contains "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" 'resolution_status: deterministic_manifest_locked_multi_file_codegen'
 require_contains "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" 'execution_semantics_contract: beta-0.3-pr72-v1'
+require_contains "${ROOT_DIR}/docs/execution_semantics_beta_0_4.md" 'execution_semantics_contract: beta-0.4-pr84-v1'
+require_contains "${ROOT_DIR}/docs/production_type_memory_model.md" 'type_system_contract: shorthand.type_memory.v1'
 require_contains "${ROOT_DIR}/docs/fuzz_sanitizer_race_hardening.md" 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1'
 require_contains "${ROOT_DIR}/docs/toolchain_platform_reproducibility.md" 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1'
 require_contains "${ROOT_DIR}/docs/signed_release_publication.md" 'signed_release_contract_version: shorthand.release.protected.v1'
@@ -110,6 +117,7 @@ require_contains "${ROOT_DIR}/scripts/check_formatter_linter.sh" 'PASS formatter
 require_contains "${ROOT_DIR}/scripts/check_lsp_editor.sh" 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate'
 require_contains "${ROOT_DIR}/scripts/check_compiler_test_strategy.sh" 'PASS compiler test strategy and coverage audit gate'
 require_contains "${ROOT_DIR}/scripts/check_production_truth.sh" 'PASS production truth and C3-ECO traceability gate'
+require_contains "${ROOT_DIR}/scripts/check_production_type_memory_model.sh" 'PASS production type and memory model gate'
 require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, completeness, mapping and evidence cases'
 
 # Historical milestones remain auditable without being mistaken for active state.

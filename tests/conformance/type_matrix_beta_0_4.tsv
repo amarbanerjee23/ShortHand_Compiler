@@ -1,0 +1,20 @@
+id	area	source	anchor	fixture	expectation	rationale
+TYP001	string-expression	parser	| STRING_LITERAL { $$=located(new AST_STRING_LITERAL(string($1)), @$); }	tests/semantic/differential/production_types.short	accept	String literals are general expression values.
+TYP002	float-semantic	semantic	type == ShortType::Float	tests/semantic/differential/production_types.short	accept	Float variables and fixed arrays are executable.
+TYP003	string-semantic	semantic	type == ShortType::String	tests/semantic/differential/production_types.short	accept	String scalar values and parameters are executable.
+TYP004	exact-assignment	semantic	SemanticTypeMismatch	tests/semantic/differential/type_mismatch.short	reject	Implicit numeric conversion is forbidden.
+TYP005	operator-domain	semantic	SemanticInvalidOperator	tests/semantic/differential/invalid_string_operator.short	reject	Operators are type-defined and fail closed.
+TYP006	condition-domain	semantic	SemanticInvalidCondition	tests/semantic/differential/invalid_string_condition.short	reject	Conditions require bool or int.
+TYP007	index-domain	semantic	array index must have type int	tests/semantic/differential/invalid_array_index_type.short	reject	Every array index is an integer.
+TYP008	array-construction	semantic	SemanticInvalidType	tests/semantic/differential/invalid_zero_array.short	reject	Fixed arrays require a non-zero checked extent.
+TYP009	owned-string-array	semantic	string arrays require owned element destruction	tests/semantic/differential/unsupported_owned_string_array.short	reject	Owned string arrays remain fail-closed until destruction lowering exists.
+TYP010	float-runtime	interpreter	float division by zero is forbidden	tests/semantic/differential/float_division_by_zero.short	reject	Floating division by zero is a deterministic runtime error.
+TYP011	float-lowering	llvm	CreateFDiv	tests/semantic/differential/production_types.short	accept	LLVM lowering uses binary64 operations.
+TYP012	string-lowering	llvm	strcmp	tests/semantic/differential/production_types.short	accept	LLVM string equality compares content.
+TYP013	type-descriptor	type-system	TypeDescriptor::record	tests/types/test_production_type_memory_model.cpp	accept	Composite type identities are deterministic and validated.
+TYP014	storage-safety	type-system	checkedArrayBytes	tests/types/test_production_type_memory_model.cpp	accept	Storage multiplication is overflow checked.
+TYP015	slice-safety	type-system	checkedSliceRange	tests/types/test_production_type_memory_model.cpp	accept	Slice ranges use subtraction-safe owner bounds.
+TYP016	conversion-safety	type-system	checkedFloatToInt	tests/types/test_production_type_memory_model.cpp	accept	Checked narrowing rejects non-finite and out-of-range values.
+TYP017	ownership-safety	type-system	OwnershipTracker::moveValue	tests/types/test_production_type_memory_model.cpp	accept	Moves and borrows follow the guarded ownership state machine.
+TYP018	module-signature	semantic	functionSignatures	tests/modules/resolver/valid_project/src/typed_app.short	accept	Imported float and string signatures remain exact across module execution and native lowering.
+TYP019	bool-abi	llvm	asExactLoweredType	tests/semantic/differential/production_types.short	accept	Boolean predicates are canonicalized to 0 or 1 at storage, function and variadic ABI boundaries.

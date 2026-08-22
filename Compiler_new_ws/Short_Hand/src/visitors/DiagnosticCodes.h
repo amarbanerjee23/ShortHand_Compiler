@@ -41,6 +41,13 @@ inline constexpr const char *SemanticGotoUnsupported = "SHD3006";
 inline constexpr const char *SemanticReturnTypeMismatch = "SHD3007";
 inline constexpr const char *SemanticUndeclaredVariable = "SHD3008";
 inline constexpr const char *SemanticDuplicateFunction = "SHD3009";
+inline constexpr const char *SemanticInvalidType = "SHD3010";
+inline constexpr const char *SemanticStorageOverflow = "SHD3011";
+inline constexpr const char *SemanticInvalidConversion = "SHD3012";
+inline constexpr const char *SemanticTypeMismatch = "SHD3013";
+inline constexpr const char *SemanticInvalidOperator = "SHD3014";
+inline constexpr const char *SemanticInvalidCondition = "SHD3015";
+inline constexpr const char *SemanticOwnershipViolation = "SHD3016";
 
 inline constexpr const char *AIModelRedeclared = "SHD4001";
 inline constexpr const char *AIModelInvalidFormat = "SHD4002";

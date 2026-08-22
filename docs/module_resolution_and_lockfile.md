@@ -5,8 +5,9 @@ package_manifest_schema: shorthand.package.v1
 package_lock_schema: shorthand.lock.v1
 module_graph_schema: shorthand.module.graph.v1
 language_version: beta-0.3
+typed_execution_extension: beta-0.4
 resolution_status: deterministic_manifest_locked_multi_file_codegen
-interpreter_imported_call_status: deferred_to_pr71_with_stable_rejection
+interpreter_imported_call_status: typed_interpreter_llvm_native_equivalent
 production_claim: false
 
 ## Purpose
@@ -125,7 +126,7 @@ emits `shorthand.module.graph.v1` JSON containing:
 
 A module program may be run after its full graph and lockfile are verified. PR70 validates every reachable source and executes the entry module's top-level logic. Imported module top-level logic is not implicitly executed.
 
-The legacy interpreter does not yet implement correct callable function semantics. Therefore an entry module that calls an imported function is rejected with `SHD2030` in `run` rather than reporting a false success. PR71 owns interpreter, LLVM and native semantic equivalence, including imported function calls.
+Direct imported function calls execute after graph and lock verification. PR72 established interpreter and native equivalence. Beta-0.4 additionally propagates exact return and parameter types across the import boundary, exercises float and string calls in interpreter/native modes, and rejects a mismatched imported argument with `SHD3013` before lowering. Historical `SHD2030` remains reserved but is not emitted for a valid imported call.
 
 ### LLVM, bitcode and native
 
@@ -147,7 +148,7 @@ This allows an entry module to bind direct imported functions in generated LLVM/
 | `SHD2027` | Source/manifest package mismatch |
 | `SHD2028` | Missing or stale lockfile |
 | `SHD2029` | Graph-wide symbol collision |
-| `SHD2030` | Imported function call requested in interpreter mode before PR71 equivalence support |
+| `SHD2030` | Reserved historical PR70 imported-interpreter boundary; not reused after equivalence support |
 
 ## Security properties
 
@@ -173,7 +174,9 @@ The resolver is designed around untrusted package input:
 - multi-file root run,
 - bitcode generation,
 - imported-function native binding and execution,
-- honest interpreter rejection for imported calls,
+- imported-function interpreter/native output equivalence,
+- exact beta-0.4 float and string signatures across import boundaries,
+- fail-closed `SHD3013` imported argument mismatch,
 - stale lock rejection,
 - missing manifest,
 - missing import,
@@ -190,4 +193,4 @@ The same gate is included in compiler, negative, LLVM and sanitizer test paths.
 
 ## Boundary after PR70
 
-PR70 closes deterministic resolution, lockfile and multi-file LLVM/native graph construction. It does not close language-wide semantic equivalence, full interpreter function semantics, continuous fuzzing, cross-platform reproducibility, signed publication, production backend qualification, C3-ECO completion, MLIR lowering or measured energy evidence. Those remain explicit PR71 through PR85 work.
+PR70 closed deterministic resolution, lockfile and multi-file LLVM/native graph construction. PR72 closed the guarded imported-call interpreter/native equivalence gap, and PR84 carries exact beta-0.4 scalar signatures across that boundary. The package registry, standard library and stable FFI remain assigned to PR86; production serving, C3-ECO completion, MLIR lowering and measured energy remain later roadmap work.

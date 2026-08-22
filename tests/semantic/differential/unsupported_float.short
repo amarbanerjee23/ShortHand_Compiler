@@ -1,4 +1,0 @@
-float value;
-int anchor;
-anchor = 1;
-print "anchor", anchor;

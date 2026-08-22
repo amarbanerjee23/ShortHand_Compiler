@@ -1,0 +1,10 @@
+package acme.demo;
+module acme.demo.typed_app;
+import acme.demo.typed_lib as typed;
+float typed_input;
+string typed_text;
+typed_input = 6.5;
+typed_text = "hello";
+typed_float(typed_input);
+typed_string(typed_text);
+print "typed root", typed_input, typed_text;

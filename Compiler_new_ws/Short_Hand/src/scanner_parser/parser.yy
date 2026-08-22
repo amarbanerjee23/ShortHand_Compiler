@@ -181,7 +181,7 @@ static void shorthand_add_c3eco_field(const char *name, const char *value) {
 %left '*' '/' '%'
 %right UMINUS
 
-%token <string_val> STRING_LITERAL IDENTIFIER
+%token <string_val> STRING_LITERAL IDENTIFIER AI_INFER_BUILTIN GREENAI_REPORT_BUILTIN
 %token <int_val> INT_LITERAL
 %token <float_val> FLOAT_LITERAL
 %token READ PRINT GOTO BREAK WHILE LOOP ELSE IF DEF
@@ -388,7 +388,7 @@ MQ_NAME: MQ1 {$$=(char*)"MQ1";} | MQ2 {$$=(char*)"MQ2";} | MQ3 {$$=(char*)"MQ3";
 DQ_NAME: DQ1 {$$=(char*)"DQ1";} | DQ2 {$$=(char*)"DQ2";} | DQ3 {$$=(char*)"DQ3";} | DQ4 {$$=(char*)"DQ4";};
 BOUNDARY_NAME: COMPUTE {$$=(char*)"compute";} | ACCELERATOR {$$=(char*)"accelerator";} | STORAGE {$$=(char*)"storage";} | NETWORK {$$=(char*)"network";} | CI_CD {$$=(char*)"ci_cd";} | THIRDPARTY {$$=(char*)"thirdparty";};
 
-AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')' {
+AI_INFER_RULE: AI_INFER_BUILTIN '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')' {
     if ((string($1)!="ai_infer" && string($1)!="aiinfer")) {
         shorthand_parser_diagnostic(shorthand::diagnostics::ParserExpectedAIInferBuiltin,
                                     "expected ai_infer builtin", @$);
@@ -397,7 +397,7 @@ AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITER
     $$=located(new AST_AI_INFER_RULE(string($3),string($5),string($7)), @$);
 };
 
-GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')' {
+GREENAI_REPORT_RULE: GREENAI_REPORT_BUILTIN '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')' {
     if (string($1)!="greenai") {
         shorthand_parser_diagnostic(shorthand::diagnostics::ParserExpectedGreenAIReportBuiltin,
                                     "expected greenai report builtin", @$);
@@ -425,6 +425,7 @@ EXPRESSION_RULE:
     | VARIABLE_RULE { $$=$1; }
     | INT_LITERAL { $$=located(new AST_LITERAL($1), @$); }
     | FLOAT_LITERAL { $$=located(new AST_FLOAT_LITERAL($1), @$); }
+    | STRING_LITERAL { $$=located(new AST_STRING_LITERAL(string($1)), @$); }
     | TRUE { $$=located(new AST_BOOL_LITERAL(true), @$); }
     | FALSE { $$=located(new AST_BOOL_LITERAL(false), @$); };
 
@@ -437,9 +438,7 @@ READ_VARIABLE_LIST_RULE:
     | VARIABLE_RULE { $$=located(new AST_READ_RULE(), @$); $$->push_back($1); };
 
 PRINT_VARIABLE_LIST_RULE:
-      PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL { $$=$1; $$->push_back(located(new AST_STRING_LITERAL(string($3)), @3)); located($$, @$); }
-    | PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE { $$=$1; $$->push_back($3); located($$, @$); }
-    | STRING_LITERAL { $$=located(new AST_PRINT_RULE(), @$); $$->push_back(located(new AST_STRING_LITERAL(string($1)), @1)); }
+      PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE { $$=$1; $$->push_back($3); located($$, @$); }
     | EXPRESSION_RULE { $$=located(new AST_PRINT_RULE(), @$); $$->push_back($1); };
 
 %%

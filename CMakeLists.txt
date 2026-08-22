@@ -256,6 +256,7 @@ add_executable(short_hand
   ${SCANNER_SRC}
   ${SRC_DIR}/ast/AST.cpp
   ${SRC_DIR}/module/ModuleResolver.cpp
+  ${SRC_DIR}/type_system/ProductionTypeSystem.cpp
   ${SRC_DIR}/visitors/AST_Printer.cpp
   ${SRC_DIR}/visitors/Interpreter.cpp
   ${SRC_DIR}/visitors/IR_Generator.cpp
@@ -408,6 +409,12 @@ if(SHORTHAND_BUILD_TESTING)
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/governance/test_production_truth_negative.sh
   )
   set_tests_properties(production_truth_negative PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_test(
+    NAME production_type_memory_model
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_production_type_memory_model.sh
+  )
+  set_tests_properties(production_type_memory_model PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   add_test(
     NAME green_ai_tool_tests

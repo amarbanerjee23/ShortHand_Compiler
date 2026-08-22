@@ -28,6 +28,7 @@ static unsigned ShortHandMetadataCounter = 0;
 static Type *i32Ty() { return Type::getInt32Ty(ShortGlobalContext); }
 static Type *i64Ty() { return Type::getInt64Ty(ShortGlobalContext); }
 static Type *i1Ty() { return Type::getInt1Ty(ShortGlobalContext); }
+static Type *f64Ty() { return Type::getDoubleTy(ShortGlobalContext); }
 static Type *voidTy() { return Type::getVoidTy(ShortGlobalContext); }
 
 static PointerType *i8PtrTy() {
@@ -46,18 +47,38 @@ static Value *asI32(Value *value) {
     if (!value) return value;
     if (value->getType()->isIntegerTy(32)) return value;
     if (value->getType()->isIntegerTy(1)) return Builder.CreateZExt(value, i32Ty(), "booltoint");
+    if (value->getType()->isDoubleTy() || value->getType()->isPointerTy())
+        return ShowError("implicit conversion to int32 reached lowering after semantic validation");
     return Builder.CreateIntCast(value, i32Ty(), true, "toint32");
 }
 
 static Value *asBool(Value *value) {
     if (!value) return value;
     if (value->getType()->isIntegerTy(1)) return value;
+    if (value->getType()->isDoubleTy() || value->getType()->isPointerTy())
+        return ShowError("non-condition type reached lowering after semantic validation");
     return Builder.CreateICmpNE(asI32(value), ConstantInt::get(i32Ty(), 0, true), "tobool");
 }
 
-static AllocaInst *createEntryBlockAlloca(Function *function, const std::string &name) {
+static Value *asExactLoweredType(Value *value, ShortType expected) {
+    if (!value) return value;
+    if (expected == ShortType::Boolean) {
+        if (value->getType()->isIntegerTy(1))
+            return Builder.CreateZExt(value, i32Ty(), "bool_storage");
+        if (value->getType()->isIntegerTy(32)) return value;
+    } else if (expected == ShortType::Int && value->getType()->isIntegerTy(32)) {
+        return value;
+    } else if (expected == ShortType::Float && value->getType()->isDoubleTy()) {
+        return value;
+    } else if (expected == ShortType::String && value->getType()->isPointerTy()) {
+        return value;
+    }
+    return ShowError("exact type mismatch reached lowering after semantic validation");
+}
+
+static AllocaInst *createEntryBlockAlloca(Function *function, Type *type, const std::string &name) {
     IRBuilder<> tmp(&function->getEntryBlock(), function->getEntryBlock().begin());
-    return tmp.CreateAlloca(i32Ty(), nullptr, name);
+    return tmp.CreateAlloca(type, nullptr, name);
 }
 
 static std::string stripQuotes(std::string value) {
@@ -189,6 +210,9 @@ IR_Generator::IR_Generator() {
     is_expression = 0;
     ret = nullptr;
     main_function = nullptr;
+    ret_type = ShortType::Int;
+    load_type = ShortType::Int;
+    active_function_return_type = ShortType::Void;
 }
 
 IR_Generator::~IR_Generator() {
@@ -307,13 +331,40 @@ void IR_Generator::emitRuntimeFailureIf(Value *condition,
     Builder.SetInsertPoint(cont);
 }
 
+ShortType IR_Generator::variableType(const std::string &name, bool array) const {
+    if (!array) {
+        const auto local = active_local_types.find(name);
+        if (local != active_local_types.end()) return local->second;
+        const auto global = global_scalar_types.find(name);
+        if (global != global_scalar_types.end()) return global->second;
+    } else {
+        const auto found = global_array_types.find(name);
+        if (found != global_array_types.end()) return found->second;
+    }
+    return ShortType::Int;
+}
+
+Constant *IR_Generator::zeroValue(ShortType type) {
+    if (type == ShortType::Float) return ConstantFP::get(f64Ty(), 0.0);
+    if (type == ShortType::String) return ConstantPointerNull::get(i8PtrTy());
+    return ConstantInt::get(i32Ty(), 0, true);
+}
+
+Value *IR_Generator::safeStringPointer(Value *value) {
+    Value *empty = Builder.CreateGlobalStringPtr("");
+    if (!value) return empty;
+    Value *is_null = Builder.CreateICmpEQ(
+        value, ConstantPointerNull::get(i8PtrTy()), "string_is_null");
+    return Builder.CreateSelect(is_null, empty, value, "safe_string");
+}
+
 Value *IR_Generator::get_expression() {
     Value *v = ret;
     if (load_variable) {
-        v = typedLoad(v, i32Ty());
+        v = typedLoad(v, parseType(load_type));
+        ret_type = load_type;
         load_variable = 0;
     }
-    v = asI32(v);
     is_condition = 0;
     is_expression = 1;
     return v;
@@ -322,7 +373,8 @@ Value *IR_Generator::get_expression() {
 Value *IR_Generator::get_condition() {
     Value *v = ret;
     if (load_variable) {
-        v = typedLoad(v, i32Ty());
+        v = typedLoad(v, parseType(load_type));
+        ret_type = load_type;
         load_variable = 0;
     }
     v = asBool(v);
@@ -346,16 +398,18 @@ int IR_Generator::visit(AST_PROGRAM *program) {
 }
 
 int IR_Generator::visit(AST_DATA_DECLARATION_BLOCK *decl_block) {
-    for (const std::string &name : decl_block->single_ints) {
-        if (module->getNamedGlobal(name)) continue;
-        new GlobalVariable(*module, i32Ty(), false, GlobalValue::CommonLinkage,
-                           ConstantInt::get(i32Ty(), 0, true), name);
+    for (const auto &entry : decl_block->typed_scalars) {
+        global_scalar_types[entry.name] = entry.type;
+        if (module->getNamedGlobal(entry.name)) continue;
+        new GlobalVariable(*module, parseType(entry.type), false, GlobalValue::ExternalLinkage,
+                           zeroValue(entry.type), entry.name);
     }
-    for (const auto &entry : decl_block->array_ints) {
-        if (module->getNamedGlobal(entry.first)) continue;
-        ArrayType *arr_type = ArrayType::get(i32Ty(), entry.second);
+    for (const auto &entry : decl_block->typed_arrays) {
+        global_array_types[entry.name] = entry.type;
+        if (module->getNamedGlobal(entry.name)) continue;
+        ArrayType *arr_type = ArrayType::get(parseType(entry.type), entry.size);
         new GlobalVariable(*module, arr_type, false, GlobalValue::ExternalLinkage,
-                           ConstantAggregateZero::get(arr_type), entry.first);
+                           ConstantAggregateZero::get(arr_type), entry.name);
     }
     return 0;
 }
@@ -363,8 +417,15 @@ int IR_Generator::visit(AST_DATA_DECLARATION_BLOCK *decl_block) {
 int IR_Generator::visit(AST_FUNCTION_LIST_RULE *functions) {
     for (AST_FUNCTION_RULE *function : functions->functions) {
         if (!function || !function->function_name) continue;
+        function_return_types[function->function_name] = function->type;
+        std::vector<ShortType> parameter_types;
+        for (const auto &parameter : function->parameters->typed_scalars)
+            parameter_types.push_back(parameter.type);
+        function_parameter_types[function->function_name] = parameter_types;
         if (module->getFunction(function->function_name)) continue;
-        std::vector<Type*> args(function->parameters->single_ints.size(), i32Ty());
+        std::vector<Type*> args;
+        for (const auto &parameter : function->parameters->typed_scalars)
+            args.push_back(parseType(parameter.type));
         FunctionType *ftype = FunctionType::get(parseType(function->type), args, false);
         Function::Create(ftype, GlobalValue::ExternalLinkage, function->function_name, module);
     }
@@ -375,9 +436,16 @@ int IR_Generator::visit(AST_FUNCTION_LIST_RULE *functions) {
 }
 
 int IR_Generator::visit(AST_FUNCTION_RULE *function) {
+    function_return_types[function->function_name] = function->type;
+    std::vector<ShortType> parameter_types;
+    for (const auto &parameter : function->parameters->typed_scalars)
+        parameter_types.push_back(parameter.type);
+    function_parameter_types[function->function_name] = parameter_types;
     Function *llvm_function = module->getFunction(function->function_name);
     if (!llvm_function) {
-        std::vector<Type*> args(function->parameters->single_ints.size(), i32Ty());
+        std::vector<Type*> args;
+        for (const auto &parameter : function->parameters->typed_scalars)
+            args.push_back(parseType(parameter.type));
         FunctionType *ftype = FunctionType::get(parseType(function->type), args, false);
         llvm_function = Function::Create(ftype, GlobalValue::ExternalLinkage, function->function_name, module);
     }
@@ -386,14 +454,19 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
     BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry", llvm_function);
     symbol_table_obj.push_block(BB);
     Builder.SetInsertPoint(BB);
+    active_local_types.clear();
+    const ShortType saved_return_type = active_function_return_type;
+    active_function_return_type = function->type;
 
     unsigned idx = 0;
     for (Function::arg_iterator ai = llvm_function->arg_begin(); ai != llvm_function->arg_end(); ++ai, ++idx) {
-        std::string name = function->parameters->single_ints[idx];
+        const auto &parameter = function->parameters->typed_scalars[idx];
+        std::string name = parameter.name;
         ai->setName(name);
-        AllocaInst *alloca = createEntryBlockAlloca(llvm_function, name);
+        AllocaInst *alloca = createEntryBlockAlloca(llvm_function, parseType(parameter.type), name);
         Builder.CreateStore(&*ai, alloca);
         symbol_table_obj.declare_locals(name, alloca);
+        active_local_types[name] = parameter.type;
     }
 
     const std::size_t saved_break = break_targets.size();
@@ -401,11 +474,13 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
     function->block_statement->accept(*this);
     if (!Builder.GetInsertBlock()->getTerminator()) {
         if (llvm_function->getReturnType()->isVoidTy()) Builder.CreateRetVoid();
-        else Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
+        else Builder.CreateRet(zeroValue(function->type));
     }
     break_targets.resize(saved_break);
     continue_targets.resize(saved_continue);
     symbol_table_obj.pop_block();
+    active_local_types.clear();
+    active_function_return_type = saved_return_type;
     return 0;
 }
 
@@ -426,13 +501,22 @@ int IR_Generator::visit(AST_FUNCTION_CALL_RULE *function_called) {
         return 0;
     }
     vector<Value*> args;
+    const auto parameter_types = function_parameter_types.find(function_called->function_name);
+    std::size_t argument_index = 0;
     for (auto *variable : function_called->parameters->variables) {
         variable->accept(*this);
         Value *arg = get_expression();
         if (!arg) return 0;
+        if (parameter_types != function_parameter_types.end() &&
+            argument_index < parameter_types->second.size())
+            arg = asExactLoweredType(arg, parameter_types->second[argument_index]);
+        if (!arg) return 0;
         args.push_back(arg);
+        ++argument_index;
     }
     ret = Builder.CreateCall(func, args);
+    const auto return_type = function_return_types.find(function_called->function_name);
+    ret_type = return_type == function_return_types.end() ? ShortType::Int : return_type->second;
     load_variable = 0;
     is_expression = !func->getReturnType()->isVoidTy();
     return 0;
@@ -449,6 +533,9 @@ int IR_Generator::visit(AST_ASSIGNMENT_RULE *assignment_statement) {
     Value *expr_value = get_expression();
     assignment_statement->variable->accept(*this);
     Value *variable_value = ret;
+    const ShortType target_type = ret_type;
+    expr_value = asExactLoweredType(expr_value, target_type);
+    if (!expr_value) return 0;
     ret = Builder.CreateStore(expr_value, variable_value);
     load_variable = 0;
     return 0;
@@ -504,7 +591,7 @@ int IR_Generator::visit(AST_FOR_LOOP_STATEMENT_RULE *for_statement) {
     Builder.CreateStore(start, variable);
     load_variable = 0;
 
-    AllocaInst *step_slot = createEntryBlockAlloca(funct, "for_step");
+    AllocaInst *step_slot = createEntryBlockAlloca(funct, i32Ty(), "for_step");
     BasicBlock *cond_BB = BasicBlock::Create(ShortGlobalContext, "for_condition", funct);
     BasicBlock *body_BB = BasicBlock::Create(ShortGlobalContext, "for_body", funct);
     BasicBlock *step_BB = BasicBlock::Create(ShortGlobalContext, "for_step_block", funct);
@@ -591,16 +678,17 @@ int IR_Generator::visit(AST_RETURN_STATEMENT *statement) {
     }
     if (statement->expression) {
         statement->expression->accept(*this);
-        Builder.CreateRet(get_expression());
+        Value *value = asExactLoweredType(get_expression(), active_function_return_type);
+        if (value) Builder.CreateRet(value);
     } else {
-        Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
+        Builder.CreateRet(Constant::getNullValue(function->getReturnType()));
     }
     return 0;
 }
 
 int IR_Generator::visit(AST_GOTO_STATEMENT_RULE *goto_statement) {
     (void)goto_statement;
-    ShowError("goto is rejected by the beta-0.3 executable semantic contract");
+    ShowError("goto is rejected by the beta-0.4 executable semantic contract");
     return 0;
 }
 
@@ -609,7 +697,8 @@ int IR_Generator::visit(AST_READ_RULE *read_statement) {
         vector<Value*> args;
         var->accept(*this);
         Value *v = ret;
-        args.push_back(Builder.CreateGlobalStringPtr("%d"));
+        const ShortType type = load_type;
+        args.push_back(Builder.CreateGlobalStringPtr(type == ShortType::Float ? "%lf" : "%d"));
         args.push_back(v);
         ret = Builder.CreateCall(CalleeR, args, "scanfCall");
     }
@@ -624,8 +713,18 @@ int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
         if (p.expression) {
             p.expression->accept(*this);
             Value *v = get_expression();
-            args.push_back(Builder.CreateGlobalStringPtr("%d"));
-            args.push_back(v);
+            if (ret_type == ShortType::Float) {
+                args.push_back(Builder.CreateGlobalStringPtr("%.17g"));
+                args.push_back(v);
+            } else if (ret_type == ShortType::String) {
+                args.push_back(Builder.CreateGlobalStringPtr("%s"));
+                args.push_back(safeStringPointer(v));
+            } else {
+                args.push_back(Builder.CreateGlobalStringPtr("%d"));
+                Value *print_value = asExactLoweredType(v, ret_type);
+                if (!print_value) return 0;
+                args.push_back(print_value);
+            }
         } else {
             p.string_literal->accept(*this);
             string printable = str_;
@@ -689,12 +788,53 @@ int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) 
     const int op = binary_operator_expression->op;
     binary_operator_expression->left->accept(*this);
     Value *L = get_expression();
+    const ShortType left_type = ret_type;
     binary_operator_expression->right->accept(*this);
     Value *R = get_expression();
+    const ShortType right_type = ret_type;
+
+    if (left_type == ShortType::Boolean && right_type == ShortType::Boolean) {
+        L = asExactLoweredType(L, ShortType::Boolean);
+        R = asExactLoweredType(R, ShortType::Boolean);
+    }
     is_condition = is_expression = 0;
-    if (op == PLUS) ret = Builder.CreateAdd(L, R, "addtmp"), is_expression = 1;
-    else if (op == MINUS) ret = Builder.CreateSub(L, R, "subtmp"), is_expression = 1;
-    else if (op == MULTIPLY) ret = Builder.CreateMul(L, R, "multmp"), is_expression = 1;
+    if (left_type != right_type) {
+        ret = ShowError("type mismatch reached lowering after semantic validation");
+        return 0;
+    }
+    if (left_type == ShortType::String && (op == EQUAL || op == NOT_EQUAL)) {
+        FunctionType *strcmpType = FunctionType::get(i32Ty(), {i8PtrTy(), i8PtrTy()}, false);
+        FunctionCallee strcmpFn = module->getOrInsertFunction("strcmp", strcmpType);
+        Value *comparison = Builder.CreateCall(
+            strcmpFn, {safeStringPointer(L), safeStringPointer(R)}, "strcmp_result");
+        Value *equal = Builder.CreateICmpEQ(comparison, ConstantInt::get(i32Ty(), 0, true), "string_equal");
+        ret = op == EQUAL ? equal : Builder.CreateNot(equal, "string_not_equal");
+        ret_type = ShortType::Boolean;
+        is_condition = 1;
+    }
+    else if (left_type == ShortType::Float) {
+        if (op == PLUS) ret = Builder.CreateFAdd(L, R, "faddtmp"), ret_type = ShortType::Float, is_expression = 1;
+        else if (op == MINUS) ret = Builder.CreateFSub(L, R, "fsubtmp"), ret_type = ShortType::Float, is_expression = 1;
+        else if (op == MULTIPLY) ret = Builder.CreateFMul(L, R, "fmultmp"), ret_type = ShortType::Float, is_expression = 1;
+        else if (op == DIVIDE) {
+            Value *zero = Builder.CreateFCmpOEQ(R, ConstantFP::get(f64Ty(), 0.0), "float_zero_divisor");
+            emitRuntimeFailureIf(zero, diag::RuntimeArithmeticDomainError,
+                                 "float division by zero is forbidden by shorthand.type_memory.v1");
+            ret = Builder.CreateFDiv(L, R, "fdivtmp");
+            ret_type = ShortType::Float;
+            is_expression = 1;
+        }
+        else if (op == LESS) ret = Builder.CreateFCmpOLT(L, R, "flttmp"), ret_type = ShortType::Boolean, is_condition = 1;
+        else if (op == GREATER) ret = Builder.CreateFCmpOGT(L, R, "fgttmp"), ret_type = ShortType::Boolean, is_condition = 1;
+        else if (op == LESS_OR_EQUAL) ret = Builder.CreateFCmpOLE(L, R, "fletmp"), ret_type = ShortType::Boolean, is_condition = 1;
+        else if (op == GREATER_OR_EQUAL) ret = Builder.CreateFCmpOGE(L, R, "fgetmp"), ret_type = ShortType::Boolean, is_condition = 1;
+        else if (op == EQUAL) ret = Builder.CreateFCmpOEQ(L, R, "feqtmp"), ret_type = ShortType::Boolean, is_condition = 1;
+        else if (op == NOT_EQUAL) ret = Builder.CreateFCmpUNE(L, R, "fnetmp"), ret_type = ShortType::Boolean, is_condition = 1;
+        else ret = ShowError("unsupported float operator reached lowering");
+    }
+    else if (op == PLUS) ret = Builder.CreateAdd(L, R, "addtmp"), ret_type = ShortType::Int, is_expression = 1;
+    else if (op == MINUS) ret = Builder.CreateSub(L, R, "subtmp"), ret_type = ShortType::Int, is_expression = 1;
+    else if (op == MULTIPLY) ret = Builder.CreateMul(L, R, "multmp"), ret_type = ShortType::Int, is_expression = 1;
     else if (op == DIVIDE || op == MODULO) {
         Value *zero = Builder.CreateICmpEQ(R, ConstantInt::get(i32Ty(), 0, true), "arith_zero_divisor");
         Value *min_value = Builder.CreateICmpEQ(L, ConstantInt::get(i32Ty(), std::numeric_limits<std::int32_t>::min(), true), "arith_min_value");
@@ -704,16 +844,17 @@ int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) 
                              diag::RuntimeArithmeticDomainError,
                              op == DIVIDE ? "integer division domain error" : "integer remainder domain error");
         ret = op == DIVIDE ? Builder.CreateSDiv(L, R, "divtmp") : Builder.CreateSRem(L, R, "modtmp");
+        ret_type = ShortType::Int;
         is_expression = 1;
     }
-    else if (op == LESS) ret = Builder.CreateICmpSLT(L, R, "lttmp"), is_condition = 1;
-    else if (op == GREATER) ret = Builder.CreateICmpSGT(L, R, "gttmp"), is_condition = 1;
-    else if (op == LESS_OR_EQUAL) ret = Builder.CreateICmpSLE(L, R, "letmp"), is_condition = 1;
-    else if (op == GREATER_OR_EQUAL) ret = Builder.CreateICmpSGE(L, R, "getmp"), is_condition = 1;
-    else if (op == EQUAL) ret = Builder.CreateICmpEQ(L, R, "eqtmp"), is_condition = 1;
-    else if (op == NOT_EQUAL) ret = Builder.CreateICmpNE(L, R, "netmp"), is_condition = 1;
-    else if (op == OR) ret = Builder.CreateOr(asBool(L), asBool(R), "ortmp"), is_condition = 1;
-    else if (op == AND) ret = Builder.CreateAnd(asBool(L), asBool(R), "andtmp"), is_condition = 1;
+    else if (op == LESS) ret = Builder.CreateICmpSLT(L, R, "lttmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == GREATER) ret = Builder.CreateICmpSGT(L, R, "gttmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == LESS_OR_EQUAL) ret = Builder.CreateICmpSLE(L, R, "letmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == GREATER_OR_EQUAL) ret = Builder.CreateICmpSGE(L, R, "getmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == EQUAL) ret = Builder.CreateICmpEQ(L, R, "eqtmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == NOT_EQUAL) ret = Builder.CreateICmpNE(L, R, "netmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == OR) ret = Builder.CreateOr(asBool(L), asBool(R), "ortmp"), ret_type = ShortType::Boolean, is_condition = 1;
+    else if (op == AND) ret = Builder.CreateAnd(asBool(L), asBool(R), "andtmp"), ret_type = ShortType::Boolean, is_condition = 1;
     else ret = ShowError("Not a supported binary operator");
     load_variable = 0;
     return 0;
@@ -722,7 +863,10 @@ int IR_Generator::visit(AST_BINARY_EXPRESSION_RULE *binary_operator_expression) 
 int IR_Generator::visit(AST_UNARY_EXPRESSION_RULE *unary_operator_expression) {
     unary_operator_expression->expression->accept(*this);
     Value *R = get_expression();
-    if (unary_operator_expression->op == UMINUS) ret = Builder.CreateNeg(R, "negtmp");
+    if (unary_operator_expression->op == UMINUS) {
+        if (ret_type == ShortType::Float) ret = Builder.CreateFNeg(R, "fnegtmp");
+        else ret = Builder.CreateNeg(R, "negtmp");
+    }
     else ret = ShowError("Not a supported unary operator");
     is_expression = 1;
     is_condition = 0;
@@ -735,6 +879,8 @@ int IR_Generator::visit(AST_SIMPLE_VARIABLE *variable_single_int) {
     ret = symbol_table_obj.return_locals(var_name);
     if (!ret) ret = module->getNamedGlobal(var_name);
     if (!ret) ret = ShowError("Unknown Variable name " + var_name);
+    load_type = variableType(var_name, false);
+    ret_type = load_type;
     load_variable = 1;
     is_expression = 1;
     return 0;
@@ -764,6 +910,8 @@ int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
     array_index.push_back(ConstantInt::get(i32Ty(), 0, true));
     array_index.push_back(index);
     ret = Builder.CreateInBoundsGEP(array_global->getValueType(), array_global, array_index, array_name + "_IDX");
+    load_type = variableType(array_name, true);
+    ret_type = load_type;
     load_variable = 1;
     is_expression = 1;
     return 0;
@@ -772,11 +920,16 @@ int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
 int IR_Generator::visit(AST_LITERAL *int_literal) {
     is_expression = 1;
     ret = ConstantInt::get(i32Ty(), int_literal->int_literal, true);
+    ret_type = ShortType::Int;
     return 0;
 }
 
 int IR_Generator::visit(AST_STRING_LITERAL *string_literal) {
     str_ = string_literal->string_literal;
+    ret = Builder.CreateGlobalStringPtr(stripQuotes(str_), "string_literal");
+    ret_type = ShortType::String;
+    load_variable = 0;
+    is_expression = 1;
     return 0;
 }
 
@@ -785,8 +938,8 @@ llvm::Type* IR_Generator::parseType(ShortType type) {
         case ShortType::Boolean: return i32Ty();
         case ShortType::Int: return i32Ty();
         case ShortType::Void: return voidTy();
-        case ShortType::Float: return i32Ty();
-        case ShortType::String: return i32Ty();
+        case ShortType::Float: return f64Ty();
+        case ShortType::String: return i8PtrTy();
     }
     return i32Ty();
 }
@@ -869,12 +1022,15 @@ int IR_Generator::visit(AST_BOOL_LITERAL *n){
     ret = ConstantInt::get(i32Ty(), n->value ? 1 : 0, true);
     load_variable = 0;
     is_expression = 1;
+    ret_type = ShortType::Boolean;
     return 0;
 }
 
 int IR_Generator::visit(AST_FLOAT_LITERAL *n){
-    (void)n;
-    ret = ShowError("float literal reached lowering despite executable-type validation");
+    ret = ConstantFP::get(f64Ty(), n->value);
+    load_variable = 0;
+    is_expression = 1;
+    ret_type = ShortType::Float;
     return 0;
 }
 
@@ -889,13 +1045,22 @@ int IR_Generator::visit(AST_FUNCTION_CALL_EXPRESSION *call){
         return 0;
     }
     vector<Value*> args;
+    const auto parameter_types = function_parameter_types.find(call->function_name);
+    std::size_t argument_index = 0;
     for (AST_EXPRESSION_RULE *argument : call->arguments) {
         argument->accept(*this);
         Value *value = get_expression();
         if (!value) return 0;
+        if (parameter_types != function_parameter_types.end() &&
+            argument_index < parameter_types->second.size())
+            value = asExactLoweredType(value, parameter_types->second[argument_index]);
+        if (!value) return 0;
         args.push_back(value);
+        ++argument_index;
     }
     ret = Builder.CreateCall(func, args, "calltmp");
+    const auto return_type = function_return_types.find(call->function_name);
+    ret_type = return_type == function_return_types.end() ? ShortType::Int : return_type->second;
     load_variable = 0;
     is_expression = !func->getReturnType()->isVoidTy();
     return 0;

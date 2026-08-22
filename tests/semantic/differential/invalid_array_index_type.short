@@ -1,0 +1,4 @@
+int values[2];
+float index;
+index = 1.0;
+values[index] = 7;

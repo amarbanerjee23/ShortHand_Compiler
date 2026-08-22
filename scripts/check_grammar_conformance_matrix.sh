@@ -58,10 +58,10 @@ done
 
 require_contains "${GRAMMAR_DOC}" 'Language version: beta-0.2'
 require_contains "${GRAMMAR_DOC}" 'grammar_conformance_status: parser_accurate_matrix_guarded'
-require_contains "${VERSION_DOC}" 'shorthand.language.version: beta-0.3'
+require_contains "${VERSION_DOC}" 'shorthand.language.version: beta-0.4'
 require_contains "${VERSION_DOC}" 'shorthand.language.version: beta-0.2'
 require_contains "${SPEC_DOC}" 'Language version: beta-0.2'
-require_contains "${MANIFEST}" 'current-version | shorthand.language.version | beta-0.3 | Current executable language contract marker.'
+require_contains "${MANIFEST}" 'current-version | shorthand.language.version | beta-0.4 | Current executable language contract marker.'
 require_contains "${MANIFEST}" 'version | shorthand.language.version | beta-0.2 | Previous executable base language contract marker.'
 require_contains "${CLI}" 'mode == "parse"'
 

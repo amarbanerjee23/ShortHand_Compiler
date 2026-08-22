@@ -142,7 +142,19 @@ binary_operator  = "+" | "-" | "*" | "/" | "%"
 variable         = identifier | identifier , "[" , expression , "]" ;
 ```
 
-String literals and function calls are not general expressions in beta-0.2.
+String literals and function calls are not general expressions in the historical beta-0.2 base matrix.
+
+### Beta-0.4 expression extension
+
+The active beta-0.4 contract adds `string_literal` as an expression alternative. The print production consequently consumes expressions directly while preserving every beta-0.2 print fixture. Function calls remain statements with variable arguments.
+
+```ebnf
+beta_0_4_expression = expression | string_literal ;
+print_statement     = "print" , beta_0_4_expression ,
+                      { "," , beta_0_4_expression } , ";" ;
+```
+
+This additive extension is traced by `tests/conformance/type_matrix_beta_0_4.tsv` and does not rewrite the historical beta-0.2 matrix.
 
 ## Tensor declarations
 

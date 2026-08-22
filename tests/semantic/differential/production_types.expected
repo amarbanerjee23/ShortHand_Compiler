@@ -1,0 +1,4 @@
+fn_float 6
+fn_string hello
+fn_bool 1
+types 6 hello 1 7 6

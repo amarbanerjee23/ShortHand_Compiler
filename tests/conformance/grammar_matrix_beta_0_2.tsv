@@ -74,7 +74,7 @@ AI018	ai	parser	PRECISION_NAME: INT8	tests/conformance/beta_0_2/ai_language.shor
 AI019	ai	parser	BACKEND_NAME: TENSORRT	tests/conformance/beta_0_2/ai_language.short	accept	All canonical backend tokens.
 AI020	ai	parser	INFER IDENTIFIER '(' IDENTIFIER ')' ARROW IDENTIFIER	tests/conformance/beta_0_2/ai_language.short	accept	Canonical inference arrow.
 AI021	compatibility	parser	INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER	tests/conformance/beta_0_2/ai_language.short	accept	Legacy greater-than inference arrow.
-AI022	compatibility	parser	AI_INFER_RULE: IDENTIFIER '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'	tests/conformance/beta_0_2/ai_language.short	accept	Legacy ai_infer and aiinfer calls.
+AI022	compatibility	parser	AI_INFER_RULE: AI_INFER_BUILTIN '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'	tests/conformance/beta_0_2/ai_language.short	accept	Legacy ai_infer and aiinfer calls use an unambiguous dedicated scanner token.
 GRN001	greenai	parser	GREENAI_CONTRACT: GREENAI_CONTRACT_T IDENTIFIER	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI contract declaration.
 GRN002	greenai	parser	FUNCTIONAL_UNIT STRING_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Functional unit field.
 GRN003	greenai	parser	SUCCESS_CRITERIA STRING_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Success criteria field.
@@ -89,7 +89,7 @@ GRN011	greenai	parser	CLAIMS_MODE EVIDENCE_ONLY ';'	tests/conformance/beta_0_2/g
 GRN012	greenai	parser	GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER	tests/conformance/beta_0_2/greenai_language.short	accept	Measurement declaration.
 GRN013	greenai	parser	MEASURE_FIELD: IDENTIFIER INT_LITERAL ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Numeric measurement fields.
 GRN014	greenai	parser	IDENTIFIER IDENTIFIER ';'	tests/conformance/beta_0_2/greenai_language.short	accept	Measurement backend field.
-GRN015	greenai	parser	GREENAI_REPORT_RULE: IDENTIFIER '(' STRING_LITERAL	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI report call.
+GRN015	greenai	parser	GREENAI_REPORT_RULE: GREENAI_REPORT_BUILTIN '(' STRING_LITERAL	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI report call uses an unambiguous dedicated scanner token.
 CLI001	program	cli	mode == "parse"	tests/conformance/beta_0_2/ai_language.short	accept	Parser-only conformance mode bypasses semantic validation.
 BND001	boundary	parser	PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/invalid_empty_program.short	reject	Empty programs remain outside beta-0.2 under the additive beta-0.3 preamble grammar.
 BND002	boundary	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')'	tests/conformance/beta_0_2/invalid_zero_parameter_function.short	reject	Empty parameter lists are not accepted.

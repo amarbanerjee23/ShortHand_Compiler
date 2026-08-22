@@ -1,0 +1,5 @@
+string value;
+value = "not-a-condition";
+if value {
+    print "unreachable";
+}

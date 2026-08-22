@@ -51,14 +51,15 @@ expected_truth=(
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
-  'active_language_version=beta-0.3'
+  'active_language_version=beta-0.4'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=82'
-  'current_github_pr=83'
+  'last_merged_github_pr=83'
+  'current_github_pr=84'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=14'
-  'remaining_implementation_prs_after_current=13'
-  'coverage_matrix_status=implemented=22,partial=3,open=3,total=28'
+  'remaining_implementation_prs_including_current=13'
+  'remaining_implementation_prs_after_current=12'
+  'coverage_matrix_status=implemented=23,partial=3,open=3,total=29'
+  'type_system_contract=shorthand.type_memory.v1'
   'production_backend_scope=linux-x64-cpu-v1'
   'accelerator_production_support=false'
   'c3eco_language_contract=shorthand.c3eco.language.v1'
@@ -137,7 +138,8 @@ for anchor in \
   'production_truth_contract: shorthand.production.truth.v1' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'beta-0.3' \
+  'beta-0.4' \
+  'shorthand.type_memory.v1' \
   'draft v0.6' \
   'v0.7' \
   'candidate evidence' \
@@ -150,72 +152,74 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-22-pr83' \
-  'LAST_MERGED_GITHUB_PR: 82' \
-  'CURRENT_GITHUB_PR: 83' \
+  'production_readiness_plan_version: 2026-08-22-pr84' \
+  'LAST_MERGED_GITHUB_PR: 83' \
+  'CURRENT_GITHUB_PR: 84' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr83_through_pr96: 14' \
-  'remaining_planned_implementation_prs_after_pr83: 13'; do
+  'remaining_planned_implementation_prs_pr84_through_pr96: 13' \
+  'remaining_planned_implementation_prs_after_pr84: 12'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-22-pr83' \
-  'current_github_pr: 83' \
-  'current_roadmap_scope: production_truth_and_c3eco_traceability' \
-  '22 implemented, 3 partial and 3 open'; do
+  'feature_status_version: 2026-08-22-pr84' \
+  'current_github_pr: 84' \
+  'current_roadmap_scope: production_type_system_and_memory_model' \
+  '23 implemented, 3 partial and 3 open'; do
   require_contains "${STATUS}" "${anchor}"
 done
 
-require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-08-22-pr83'
-require_contains "${STRATEGY}" '28-area production test matrix'
+require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-08-22-pr84'
+require_contains "${STRATEGY}" '29-area production test matrix'
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
+require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 
 for anchor in \
-  'Language version: beta-0.3' \
+  'Language version: beta-0.4' \
   'Base grammar version: beta-0.2' \
   'production_claim: false'; do
   require_contains "${LANGUAGE_SPEC}" "${anchor}"
 done
 for anchor in \
   'language_compatibility_contract: shorthand.language.compatibility.v1' \
-  'active_language_version: beta-0.3' \
+  'active_language_version: beta-0.4' \
   'production_claim: false'; do
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-08-22-pr83' \
+  'known_limitations_version: 2026-08-22-pr84' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-08-22-pr83' \
+  'release_level_status_version: 2026-08-22-pr84' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: 96'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-08-22-pr83' \
+  'public_release_readiness_version: 2026-08-22-pr84' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-08-22-pr83' \
+  'enterprise_release_scorecard_version: 2026-08-22-pr84' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: partial_dependency_free_exports'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-08-22-pr83'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-08-22-pr84'
 require_contains "${C3ECO_CONTRACT}" 'normative_candidate: C3-ECO draft v0.6'
 require_contains "${C3ECO_CONTRACT}" 'inclusion_overlay: C3-ECO draft v0.7 dated 2026-07-18'
 require_contains "${C3ECO_CONTRACT}" 'A programming language, framework, cloud, backend or model is not inherently green.'
 require_contains "${README}" 'Current maturity: `controlled_beta`. Production claim: `false`.'
 require_contains "${README}" 'The only qualified backend scope is `linux-x64-cpu-v1`'
 require_contains "${OBJECTIVES}" 'Production truth and certification traceability: PR83.'
+require_contains "${OBJECTIVES}" 'Production type and memory model: PR84.'
 require_contains "${OBJECTIVES}" 'Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.'
 require_contains "${ENTERPRISE_STRATEGY}" 'Current maturity: controlled enterprise beta (ER3), not an enterprise release candidate.'
 require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_superseded'
@@ -225,6 +229,6 @@ require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_s
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-printf 'PRODUCTION_TRUTH current_pr=83 remaining=14 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=84 remaining=13 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 printf 'PASS production truth and C3-ECO traceability gate\n'

@@ -2,6 +2,7 @@
 #define SHORTHAND_SEMANTIC_ANALYZER_H
 
 #include "../ast/AST.h"
+#include "../type_system/ProductionTypeSystem.h"
 #include "Diagnostics.h"
 
 #include <cstddef>
@@ -12,12 +13,20 @@
 
 class SemanticAnalyzer : public Visitor {
 public:
+    struct FunctionSignature {
+        ShortType return_type = ShortType::Void;
+        std::vector<ShortType> parameter_types;
+    };
+
     Diagnostics diagnostics;
 
     static std::set<std::string> functionNames(AST_PROGRAM *program);
     static std::map<std::string, std::size_t> functionArities(AST_PROGRAM *program);
+    static std::map<std::string, FunctionSignature> functionSignatures(AST_PROGRAM *program);
     static std::set<std::string> globalNames(AST_PROGRAM *program);
     void setImportedFunctions(const std::map<std::string, std::size_t> &arities,
+                              bool allow_external_calls);
+    void setImportedFunctions(const std::map<std::string, FunctionSignature> &signatures,
                               bool allow_external_calls);
 
     int visit(AST_PROGRAM*) override;
@@ -67,14 +76,24 @@ private:
     std::map<std::string, std::size_t> function_arity;
     std::set<std::string> imported_functions;
     std::set<std::string> globals;
-    std::vector<std::set<std::string>> local_scopes;
+    std::map<std::string, ShortType> global_types;
+    std::map<std::string, ShortType> global_array_types;
+    std::vector<std::map<std::string, ShortType>> local_scopes;
+    std::map<std::string, ShortType> function_return_types;
+    std::map<std::string, std::vector<ShortType>> function_parameter_types;
     std::vector<ShortType> return_types;
     bool allow_external_function_calls = true;
     int loopDepth = 0;
 
     bool isDeclared(const std::string &name) const;
     static bool isExecutableScalarType(ShortType type);
+    bool lookupType(const std::string &name, ShortType &type, bool &is_array) const;
+    ShortType expressionType(AST_EXPRESSION_RULE *expression);
+    bool requireConditionType(const void *node, AST_EXPRESSION_RULE *expression);
     void validateCall(const void *node, const std::string &name, std::size_t arity);
+    void validateCallTypes(const void *node,
+                           const std::string &name,
+                           const std::vector<AST_EXPRESSION_RULE *> &arguments);
 };
 
 #endif
