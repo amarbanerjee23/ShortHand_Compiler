@@ -417,6 +417,15 @@ if(SHORTHAND_BUILD_TESTING)
   set_tests_properties(production_type_memory_model PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   add_test(
+    NAME functions_control_error_semantics
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_functions_control_error_semantics.sh
+  )
+  set_tests_properties(functions_control_error_semantics PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>;SHORTHAND_RUNTIME_LIB=$<TARGET_FILE:shorthand_runtime>"
+  )
+
+  add_test(
     NAME green_ai_tool_tests
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/green_ai/test_green_ai_tool.sh
   )

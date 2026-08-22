@@ -2,7 +2,7 @@
 
 ShortHand is a C++/LLVM-first controlled-beta programming language. It combines an interpreter, LLVM IR/bitcode/native code generation, first-class Green AI candidate-evidence constructs, and a C++ AI runtime abstraction for model/tensor/inference workloads.
 
-Current maturity: `controlled_beta`. Production claim: `false`. Active language: beta-0.4 over the beta-0.2 base grammar and beta-0.3 module extension. The only qualified backend scope is `linux-x64-cpu-v1` with live ONNX Runtime CPU numerical execution. See `docs/production_truth.tsv` for the machine-readable authority.
+Current maturity: `controlled_beta`. Production claim: `false`. Active language: beta-0.5 over the beta-0.2 base grammar, beta-0.3 module extension, beta-0.4 type contract and `shorthand.control_flow.v1`. The only qualified backend scope is `linux-x64-cpu-v1` with live ONNX Runtime CPU numerical execution. See `docs/production_truth.tsv` for the machine-readable authority.
 
 The implementation goal is to keep the language syntax simple for end users while allowing advanced C/C++ AI libraries such as ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, and OpenBLAS to be integrated behind a stable compiler/runtime abstraction.
 

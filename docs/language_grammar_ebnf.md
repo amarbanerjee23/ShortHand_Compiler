@@ -146,7 +146,7 @@ String literals and function calls are not general expressions in the historical
 
 ### Beta-0.4 expression extension
 
-The active beta-0.4 contract adds `string_literal` as an expression alternative. The print production consequently consumes expressions directly while preserving every beta-0.2 print fixture. Function calls remain statements with variable arguments.
+The beta-0.4 contract adds `string_literal` as an expression alternative. The print production consequently consumes expressions directly while preserving every beta-0.2 print fixture. At that historical boundary, function calls remained statements with variable arguments.
 
 ```ebnf
 beta_0_4_expression = expression | string_literal ;
@@ -155,6 +155,29 @@ print_statement     = "print" , beta_0_4_expression ,
 ```
 
 This additive extension is traced by `tests/conformance/type_matrix_beta_0_4.tsv` and does not rewrite the historical beta-0.2 matrix.
+
+### Beta-0.5 function, scope and control-flow extension
+
+The active beta-0.5 contract makes calls expressions, accepts zero or more arbitrary expression arguments, permits an empty parameter list and permits typed declarations inside statement blocks. Function parameters and direct function-body declarations share a scope; every nested braced block creates a child lexical scope.
+
+```ebnf
+beta_0_5_function_definition = "def" , short_type , identifier , "(" ,
+                               [ parameter_declarations ] , ")" , block ;
+beta_0_5_primary             = variable | integer_literal | float_literal
+                             | string_literal | "true" | "false"
+                             | identifier , "(" , [ expression_list ] , ")"
+                             | "(" , beta_0_5_expression , ")" ;
+beta_0_5_expression          = beta_0_5_primary
+                             | "-" , beta_0_5_expression
+                             | beta_0_5_expression , binary_operator ,
+                               beta_0_5_expression ;
+expression_list              = beta_0_5_expression ,
+                               { "," , beta_0_5_expression } ;
+beta_0_5_statement           = statement
+                             | declaration_statement , ";" ;
+```
+
+Calls evaluate arguments from left to right. Labels and conditional or unconditional `goto` remain syntactically compatible, while `shorthand.control_flow.v1` restricts a transfer to one unique label in the same lexical block and forbids crossing a declaration lifetime boundary. The executable contract is traced by `tests/conformance/functions_control_matrix_beta_0_5.tsv` and `docs/functions_control_error_semantics.md`.
 
 ## Tensor declarations
 

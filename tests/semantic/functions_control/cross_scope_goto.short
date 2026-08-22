@@ -1,0 +1,7 @@
+int value;
+value = 1;
+outside:
+{
+    goto outside;
+}
+print value;

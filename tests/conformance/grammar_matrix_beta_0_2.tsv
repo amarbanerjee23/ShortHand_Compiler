@@ -92,7 +92,7 @@ GRN014	greenai	parser	IDENTIFIER IDENTIFIER ';'	tests/conformance/beta_0_2/green
 GRN015	greenai	parser	GREENAI_REPORT_RULE: GREENAI_REPORT_BUILTIN '(' STRING_LITERAL	tests/conformance/beta_0_2/greenai_language.short	accept	Green AI report call uses an unambiguous dedicated scanner token.
 CLI001	program	cli	mode == "parse"	tests/conformance/beta_0_2/ai_language.short	accept	Parser-only conformance mode bypasses semantic validation.
 BND001	boundary	parser	PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK	tests/conformance/beta_0_2/invalid_empty_program.short	reject	Empty programs remain outside beta-0.2 under the additive beta-0.3 preamble grammar.
-BND002	boundary	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')'	tests/conformance/beta_0_2/invalid_zero_parameter_function.short	reject	Empty parameter lists are not accepted.
+BND002	boundary	parser	FUNCTION_RULE: DEF ShortType IDENTIFIER '(' FUNCTION_PARAMETER_LIST_RULE ')'	tests/conformance/beta_0_2/invalid_zero_parameter_function.short	accept	Beta-0.5 additively accepts empty parameter lists while preserving every valid beta-0.2 function.
 BND003	boundary	parser	STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'	tests/conformance/beta_0_2/invalid_empty_block.short	reject	Blocks require at least one statement.
 BND004	boundary	parser	PRECISION_NAME: INT8	tests/conformance/beta_0_2/invalid_precision_alias.short	reject	float32 is not a canonical parser precision token.
 BND005	boundary	parser	QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL	tests/conformance/beta_0_2/invalid_guardrail_operator.short	reject	Guardrail operators other than greater-or-equal are not accepted.

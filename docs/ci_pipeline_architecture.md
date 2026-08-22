@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-08-22-pr84
+ci_pipeline_architecture_version: 2026-08-22-pr85
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -37,6 +37,7 @@ Runs first and fails quickly.
 
 - Bison/Flex regeneration with conflicts as errors,
 - grammar/conformance matrices,
+- beta-0.5 call, scope, return and same-block label conformance,
 - AST/source ranges,
 - diagnostics codes,
 - module manifest/graph/lockfile determinism,
@@ -134,6 +135,8 @@ GitHub PR83 adds `scripts/check_production_truth.sh` and its negative mutation s
 
 GitHub PR84 adds `scripts/check_production_type_memory_model.sh`, the beta-0.4 type matrix and expanded semantic differential evidence. Strict descriptor, storage, conversion and ownership unit tests join CI, Make governance parity and CTest; typed runtime behavior must also agree in interpreter, LLVM and native modes.
 
+GitHub PR85 adds `scripts/check_functions_control_error_semantics.sh` and the beta-0.5 control-flow matrix. Expression calls, recursion, lexical cleanup, structured returns and safe label transfers must agree in interpreter, LLVM bitcode and native modes; undefined calls/labels, duplicate declarations/labels, illegal lifetime crossings, missing returns and void-value use fail with stable diagnostics before lowering.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -183,7 +186,8 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR80: CPU/GPU/TPU/NPU and backend execution qualification.
 - PR83: production truth and C3-ECO traceability.
 - PR84: production type and memory model plus beta-0.4 typed execution.
-- PR85-PR87: remaining production language, packages/FFI and concurrent serving.
+- PR85: functions, lexical scopes, structured control flow and deterministic errors under beta-0.5.
+- PR86-PR87: remaining source composites/ownership, packages/FFI and concurrent serving.
 - PR88-PR91: typed C3-ECO profile, measurement, scoring and auditor evidence.
 - PR92-PR94: generated MLIR, lowering and representative AI qualification.
 - PR95: performance and measured-energy qualification.

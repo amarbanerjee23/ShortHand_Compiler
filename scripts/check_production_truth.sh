@@ -19,6 +19,9 @@ SBOM_STATUS="${ROOT_DIR}/docs/sbom_plan.md"
 OBSERVABILITY_STATUS="${ROOT_DIR}/docs/observability_plan.md"
 PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
 C3ECO_CONTRACT="${ROOT_DIR}/docs/c3eco_language_contract.md"
+CONTROL_FLOW_CONTRACT="${ROOT_DIR}/docs/functions_control_error_semantics.md"
+CONTROL_FLOW_MATRIX="${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv"
+CONTROL_FLOW_GATE="${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh"
 README="${ROOT_DIR}/README.md"
 OBJECTIVES="${ROOT_DIR}/docs/language_objectives.md"
 ENTERPRISE_STRATEGY="${ROOT_DIR}/docs/enterprise_release_strategy.md"
@@ -32,7 +35,8 @@ truth_value() { awk -F '\t' -v key="$1" 'NR > 1 && $1 == key { print $2 }' "${TR
 
 for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATEGY}" "${MATRIX}" \
   "${LANGUAGE_SPEC}" "${LANGUAGE_COMPATIBILITY}" "${LIMITATIONS}" "${RELEASE_STATUS}" \
-  "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" "${C3ECO_CONTRACT}" "${README}"; do
+  "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" "${C3ECO_CONTRACT}" \
+  "${CONTROL_FLOW_CONTRACT}" "${CONTROL_FLOW_MATRIX}" "${CONTROL_FLOW_GATE}" "${README}"; do
   require_file "${file}"
 done
 for file in "${OBJECTIVES}" "${ENTERPRISE_STRATEGY}" "${HISTORICAL_RELEASE_PLAN}" \
@@ -51,15 +55,16 @@ expected_truth=(
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
-  'active_language_version=beta-0.4'
+  'active_language_version=beta-0.5'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=83'
-  'current_github_pr=84'
+  'last_merged_github_pr=84'
+  'current_github_pr=85'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=13'
-  'remaining_implementation_prs_after_current=12'
-  'coverage_matrix_status=implemented=23,partial=3,open=3,total=29'
+  'remaining_implementation_prs_including_current=12'
+  'remaining_implementation_prs_after_current=11'
+  'coverage_matrix_status=implemented=24,partial=3,open=3,total=30'
   'type_system_contract=shorthand.type_memory.v1'
+  'control_flow_contract=shorthand.control_flow.v1'
   'production_backend_scope=linux-x64-cpu-v1'
   'accelerator_production_support=false'
   'c3eco_language_contract=shorthand.c3eco.language.v1'
@@ -138,8 +143,9 @@ for anchor in \
   'production_truth_contract: shorthand.production.truth.v1' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'beta-0.4' \
+  'beta-0.5' \
   'shorthand.type_memory.v1' \
+  'shorthand.control_flow.v1' \
   'draft v0.6' \
   'v0.7' \
   'candidate evidence' \
@@ -152,74 +158,81 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-22-pr84' \
-  'LAST_MERGED_GITHUB_PR: 83' \
-  'CURRENT_GITHUB_PR: 84' \
+  'production_readiness_plan_version: 2026-08-22-pr85' \
+  'LAST_MERGED_GITHUB_PR: 84' \
+  'CURRENT_GITHUB_PR: 85' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr84_through_pr96: 13' \
-  'remaining_planned_implementation_prs_after_pr84: 12'; do
+  'remaining_planned_implementation_prs_pr85_through_pr96: 12' \
+  'remaining_planned_implementation_prs_after_pr85: 11'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-22-pr84' \
-  'current_github_pr: 84' \
-  'current_roadmap_scope: production_type_system_and_memory_model' \
-  '23 implemented, 3 partial and 3 open'; do
+  'feature_status_version: 2026-08-22-pr85' \
+  'current_github_pr: 85' \
+  'current_roadmap_scope: functions_structured_control_flow_and_error_semantics' \
+  '24 implemented, 3 partial and 3 open'; do
   require_contains "${STATUS}" "${anchor}"
 done
 
-require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-08-22-pr84'
-require_contains "${STRATEGY}" '29-area production test matrix'
+require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-08-22-pr85'
+require_contains "${STRATEGY}" '30-area production test matrix'
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
+require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
 
 for anchor in \
-  'Language version: beta-0.4' \
+  'Language version: beta-0.5' \
   'Base grammar version: beta-0.2' \
   'production_claim: false'; do
   require_contains "${LANGUAGE_SPEC}" "${anchor}"
 done
 for anchor in \
   'language_compatibility_contract: shorthand.language.compatibility.v1' \
-  'active_language_version: beta-0.4' \
+  'active_language_version: beta-0.5' \
   'production_claim: false'; do
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-08-22-pr84' \
+  'known_limitations_version: 2026-08-22-pr85' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-08-22-pr84' \
+  'release_level_status_version: 2026-08-22-pr85' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: 96'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-08-22-pr84' \
+  'public_release_readiness_version: 2026-08-22-pr85' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-08-22-pr84' \
+  'enterprise_release_scorecard_version: 2026-08-22-pr85' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: partial_dependency_free_exports'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-08-22-pr84'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-08-22-pr85'
+require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
+require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
+require_contains "${CONTROL_FLOW_GATE}" 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate'
 require_contains "${C3ECO_CONTRACT}" 'normative_candidate: C3-ECO draft v0.6'
 require_contains "${C3ECO_CONTRACT}" 'inclusion_overlay: C3-ECO draft v0.7 dated 2026-07-18'
 require_contains "${C3ECO_CONTRACT}" 'A programming language, framework, cloud, backend or model is not inherently green.'
 require_contains "${README}" 'Current maturity: `controlled_beta`. Production claim: `false`.'
+require_contains "${README}" 'Active language: beta-0.5'
+require_contains "${README}" 'shorthand.control_flow.v1'
 require_contains "${README}" 'The only qualified backend scope is `linux-x64-cpu-v1`'
 require_contains "${OBJECTIVES}" 'Production truth and certification traceability: PR83.'
 require_contains "${OBJECTIVES}" 'Production type and memory model: PR84.'
+require_contains "${OBJECTIVES}" 'Functions, lexical scopes, structured control flow and deterministic errors: PR85.'
 require_contains "${OBJECTIVES}" 'Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.'
 require_contains "${ENTERPRISE_STRATEGY}" 'Current maturity: controlled enterprise beta (ER3), not an enterprise release candidate.'
 require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_superseded'
@@ -229,6 +242,6 @@ require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_s
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-printf 'PRODUCTION_TRUTH current_pr=84 remaining=13 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=85 remaining=12 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 printf 'PASS production truth and C3-ECO traceability gate\n'

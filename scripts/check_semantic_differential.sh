@@ -72,7 +72,7 @@ for file in \
   "${FIXTURE_DIR}/float_array_bounds.short" \
   "${FIXTURE_DIR}/wrong_arity.short" \
   "${FIXTURE_DIR}/return_outside_function.short" \
-  "${FIXTURE_DIR}/goto_rejected.short" \
+  "${ROOT_DIR}/tests/semantic/functions_control/undefined_label.short" \
   "${FIXTURE_DIR}/undeclared_variable.short" \
   "${FIXTURE_DIR}/return_type_mismatch.short" \
   "${FIXTURE_DIR}/division_by_zero.short" \
@@ -216,7 +216,7 @@ expect_semantic_failure "${FIXTURE_DIR}/invalid_string_condition.short" SHD3015
 expect_semantic_failure "${FIXTURE_DIR}/greenai_float_rejected.short" SHD3013
 expect_semantic_failure "${FIXTURE_DIR}/wrong_arity.short" SHD3004
 expect_semantic_failure "${FIXTURE_DIR}/return_outside_function.short" SHD3005
-expect_semantic_failure "${FIXTURE_DIR}/goto_rejected.short" SHD3006
+expect_semantic_failure "${ROOT_DIR}/tests/semantic/functions_control/undefined_label.short" SHD3018
 expect_semantic_failure "${FIXTURE_DIR}/return_type_mismatch.short" SHD3007
 expect_semantic_failure "${FIXTURE_DIR}/undeclared_variable.short" SHD3008
 

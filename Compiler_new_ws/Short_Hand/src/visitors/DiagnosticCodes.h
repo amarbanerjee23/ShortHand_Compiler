@@ -48,6 +48,13 @@ inline constexpr const char *SemanticTypeMismatch = "SHD3013";
 inline constexpr const char *SemanticInvalidOperator = "SHD3014";
 inline constexpr const char *SemanticInvalidCondition = "SHD3015";
 inline constexpr const char *SemanticOwnershipViolation = "SHD3016";
+inline constexpr const char *SemanticDuplicateLabel = "SHD3017";
+inline constexpr const char *SemanticUndefinedLabel = "SHD3018";
+inline constexpr const char *SemanticInvalidGotoScope = "SHD3019";
+inline constexpr const char *SemanticMissingReturn = "SHD3020";
+inline constexpr const char *SemanticDuplicateDeclaration = "SHD3021";
+inline constexpr const char *SemanticVoidValueUsed = "SHD3022";
+inline constexpr const char *SemanticUndefinedFunction = "SHD3023";
 
 inline constexpr const char *AIModelRedeclared = "SHD4001";
 inline constexpr const char *AIModelInvalidFormat = "SHD4002";

@@ -5,10 +5,11 @@
 version | shorthand.language.version | beta-0.1 | Current beta language contract marker.
 version | shorthand.language.version | beta-0.2 | Previous executable base language contract marker.
 version | shorthand.language.version | beta-0.3 | Previous module and executable core language contract marker.
-current-version | shorthand.language.version | beta-0.4 | Current executable language contract marker.
+current-version | shorthand.language.version | beta-0.5 | Current executable language contract marker.
 grammar-matrix | tests/conformance/grammar_matrix_beta_0_2.tsv | accept | Every beta-0.2 base grammar obligation must remain implemented and executable.
 grammar-extension | tests/conformance/module_matrix_beta_0_3.tsv | accept | Every beta-0.3 package, module and import obligation maps to implementation and a fixture.
 type-matrix | tests/conformance/type_matrix_beta_0_4.tsv | accept | Every beta-0.4 executable type and memory obligation maps to implementation and a fixture.
+control-flow-matrix | tests/conformance/functions_control_matrix_beta_0_5.tsv | accept | Every beta-0.5 function, scope, control-flow and deterministic-error obligation maps to implementation and a fixture.
 module-resolution | scripts/check_module_resolution.sh | accept | Explicit manifest resolution, graph ordering, lock determinism, path safety and multi-file LLVM/native behavior must remain executable.
 parser-valid | tests/conformance/beta_0_2/core_declarations.short | accept | Primitive declarations, arrays and the required non-empty logic section must parse.
 parser-valid | tests/conformance/beta_0_2/core_control.short | accept | Functions, statements, control flow, variables and expressions must parse.
@@ -20,7 +21,7 @@ parser-valid | tests/fixtures/external_runtime_ai.short | accept | Existing beta
 parser-valid | Compiler_new_ws/Short_Hand/examples/ai_onnx_fallback.short | accept | Existing runtime and evidence AI syntax must remain accepted.
 parser-valid | Compiler_new_ws/Short_Hand/examples/greenai_report.short | accept | Existing Green AI report syntax must remain accepted.
 parser-invalid | tests/conformance/beta_0_2/invalid_empty_program.short | reject | Empty programs remain outside the current contract.
-parser-invalid | tests/conformance/beta_0_2/invalid_zero_parameter_function.short | reject | Empty function parameter lists are not accepted by the current parser.
+parser-valid | tests/conformance/beta_0_2/invalid_zero_parameter_function.short | accept | The beta-0.5 additive function contract accepts empty parameter lists.
 parser-invalid | tests/conformance/beta_0_2/invalid_empty_block.short | reject | Blocks require at least one statement.
 parser-invalid | tests/conformance/beta_0_2/invalid_precision_alias.short | reject | Runtime aliases such as float32 are not scanner keywords.
 parser-invalid | tests/conformance/beta_0_2/invalid_guardrail_operator.short | reject | Quality guardrails currently accept only integer greater-or-equal syntax.

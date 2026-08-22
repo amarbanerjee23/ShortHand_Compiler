@@ -16,6 +16,7 @@ required_files=(
   docs/execution_semantics_beta_0_3.md
   docs/execution_semantics_beta_0_4.md
   docs/production_type_memory_model.md
+  docs/functions_control_error_semantics.md
   docs/fuzz_sanitizer_race_hardening.md
   docs/signed_release_publication.md
   docs/external_security_policy.md
@@ -24,6 +25,7 @@ required_files=(
   docs/formatter_linter.md
   docs/syntax_highlighting_lsp.md
   tests/coverage/compiler_test_coverage_matrix.tsv
+  tests/conformance/functions_control_matrix_beta_0_5.tsv
   tests/tooling/formatter_messy.short
   tests/tooling/formatter_expected.short
   tests/integration/test_production_backend_hardware_qualification.sh
@@ -50,6 +52,7 @@ required_files=(
   scripts/check_no_mandatory_test_skips.sh
   scripts/check_production_truth.sh
   scripts/check_production_type_memory_model.sh
+  scripts/check_functions_control_error_semantics.sh
   tests/governance/test_production_truth_negative.sh
   Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
@@ -92,19 +95,20 @@ required_status_terms=(
   "External vulnerability gate" "Container and Kubernetes hardening"
   "Formatter and linter" "Syntax highlighting and LSP"
   "Production type and memory model"
+  "Functions, structured control flow and deterministic errors"
 )
 for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-22-pr84' \
-  'language_version: beta-0.4' \
+  'feature_status_version: 2026-08-22-pr85' \
+  'language_version: beta-0.5' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 84' \
-  'current_roadmap_scope: production_type_system_and_memory_model' \
-  '23 implemented, 3 partial and 3 open' \
+  'current_github_pr: 85' \
+  'current_roadmap_scope: functions_structured_control_flow_and_error_semantics' \
+  '24 implemented, 3 partial and 3 open' \
   'Roadmap PR75 was implemented and merged as GitHub PR76' \
   'GitHub PR77 implemented and merged roadmap PR76' \
   'GitHub PR78 implemented and merged roadmap PR77' \
@@ -128,6 +132,7 @@ grep -Fq 'resolution_status: deterministic_manifest_locked_multi_file_codegen' d
 grep -Fq 'execution_semantics_contract: beta-0.3-pr72-v1' docs/execution_semantics_beta_0_3.md
 grep -Fq 'execution_semantics_contract: beta-0.4-pr84-v1' docs/execution_semantics_beta_0_4.md
 grep -Fq 'type_system_contract: shorthand.type_memory.v1' docs/production_type_memory_model.md
+grep -Fq 'control_flow_contract: shorthand.control_flow.v1' docs/functions_control_error_semantics.md
 grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
 grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
 grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
@@ -159,6 +164,7 @@ grep -Fq 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation 
 grep -Fq 'PASS production backend and hardware qualification gate' scripts/check_production_backend_hardware_qualification.sh
 grep -Fq 'PASS verified ONNX Runtime CPU qualification SDK acquisition' scripts/install_ci_onnxruntime_cpu.sh
 grep -Fq 'PASS production type and memory model gate' scripts/check_production_type_memory_model.sh
+grep -Fq 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate' scripts/check_functions_control_error_semantics.sh
 
 grep -Fq 'GCC formatter and linter gate' .github/workflows/tooling.yml
 grep -Fq 'Clang formatter and linter gate' .github/workflows/tooling.yml
@@ -178,6 +184,7 @@ bash scripts/check_no_mandatory_test_skips.sh
 bash scripts/check_c3eco_language_blocks.sh
 bash scripts/check_production_truth.sh
 bash scripts/check_production_type_memory_model.sh
+bash scripts/check_functions_control_error_semantics.sh
 bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
@@ -221,7 +228,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR84 establishes shorthand.type_memory.v1 and beta-0.4 typed execution while preserving PR83 production truth and all zero-skip qualification gates; PR85-PR96 and the protected release exercise remain fail-closed."
+echo "Feature plan status check passed. GitHub PR85 establishes shorthand.control_flow.v1 and beta-0.5 function/control-flow execution while preserving PR84 typed execution and all zero-skip qualification gates; PR86-PR96 and the protected release exercise remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

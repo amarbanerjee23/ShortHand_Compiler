@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-08-22-pr84
+public_release_readiness_version: 2026-08-22-pr85
 current_maturity: controlled_beta
 production_claim: false
 release_candidate_target: PR96
 
-A PR84 candidate requires all mandatory commands to pass from a clean checkout:
+A PR85 candidate requires all mandatory commands to pass from a clean checkout:
 
 ```bash
 bash setup_build_infra.sh
@@ -14,6 +14,7 @@ bash scripts/validate_language.sh --strict
 bash scripts/check_production_truth.sh
 bash tests/governance/test_production_truth_negative.sh
 bash scripts/check_production_type_memory_model.sh
+bash scripts/check_functions_control_error_semantics.sh
 bash scripts/check_semantic_differential.sh
 bash scripts/smoke_test.sh
 make -C Compiler_new_ws/Short_Hand/src test

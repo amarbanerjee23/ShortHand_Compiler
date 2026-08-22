@@ -1,0 +1,6 @@
+int value;
+value = 1;
+goto after;
+int hidden;
+after:
+print value;

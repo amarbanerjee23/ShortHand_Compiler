@@ -32,7 +32,8 @@ private:
         Normal,
         Return,
         Break,
-        Continue
+        Continue,
+        Goto
     };
 
     std::vector<Frame> frames;
@@ -47,12 +48,16 @@ private:
     int num = 0;
     RuntimeValue current_value;
     FlowSignal flow = FlowSignal::Normal;
+    std::string goto_target;
     RuntimeValue return_value;
     bool runtime_failed = false;
     std::size_t call_depth = 0;
+    std::size_t goto_transfers = 0;
     static constexpr std::size_t kMaxCallDepth = 256;
+    static constexpr std::size_t kMaxGotoTransfers = 1000000;
 
     Frame &globalFrame();
+    void initializeDeclarationsInto(AST_DATA_DECLARATION_BLOCK *decl_block, Frame &frame);
     void initializeDeclarations(AST_DATA_DECLARATION_BLOCK *decl_block);
     void registerFunctions(AST_FUNCTION_LIST_RULE *functions, const std::string &source_path);
     static RuntimeValue defaultValue(ShortType type);

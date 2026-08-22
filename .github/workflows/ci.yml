@@ -102,6 +102,9 @@ jobs:
           CXX=g++ bash scripts/check_production_type_memory_model.sh
           CXX=clang++ bash scripts/check_production_type_memory_model.sh
 
+      - name: Functions control flow and deterministic errors beta-0.5
+        run: CXX=g++ bash scripts/check_functions_control_error_semantics.sh
+
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
 

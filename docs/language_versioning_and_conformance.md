@@ -2,11 +2,11 @@
 
 ## Current contract
 
-`shorthand.language.version: beta-0.4`
+`shorthand.language.version: beta-0.5`
 
-`shorthand.conformance.contract: beta-0.4`
+`shorthand.conformance.contract: beta-0.5`
 
-`shorthand.grammar.matrix: beta-0.2-base+beta-0.3-modules+beta-0.4-types`
+`shorthand.grammar.matrix: beta-0.2-base+beta-0.3-modules+beta-0.4-types+beta-0.5-control`
 
 `shorthand.module.resolution.contract: shorthand.package.v1+shorthand.lock.v1`
 
@@ -18,17 +18,19 @@ Historical markers retained for compatibility and old-task stability:
 - `shorthand.conformance.contract: beta-0.2`
 - `shorthand.language.version: beta-0.3`
 - `shorthand.conformance.contract: beta-0.3`
+- `shorthand.language.version: beta-0.4`
+- `shorthand.conformance.contract: beta-0.4`
 - `shorthand.grammar.matrix: beta-0.2`
 - `shorthand.language.version: beta-0.1`
 - `shorthand.conformance.contract: beta-0.1`
 
-Beta-0.4 is the current executable language contract. Beta-0.2 remains the complete base-language compatibility matrix, beta-0.3 adds the optional module/package/import preamble, and beta-0.4 adds string expressions plus exact float, string and typed-array execution. PR70's deterministic package resolution remains unchanged. Historical markers do not identify the active version.
+Beta-0.5 is the current executable language contract. Beta-0.2 remains the base-language compatibility matrix, beta-0.3 adds the optional module/package/import preamble, beta-0.4 adds string expressions plus exact float, string and typed-array execution, and beta-0.5 adds expression calls, zero-argument functions, lexical declarations, scoped cleanup and executable label resolution. PR70's deterministic package resolution remains unchanged. Historical markers do not identify the active version.
 
 ## Purpose
 
 The version marker identifies the public parser and semantic surface that the repository protects. It is not a claim that ShortHand is complete or production ready.
 
-The beta-0.4 contract is grounded in:
+The beta-0.5 contract is grounded in:
 
 - the beta-0.2 base grammar in `docs/language_grammar_ebnf.md`,
 - the beta-0.2 base specification in `docs/language_spec.md`,
@@ -37,12 +39,15 @@ The beta-0.4 contract is grounded in:
 - `tests/conformance/grammar_matrix_beta_0_2.tsv`,
 - `tests/conformance/module_matrix_beta_0_3.tsv`,
 - `tests/conformance/type_matrix_beta_0_4.tsv`,
+- `tests/conformance/functions_control_matrix_beta_0_5.tsv`,
 - `docs/production_type_memory_model.md`,
 - `docs/execution_semantics_beta_0_4.md`,
+- `docs/functions_control_error_semantics.md`,
 - `tests/conformance/manifest.txt`,
 - `scripts/check_grammar_conformance_matrix.sh`,
 - `scripts/check_module_ast_scaffold.sh`,
 - `scripts/check_module_resolution.sh`,
+- `scripts/check_functions_control_error_semantics.sh`,
 - `scripts/check_language_versioning.sh`,
 - parser, module, semantic, diagnostics, codegen, runtime and evidence tests.
 
@@ -85,6 +90,21 @@ Beta-0.4 changes source meaning and therefore advances the language version. It:
 8. introduces `shorthand.type_memory.v1` descriptors and guarded ownership states without prematurely exposing composite syntax;
 9. advances cross-mode evidence to `shorthand.semantic.differential.v2`.
 
+## What changed from beta-0.4
+
+Beta-0.5 changes accepted syntax and executable control-flow meaning. It:
+
+1. makes calls first-class expressions with zero or more arbitrary expression arguments;
+2. defines left-to-right argument evaluation and exact parameter typing;
+3. permits empty function parameter lists while preserving legacy typed parameter declarations;
+4. permits typed local declarations in function and nested statement blocks;
+5. defines lexical shadowing, same-scope duplicate rejection and deterministic frame cleanup;
+6. executes recursive calls in interpreter, LLVM bitcode and native modes;
+7. resolves labels within the current lexical block and rejects cross-scope or declaration-crossing jumps;
+8. requires non-void functions to return a value on every structured path;
+9. adds stable `SHD3017` through `SHD3023` diagnostics;
+10. introduces `shorthand.control_flow.v1` without changing runtime ABI 1.0.0.
+
 ## Conformance layers
 
 ### Base lexical and grammar conformance
@@ -122,7 +142,7 @@ A package-resolved source must satisfy `docs/module_resolution_and_lockfile.md` 
 
 ### Semantic conformance
 
-A syntactically accepted source conforms semantically when a normal compiler mode completes module-aware semantic analysis without errors. Stable `SHDxxxx` diagnostics remain the rejection contract. Full cross-mode equivalence remains PR71.
+A syntactically accepted source conforms semantically when a normal compiler mode completes module-aware semantic analysis without errors. Stable `SHDxxxx` diagnostics remain the rejection contract. The implemented typed core, functions and control flow are required to agree across interpreter, `lli` and native execution.
 
 ### Lowering and runtime conformance
 
@@ -134,26 +154,31 @@ Direct imported function calls participate in the same interpreter/LLVM/native d
 
 A beta-0.4 implementation must satisfy every row in `tests/conformance/type_matrix_beta_0_4.tsv`, the descriptor and ownership unit gate, and exact interpreter/LLVM/native differential behavior. Unsupported owned string arrays and parser-unexposed composites remain fail-closed.
 
+### Beta-0.5 function and control-flow conformance
+
+A beta-0.5 implementation must satisfy every row in `tests/conformance/functions_control_matrix_beta_0_5.tsv` and `scripts/check_functions_control_error_semantics.sh`. Calls, recursion, scopes, loops, returns, label transfers and cleanup must produce the guarded result in interpreter, LLVM bitcode and native modes. Every negative fixture must fail in run, bitcode and native compilation modes with its stable ranged diagnostic.
+
 ### Production conformance
 
 There is no production conformance level yet. ShortHand remains controlled beta with `production_claim: false`.
 
 ## Compatibility rules
 
-A change is compatible with beta-0.4 when it:
+A change is compatible with beta-0.5 when it:
 
 1. keeps every beta-0.2 accept fixture accepted,
-2. keeps every beta-0.2 reject fixture rejected unless a later language version intentionally changes it,
+2. keeps every beta-0.2 reject fixture rejected unless a later language version intentionally changes it, as beta-0.5 does for empty parameter lists,
 3. keeps every beta-0.3 module syntax accept fixture accepted,
 4. keeps every beta-0.4 type-matrix accept fixture accepted and every rejection boundary fail-closed,
-5. keeps module ordering, duplicate and malformed-path boundaries rejected with stable codes,
-6. preserves the PR70 deterministic resolver/lock contract or versions that contract explicitly,
-7. preserves exact typing, checked storage and ownership-state rules or versions them explicitly,
-8. preserves stable diagnostics or documents a migration,
-9. preserves runtime and evidence honesty,
-10. updates the applicable grammar, extension matrix, package-resolution evidence, manifest and gates when behavior changes.
+5. keeps every beta-0.5 control-flow matrix acceptance and rejection boundary guarded,
+6. keeps module ordering, duplicate and malformed-path boundaries rejected with stable codes,
+7. preserves the PR70 deterministic resolver/lock contract or versions that contract explicitly,
+8. preserves exact typing, checked storage and ownership-state rules or versions them explicitly,
+9. preserves stable diagnostics or documents a migration,
+10. preserves runtime and evidence honesty,
+11. updates the applicable grammar, extension matrix, package-resolution evidence, manifest and gates when behavior changes.
 
-A new source-language version is required when accepted syntax, top-level ordering or source-level semantic meaning changes. Package/lock and type/memory schema changes require their own explicit schema-version changes even if source grammar remains beta-0.4.
+A new source-language version is required when accepted syntax, top-level ordering or source-level semantic meaning changes. Package/lock, type/memory and control-flow schema changes require their own explicit schema-version changes even if source grammar remains beta-0.5.
 
 ## Matrix rules
 
@@ -169,14 +194,16 @@ Package-resolution behavior is executable evidence through `scripts/check_module
 
 `tests/conformance/type_matrix_beta_0_4.tsv` is the authoritative executable type extension matrix. It maps parser, semantic, interpreter, LLVM and reusable type-system obligations to positive or fail-closed fixtures.
 
+`tests/conformance/functions_control_matrix_beta_0_5.tsv` is the authoritative executable function and control-flow extension matrix. It maps parser, AST, semantic, interpreter and LLVM obligations to positive or fail-closed fixtures.
+
 ## Manifest rules
 
 The active marker is:
 
-`current-version | shorthand.language.version | beta-0.4 | Current executable language contract marker.`
+`current-version | shorthand.language.version | beta-0.5 | Current executable language contract marker.`
 
-Historical beta-0.1, beta-0.2 and beta-0.3 rows are retained for compatibility. The conformance manifest must cover the base grammar matrix, module extension matrix, type matrix, module resolution, parser-valid, parser-invalid, semantic-invalid, diagnostics, codegen, runtime and evidence categories.
+Historical beta-0.1 through beta-0.4 markers are retained for compatibility. The conformance manifest must cover the base grammar matrix, module extension matrix, type matrix, control-flow matrix, module resolution, parser-valid, parser-invalid, semantic-invalid, diagnostics, codegen, runtime and evidence categories.
 
 ## Review rule
 
-Any PR that changes scanner keywords, parser productions, semantic meaning, module metadata, resolver behavior, package/lock schema, type/memory behavior, diagnostics, runtime hooks, evidence output or public examples must update the corresponding conformance evidence or explicitly prove why the beta-0.4 contract remains unchanged.
+Any PR that changes scanner keywords, parser productions, semantic meaning, module metadata, resolver behavior, package/lock schema, type/memory or control-flow behavior, diagnostics, runtime hooks, evidence output or public examples must update the corresponding conformance evidence or explicitly prove why the beta-0.5 contract remains unchanged.

@@ -2,6 +2,7 @@
 #include "DiagnosticCodes.h"
 #include "../ai_runtime/AI_Types.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace diag = shorthand::diagnostics;
@@ -203,8 +204,8 @@ bool SemanticAnalyzer::lookupType(const std::string &name,
     for (auto it = local_scopes.rbegin(); it != local_scopes.rend(); ++it) {
         const auto found = it->find(name);
         if (found != it->end()) {
-            type = found->second;
-            is_array = false;
+            type = found->second.type;
+            is_array = found->second.is_array;
             return true;
         }
     }
@@ -281,7 +282,11 @@ ShortType SemanticAnalyzer::expressionType(AST_EXPRESSION_RULE *expression) {
     if (auto *binary = dynamic_cast<AST_BINARY_EXPRESSION_RULE *>(expression)) {
         const ShortType left = expressionType(binary->left);
         const ShortType right = expressionType(binary->right);
-        if (left == ShortType::Void || right == ShortType::Void) return ShortType::Void;
+        if (left == ShortType::Void || right == ShortType::Void) {
+            diagnostics.errorAtNode(binary, diag::SemanticVoidValueUsed,
+                                    "binary operator requires value operands and cannot consume void");
+            return ShortType::Void;
+        }
         const int op = binary->op;
         const bool arithmetic = op == AST_BINARY_EXPRESSION_RULE::PLUS ||
                                 op == AST_BINARY_EXPRESSION_RULE::MINUS ||
@@ -355,11 +360,54 @@ bool SemanticAnalyzer::requireConditionType(const void *node, AST_EXPRESSION_RUL
     return false;
 }
 
+bool SemanticAnalyzer::definitelyReturns(AST_STATEMENT_RULE *statement) const {
+    if (statement == nullptr) return false;
+    if (dynamic_cast<AST_RETURN_STATEMENT *>(statement) != nullptr) return true;
+    if (auto *conditional = dynamic_cast<AST_IF_ELSE_STATEMENT *>(statement)) {
+        return definitelyReturns(conditional->if_block) && definitelyReturns(conditional->else_block);
+    }
+    if (auto *block = dynamic_cast<AST_STATEMENTS_BLOCK *>(statement)) {
+        const bool has_direct_transfer_target = std::any_of(
+            block->statements.begin(), block->statements.end(),
+            [](AST_STATEMENT_RULE *child) {
+                return dynamic_cast<AST_LABEL_RULE *>(child) != nullptr ||
+                       dynamic_cast<AST_GOTO_STATEMENT_RULE *>(child) != nullptr;
+            });
+        if (has_direct_transfer_target) {
+            // A label can make statements after an earlier return reachable. Keep
+            // the proof deliberately conservative for blocks with unstructured
+            // transfers: their final statement must itself close every path.
+            return !block->statements.empty() && definitelyReturns(block->statements.back());
+        }
+        for (AST_STATEMENT_RULE *child : block->statements) {
+            if (definitelyReturns(child)) return true;
+        }
+    }
+    return false;
+}
+
+void SemanticAnalyzer::declareInCurrentScope(AST_DATA_DECLARATION_BLOCK *block) {
+    if (block == nullptr || local_scopes.empty()) return;
+    auto &scope = local_scopes.back();
+    for (const auto &entry : block->typed_scalars) {
+        if (!scope.emplace(entry.name, VariableInfo{entry.type, false}).second) {
+            diagnostics.errorAtNode(block, diag::SemanticDuplicateDeclaration,
+                                    "duplicate declaration in lexical scope: " + entry.name);
+        }
+    }
+    for (const auto &entry : block->typed_arrays) {
+        if (!scope.emplace(entry.name, VariableInfo{entry.type, true}).second) {
+            diagnostics.errorAtNode(block, diag::SemanticDuplicateDeclaration,
+                                    "duplicate declaration in lexical scope: " + entry.name);
+        }
+    }
+}
+
 void SemanticAnalyzer::validateCall(const void *node, const std::string &name, std::size_t arity) {
     auto signature = function_arity.find(name);
     if (name.empty() || signature == function_arity.end()) {
-        diagnostics.errorAtNode(node, diag::LoweringUndefinedFunction,
-                                "lowering cannot resolve function: " + name);
+        diagnostics.errorAtNode(node, diag::SemanticUndefinedFunction,
+                                "undefined function: " + name);
         return;
     }
     if (signature->second != arity) {
@@ -384,7 +432,12 @@ void SemanticAnalyzer::validateCallTypes(
     if (expected == function_parameter_types.end() || expected->second.size() != arguments.size()) return;
     for (std::size_t i = 0; i < arguments.size(); ++i) {
         const ShortType actual = expressionType(arguments[i]);
-        if (actual != ShortType::Void && actual != expected->second[i]) {
+        if (actual == ShortType::Void) {
+            diagnostics.errorAtNode(
+                arguments[i], diag::SemanticVoidValueUsed,
+                "function " + name + " argument " + std::to_string(i + 1) +
+                " requires a value but received void");
+        } else if (actual != expected->second[i]) {
             diagnostics.errorAtNode(
                 arguments[i], diag::SemanticTypeMismatch,
                 "function " + name + " argument " + std::to_string(i + 1) +
@@ -412,8 +465,8 @@ int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK *block) {
     if (block == nullptr) return 0;
     std::set<std::string> names;
     for (const auto &entry : block->typed_scalars) {
-        if (!names.insert(entry.name).second) {
-            diagnostics.errorAtNode(block, diag::SemanticInvalidType,
+        if (local_scopes.empty() && !names.insert(entry.name).second) {
+            diagnostics.errorAtNode(block, diag::SemanticDuplicateDeclaration,
                                     "duplicate declaration: " + entry.name);
         }
         if (!isExecutableScalarType(entry.type)) {
@@ -428,8 +481,8 @@ int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK *block) {
             diagnostics.errorAtNode(block, diag::SemanticInvalidType, type_diagnostic);
     }
     for (const auto &entry : block->typed_arrays) {
-        if (!names.insert(entry.name).second) {
-            diagnostics.errorAtNode(block, diag::SemanticInvalidType,
+        if (local_scopes.empty() && !names.insert(entry.name).second) {
+            diagnostics.errorAtNode(block, diag::SemanticDuplicateDeclaration,
                                     "duplicate declaration: " + entry.name);
         }
         if (!isExecutableScalarType(entry.type)) {
@@ -448,6 +501,7 @@ int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK *block) {
         if (!descriptor.validate(type_diagnostic))
             diagnostics.errorAtNode(block, diag::SemanticInvalidType, type_diagnostic);
     }
+    declareInCurrentScope(block);
     return 0;
 }
 
@@ -491,16 +545,25 @@ int SemanticAnalyzer::visit(AST_FUNCTION_RULE *n) {
         }
     }
 
-    std::map<std::string, ShortType> scope;
+    std::map<std::string, VariableInfo> scope;
     if (n->parameters) {
-        for (const auto &entry : n->parameters->typed_scalars) scope[entry.name] = entry.type;
-        for (const auto &entry : n->parameters->typed_arrays) scope[entry.name] = entry.type;
+        for (const auto &entry : n->parameters->typed_scalars)
+            scope.emplace(entry.name, VariableInfo{entry.type, false});
+        for (const auto &entry : n->parameters->typed_arrays)
+            scope.emplace(entry.name, VariableInfo{entry.type, true});
     }
     local_scopes.push_back(scope);
     return_types.push_back(n->type);
     const int saved_loop_depth = loopDepth;
     loopDepth = 0;
     if (n->block_statement) n->block_statement->accept(*this);
+    if (n->type != ShortType::Void && !definitelyReturns(n->block_statement)) {
+        diagnostics.errorAtNode(
+            n, diag::SemanticMissingReturn,
+            std::string("non-void function `") +
+            (n->function_name == nullptr ? "" : n->function_name) +
+            "` does not return a value on every structured path");
+    }
     loopDepth = saved_loop_depth;
     return_types.pop_back();
     local_scopes.pop_back();
@@ -508,12 +571,50 @@ int SemanticAnalyzer::visit(AST_FUNCTION_RULE *n) {
 }
 
 int SemanticAnalyzer::visit(AST_LOGIC_BLOCK *b) {
+    local_scopes.push_back({});
     if (b->block_statement) b->block_statement->accept(*this);
+    local_scopes.pop_back();
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_STATEMENTS_BLOCK *b) {
-    for (auto *statement : b->statements) if (statement) statement->accept(*this);
+    if (b == nullptr) return 0;
+    if (b->lexical_scope) local_scopes.push_back({});
+
+    std::set<std::string> labels;
+    std::map<std::string, std::size_t> label_positions;
+    for (std::size_t i = 0; i < b->statements.size(); ++i) {
+        auto *label = dynamic_cast<AST_LABEL_RULE *>(b->statements[i]);
+        if (label == nullptr) continue;
+        if (!labels.insert(label->label).second) {
+            diagnostics.errorAtNode(label, diag::SemanticDuplicateLabel,
+                                    "duplicate label in lexical block: " + label->label);
+        } else {
+            label_positions[label->label] = i;
+        }
+    }
+    block_label_scopes.push_back(labels);
+
+    for (std::size_t i = 0; i < b->statements.size(); ++i) {
+        auto *jump = dynamic_cast<AST_GOTO_STATEMENT_RULE *>(b->statements[i]);
+        const auto target = jump == nullptr ? label_positions.end() : label_positions.find(jump->label);
+        if (target != label_positions.end()) {
+            const std::size_t low = std::min(i, target->second);
+            const std::size_t high = std::max(i, target->second);
+            for (std::size_t k = low + 1; k < high; ++k) {
+                if (dynamic_cast<AST_DATA_DECLARATION_BLOCK *>(b->statements[k]) != nullptr) {
+                    diagnostics.errorAtNode(
+                        jump, diag::SemanticInvalidGotoScope,
+                        "goto cannot cross a lexical declaration boundary: " + jump->label);
+                    break;
+                }
+            }
+        }
+        if (b->statements[i]) b->statements[i]->accept(*this);
+    }
+
+    block_label_scopes.pop_back();
+    if (b->lexical_scope) local_scopes.pop_back();
     return 0;
 }
 
@@ -535,7 +636,10 @@ int SemanticAnalyzer::visit(AST_FUNCTION_CALL_RULE *n) {
 int SemanticAnalyzer::visit(AST_ASSIGNMENT_RULE *n) {
     const ShortType target = expressionType(n->variable);
     const ShortType source = expressionType(n->expression);
-    if (target != ShortType::Void && source != ShortType::Void && target != source) {
+    if (target != ShortType::Void && source == ShortType::Void) {
+        diagnostics.errorAtNode(n->expression, diag::SemanticVoidValueUsed,
+                                "assignment source requires a value but received void");
+    } else if (target != ShortType::Void && target != source) {
         diagnostics.errorAtNode(
             n, diag::SemanticTypeMismatch,
             std::string("assignment requires identical types; target=") + shortTypeName(target) +
@@ -771,10 +875,28 @@ int SemanticAnalyzer::visit(AST_WHILE_LOOP_STATEMENT_RULE *n) {
 }
 
 int SemanticAnalyzer::visit(AST_GOTO_STATEMENT_RULE *n) {
-    diagnostics.errorAtNode(
-        n, diag::SemanticGotoUnsupported,
-        "goto is parser-valid but not executable until interpreter and LLVM jump semantics are identical");
-    if (n->condition) n->condition->accept(*this);
+    bool resolved = false;
+    if (!block_label_scopes.empty()) {
+        resolved = block_label_scopes.back().count(n->label) != 0U;
+    }
+    if (!resolved) {
+        bool found_in_outer_scope = false;
+        if (block_label_scopes.size() > 1) {
+            for (auto it = block_label_scopes.rbegin() + 1; it != block_label_scopes.rend(); ++it) {
+                if (it->count(n->label) != 0U) {
+                    found_in_outer_scope = true;
+                    break;
+                }
+            }
+        }
+        diagnostics.errorAtNode(
+            n,
+            found_in_outer_scope ? diag::SemanticInvalidGotoScope : diag::SemanticUndefinedLabel,
+            found_in_outer_scope
+                ? "goto cannot leave its lexical block: " + n->label
+                : "goto target is not defined in the current lexical block: " + n->label);
+    }
+    if (n->condition) requireConditionType(n, n->condition);
     return 0;
 }
 
@@ -791,7 +913,12 @@ int SemanticAnalyzer::visit(AST_READ_RULE *n) {
 
 int SemanticAnalyzer::visit(AST_PRINT_RULE *n) {
     for (auto &item : n->printables) {
-        if (item.expression) expressionType(item.expression);
+        if (item.expression) {
+            if (expressionType(item.expression) == ShortType::Void) {
+                diagnostics.errorAtNode(item.expression, diag::SemanticVoidValueUsed,
+                                        "print requires a value and cannot consume void");
+            }
+        }
         else if (item.string_literal) expressionType(item.string_literal);
     }
     return 0;
@@ -823,9 +950,15 @@ int SemanticAnalyzer::visit(AST_RETURN_STATEMENT *n) {
         diagnostics.errorAtNode(n, diag::SemanticReturnTypeMismatch,
                                 "void function cannot return a value");
     }
-    if (n->expression && return_types.back() != ShortType::Void) {
+    if (return_types.back() != ShortType::Void && n->expression == nullptr) {
+        diagnostics.errorAtNode(n, diag::SemanticReturnTypeMismatch,
+                                "non-void function must return a value");
+    } else if (n->expression && return_types.back() != ShortType::Void) {
         const ShortType actual = expressionType(n->expression);
-        if (actual != ShortType::Void && actual != return_types.back()) {
+        if (actual == ShortType::Void) {
+            diagnostics.errorAtNode(n->expression, diag::SemanticVoidValueUsed,
+                                    "return expression requires a value but received void");
+        } else if (actual != return_types.back()) {
             diagnostics.errorAtNode(
                 n, diag::SemanticReturnTypeMismatch,
                 std::string("return expression has type ") + shortTypeName(actual) +

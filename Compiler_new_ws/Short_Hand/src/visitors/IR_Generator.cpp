@@ -332,9 +332,11 @@ void IR_Generator::emitRuntimeFailureIf(Value *condition,
 }
 
 ShortType IR_Generator::variableType(const std::string &name, bool array) const {
+    for (auto it = local_type_scopes.rbegin(); it != local_type_scopes.rend(); ++it) {
+        const auto local = it->find(name);
+        if (local != it->end() && local->second.is_array == array) return local->second.type;
+    }
     if (!array) {
-        const auto local = active_local_types.find(name);
-        if (local != active_local_types.end()) return local->second;
         const auto global = global_scalar_types.find(name);
         if (global != global_scalar_types.end()) return global->second;
     } else {
@@ -384,20 +386,47 @@ Value *IR_Generator::get_condition() {
 }
 
 int IR_Generator::visit(AST_PROGRAM *program) {
+    emitting_global_declarations = true;
     program->decl_block->accept(*this);
+    emitting_global_declarations = false;
     program->functions->accept(*this);
 
     FunctionType *ftype = FunctionType::get(i32Ty(), false);
     main_function = Function::Create(ftype, GlobalValue::ExternalLinkage, "main", module);
     BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry", main_function);
     Builder.SetInsertPoint(BB);
+    symbol_table_obj.push_block(BB);
+    local_type_scopes.push_back({});
     program->code_block->accept(*this);
     if (!Builder.GetInsertBlock()->getTerminator())
         Builder.CreateRet(ConstantInt::get(i32Ty(), 0, true));
+    local_type_scopes.pop_back();
+    symbol_table_obj.pop_block();
     return 0;
 }
 
 int IR_Generator::visit(AST_DATA_DECLARATION_BLOCK *decl_block) {
+    if (!emitting_global_declarations) {
+        if (Builder.GetInsertBlock() == nullptr || local_type_scopes.empty()) {
+            ShowError("local declaration reached lowering without an active lexical scope");
+            return 0;
+        }
+        Function *function = Builder.GetInsertBlock()->getParent();
+        for (const auto &entry : decl_block->typed_scalars) {
+            AllocaInst *alloca = createEntryBlockAlloca(function, parseType(entry.type), entry.name);
+            Builder.CreateStore(zeroValue(entry.type), alloca);
+            symbol_table_obj.declare_locals(entry.name, alloca);
+            local_type_scopes.back()[entry.name] = LocalTypeInfo{entry.type, false};
+        }
+        for (const auto &entry : decl_block->typed_arrays) {
+            ArrayType *array_type = ArrayType::get(parseType(entry.type), entry.size);
+            AllocaInst *alloca = createEntryBlockAlloca(function, array_type, entry.name);
+            Builder.CreateStore(ConstantAggregateZero::get(array_type), alloca);
+            symbol_table_obj.declare_locals(entry.name, alloca);
+            local_type_scopes.back()[entry.name] = LocalTypeInfo{entry.type, true};
+        }
+        return 0;
+    }
     for (const auto &entry : decl_block->typed_scalars) {
         global_scalar_types[entry.name] = entry.type;
         if (module->getNamedGlobal(entry.name)) continue;
@@ -454,7 +483,7 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
     BasicBlock *BB = BasicBlock::Create(ShortGlobalContext, "entry", llvm_function);
     symbol_table_obj.push_block(BB);
     Builder.SetInsertPoint(BB);
-    active_local_types.clear();
+    local_type_scopes.push_back({});
     const ShortType saved_return_type = active_function_return_type;
     active_function_return_type = function->type;
 
@@ -466,7 +495,7 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
         AllocaInst *alloca = createEntryBlockAlloca(llvm_function, parseType(parameter.type), name);
         Builder.CreateStore(&*ai, alloca);
         symbol_table_obj.declare_locals(name, alloca);
-        active_local_types[name] = parameter.type;
+        local_type_scopes.back()[name] = LocalTypeInfo{parameter.type, false};
     }
 
     const std::size_t saved_break = break_targets.size();
@@ -474,12 +503,12 @@ int IR_Generator::visit(AST_FUNCTION_RULE *function) {
     function->block_statement->accept(*this);
     if (!Builder.GetInsertBlock()->getTerminator()) {
         if (llvm_function->getReturnType()->isVoidTy()) Builder.CreateRetVoid();
-        else Builder.CreateRet(zeroValue(function->type));
+        else Builder.CreateUnreachable();
     }
     break_targets.resize(saved_break);
     continue_targets.resize(saved_continue);
     symbol_table_obj.pop_block();
-    active_local_types.clear();
+    local_type_scopes.pop_back();
     active_function_return_type = saved_return_type;
     return 0;
 }
@@ -542,10 +571,36 @@ int IR_Generator::visit(AST_ASSIGNMENT_RULE *assignment_statement) {
 }
 
 int IR_Generator::visit(AST_STATEMENTS_BLOCK *block_statement) {
+    if (block_statement == nullptr || Builder.GetInsertBlock() == nullptr) return 0;
+    if (block_statement->lexical_scope) {
+        symbol_table_obj.push_block(Builder.GetInsertBlock());
+        local_type_scopes.push_back({});
+    }
+
+    Function *function = Builder.GetInsertBlock()->getParent();
+    std::map<std::string, BasicBlock*> labels;
     for (AST_STATEMENT_RULE *statement : block_statement->statements) {
-        if (Builder.GetInsertBlock() && Builder.GetInsertBlock()->getTerminator()) break;
-        statement->accept(*this);
+        auto *label = dynamic_cast<AST_LABEL_RULE *>(statement);
+        if (label != nullptr) {
+            labels.emplace(label->label,
+                           BasicBlock::Create(ShortGlobalContext, "label_" + label->label, function));
+        }
+    }
+    goto_label_scopes.push_back(labels);
+
+    for (AST_STATEMENT_RULE *statement : block_statement->statements) {
+        if (Builder.GetInsertBlock() && Builder.GetInsertBlock()->getTerminator() &&
+            dynamic_cast<AST_LABEL_RULE *>(statement) == nullptr) {
+            continue;
+        }
+        if (statement) statement->accept(*this);
         load_variable = 0;
+    }
+
+    goto_label_scopes.pop_back();
+    if (block_statement->lexical_scope) {
+        local_type_scopes.pop_back();
+        symbol_table_obj.pop_block();
     }
     return 0;
 }
@@ -681,14 +736,32 @@ int IR_Generator::visit(AST_RETURN_STATEMENT *statement) {
         Value *value = asExactLoweredType(get_expression(), active_function_return_type);
         if (value) Builder.CreateRet(value);
     } else {
-        Builder.CreateRet(Constant::getNullValue(function->getReturnType()));
+        ShowError("non-void return reached lowering without a value");
+        Builder.CreateUnreachable();
     }
     return 0;
 }
 
 int IR_Generator::visit(AST_GOTO_STATEMENT_RULE *goto_statement) {
-    (void)goto_statement;
-    ShowError("goto is rejected by the beta-0.4 executable semantic contract");
+    if (goto_label_scopes.empty()) {
+        ShowError("goto reached lowering without a lexical label scope");
+        return 0;
+    }
+    const auto target = goto_label_scopes.back().find(goto_statement->label);
+    if (target == goto_label_scopes.back().end()) {
+        ShowError("goto target was not resolved by semantic analysis");
+        return 0;
+    }
+    if (goto_statement->condition == nullptr) {
+        Builder.CreateBr(target->second);
+        return 0;
+    }
+    goto_statement->condition->accept(*this);
+    Value *condition = get_condition();
+    Function *function = Builder.GetInsertBlock()->getParent();
+    BasicBlock *next = BasicBlock::Create(ShortGlobalContext, "goto_next", function);
+    Builder.CreateCondBr(condition, target->second, next);
+    Builder.SetInsertPoint(next);
     return 0;
 }
 
@@ -743,7 +816,18 @@ int IR_Generator::visit(AST_PRINT_RULE *print_statement) {
 }
 
 int IR_Generator::visit(AST_LABEL_RULE *label_statement) {
-    (void)label_statement;
+    if (goto_label_scopes.empty()) {
+        ShowError("label reached lowering without a lexical label scope");
+        return 0;
+    }
+    const auto target = goto_label_scopes.back().find(label_statement->label);
+    if (target == goto_label_scopes.back().end()) {
+        ShowError("label was not registered before lowering");
+        return 0;
+    }
+    if (Builder.GetInsertBlock() && !Builder.GetInsertBlock()->getTerminator())
+        Builder.CreateBr(target->second);
+    Builder.SetInsertPoint(target->second);
     return 0;
 }
 
@@ -890,12 +974,17 @@ int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
     string &array_name = variable_array_int->array_name;
     variable_array_int->index->accept(*this);
     Value *index = get_expression();
+    Value *array_pointer = symbol_table_obj.return_locals(array_name);
     GlobalVariable *array_global = module->getNamedGlobal(array_name);
-    if (!array_global) {
+    if (array_pointer == nullptr) array_pointer = array_global;
+    if (!array_pointer) {
         ret = ShowError("Unknown Array name " + array_name);
         return 0;
     }
-    ArrayType *array_type = dyn_cast<ArrayType>(array_global->getValueType());
+    Type *stored_type = nullptr;
+    if (auto *alloca = dyn_cast<AllocaInst>(array_pointer)) stored_type = alloca->getAllocatedType();
+    else if (array_global != nullptr) stored_type = array_global->getValueType();
+    ArrayType *array_type = dyn_cast_or_null<ArrayType>(stored_type);
     if (!array_type) {
         ret = ShowError("Variable is not an array " + array_name);
         return 0;
@@ -909,7 +998,7 @@ int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
     vector<Value*> array_index;
     array_index.push_back(ConstantInt::get(i32Ty(), 0, true));
     array_index.push_back(index);
-    ret = Builder.CreateInBoundsGEP(array_global->getValueType(), array_global, array_index, array_name + "_IDX");
+    ret = Builder.CreateInBoundsGEP(array_type, array_pointer, array_index, array_name + "_IDX");
     load_type = variableType(array_name, true);
     ret_type = load_type;
     load_variable = 1;
@@ -1058,7 +1147,9 @@ int IR_Generator::visit(AST_FUNCTION_CALL_EXPRESSION *call){
         args.push_back(value);
         ++argument_index;
     }
-    ret = Builder.CreateCall(func, args, "calltmp");
+    ret = func->getReturnType()->isVoidTy()
+        ? Builder.CreateCall(func, args)
+        : Builder.CreateCall(func, args, "calltmp");
     const auto return_type = function_return_types.find(call->function_name);
     ret_type = return_type == function_return_types.end() ? ShortType::Int : return_type->second;
     load_variable = 0;
