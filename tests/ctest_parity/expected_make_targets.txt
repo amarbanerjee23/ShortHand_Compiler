@@ -9,5 +9,6 @@ test-diagnostics
 test-runtime-linking
 test-conformance
 test-semantic-differential
+test-control-flow
 test-llvm
 test-ai
