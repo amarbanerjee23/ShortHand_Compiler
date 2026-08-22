@@ -1,0 +1,5 @@
+int value;
+def int identity(int input;) {
+    return input;
+};
+value = identity("wrong");

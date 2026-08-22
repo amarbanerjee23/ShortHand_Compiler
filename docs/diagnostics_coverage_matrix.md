@@ -1,6 +1,6 @@
 # Diagnostics coverage matrix
 
-diagnostics_coverage_contract_version: 1.3.0
+diagnostics_coverage_contract_version: 1.4.0
 diagnostics_coverage_status: stable_coded_stage_matrix_guarded
 diagnostic_code_prefix: SHD
 covered_stages: parser, module, semantic, ai, greenai, lowering, runtime
@@ -11,7 +11,7 @@ runtime_failure_status: stable_code_cross_mode_differential_guarded
 runtime_abi_change: none
 production_claim_boundary: matrix_is_not_parser_recovery_or_localization_completion
 
-PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 adds exact type, storage, conversion, operator, condition and ownership failures.
+PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 added exact type, storage, conversion, operator, condition and ownership failures. PR85 adds deterministic function, scope, return and label-resolution failures.
 
 ## Code allocation
 
@@ -54,7 +54,7 @@ These codes are executed by `scripts/check_parser_robustness.sh`.
 | `SHD3003` | Parser-valid type use remains outside the beta-0.4 executable boundary, including owned string arrays and array parameters |
 | `SHD3004` | Function call arity differs from the declared signature |
 | `SHD3005` | `return` appears outside a function |
-| `SHD3006` | Parser-valid `goto` is rejected until identical interpreter/LLVM jump semantics exist |
+| `SHD3006` | Historical beta-0.4 code for the former unsupported-`goto` boundary; retained and never reused |
 | `SHD3007` | Function return usage violates its declared return contract |
 | `SHD3008` | Scalar or array reference is undeclared |
 | `SHD3009` | Duplicate function definition or conflicting imported function identity |
@@ -84,6 +84,18 @@ Runtime errors are deterministic language failures, not sanitizer crashes. `scri
 | `SHD3015` | A branch or condition loop uses a value other than `bool` or `int`. |
 | `SHD3016` | An ownership-state transition, borrow or value access violates lifetime rules. |
 
+## PR85 function and control-flow allocation
+
+| Code | Contract |
+| --- | --- |
+| `SHD3017` | A lexical statement block contains a duplicate label. |
+| `SHD3018` | A `goto` target is undefined in the current lexical block. |
+| `SHD3019` | A `goto` attempts to leave a lexical block or cross a declaration lifetime boundary. |
+| `SHD3020` | A non-void function does not return a value on every structured path. |
+| `SHD3021` | A declaration duplicates a name in the same lexical scope. |
+| `SHD3022` | A void function result is consumed by a value-requiring context. |
+| `SHD3023` | A function call cannot be resolved during semantic analysis. |
+
 ## Output contract
 
 A ranged compile-time error is rendered as:
@@ -98,11 +110,11 @@ Runtime implementations may include engine-specific source rendering, but differ
 
 ## Lowering safety
 
-Undefined function calls are validated before LLVM IR generation and emit `SHD6001`. PR70 validates direct-import visibility and graph-wide symbol uniqueness before multi-file lowering. PR72 additionally validates function signatures and executable type boundaries before either interpreter execution or lowering.
+Undefined function calls are validated before LLVM IR generation and emit `SHD3023`. `SHD6001` remains the stable lowering-invariant code for an unresolved function that reaches lowering despite semantic validation. PR70 validates direct-import visibility and graph-wide symbol uniqueness before multi-file lowering. PR72 validates function signatures and executable type boundaries, and PR85 completes source-level call and label resolution before execution or lowering.
 
 ## Guarded evidence
 
-The live diagnostics gate proves representative behavior for parser syntax, core semantics, AI warnings, AI shape validation, Green AI contracts and lowering preflight. Parser robustness proves deterministic resource and lexical failures. Module gates prove package and resolver failures. The PR72 differential gate adds semantic negatives and runtime-domain failures across interpreter, `lli` and native execution.
+The live diagnostics gate proves representative behavior for parser syntax, core semantics, undefined functions, AI warnings, AI shape validation and Green AI contracts. Parser robustness proves deterministic resource and lexical failures. Module gates prove package and resolver failures. The PR72 differential gate adds semantic negatives and runtime-domain failures across interpreter, `lli` and native execution. The PR85 control-flow gate covers SHD3017 through SHD3023 in run, bitcode and native compilation modes.
 
 Each error case must fail, each warning-only case must succeed, and every catalogued code must remain unique and stage-owned.
 

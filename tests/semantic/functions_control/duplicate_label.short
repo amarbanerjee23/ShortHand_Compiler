@@ -1,0 +1,6 @@
+int value;
+value = 1;
+same:
+value = value + 1;
+same:
+print value;

@@ -98,15 +98,30 @@ Interpreter::RuntimeValue Interpreter::evaluate(AST_EXPRESSION_RULE *expression)
     return current_value;
 }
 
-void Interpreter::initializeDeclarations(AST_DATA_DECLARATION_BLOCK *decl_block)
+void Interpreter::initializeDeclarationsInto(AST_DATA_DECLARATION_BLOCK *decl_block, Frame &frame)
 {
     if (decl_block == nullptr) return;
-    Frame &global = globalFrame();
-    for (const auto &entry : decl_block->typed_scalars)
-        global.scalars.emplace(entry.name, defaultValue(entry.type));
-    for (const auto &entry : decl_block->typed_arrays)
-        global.arrays.emplace(entry.name, vector<RuntimeValue>(
-            static_cast<std::size_t>(entry.size), defaultValue(entry.type)));
+    for (const auto &entry : decl_block->typed_scalars) {
+        if (!frame.scalars.emplace(entry.name, defaultValue(entry.type)).second) {
+            runtimeError(decl_block, diag::RuntimeInvalidState,
+                         "duplicate scalar declaration reached runtime: `" + entry.name + "`");
+            return;
+        }
+    }
+    for (const auto &entry : decl_block->typed_arrays) {
+        if (!frame.arrays.emplace(entry.name, vector<RuntimeValue>(
+                static_cast<std::size_t>(entry.size), defaultValue(entry.type))).second) {
+            runtimeError(decl_block, diag::RuntimeInvalidState,
+                         "duplicate array declaration reached runtime: `" + entry.name + "`");
+            return;
+        }
+    }
+}
+
+void Interpreter::initializeDeclarations(AST_DATA_DECLARATION_BLOCK *decl_block)
+{
+    if (frames.empty()) frames.push_back(Frame{});
+    initializeDeclarationsInto(decl_block, frames.back());
 }
 
 void Interpreter::registerFunctions(AST_FUNCTION_LIST_RULE *list, const std::string &source_path)
@@ -122,7 +137,7 @@ void Interpreter::registerFunctions(AST_FUNCTION_LIST_RULE *list, const std::str
 bool Interpreter::addLibraryProgram(AST_PROGRAM *program, const std::string &source_path)
 {
     if (program == nullptr) return false;
-    initializeDeclarations(program->decl_block);
+    initializeDeclarationsInto(program->decl_block, globalFrame());
     registerFunctions(program->functions, source_path);
     return true;
 }
@@ -254,20 +269,26 @@ int Interpreter::invokeFunction(const void *call_node,
     }
 
     const FlowSignal caller_flow = flow;
+    const string caller_goto_target = goto_target;
     const RuntimeValue caller_return = return_value;
     const string caller_source = active_source;
     frames.push_back(std::move(frame));
     ++call_depth;
     flow = FlowSignal::Normal;
+    goto_target.clear();
     return_value = defaultValue(function->type);
     auto source = function_sources.find(function);
     if (source != function_sources.end()) active_source = source->second;
 
     if (function->block_statement) function->block_statement->accept(*this);
 
-    if (flow == FlowSignal::Break || flow == FlowSignal::Continue) {
+    if (flow == FlowSignal::Break || flow == FlowSignal::Continue || flow == FlowSignal::Goto) {
         runtimeError(function, diag::RuntimeInvalidState,
-                     "loop control escaped function `" + name + "`");
+                     "control-flow signal escaped function `" + name + "`");
+    }
+    if (!runtime_failed && function->type != ShortType::Void && flow != FlowSignal::Return) {
+        runtimeError(function, diag::RuntimeInvalidState,
+                     "non-void function completed without a return value: `" + name + "`");
     }
     result = flow == FlowSignal::Return ? return_value : defaultValue(function->type);
 
@@ -275,6 +296,7 @@ int Interpreter::invokeFunction(const void *call_node,
     frames.pop_back();
     active_source = caller_source;
     flow = caller_flow;
+    goto_target = caller_goto_target;
     return_value = caller_return;
     return runtime_failed ? 1 : 0;
 }
@@ -284,8 +306,8 @@ int Interpreter::visit(AST_PROGRAM *program)
     initializeDeclarations(program->decl_block);
     registerFunctions(program->functions, entry_source);
     if (program->code_block) program->code_block->accept(*this);
-    if (!runtime_failed && (flow == FlowSignal::Break || flow == FlowSignal::Continue))
-        runtimeError(program, diag::RuntimeInvalidState, "loop control escaped the top-level program");
+    if (!runtime_failed && flow != FlowSignal::Normal)
+        runtimeError(program, diag::RuntimeInvalidState, "control-flow signal escaped the top-level program");
     return runtime_failed ? 1 : 0;
 }
 
@@ -352,10 +374,42 @@ int Interpreter::visit(AST_ASSIGNMENT_RULE *assignment_statement)
 
 int Interpreter::visit(AST_STATEMENTS_BLOCK *block_statement)
 {
-    for (AST_STATEMENT_RULE *statement : block_statement->statements) {
-        if (runtime_failed || flow != FlowSignal::Normal) break;
-        if (statement) statement->accept(*this);
+    if (block_statement == nullptr) return 0;
+    if (block_statement->lexical_scope) frames.push_back(Frame{});
+
+    std::map<std::string, std::size_t> labels;
+    for (std::size_t i = 0; i < block_statement->statements.size(); ++i) {
+        auto *label = dynamic_cast<AST_LABEL_RULE *>(block_statement->statements[i]);
+        if (label != nullptr) labels.emplace(label->label, i);
     }
+
+    std::size_t pc = 0;
+    while (pc < block_statement->statements.size() && !runtime_failed) {
+        if (flow != FlowSignal::Normal) break;
+        AST_STATEMENT_RULE *statement = block_statement->statements[pc];
+        if (statement) statement->accept(*this);
+        if (runtime_failed) break;
+        if (flow == FlowSignal::Goto) {
+            const auto target = labels.find(goto_target);
+            if (target == labels.end()) {
+                runtimeError(statement, diag::RuntimeInvalidState,
+                             "goto target escaped its validated lexical block: `" + goto_target + "`");
+                break;
+            }
+            if (++goto_transfers > kMaxGotoTransfers) {
+                runtimeError(statement, diag::RuntimeInvalidState,
+                             "maximum deterministic goto transfer budget exceeded");
+                break;
+            }
+            flow = FlowSignal::Normal;
+            goto_target.clear();
+            pc = target->second + 1;
+            continue;
+        }
+        if (flow != FlowSignal::Normal) break;
+        ++pc;
+    }
+    if (block_statement->lexical_scope) frames.pop_back();
     return runtime_failed ? 1 : 0;
 }
 
@@ -451,9 +505,13 @@ int Interpreter::visit(AST_WHILE_LOOP_STATEMENT_RULE *while_statement)
 
 int Interpreter::visit(AST_GOTO_STATEMENT_RULE *goto_statement)
 {
-    runtimeError(goto_statement, diag::RuntimeInvalidState,
-                 "goto reached runtime despite semantic rejection");
-    return 1;
+    if (goto_statement->condition != nullptr) {
+        const RuntimeValue condition = evaluate(goto_statement->condition);
+        if (runtime_failed || !truthy(condition)) return runtime_failed ? 1 : 0;
+    }
+    goto_target = goto_statement->label;
+    flow = FlowSignal::Goto;
+    return 0;
 }
 
 int Interpreter::visit(AST_BREAK *)

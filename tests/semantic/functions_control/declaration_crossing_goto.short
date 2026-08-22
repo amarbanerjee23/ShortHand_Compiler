@@ -1,0 +1,10 @@
+int value;
+def int declaration_crossing() {
+    int local;
+    local = 1;
+    goto after;
+    int hidden;
+    after:
+    return local;
+};
+value = declaration_crossing();

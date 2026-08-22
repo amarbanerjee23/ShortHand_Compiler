@@ -1,0 +1,26 @@
+id	area	source	anchor	fixture	expectation	rationale
+CTL001	functions	parser	FUNCTION_PARAMETER_LIST_RULE	tests/semantic/functions_control/functions_control.short	accept	Zero-parameter and typed legacy parameter lists are both versioned syntax.
+CTL002	functions	parser	IDENTIFIER '(' EXPRESSION_LIST_OPT ')'	tests/semantic/functions_control/functions_control.short	accept	A function call is a first-class expression.
+CTL003	functions	parser	EXPRESSION_LIST_RULE ',' EXPRESSION_RULE	tests/semantic/functions_control/functions_control.short	accept	Arguments accept arbitrary expressions in source order.
+CTL004	functions	semantic	function_return_types	tests/semantic/functions_control/functions_control.short	accept	Calls carry exact declared result types.
+CTL005	functions	interpreter	invokeFunction	tests/semantic/functions_control/functions_control.short	accept	Interpreter frames execute nested and recursive calls.
+CTL006	functions	llvm	CreateCall(func, args, "calltmp")	tests/semantic/functions_control/functions_control.short	accept	LLVM lowers expression calls with exact argument values.
+CTL007	scopes	parser	DECLARATION_STATEMENT_RULE ';'	tests/semantic/functions_control/functions_control.short	accept	Typed declarations are executable statements inside blocks.
+CTL008	scopes	ast	lexical_scope	tests/semantic/functions_control/functions_control.short	accept	Braced blocks explicitly carry lexical-scope identity.
+CTL009	scopes	semantic	declareInCurrentScope	tests/semantic/functions_control/functions_control.short	accept	Same-scope duplicates are rejected while nested shadowing is defined.
+CTL010	scopes	interpreter	frames.push_back(Frame{})	tests/semantic/functions_control/functions_control.short	accept	Interpreter block entry and exit own deterministic storage cleanup.
+CTL011	scopes	llvm	local_type_scopes.push_back({})	tests/semantic/functions_control/functions_control.short	accept	LLVM name and type lookup follows lexical scope nesting.
+CTL012	control	semantic	block_label_scopes	tests/semantic/functions_control/functions_control.short	accept	Goto targets resolve within the current lexical block.
+CTL013	control	interpreter	FlowSignal::Goto	tests/semantic/functions_control/functions_control.short	accept	Interpreter goto execution uses an explicit program-counter transfer.
+CTL014	control	llvm	goto_label_scopes	tests/semantic/functions_control/functions_control.short	accept	LLVM predeclares lexical label blocks for conditional and unconditional forward and backward branches.
+CTL015	control	semantic	SemanticInvalidGotoScope	tests/semantic/functions_control/cross_scope_goto.short	reject	Goto cannot bypass block cleanup by escaping a lexical scope.
+CTL016	control	semantic	lexical declaration boundary	tests/semantic/functions_control/declaration_crossing_goto.short	reject	Goto cannot cross a local declaration lifetime boundary.
+CTL017	errors	semantic	SemanticDuplicateLabel	tests/semantic/functions_control/duplicate_label.short	reject	Duplicate labels have a stable source diagnostic.
+CTL018	errors	semantic	SemanticUndefinedLabel	tests/semantic/functions_control/undefined_label.short	reject	Undefined labels fail before execution and lowering.
+CTL019	errors	semantic	SemanticMissingReturn	tests/semantic/functions_control/missing_return.short	reject	Non-void functions must return on every structured path.
+CTL020	errors	semantic	SemanticDuplicateDeclaration	tests/semantic/functions_control/duplicate_local.short	reject	Same-scope local redeclaration is deterministic and fail-closed.
+CTL021	errors	semantic	SemanticVoidValueUsed	tests/semantic/functions_control/void_value.short	reject	Void results cannot enter value-consuming contexts.
+CTL022	errors	semantic	SemanticUndefinedFunction	tests/semantic/functions_control/undefined_function.short	reject	Undefined calls fail in semantic analysis rather than lowering.
+CTL023	errors	semantic	SemanticTypeMismatch	tests/semantic/functions_control/argument_type.short	reject	Expression arguments retain exact parameter typing.
+CTL024	compatibility	parser	READ_VARIABLE_LIST_RULE	tests/conformance/beta_0_2/core_control.short	accept	Read statements and beta-0.2 valid syntax remain accepted.
+CTL025	compatibility	interpreter	FlowSignal::Continue	tests/semantic/differential/core_control.short	accept	Existing break and continue behavior remains executable.

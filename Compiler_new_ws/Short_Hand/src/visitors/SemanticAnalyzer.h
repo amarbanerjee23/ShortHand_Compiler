@@ -68,6 +68,11 @@ public:
     int visit(AST_FUNCTION_CALL_EXPRESSION*) override;
 
 private:
+    struct VariableInfo {
+        ShortType type = ShortType::Void;
+        bool is_array = false;
+    };
+
     std::map<std::string, ModelDeclarationData> models;
     std::map<std::string, TensorDeclarationData> tensors;
     std::map<std::string, GreenAIContractData> contracts;
@@ -78,7 +83,8 @@ private:
     std::set<std::string> globals;
     std::map<std::string, ShortType> global_types;
     std::map<std::string, ShortType> global_array_types;
-    std::vector<std::map<std::string, ShortType>> local_scopes;
+    std::vector<std::map<std::string, VariableInfo>> local_scopes;
+    std::vector<std::set<std::string>> block_label_scopes;
     std::map<std::string, ShortType> function_return_types;
     std::map<std::string, std::vector<ShortType>> function_parameter_types;
     std::vector<ShortType> return_types;
@@ -90,6 +96,8 @@ private:
     bool lookupType(const std::string &name, ShortType &type, bool &is_array) const;
     ShortType expressionType(AST_EXPRESSION_RULE *expression);
     bool requireConditionType(const void *node, AST_EXPRESSION_RULE *expression);
+    bool definitelyReturns(AST_STATEMENT_RULE *statement) const;
+    void declareInCurrentScope(AST_DATA_DECLARATION_BLOCK *block);
     void validateCall(const void *node, const std::string &name, std::size_t arity);
     void validateCallTypes(const void *node,
                            const std::string &name,

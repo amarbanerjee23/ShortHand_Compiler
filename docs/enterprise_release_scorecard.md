@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-08-22-pr84
+enterprise_release_scorecard_version: 2026-08-22-pr85
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -22,9 +22,9 @@ This scorecard summarizes active release controls. The machine-readable authorit
 
 | Control family | Status | Evidence / remaining condition |
 | --- | --- | --- |
-| Build, grammar, diagnostics and cross-mode tests | Implemented for defined beta-0.4 typed core | CI, Make, CMake/CTest, conformance, type/memory and differential gates; PR85 completes the next language layer. |
+| Build, grammar, diagnostics and cross-mode tests | Implemented for defined beta-0.5 typed/control-flow core | CI, Make, CMake/CTest, conformance, type/memory, control-flow and differential gates; PR86 owns the remaining language/package layer. |
 | Memory, UB, fuzz and concurrency safety | Implemented for current baseline | ASan/LSan/UBSan, libFuzzer and TSan; PR87 adds serving load/fault/soak evidence. |
-| Toolchain, platform, ABI and packaging | Implemented for declared tiers | Reproducible clean builds, frozen ABI and installed consumers; PR86 adds enterprise packages/stdlib/FFI. |
+| Toolchain, platform, ABI and packaging | Implemented for declared tiers | Reproducible clean builds, frozen ABI and installed consumers; PR86 adds source composites/ownership integration plus enterprise packages/stdlib/FFI. |
 | Security and dependency governance | Implemented for current contract | CodeQL, Trivy, dependency delta, license policy, pinned actions and expiring exceptions. |
 | Container and Kubernetes | Implemented for CLI/compiler deployment contract | Hardened multi-arch image and live Kind checks; no public service/ingress claim. |
 | Backend execution | Implemented for `linux-x64-cpu-v1` | ONNX Runtime CPU output `42`; PR94 adds a representative AI workload. |

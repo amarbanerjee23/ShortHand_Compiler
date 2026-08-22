@@ -1,0 +1,107 @@
+int result;
+string text;
+
+def int zero() {
+    return 3;
+};
+
+def int left() {
+    print "left";
+    return 1;
+};
+
+def int right() {
+    print "right";
+    return 2;
+};
+
+def int add(int first; int second;) {
+    return first + second;
+};
+
+def int combine3(int first; int second; int third;) {
+    return first + second + third;
+};
+
+def int factorial(int value;) {
+    if value <= 1 {
+        return 1;
+    } else {
+        return value * factorial(value - 1);
+    }
+};
+
+def int scoped(int value;) {
+    int local;
+    local = value;
+    {
+        int local;
+        local = 10;
+        print "inner", local;
+    }
+    print "outer", local;
+    return local;
+};
+
+def string keep(string value;) {
+    {
+        string value;
+        value = "inner-string";
+        print "shadow", value;
+    }
+    return value;
+};
+
+def int local_array(int value;) {
+    int values[2];
+    values[0] = value;
+    values[1] = value + 1;
+    {
+        int values[1];
+        values[0] = 20;
+        print "array inner", values[0];
+    }
+    print "array outer", values[0], values[1];
+    return values[0] + values[1];
+};
+
+def int controlled(int limit;) {
+    int i,total;
+    i = 0;
+    total = 0;
+    loop i = 0, 1, limit {
+        if i == 1 {
+            continue;
+        }
+        total = total + i;
+    }
+    goto finished if total > 0;
+    total = -1;
+    goto finished;
+    finished:
+    return total;
+};
+
+def int counted_goto(int limit;) {
+    int counter;
+    counter = 0;
+    again:
+    counter = counter + 1;
+    goto again if counter < limit;
+    return counter;
+};
+
+def int unconditional_goto() {
+    int value;
+    value = 1;
+    goto done;
+    value = -1;
+    done:
+    return value;
+};
+
+result = add(left(), right());
+result = result + zero() + combine3(1, 2, 3) + factorial(5) + scoped(7) + local_array(4) + controlled(4) + counted_goto(3) + unconditional_goto();
+text = keep("outer-string");
+print "text", text;
+print "result", result;

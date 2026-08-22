@@ -1,8 +1,8 @@
 # ShortHand Language Specification
 
-Language version: beta-0.4
+Language version: beta-0.5
 
-Conformance contract: beta-0.4
+Conformance contract: beta-0.5
 
 Base grammar version: beta-0.2
 
@@ -16,9 +16,9 @@ Historical stability marker retained for earlier gates: Language version: beta-0
 
 ShortHand is a C++ and LLVM-first compiled Green AI language. Python is not required for the official compiler, runtime, validation, conformance, tests or evidence path.
 
-## Beta-0.4 objective
+## Beta-0.5 objective
 
-Beta-0.4 is the active layered language contract. It combines the beta-0.2 base grammar, the beta-0.3 module/package extension and deterministic resolver, the beta-0.4 executable type extension, and the `shorthand.c3eco.language.v1` candidate-evidence declaration extension. The accepted base scanner/parser surface is documented in `docs/language_grammar_ebnf.md` and traced by `tests/conformance/grammar_matrix_beta_0_2.tsv`. Modules are traced by `tests/conformance/module_matrix_beta_0_3.tsv` and `scripts/check_module_resolution.sh`. Type behavior is traced by `tests/conformance/type_matrix_beta_0_4.tsv`, `docs/production_type_memory_model.md` and cross-mode differential execution.
+Beta-0.5 is the active layered language contract. It combines the beta-0.2 base grammar, the beta-0.3 module/package extension and deterministic resolver, the beta-0.4 executable type extension, the beta-0.5 function/control-flow extension, and the `shorthand.c3eco.language.v1` candidate-evidence declaration extension. The accepted base scanner/parser surface is documented in `docs/language_grammar_ebnf.md` and traced by `tests/conformance/grammar_matrix_beta_0_2.tsv`. Modules are traced by `tests/conformance/module_matrix_beta_0_3.tsv` and `scripts/check_module_resolution.sh`. Type behavior is traced by `tests/conformance/type_matrix_beta_0_4.tsv`; function and control-flow behavior is traced by `tests/conformance/functions_control_matrix_beta_0_5.tsv` and `docs/functions_control_error_semantics.md`.
 
 The matrix covers:
 
@@ -33,6 +33,7 @@ The matrix covers:
 - Green AI contract, measurement and report syntax,
 - beta-0.3 module, import and package declarations,
 - beta-0.4 float, string and typed-array execution,
+- beta-0.5 expression calls, lexical declarations, recursion, cleanup and resolved labels,
 - first-class C3-ECO candidate-evidence declarations,
 - explicit parser and execution boundaries that remain unsupported.
 
@@ -48,7 +49,7 @@ Parser-only acceptance is not evidence that a program is semantically valid or e
 
 ## Program structure
 
-A beta-0.4 source file contains an optional beta-0.3 module/package preamble followed by the compatible base program body:
+A beta-0.5 source file contains an optional beta-0.3 module/package preamble followed by the compatible base program body:
 
 1. one or more primitive declaration statements,
 2. zero or more function definitions,
@@ -56,7 +57,7 @@ A beta-0.4 source file contains an optional beta-0.3 module/package preamble fol
 
 Primitive declarations and functions have an ordered top-level position. AI and Green AI constructs are logic statements. Blocks and the top-level logic section are non-empty.
 
-Function parameter declarations are semicolon-terminated. Empty parameter lists are not accepted by the current parser and remain an explicit beta boundary.
+Function parameter declarations remain semicolon-terminated for compatibility. Empty parameter lists are accepted. Calls take zero or more arbitrary expressions and evaluate them from left to right. Typed declarations inside function bodies and nested braced blocks have lexical scope; nested blocks may shadow outer names, while same-scope redeclaration is rejected.
 
 ## Modules, packages and deterministic resolution
 
@@ -116,20 +117,24 @@ Beta-0.3 also provides the ten first-class `shorthand.c3eco.language.v1` declara
 
 `int`, `bool`, binary64 `float`/`double`, immutable `string` and fixed numeric or boolean arrays are covered by `docs/execution_semantics_beta_0_4.md`. `float` and `double` name the same binary64 type. Assignments, function arguments, returns, operators and indices are checked exactly, with no implicit narrowing. String literals are general expressions and string equality is content-based.
 
-`shorthand.type_memory.v1` also defines deterministic descriptors for slices, records, enums, options and results plus a guarded ownership state machine. Their source syntax is not exposed in beta-0.4. Arrays of owned strings remain rejected until generated element destruction and move semantics exist. Parser acceptance or descriptor availability must not be presented as executable support.
+`shorthand.type_memory.v1` also defines deterministic descriptors for slices, records, enums, options and results plus a guarded ownership state machine. Their source syntax is not exposed in beta-0.5. Arrays of owned strings remain rejected until generated element destruction and move semantics exist. Parser acceptance or descriptor availability must not be presented as executable support.
+
+## Functions and structured control flow
+
+`shorthand.control_flow.v1` defines expression calls, recursion, lexical local storage, structured returns and labels. Non-void functions must return on every structured path. `break` and `continue` remain loop-only. A `goto` target must be a unique label in the same statement block, and a jump cannot cross a local declaration boundary. These restrictions prevent jumps from bypassing initialization or lexical cleanup.
+
+Interpreter frames and LLVM lexical symbol tables implement the same shadowing and lifetime rules. The guarded positive program must produce identical output in interpreter, `lli` and native modes. Stable SHD3017 through SHD3023 diagnostics cover duplicate or undefined labels, illegal scope transfer, missing returns, duplicate declarations, void-value consumption and undefined functions.
 
 ## Compatibility and boundaries
 
-Beta-0.4 is additive over valid beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest.
+Beta-0.5 is additive over valid beta-0.4, beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest. The former empty-parameter-list rejection is intentionally superseded by the beta-0.5 function contract.
 
 The following are explicitly outside the current grammar contract:
 
 - empty programs,
 - empty blocks,
-- empty function parameter lists,
 - `for` syntax,
 - parsed `while` syntax,
-- arbitrary expression arguments in function calls,
 - slice, record, enum, option/result and ownership syntax,
 - implicit numeric conversions,
 - non-`>=` quality guardrail operators,
@@ -137,8 +142,8 @@ The following are explicitly outside the current grammar contract:
 - production registry publication and remote dependency resolution,
 - a stable standard library or general-purpose C/C++ FFI.
 
-These are documented constraints, not production-readiness claims. Parser robustness, modules, deterministic multi-file resolution and the guarded beta-0.4 typed subset are implemented. PR85-PR86 own the remaining control-flow, package, standard-library and FFI boundaries; later source-level composite support must preserve or version `shorthand.type_memory.v1`.
+These are documented constraints, not production-readiness claims. Parser robustness, modules, deterministic multi-file resolution and the guarded beta-0.5 typed/control-flow subset are implemented. PR86 owns the remaining source-level composite/ownership, package, standard-library and FFI boundaries and must preserve or explicitly version `shorthand.type_memory.v1`.
 
 ## Runtime and ABI boundary
 
-Beta-0.4 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols.
+Beta-0.5 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols.

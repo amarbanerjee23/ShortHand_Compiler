@@ -147,13 +147,13 @@ static void shorthand_add_c3eco_field(const char *name, const char *value) {
 
 %start PROGRAMME_RULE
 %type <program> PROGRAMME_RULE
-%type <decl_block> DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE DECLARATION_VARIABLE_LIST_RULE
+%type <decl_block> DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE DECLARATION_VARIABLE_LIST_RULE FUNCTION_PARAMETER_LIST_RULE
 %type <functions> FUNCTION_LIST_RULE
 %type <function> FUNCTION_RULE
 %type <code_block> LOGIC_BLOCK
 %type <break_statement> BREAK
-%type <block_statement> STATEMENT_BLOCK_RULE STATEMENT_LIST_RULE
-%type <statement> STATEMENT_RULE
+%type <block_statement> STATEMENT_BLOCK_RULE STATEMENT_LIST_RULE TOP_LEVEL_STATEMENT_LIST_RULE
+%type <statement> STATEMENT_RULE EXECUTABLE_STATEMENT_RULE
 %type <read_statement> READ_VARIABLE_LIST_RULE
 %type <variable> VARIABLE_RULE
 %type <print_statement> PRINT_VARIABLE_LIST_RULE
@@ -168,6 +168,7 @@ static void shorthand_add_c3eco_field(const char *name, const char *value) {
 %type <return_statement> RETURN_STATEMENT
 %type <string_val> BACKEND_NAME FORMAT_NAME PRECISION_NAME MQ_NAME DQ_NAME BOUNDARY_NAME C3ECO_FIELD_NAME
 %type <expression> EXPRESSION_RULE
+%type <expression_list> EXPRESSION_LIST_RULE EXPRESSION_LIST_OPT
 %type <type> ShortType
 
 %token ETOK
@@ -280,8 +281,12 @@ FUNCTION_LIST_RULE:
       FUNCTION_LIST_RULE FUNCTION_RULE ';' { $$=$1; $$->push_back($2); located($$, @$); }
     | %empty { $$=located(new AST_FUNCTION_LIST_RULE(), @$); };
 
-FUNCTION_RULE: DEF ShortType IDENTIFIER '(' DECLARATION_STATEMENT_LIST_RULE ')' STATEMENT_BLOCK_RULE
-    { $$=located(new AST_FUNCTION_RULE($2,$3,$5,$7), @$); };
+FUNCTION_RULE: DEF ShortType IDENTIFIER '(' FUNCTION_PARAMETER_LIST_RULE ')' STATEMENT_BLOCK_RULE
+    { $7->setLexicalScope(false); $$=located(new AST_FUNCTION_RULE($2,$3,$5,$7), @$); };
+
+FUNCTION_PARAMETER_LIST_RULE:
+      DECLARATION_STATEMENT_LIST_RULE { $$=$1; }
+    | %empty { $$=located(new AST_DATA_DECLARATION_BLOCK(), @$); };
 
 DECLARATION_STATEMENT_LIST_RULE:
       DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';' { $$=$1; $$->push_back($2); located($$, @$); }
@@ -298,13 +303,27 @@ DECLARATION_VARIABLE_LIST_RULE:
     | IDENTIFIER '[' INT_LITERAL ']' { $$=located(new AST_DATA_DECLARATION_BLOCK(), @$); $$->push_back(string($1),$3); }
     | %empty { $$=located(new AST_DATA_DECLARATION_BLOCK(), @$); };
 
-LOGIC_BLOCK: STATEMENT_LIST_RULE { $$=located(new AST_LOGIC_BLOCK($1), @$); };
-STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}' { $$=$2; located($$, @$); };
+/*
+ * The unbraced programme logic block follows the global declaration and
+ * function sections.  Keep declarations out of this list: accepting the same
+ * ShortType-prefixed production in both places makes all six scalar type
+ * tokens ambiguous at the section boundary.  Braced blocks still use
+ * STATEMENT_LIST_RULE and therefore retain beta-0.5 lexical declarations.
+ */
+LOGIC_BLOCK: TOP_LEVEL_STATEMENT_LIST_RULE { $$=located(new AST_LOGIC_BLOCK($1), @$); };
+TOP_LEVEL_STATEMENT_LIST_RULE:
+      TOP_LEVEL_STATEMENT_LIST_RULE EXECUTABLE_STATEMENT_RULE { $$=$1; $$->push_back($2); located($$, @$); }
+    | EXECUTABLE_STATEMENT_RULE { $$=located(new AST_STATEMENTS_BLOCK(), @$); $$->push_back($1); };
+STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}' { $$=$2; $$->setLexicalScope(true); located($$, @$); };
 STATEMENT_LIST_RULE:
       STATEMENT_LIST_RULE STATEMENT_RULE { $$=$1; $$->push_back($2); located($$, @$); }
     | STATEMENT_RULE { $$=located(new AST_STATEMENTS_BLOCK(), @$); $$->push_back($1); };
 
 STATEMENT_RULE:
+      EXECUTABLE_STATEMENT_RULE { $$=$1; }
+    | DECLARATION_STATEMENT_RULE ';' { $$=$1; located($$, @$); };
+
+EXECUTABLE_STATEMENT_RULE:
       MODEL_DECLARATION { $$=$1; }
     | TENSOR_DECLARATION { $$=$1; }
     | GREENAI_CONTRACT { $$=$1; }
@@ -315,7 +334,6 @@ STATEMENT_RULE:
     | CONTINUE ';' { $$=located(new AST_CONTINUE(), @$); }
     | EXPRESSION_RULE ';' { $$=located(new AST_EXPRESSION_STATEMENT_RULE($1), @$); }
     | VARIABLE_RULE '=' EXPRESSION_RULE ';' { $$=located(new AST_ASSIGNMENT_RULE($1,$3), @$); }
-    | IDENTIFIER '(' READ_VARIABLE_LIST_RULE ')' ';' { $$=located(new AST_FUNCTION_CALL_RULE($1,$3), @$); }
     | STATEMENT_BLOCK_RULE { $$=$1; }
     | IF EXPRESSION_RULE STATEMENT_BLOCK_RULE { $$=located(new AST_IF_STATEMENT($2,$3), @$); }
     | IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE { $$=located(new AST_IF_ELSE_STATEMENT($2,$3,$5), @$); }
@@ -422,12 +440,21 @@ EXPRESSION_RULE:
     | EXPRESSION_RULE AND EXPRESSION_RULE { $$=located(new AST_BINARY_EXPRESSION_RULE($1,$3,"&&"), @$); }
     | '-' EXPRESSION_RULE %prec UMINUS { $$=located(new AST_UNARY_EXPRESSION_RULE($2,"-"), @$); }
     | '(' EXPRESSION_RULE ')' { $$=$2; located($$, @$); }
+    | IDENTIFIER '(' EXPRESSION_LIST_OPT ')' { $$=located(new AST_FUNCTION_CALL_EXPRESSION(string($1),*$3), @$); }
     | VARIABLE_RULE { $$=$1; }
     | INT_LITERAL { $$=located(new AST_LITERAL($1), @$); }
     | FLOAT_LITERAL { $$=located(new AST_FLOAT_LITERAL($1), @$); }
     | STRING_LITERAL { $$=located(new AST_STRING_LITERAL(string($1)), @$); }
     | TRUE { $$=located(new AST_BOOL_LITERAL(true), @$); }
     | FALSE { $$=located(new AST_BOOL_LITERAL(false), @$); };
+
+EXPRESSION_LIST_OPT:
+      EXPRESSION_LIST_RULE { $$=$1; }
+    | %empty { $$=shorthand_track_parser_node(new vector<AST_EXPRESSION_RULE*>()); };
+
+EXPRESSION_LIST_RULE:
+      EXPRESSION_LIST_RULE ',' EXPRESSION_RULE { $$=$1; $$->push_back($3); }
+    | EXPRESSION_RULE { $$=shorthand_track_parser_node(new vector<AST_EXPRESSION_RULE*>()); $$->push_back($1); };
 
 VARIABLE_RULE:
       IDENTIFIER { $$=located(new AST_SIMPLE_VARIABLE(string($1)), @$); }

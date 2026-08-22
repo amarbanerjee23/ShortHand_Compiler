@@ -65,7 +65,7 @@ expect_failure semantic SHD3001 tests/diagnostics/fixtures/break_outside_loop.sh
 expect_warning ai SHD4007 tests/diagnostics/fixtures/ai_incompatible_backend_warning.short run "is not compatible with format onnx"
 expect_failure ai SHD4014 tests/semantic/invalid/ai_shape_mismatch.short run "infer input tensor shape"
 expect_failure greenai SHD5001 tests/diagnostics/fixtures/greenai_missing_functional_unit.short run "missing functional_unit"
-expect_failure lowering SHD6001 tests/diagnostics/fixtures/lowering_undefined_function.short compile "lowering cannot resolve function: missing"
+expect_failure semantic SHD3023 tests/semantic/functions_control/undefined_function.short compile "undefined function: missing"
 
 CURRENT_STAGE="complete"
 echo "PASS diagnostics coverage matrix gate"

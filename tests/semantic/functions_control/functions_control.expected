@@ -1,0 +1,9 @@
+left
+right
+inner 10
+outer 7
+array inner 20
+array outer 4 5
+shadow inner-string
+text outer-string
+result 157

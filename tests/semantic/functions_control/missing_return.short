@@ -1,0 +1,7 @@
+int value;
+def int incomplete(int input;) {
+    if input > 0 {
+        return input;
+    }
+};
+value = incomplete(0);

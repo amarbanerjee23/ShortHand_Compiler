@@ -1,0 +1,8 @@
+int value;
+def int duplicate(int input;) {
+    int local;
+    int local;
+    local = input;
+    return local;
+};
+value = duplicate(1);

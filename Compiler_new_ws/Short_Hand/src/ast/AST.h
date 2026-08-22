@@ -117,6 +117,7 @@ union _NODE_
     AST_STRING_LITERAL * string_literal;
     AST_BOOL_LITERAL * bool_literal;
     AST_FLOAT_LITERAL * float_literal;
+    vector<AST_EXPRESSION_RULE*> * expression_list;
     ShortType type;
 };
 typedef union _NODE_ YYSTYPE;
@@ -172,6 +173,8 @@ public:
     virtual ~AST_NODE(){}
 };
 
+class AST_STATEMENT_RULE : public AST_NODE {};
+
 class AST_PROGRAM : public AST_NODE
 {
 private:
@@ -187,7 +190,7 @@ public:
     int accept(Visitor &);
 };
 
-class AST_DATA_DECLARATION_BLOCK : public AST_NODE
+class AST_DATA_DECLARATION_BLOCK : public AST_STATEMENT_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;
@@ -241,8 +244,6 @@ public:
     virtual ~AST_LOGIC_BLOCK(){}
 };
 
-class AST_STATEMENT_RULE : public AST_NODE {};
-
 class AST_EXPRESSION_STATEMENT_RULE : public AST_STATEMENT_RULE
 {
 private:
@@ -294,8 +295,10 @@ private:
     friend class Interpreter; friend class IR_Generator;
     friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter;
     vector<AST_STATEMENT_RULE*> statements;
+    bool lexical_scope = false;
 public:
     void push_back(AST_STATEMENT_RULE * statement);
+    void setLexicalScope(bool enabled) { lexical_scope = enabled; }
     int accept(Visitor &);
 };
 

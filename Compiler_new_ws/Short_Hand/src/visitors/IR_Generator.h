@@ -35,6 +35,11 @@ llvm::Value *ShowError(const char *str);
 class IR_Generator : public Visitor
 {
 private:
+    struct LocalTypeInfo {
+        ShortType type = ShortType::Void;
+        bool is_array = false;
+    };
+
     std::string module_name;
     llvm::Value * ret;
     llvm::Function * main_function;
@@ -42,17 +47,18 @@ private:
     int is_condition;
     int is_expression;
     std::string str_;
-    std::map<std::string, llvm::BasicBlock*> goto_labels;
+    std::vector<std::map<std::string, llvm::BasicBlock*>> goto_label_scopes;
     std::vector<llvm::BasicBlock*> break_targets;
     std::vector<llvm::BasicBlock*> continue_targets;
     std::map<std::string, ShortType> global_scalar_types;
     std::map<std::string, ShortType> global_array_types;
-    std::map<std::string, ShortType> active_local_types;
+    std::vector<std::map<std::string, LocalTypeInfo>> local_type_scopes;
     std::map<std::string, ShortType> function_return_types;
     std::map<std::string, std::vector<ShortType>> function_parameter_types;
     ShortType active_function_return_type;
     ShortType ret_type;
     ShortType load_type;
+    bool emitting_global_declarations = false;
 
     void emitRuntimeFailureIf(llvm::Value *condition,
                               const std::string &code,

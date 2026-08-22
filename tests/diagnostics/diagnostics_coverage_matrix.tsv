@@ -31,7 +31,7 @@ SHD3002	semantic	error	required	catalogued	run	continue_outside_loop
 SHD3003	semantic	error	required	tests/semantic/differential/unsupported_owned_string_array.short	run	semantic_differential_gate
 SHD3004	semantic	error	required	tests/semantic/differential/wrong_arity.short	run	semantic_differential_gate
 SHD3005	semantic	error	required	tests/semantic/differential/return_outside_function.short	run	semantic_differential_gate
-SHD3006	semantic	error	required	tests/semantic/differential/goto_rejected.short	run	semantic_differential_gate
+SHD3006	semantic	error	required	historical_beta_0_4_goto_boundary	run	historical_boundary
 SHD3007	semantic	error	required	tests/semantic/differential/return_type_mismatch.short	run	semantic_differential_gate
 SHD3008	semantic	error	required	tests/semantic/differential/undeclared_variable.short	run	semantic_differential_gate
 SHD3009	semantic	error	required	catalogued	run	duplicate_function
@@ -42,6 +42,13 @@ SHD3013	semantic	error	required	tests/semantic/differential/type_mismatch.short	
 SHD3014	semantic	error	required	tests/semantic/differential/invalid_string_operator.short	run	semantic_differential_gate
 SHD3015	semantic	error	required	tests/semantic/differential/invalid_string_condition.short	run	semantic_differential_gate
 SHD3016	semantic	error	required	tests/types/test_production_type_memory_model.cpp	unit	production_type_memory_gate
+SHD3017	semantic	error	required	tests/semantic/functions_control/duplicate_label.short	run	functions_control_gate
+SHD3018	semantic	error	required	tests/semantic/functions_control/undefined_label.short	run	functions_control_gate
+SHD3019	semantic	error	required	tests/semantic/functions_control/cross_scope_goto.short	run	functions_control_gate
+SHD3020	semantic	error	required	tests/semantic/functions_control/missing_return.short	run	functions_control_gate
+SHD3021	semantic	error	required	tests/semantic/functions_control/duplicate_local.short	run	functions_control_gate
+SHD3022	semantic	error	required	tests/semantic/functions_control/void_value.short	run	functions_control_gate
+SHD3023	semantic	error	required	tests/semantic/functions_control/undefined_function.short	compile	representative
 SHD4001	ai	error	required	catalogued	run	model_redeclared
 SHD4002	ai	error	required	catalogued	run	invalid_model_format
 SHD4003	ai	error	required	catalogued	run	invalid_model_precision
@@ -72,7 +79,7 @@ SHD5101	greenai	error	required	tests/c3eco/c3eco_duplicate_declaration.short	c3e
 SHD5102	greenai	error	required	tests/c3eco/c3eco_missing_required_field.short	c3eco-report	missing_required_c3eco_field
 SHD5103	greenai	error	required	tests/c3eco/c3eco_invalid_field.short	c3eco-report	invalid_c3eco_field
 SHD5104	greenai	error	required	tests/c3eco/c3eco_unsafe_claim.short	c3eco-report	unsafe_self_certification_claim
-SHD6001	lowering	error	required	tests/diagnostics/fixtures/lowering_undefined_function.short	compile	representative
+SHD6001	lowering	error	required	catalogued	compile	lowering_invariant_failure
 SHD7001	runtime	error	required	tests/semantic/differential/division_by_zero.short	run	semantic_differential_gate
 SHD7002	runtime	error	required	tests/semantic/differential/array_bounds.short	run	semantic_differential_gate
 SHD7003	runtime	error	required	generated_loop_step_zero	run	semantic_differential_gate
