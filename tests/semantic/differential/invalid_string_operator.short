@@ -1,0 +1,4 @@
+string left,right;
+left = "a";
+right = "b";
+left + right;

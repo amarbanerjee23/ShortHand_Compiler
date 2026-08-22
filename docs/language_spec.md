@@ -1,8 +1,8 @@
 # ShortHand Language Specification
 
-Language version: beta-0.3
+Language version: beta-0.4
 
-Conformance contract: beta-0.3
+Conformance contract: beta-0.4
 
 Base grammar version: beta-0.2
 
@@ -16,9 +16,9 @@ Historical stability marker retained for earlier gates: Language version: beta-0
 
 ShortHand is a C++ and LLVM-first compiled Green AI language. Python is not required for the official compiler, runtime, validation, conformance, tests or evidence path.
 
-## Beta-0.3 objective
+## Beta-0.4 objective
 
-Beta-0.3 is the active layered language contract. It combines the beta-0.2 base grammar, the beta-0.3 module/package extension and deterministic resolver, and the `shorthand.c3eco.language.v1` candidate-evidence declaration extension. The accepted base scanner/parser surface is documented in `docs/language_grammar_ebnf.md` and traced by `tests/conformance/grammar_matrix_beta_0_2.tsv`. Modules are traced by `tests/conformance/module_matrix_beta_0_3.tsv` and `scripts/check_module_resolution.sh`.
+Beta-0.4 is the active layered language contract. It combines the beta-0.2 base grammar, the beta-0.3 module/package extension and deterministic resolver, the beta-0.4 executable type extension, and the `shorthand.c3eco.language.v1` candidate-evidence declaration extension. The accepted base scanner/parser surface is documented in `docs/language_grammar_ebnf.md` and traced by `tests/conformance/grammar_matrix_beta_0_2.tsv`. Modules are traced by `tests/conformance/module_matrix_beta_0_3.tsv` and `scripts/check_module_resolution.sh`. Type behavior is traced by `tests/conformance/type_matrix_beta_0_4.tsv`, `docs/production_type_memory_model.md` and cross-mode differential execution.
 
 The matrix covers:
 
@@ -32,6 +32,7 @@ The matrix covers:
 - legacy inference compatibility forms,
 - Green AI contract, measurement and report syntax,
 - beta-0.3 module, import and package declarations,
+- beta-0.4 float, string and typed-array execution,
 - first-class C3-ECO candidate-evidence declarations,
 - explicit parser and execution boundaries that remain unsupported.
 
@@ -47,7 +48,7 @@ Parser-only acceptance is not evidence that a program is semantically valid or e
 
 ## Program structure
 
-A beta-0.3 source file contains an optional module/package preamble followed by the beta-0.2 base program body:
+A beta-0.4 source file contains an optional beta-0.3 module/package preamble followed by the compatible base program body:
 
 1. one or more primitive declaration statements,
 2. zero or more function definitions,
@@ -113,11 +114,13 @@ Beta-0.3 also provides the ten first-class `shorthand.c3eco.language.v1` declara
 
 ## Executable type boundary
 
-`int` and `bool` are the complete cross-mode executable core currently covered by `docs/execution_semantics_beta_0_3.md`. The parser accepts additional primitive declarations such as `float`, `double` and `string`, but parser acceptance is not an executable representation. Unsupported executable types fail semantic analysis with the documented diagnostic rather than silently lowering to another type. PR84 owns the production type and memory model.
+`int`, `bool`, binary64 `float`/`double`, immutable `string` and fixed numeric or boolean arrays are covered by `docs/execution_semantics_beta_0_4.md`. `float` and `double` name the same binary64 type. Assignments, function arguments, returns, operators and indices are checked exactly, with no implicit narrowing. String literals are general expressions and string equality is content-based.
+
+`shorthand.type_memory.v1` also defines deterministic descriptors for slices, records, enums, options and results plus a guarded ownership state machine. Their source syntax is not exposed in beta-0.4. Arrays of owned strings remain rejected until generated element destruction and move semantics exist. Parser acceptance or descriptor availability must not be presented as executable support.
 
 ## Compatibility and boundaries
 
-Beta-0.3 is additive over valid beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest.
+Beta-0.4 is additive over valid beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest.
 
 The following are explicitly outside the current grammar contract:
 
@@ -127,14 +130,15 @@ The following are explicitly outside the current grammar contract:
 - `for` syntax,
 - parsed `while` syntax,
 - arbitrary expression arguments in function calls,
-- string literals as general expressions,
+- slice, record, enum, option/result and ownership syntax,
+- implicit numeric conversions,
 - non-`>=` quality guardrail operators,
 - precision and backend aliases that are not scanner keywords,
 - production registry publication and remote dependency resolution,
 - a stable standard library or general-purpose C/C++ FFI.
 
-These are documented constraints, not production-readiness claims. Parser robustness, modules and deterministic multi-file resolution are implemented. PR84-PR86 own the remaining type, control-flow, package, standard-library and FFI boundaries.
+These are documented constraints, not production-readiness claims. Parser robustness, modules, deterministic multi-file resolution and the guarded beta-0.4 typed subset are implemented. PR85-PR86 own the remaining control-flow, package, standard-library and FFI boundaries; later source-level composite support must preserve or version `shorthand.type_memory.v1`.
 
 ## Runtime and ABI boundary
 
-Beta-0.3 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols.
+Beta-0.4 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols.

@@ -1,6 +1,6 @@
 # Diagnostics coverage matrix
 
-diagnostics_coverage_contract_version: 1.2.0
+diagnostics_coverage_contract_version: 1.3.0
 diagnostics_coverage_status: stable_coded_stage_matrix_guarded
 diagnostic_code_prefix: SHD
 covered_stages: parser, module, semantic, ai, greenai, lowering, runtime
@@ -11,7 +11,7 @@ runtime_failure_status: stable_code_cross_mode_differential_guarded
 runtime_abi_change: none
 production_claim_boundary: matrix_is_not_parser_recovery_or_localization_completion
 
-PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extends the contract to executable core semantics and deterministic runtime failures so the interpreter, LLVM bitcode and native binary paths can be compared without treating crashes or host undefined behavior as language semantics.
+PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 adds exact type, storage, conversion, operator, condition and ownership failures.
 
 ## Code allocation
 
@@ -51,7 +51,7 @@ These codes are executed by `scripts/check_parser_robustness.sh`.
 
 | Code | Contract |
 | --- | --- |
-| `SHD3003` | Parser-valid primitive type has no honest executable representation in the beta-0.3 execution contract |
+| `SHD3003` | Parser-valid type use remains outside the beta-0.4 executable boundary, including owned string arrays and array parameters |
 | `SHD3004` | Function call arity differs from the declared signature |
 | `SHD3005` | `return` appears outside a function |
 | `SHD3006` | Parser-valid `goto` is rejected until identical interpreter/LLVM jump semantics exist |
@@ -65,12 +65,24 @@ These codes fail before interpretation or lowering and retain source-aware range
 
 | Code | Contract |
 | --- | --- |
-| `SHD7001` | Integer divide/remainder by zero or the signed `INT_MIN / -1` overflow case |
-| `SHD7002` | Array index outside the declared bounds |
+| `SHD7001` | Integer divide/remainder domain failure or floating division by zero |
+| `SHD7002` | Fixed-array index or slice range outside declared owner bounds |
 | `SHD7003` | Counted loop step is zero |
 | `SHD7004` | Internal execution invariant failed after semantic validation |
 
 Runtime errors are deterministic language failures, not sanitizer crashes. `scripts/check_semantic_differential.sh` requires the same stable runtime code from interpreter, LLVM bitcode executed with `lli`, and the native binary for the guarded cases.
+
+## PR84 type and memory allocation
+
+| Code | Contract |
+| --- | --- |
+| `SHD3010` | Type construction is invalid. |
+| `SHD3011` | Storage-size calculation overflows or has an invalid extent. |
+| `SHD3012` | Explicit checked conversion is outside its defined domain. |
+| `SHD3013` | Assignment, argument, return, index or binary operands have incompatible types. |
+| `SHD3014` | An operator is undefined for the operand type. |
+| `SHD3015` | A branch or condition loop uses a value other than `bool` or `int`. |
+| `SHD3016` | An ownership-state transition, borrow or value access violates lifetime rules. |
 
 ## Output contract
 

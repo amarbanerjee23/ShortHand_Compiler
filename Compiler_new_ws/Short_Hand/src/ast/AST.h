@@ -563,7 +563,7 @@ class AST_BOOL_LITERAL : public AST_EXPRESSION_RULE { private: friend class Inte
 class AST_FLOAT_LITERAL : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; double value; public: AST_FLOAT_LITERAL(double value); int accept(Visitor &); };
 class AST_FUNCTION_CALL_EXPRESSION : public AST_EXPRESSION_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; std::string function_name; std::vector<AST_EXPRESSION_RULE*> arguments; public: AST_FUNCTION_CALL_EXPRESSION(std::string name, std::vector<AST_EXPRESSION_RULE*> args); int accept(Visitor &); };
 
-class AST_STRING_LITERAL : public AST_NODE
+class AST_STRING_LITERAL : public AST_EXPRESSION_RULE
 {
 private:
     friend class Interpreter; friend class IR_Generator;

@@ -97,6 +97,11 @@ jobs:
       - name: Module resolver and multi-file codegen
         run: bash scripts/check_module_resolution.sh
 
+      - name: Production type and memory model beta-0.4
+        run: |
+          CXX=g++ bash scripts/check_production_type_memory_model.sh
+          CXX=clang++ bash scripts/check_production_type_memory_model.sh
+
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
 

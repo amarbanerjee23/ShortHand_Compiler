@@ -16,9 +16,16 @@ public:
     using IntValue = std::int32_t;
 
 private:
+    struct RuntimeValue {
+        ShortType type = ShortType::Int;
+        IntValue int_value = 0;
+        double float_value = 0.0;
+        std::string string_value;
+    };
+
     struct Frame {
-        std::map<std::string, IntValue> scalars;
-        std::map<std::string, std::vector<IntValue>> arrays;
+        std::map<std::string, RuntimeValue> scalars;
+        std::map<std::string, std::vector<RuntimeValue>> arrays;
     };
 
     enum class FlowSignal {
@@ -38,8 +45,9 @@ private:
     std::string active_source;
     std::string str;
     int num = 0;
+    RuntimeValue current_value;
     FlowSignal flow = FlowSignal::Normal;
-    IntValue return_value = 0;
+    RuntimeValue return_value;
     bool runtime_failed = false;
     std::size_t call_depth = 0;
     static constexpr std::size_t kMaxCallDepth = 256;
@@ -47,15 +55,18 @@ private:
     Frame &globalFrame();
     void initializeDeclarations(AST_DATA_DECLARATION_BLOCK *decl_block);
     void registerFunctions(AST_FUNCTION_LIST_RULE *functions, const std::string &source_path);
-    bool readScalar(const std::string &name, IntValue &value) const;
-    bool writeScalar(const std::string &name, IntValue value);
-    bool readArray(const std::string &name, int index, IntValue &value) const;
-    bool writeArray(const std::string &name, int index, IntValue value);
+    static RuntimeValue defaultValue(ShortType type);
+    static bool truthy(const RuntimeValue &value);
+    RuntimeValue evaluate(AST_EXPRESSION_RULE *expression);
+    bool readScalar(const std::string &name, RuntimeValue &value) const;
+    bool writeScalar(const std::string &name, const RuntimeValue &value);
+    bool readArray(const std::string &name, int index, RuntimeValue &value) const;
+    bool writeArray(const std::string &name, int index, const RuntimeValue &value);
     void runtimeError(const void *node, const char *code, const std::string &message);
     int invokeFunction(const void *call_node,
                        const std::string &name,
-                       const std::vector<IntValue> &arguments,
-                       IntValue &result);
+                       const std::vector<RuntimeValue> &arguments,
+                       RuntimeValue &result);
     static IntValue wrapAdd(IntValue left, IntValue right);
     static IntValue wrapSub(IntValue left, IntValue right);
     static IntValue wrapMul(IntValue left, IntValue right);

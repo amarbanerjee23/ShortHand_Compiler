@@ -5,6 +5,7 @@
 #include "DiagnosticCodes.h"
 
 #include <cstdint>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -76,13 +77,36 @@ Interpreter::Frame &Interpreter::globalFrame()
     return frames.front();
 }
 
+Interpreter::RuntimeValue Interpreter::defaultValue(ShortType type)
+{
+    RuntimeValue value;
+    value.type = type;
+    return value;
+}
+
+bool Interpreter::truthy(const RuntimeValue &value)
+{
+    if (value.type == ShortType::Float) return value.float_value != 0.0;
+    if (value.type == ShortType::String) return !value.string_value.empty();
+    return value.int_value != 0;
+}
+
+Interpreter::RuntimeValue Interpreter::evaluate(AST_EXPRESSION_RULE *expression)
+{
+    current_value = defaultValue(ShortType::Int);
+    if (expression != nullptr) expression->accept(*this);
+    return current_value;
+}
+
 void Interpreter::initializeDeclarations(AST_DATA_DECLARATION_BLOCK *decl_block)
 {
     if (decl_block == nullptr) return;
     Frame &global = globalFrame();
-    for (const string &name : decl_block->single_ints) global.scalars.emplace(name, 0);
-    for (const auto &entry : decl_block->array_ints)
-        global.arrays.emplace(entry.first, vector<IntValue>(entry.second, 0));
+    for (const auto &entry : decl_block->typed_scalars)
+        global.scalars.emplace(entry.name, defaultValue(entry.type));
+    for (const auto &entry : decl_block->typed_arrays)
+        global.arrays.emplace(entry.name, vector<RuntimeValue>(
+            static_cast<std::size_t>(entry.size), defaultValue(entry.type)));
 }
 
 void Interpreter::registerFunctions(AST_FUNCTION_LIST_RULE *list, const std::string &source_path)
@@ -103,7 +127,7 @@ bool Interpreter::addLibraryProgram(AST_PROGRAM *program, const std::string &sou
     return true;
 }
 
-bool Interpreter::readScalar(const std::string &name, IntValue &value) const
+bool Interpreter::readScalar(const std::string &name, RuntimeValue &value) const
 {
     for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
         auto found = it->scalars.find(name);
@@ -115,11 +139,12 @@ bool Interpreter::readScalar(const std::string &name, IntValue &value) const
     return false;
 }
 
-bool Interpreter::writeScalar(const std::string &name, IntValue value)
+bool Interpreter::writeScalar(const std::string &name, const RuntimeValue &value)
 {
     for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
         auto found = it->scalars.find(name);
         if (found != it->scalars.end()) {
+            if (found->second.type != value.type) return false;
             found->second = value;
             return true;
         }
@@ -127,7 +152,7 @@ bool Interpreter::writeScalar(const std::string &name, IntValue value)
     return false;
 }
 
-bool Interpreter::readArray(const std::string &name, int index, IntValue &value) const
+bool Interpreter::readArray(const std::string &name, int index, RuntimeValue &value) const
 {
     for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
         auto found = it->arrays.find(name);
@@ -139,12 +164,13 @@ bool Interpreter::readArray(const std::string &name, int index, IntValue &value)
     return false;
 }
 
-bool Interpreter::writeArray(const std::string &name, int index, IntValue value)
+bool Interpreter::writeArray(const std::string &name, int index, const RuntimeValue &value)
 {
     for (auto it = frames.rbegin(); it != frames.rend(); ++it) {
         auto found = it->arrays.find(name);
         if (found == it->arrays.end()) continue;
         if (index < 0 || static_cast<std::size_t>(index) >= found->second.size()) return false;
+        if (found->second[static_cast<std::size_t>(index)].type != value.type) return false;
         found->second[static_cast<std::size_t>(index)] = value;
         return true;
     }
@@ -191,8 +217,8 @@ Interpreter::IntValue Interpreter::wrapMul(IntValue left, IntValue right)
 
 int Interpreter::invokeFunction(const void *call_node,
                                 const std::string &name,
-                                const std::vector<IntValue> &arguments,
-                                IntValue &result)
+                                const std::vector<RuntimeValue> &arguments,
+                                RuntimeValue &result)
 {
     auto found = functions.find(name);
     if (found == functions.end() || found->second == nullptr) {
@@ -217,16 +243,23 @@ int Interpreter::invokeFunction(const void *call_node,
     }
 
     Frame frame;
-    for (std::size_t i = 0; i < arguments.size(); ++i)
-        frame.scalars[function->parameters->single_ints[i]] = arguments[i];
+    for (std::size_t i = 0; i < arguments.size(); ++i) {
+        if (i >= function->parameters->typed_scalars.size() ||
+            function->parameters->typed_scalars[i].type != arguments[i].type) {
+            runtimeError(call_node, diag::RuntimeInvalidState,
+                         "function argument type mismatch reached runtime after semantic validation");
+            return 1;
+        }
+        frame.scalars[function->parameters->typed_scalars[i].name] = arguments[i];
+    }
 
     const FlowSignal caller_flow = flow;
-    const IntValue caller_return = return_value;
+    const RuntimeValue caller_return = return_value;
     const string caller_source = active_source;
     frames.push_back(std::move(frame));
     ++call_depth;
     flow = FlowSignal::Normal;
-    return_value = 0;
+    return_value = defaultValue(function->type);
     auto source = function_sources.find(function);
     if (source != function_sources.end()) active_source = source->second;
 
@@ -236,7 +269,7 @@ int Interpreter::invokeFunction(const void *call_node,
         runtimeError(function, diag::RuntimeInvalidState,
                      "loop control escaped function `" + name + "`");
     }
-    result = flow == FlowSignal::Return ? return_value : 0;
+    result = flow == FlowSignal::Return ? return_value : defaultValue(function->type);
 
     --call_depth;
     frames.pop_back();
@@ -278,14 +311,14 @@ int Interpreter::visit(AST_FUNCTION_RULE *) { return 0; }
 
 int Interpreter::visit(AST_FUNCTION_CALL_RULE *function)
 {
-    vector<IntValue> arguments;
+    vector<RuntimeValue> arguments;
     if (function->parameters) {
         for (AST_VARIABLE_RULE *parameter : function->parameters->variables) {
-            arguments.push_back(static_cast<IntValue>(parameter->accept(*this)));
+            arguments.push_back(evaluate(parameter));
             if (runtime_failed) return 1;
         }
     }
-    IntValue ignored = 0;
+    RuntimeValue ignored = defaultValue(ShortType::Void);
     return invokeFunction(function,
                           function->function_name == nullptr ? string() : string(function->function_name),
                           arguments, ignored);
@@ -293,13 +326,13 @@ int Interpreter::visit(AST_FUNCTION_CALL_RULE *function)
 
 int Interpreter::visit(AST_EXPRESSION_STATEMENT_RULE *expression_statement)
 {
-    if (expression_statement->expression) expression_statement->expression->accept(*this);
+    if (expression_statement->expression) evaluate(expression_statement->expression);
     return runtime_failed ? 1 : 0;
 }
 
 int Interpreter::visit(AST_ASSIGNMENT_RULE *assignment_statement)
 {
-    const IntValue value = static_cast<IntValue>(assignment_statement->expression->accept(*this));
+    const RuntimeValue value = evaluate(assignment_statement->expression);
     if (runtime_failed) return 1;
     assignment_statement->variable->accept(*this);
     if (runtime_failed) return 1;
@@ -328,16 +361,16 @@ int Interpreter::visit(AST_STATEMENTS_BLOCK *block_statement)
 
 int Interpreter::visit(AST_IF_STATEMENT *if_statement)
 {
-    const IntValue value = static_cast<IntValue>(if_statement->condition->accept(*this));
-    if (!runtime_failed && value != 0 && if_statement->if_block) if_statement->if_block->accept(*this);
+    const RuntimeValue value = evaluate(if_statement->condition);
+    if (!runtime_failed && truthy(value) && if_statement->if_block) if_statement->if_block->accept(*this);
     return runtime_failed ? 1 : 0;
 }
 
 int Interpreter::visit(AST_IF_ELSE_STATEMENT *ifelse_statement)
 {
-    const IntValue value = static_cast<IntValue>(ifelse_statement->condition->accept(*this));
+    const RuntimeValue value = evaluate(ifelse_statement->condition);
     if (runtime_failed) return 1;
-    if (value != 0) {
+    if (truthy(value)) {
         if (ifelse_statement->if_block) ifelse_statement->if_block->accept(*this);
     } else if (ifelse_statement->else_block) {
         ifelse_statement->else_block->accept(*this);
@@ -347,31 +380,31 @@ int Interpreter::visit(AST_IF_ELSE_STATEMENT *ifelse_statement)
 
 int Interpreter::visit(AST_FOR_LOOP_STATEMENT_RULE *for_statement)
 {
-    const IntValue initial = static_cast<IntValue>(for_statement->from->accept(*this));
+    const IntValue initial = evaluate(for_statement->from).int_value;
     if (runtime_failed) return 1;
     for_statement->variable->accept(*this);
     if (runtime_failed) return 1;
     if (for_statement->variable->type == "array") {
-        if (!writeArray(str, num, initial)) {
+        if (!writeArray(str, num, RuntimeValue{ShortType::Int, initial, 0.0, {}})) {
             runtimeError(for_statement, diag::RuntimeArrayBounds, "loop variable array index out of bounds");
             return 1;
         }
-    } else if (!writeScalar(str, initial)) {
+    } else if (!writeScalar(str, RuntimeValue{ShortType::Int, initial, 0.0, {}})) {
         runtimeError(for_statement, diag::RuntimeInvalidState, "loop variable is not declared");
         return 1;
     }
 
     while (!runtime_failed) {
-        const IntValue current = static_cast<IntValue>(for_statement->variable->accept(*this));
+        const IntValue current = evaluate(for_statement->variable).int_value;
         if (runtime_failed) break;
-        const IntValue step = static_cast<IntValue>(for_statement->step->accept(*this));
+        const IntValue step = evaluate(for_statement->step).int_value;
         if (runtime_failed) break;
         if (step == 0) {
             runtimeError(for_statement->step, diag::RuntimeLoopStepZero,
                          "loop step must be non-zero");
             break;
         }
-        const IntValue limit = static_cast<IntValue>(for_statement->to->accept(*this));
+        const IntValue limit = evaluate(for_statement->to).int_value;
         if (runtime_failed) break;
         const bool in_range = step > 0 ? current < limit : current > limit;
         if (!in_range) break;
@@ -384,15 +417,15 @@ int Interpreter::visit(AST_FOR_LOOP_STATEMENT_RULE *for_statement)
         }
         if (flow == FlowSignal::Continue) flow = FlowSignal::Normal;
 
-        const IntValue after_body = static_cast<IntValue>(for_statement->variable->accept(*this));
+        const IntValue after_body = evaluate(for_statement->variable).int_value;
         if (runtime_failed) break;
         const IntValue next = wrapAdd(after_body, step);
         if (for_statement->variable->type == "array") {
-            if (!writeArray(str, num, next)) {
+            if (!writeArray(str, num, RuntimeValue{ShortType::Int, next, 0.0, {}})) {
                 runtimeError(for_statement, diag::RuntimeArrayBounds, "loop variable array index out of bounds");
                 break;
             }
-        } else if (!writeScalar(str, next)) {
+        } else if (!writeScalar(str, RuntimeValue{ShortType::Int, next, 0.0, {}})) {
             runtimeError(for_statement, diag::RuntimeInvalidState, "loop variable is not declared");
             break;
         }
@@ -403,8 +436,8 @@ int Interpreter::visit(AST_FOR_LOOP_STATEMENT_RULE *for_statement)
 int Interpreter::visit(AST_WHILE_LOOP_STATEMENT_RULE *while_statement)
 {
     while (!runtime_failed) {
-        const IntValue value = static_cast<IntValue>(while_statement->condition->accept(*this));
-        if (runtime_failed || value == 0) break;
+        const RuntimeValue value = evaluate(while_statement->condition);
+        if (runtime_failed || !truthy(value)) break;
         if (while_statement->while_block) while_statement->while_block->accept(*this);
         if (runtime_failed || flow == FlowSignal::Return) break;
         if (flow == FlowSignal::Break) {
@@ -441,8 +474,7 @@ int Interpreter::visit(AST_RETURN_STATEMENT *statement)
         runtimeError(statement, diag::RuntimeInvalidState, "return reached top-level runtime");
         return 1;
     }
-    return_value = statement->expression == nullptr ? 0 :
-        static_cast<IntValue>(statement->expression->accept(*this));
+    if (statement->expression != nullptr) return_value = evaluate(statement->expression);
     if (!runtime_failed) flow = FlowSignal::Return;
     return runtime_failed ? 1 : 0;
 }
@@ -450,14 +482,15 @@ int Interpreter::visit(AST_RETURN_STATEMENT *statement)
 int Interpreter::visit(AST_READ_RULE *read_statement)
 {
     for (AST_VARIABLE_RULE *variable : read_statement->variables) {
-        IntValue value = 0;
-        cin >> value;
-        if (!cin) {
-            runtimeError(read_statement, diag::RuntimeInvalidState, "read failed to parse int32 input");
-            return 1;
-        }
         variable->accept(*this);
         if (runtime_failed) return 1;
+        RuntimeValue value = current_value;
+        if (value.type == ShortType::Float) cin >> value.float_value;
+        else cin >> value.int_value;
+        if (!cin) {
+            runtimeError(read_statement, diag::RuntimeInvalidState, "read failed to parse typed input");
+            return 1;
+        }
         if (variable->type == "array") {
             if (!writeArray(str, num, value)) {
                 runtimeError(read_statement, diag::RuntimeArrayBounds, "read target array index out of bounds");
@@ -477,12 +510,14 @@ int Interpreter::visit(AST_PRINT_RULE *print_statement)
         if (i != 0) cout << ' ';
         AST_PRINTABLE_ITEM &item = print_statement->printables[i];
         if (item.expression) {
-            const IntValue value = static_cast<IntValue>(item.expression->accept(*this));
+            const RuntimeValue value = evaluate(item.expression);
             if (runtime_failed) return 1;
-            cout << value;
+            if (value.type == ShortType::Float) cout << std::setprecision(17) << value.float_value;
+            else if (value.type == ShortType::String) cout << value.string_value;
+            else cout << value.int_value;
         } else if (item.string_literal) {
-            item.string_literal->accept(*this);
-            cout << unquoteShortString(str);
+            const RuntimeValue value = evaluate(item.string_literal);
+            cout << value.string_value;
         }
     }
     cout << endl;
@@ -493,9 +528,9 @@ int Interpreter::visit(AST_LABEL_RULE *) { return 0; }
 
 int Interpreter::visit(AST_GREENAI_REPORT_RULE *greenai_report)
 {
-    const IntValue inferences = static_cast<IntValue>(greenai_report->inferences->accept(*this));
-    const IntValue watts = static_cast<IntValue>(greenai_report->watts->accept(*this));
-    const IntValue seconds = static_cast<IntValue>(greenai_report->seconds->accept(*this));
+    const IntValue inferences = evaluate(greenai_report->inferences).int_value;
+    const IntValue watts = evaluate(greenai_report->watts).int_value;
+    const IntValue seconds = evaluate(greenai_report->seconds).int_value;
     if (runtime_failed) return 1;
     const IntValue energy_joules = wrapMul(watts, seconds);
     const IntValue inferences_per_joule = energy_joules == 0 ? 0 : inferences / energy_joules;
@@ -532,37 +567,84 @@ int Interpreter::visit(AST_AI_INFER_RULE *ai_infer)
 
 int Interpreter::visit(AST_BINARY_EXPRESSION_RULE *expression)
 {
-    const IntValue left = static_cast<IntValue>(expression->left->accept(*this));
+    const RuntimeValue left_value = evaluate(expression->left);
     if (runtime_failed) return 0;
-    const IntValue right = static_cast<IntValue>(expression->right->accept(*this));
+    const RuntimeValue right_value = evaluate(expression->right);
     if (runtime_failed) return 0;
 
+    current_value = defaultValue(ShortType::Boolean);
+    if (left_value.type == ShortType::Float) {
+        const double left = left_value.float_value;
+        const double right = right_value.float_value;
+        if (expression->op == AST_BINARY_EXPRESSION_RULE::PLUS ||
+            expression->op == AST_BINARY_EXPRESSION_RULE::MINUS ||
+            expression->op == AST_BINARY_EXPRESSION_RULE::MULTIPLY ||
+            expression->op == AST_BINARY_EXPRESSION_RULE::DIVIDE) {
+            if (expression->op == AST_BINARY_EXPRESSION_RULE::DIVIDE && right == 0.0) {
+                runtimeError(expression, diag::RuntimeArithmeticDomainError,
+                             "float division by zero is forbidden by shorthand.type_memory.v1");
+                return 0;
+            }
+            current_value = defaultValue(ShortType::Float);
+            if (expression->op == AST_BINARY_EXPRESSION_RULE::PLUS) current_value.float_value = left + right;
+            else if (expression->op == AST_BINARY_EXPRESSION_RULE::MINUS) current_value.float_value = left - right;
+            else if (expression->op == AST_BINARY_EXPRESSION_RULE::MULTIPLY) current_value.float_value = left * right;
+            else current_value.float_value = left / right;
+            return 0;
+        }
+        if (expression->op == AST_BINARY_EXPRESSION_RULE::LESS) current_value.int_value = left < right;
+        else if (expression->op == AST_BINARY_EXPRESSION_RULE::GREATER) current_value.int_value = left > right;
+        else if (expression->op == AST_BINARY_EXPRESSION_RULE::LESS_OR_EQUAL) current_value.int_value = left <= right;
+        else if (expression->op == AST_BINARY_EXPRESSION_RULE::GREATER_OR_EQUAL) current_value.int_value = left >= right;
+        else if (expression->op == AST_BINARY_EXPRESSION_RULE::EQUAL) current_value.int_value = left == right;
+        else if (expression->op == AST_BINARY_EXPRESSION_RULE::NOT_EQUAL) current_value.int_value = left != right;
+        return current_value.int_value;
+    }
+    if (left_value.type == ShortType::String) {
+        if (expression->op == AST_BINARY_EXPRESSION_RULE::EQUAL)
+            current_value.int_value = left_value.string_value == right_value.string_value;
+        else if (expression->op == AST_BINARY_EXPRESSION_RULE::NOT_EQUAL)
+            current_value.int_value = left_value.string_value != right_value.string_value;
+        return current_value.int_value;
+    }
+
+    const IntValue left = left_value.int_value;
+    const IntValue right = right_value.int_value;
+
     switch (expression->op) {
-        case AST_BINARY_EXPRESSION_RULE::PLUS: return wrapAdd(left, right);
-        case AST_BINARY_EXPRESSION_RULE::MINUS: return wrapSub(left, right);
-        case AST_BINARY_EXPRESSION_RULE::MULTIPLY: return wrapMul(left, right);
+        case AST_BINARY_EXPRESSION_RULE::PLUS:
+            current_value = defaultValue(ShortType::Int);
+            return current_value.int_value = wrapAdd(left, right);
+        case AST_BINARY_EXPRESSION_RULE::MINUS:
+            current_value = defaultValue(ShortType::Int);
+            return current_value.int_value = wrapSub(left, right);
+        case AST_BINARY_EXPRESSION_RULE::MULTIPLY:
+            current_value = defaultValue(ShortType::Int);
+            return current_value.int_value = wrapMul(left, right);
         case AST_BINARY_EXPRESSION_RULE::DIVIDE:
             if (right == 0 || (left == std::numeric_limits<IntValue>::min() && right == -1)) {
                 runtimeError(expression, diag::RuntimeArithmeticDomainError,
                              "integer division has an invalid divisor or overflow case");
                 return 0;
             }
-            return left / right;
+            current_value = defaultValue(ShortType::Int);
+            return current_value.int_value = left / right;
         case AST_BINARY_EXPRESSION_RULE::MODULO:
             if (right == 0 || (left == std::numeric_limits<IntValue>::min() && right == -1)) {
                 runtimeError(expression, diag::RuntimeArithmeticDomainError,
                              "integer remainder has an invalid divisor or overflow case");
                 return 0;
             }
-            return left % right;
-        case AST_BINARY_EXPRESSION_RULE::LESS: return left < right;
-        case AST_BINARY_EXPRESSION_RULE::GREATER: return left > right;
-        case AST_BINARY_EXPRESSION_RULE::LESS_OR_EQUAL: return left <= right;
-        case AST_BINARY_EXPRESSION_RULE::GREATER_OR_EQUAL: return left >= right;
-        case AST_BINARY_EXPRESSION_RULE::EQUAL: return left == right;
-        case AST_BINARY_EXPRESSION_RULE::NOT_EQUAL: return left != right;
-        case AST_BINARY_EXPRESSION_RULE::OR: return (left != 0) || (right != 0);
-        case AST_BINARY_EXPRESSION_RULE::AND: return (left != 0) && (right != 0);
+            current_value = defaultValue(ShortType::Int);
+            return current_value.int_value = left % right;
+        case AST_BINARY_EXPRESSION_RULE::LESS: return current_value.int_value = left < right;
+        case AST_BINARY_EXPRESSION_RULE::GREATER: return current_value.int_value = left > right;
+        case AST_BINARY_EXPRESSION_RULE::LESS_OR_EQUAL: return current_value.int_value = left <= right;
+        case AST_BINARY_EXPRESSION_RULE::GREATER_OR_EQUAL: return current_value.int_value = left >= right;
+        case AST_BINARY_EXPRESSION_RULE::EQUAL: return current_value.int_value = left == right;
+        case AST_BINARY_EXPRESSION_RULE::NOT_EQUAL: return current_value.int_value = left != right;
+        case AST_BINARY_EXPRESSION_RULE::OR: return current_value.int_value = (left != 0) || (right != 0);
+        case AST_BINARY_EXPRESSION_RULE::AND: return current_value.int_value = (left != 0) && (right != 0);
         default:
             runtimeError(expression, diag::RuntimeInvalidState, "unsupported binary operator reached runtime");
             return 0;
@@ -571,9 +653,16 @@ int Interpreter::visit(AST_BINARY_EXPRESSION_RULE *expression)
 
 int Interpreter::visit(AST_UNARY_EXPRESSION_RULE *expression)
 {
-    const IntValue value = static_cast<IntValue>(expression->expression->accept(*this));
+    const RuntimeValue value = evaluate(expression->expression);
     if (runtime_failed) return 0;
-    if (expression->op == AST_UNARY_EXPRESSION_RULE::UMINUS) return wrapSub(0, value);
+    if (expression->op == AST_UNARY_EXPRESSION_RULE::UMINUS) {
+        current_value = value;
+        if (value.type == ShortType::Float) {
+            current_value.float_value = -value.float_value;
+            return 0;
+        }
+        return current_value.int_value = wrapSub(0, value.int_value);
+    }
     runtimeError(expression, diag::RuntimeInvalidState, "unsupported unary operator reached runtime");
     return 0;
 }
@@ -581,56 +670,68 @@ int Interpreter::visit(AST_UNARY_EXPRESSION_RULE *expression)
 int Interpreter::visit(AST_SIMPLE_VARIABLE *variable)
 {
     str = variable->variable_name;
-    IntValue value = 0;
+    RuntimeValue value;
     if (!readScalar(str, value)) {
         runtimeError(variable, diag::RuntimeInvalidState, "scalar is not declared: `" + str + "`");
         return 0;
     }
-    return value;
+    current_value = value;
+    return value.int_value;
 }
 
 int Interpreter::visit(AST_ARRAY_VARIABLE *variable)
 {
-    num = variable->index->accept(*this);
+    num = evaluate(variable->index).int_value;
     str = variable->array_name;
     if (runtime_failed) return 0;
-    IntValue value = 0;
+    RuntimeValue value;
     if (!readArray(str, num, value)) {
         runtimeError(variable, diag::RuntimeArrayBounds,
                      "array index is outside declared bounds for `" + str + "`");
         return 0;
     }
-    return value;
+    current_value = value;
+    return value.int_value;
 }
 
-int Interpreter::visit(AST_LITERAL *literal) { return literal->int_literal; }
+int Interpreter::visit(AST_LITERAL *literal) {
+    current_value = defaultValue(ShortType::Int);
+    current_value.int_value = literal->int_literal;
+    return current_value.int_value;
+}
 
 int Interpreter::visit(AST_STRING_LITERAL *literal)
 {
     str = literal->string_literal;
+    current_value = defaultValue(ShortType::String);
+    current_value.string_value = unquoteShortString(str);
     return 0;
 }
 
-int Interpreter::visit(AST_BOOL_LITERAL *literal) { return literal->value ? 1 : 0; }
+int Interpreter::visit(AST_BOOL_LITERAL *literal) {
+    current_value = defaultValue(ShortType::Boolean);
+    current_value.int_value = literal->value ? 1 : 0;
+    return current_value.int_value;
+}
 
 int Interpreter::visit(AST_FLOAT_LITERAL *literal)
 {
-    (void)literal;
-    runtimeError(literal, diag::RuntimeInvalidState,
-                 "float literal reached runtime despite executable-type validation");
+    current_value = defaultValue(ShortType::Float);
+    current_value.float_value = literal->value;
     return 0;
 }
 
 int Interpreter::visit(AST_FUNCTION_CALL_EXPRESSION *call)
 {
-    vector<IntValue> arguments;
+    vector<RuntimeValue> arguments;
     for (AST_EXPRESSION_RULE *argument : call->arguments) {
-        arguments.push_back(static_cast<IntValue>(argument->accept(*this)));
+        arguments.push_back(evaluate(argument));
         if (runtime_failed) return 0;
     }
-    IntValue result = 0;
+    RuntimeValue result = defaultValue(ShortType::Void);
     if (invokeFunction(call, call->function_name, arguments, result) != 0) return 0;
-    return result;
+    current_value = result;
+    return result.int_value;
 }
 
 int Interpreter::visit(AST_MODEL_DECLARATION *n)

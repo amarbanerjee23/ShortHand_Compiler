@@ -35,7 +35,13 @@ for file in \
   "${ROOT_DIR}/tests/diagnostics/fixtures/ai_incompatible_backend_warning.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/greenai_missing_functional_unit.short" \
   "${ROOT_DIR}/tests/diagnostics/fixtures/lowering_undefined_function.short" \
-  "${ROOT_DIR}/tests/semantic/differential/unsupported_float.short" \
+  "${ROOT_DIR}/tests/semantic/differential/unsupported_owned_string_array.short" \
+  "${ROOT_DIR}/tests/semantic/differential/invalid_zero_array.short" \
+  "${ROOT_DIR}/tests/semantic/differential/invalid_string_condition.short" \
+  "${ROOT_DIR}/tests/semantic/differential/type_mismatch.short" \
+  "${ROOT_DIR}/tests/semantic/differential/invalid_string_operator.short" \
+  "${ROOT_DIR}/tests/types/test_production_type_memory_model.cpp" \
+  "${ROOT_DIR}/scripts/check_production_type_memory_model.sh" \
   "${ROOT_DIR}/tests/semantic/differential/wrong_arity.short" \
   "${ROOT_DIR}/tests/semantic/differential/division_by_zero.short" \
   "${ROOT_DIR}/tests/semantic/differential/array_bounds.short" \
@@ -55,7 +61,7 @@ bash -n "${ROOT_DIR}/scripts/check_module_resolution.sh"
 bash -n "${DIFFERENTIAL}"
 
 for anchor in \
-  'diagnostics_coverage_contract_version: 1.2.0' \
+  'diagnostics_coverage_contract_version: 1.3.0' \
   'diagnostics_coverage_status: stable_coded_stage_matrix_guarded' \
   'covered_stages: parser, module, semantic, ai, greenai, lowering, runtime' \
   'warning_delivery_status: printed_without_failing_successful_compilation' \
@@ -77,6 +83,9 @@ require_contains "${SEMANTIC}" 'LoweringUndefinedFunction'
 require_contains "${SEMANTIC}" 'SemanticUnsupportedExecutableType'
 require_contains "${SEMANTIC}" 'SemanticFunctionArityMismatch'
 require_contains "${SEMANTIC}" 'SemanticUndeclaredVariable'
+require_contains "${SEMANTIC}" 'SemanticTypeMismatch'
+require_contains "${SEMANTIC}" 'SemanticInvalidOperator'
+require_contains "${SEMANTIC}" 'SemanticInvalidCondition'
 require_contains "${RESOLVER}" 'ModuleLockfileMismatch'
 require_contains "${MAIN}" 'resolver.verifyLockfile'
 require_contains "${DIFFERENTIAL}" 'PASS cross-mode semantic differential execution gate'
@@ -103,8 +112,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 71 ]] || {
-  echo "error: expected 71 stable diagnostics after the PR82 C3-ECO language expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 78 ]] || {
+  echo "error: expected 78 stable diagnostics after the PR84 type and memory expansion" >&2
   exit 1
 }
 
@@ -118,7 +127,7 @@ awk -F '\t' '
   $2 !~ /^(parser|module|semantic|ai|greenai|lowering|runtime)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 72) exit 16 }
+  END { if (NR != 79) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1

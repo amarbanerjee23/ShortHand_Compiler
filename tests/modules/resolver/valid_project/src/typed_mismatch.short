@@ -1,0 +1,6 @@
+package acme.demo;
+module acme.demo.typed_mismatch;
+import acme.demo.typed_lib as typed;
+int wrong_type;
+wrong_type = 6;
+typed_float(wrong_type);

@@ -1,12 +1,12 @@
 # Language Compatibility and Evolution Policy
 
 language_compatibility_contract: shorthand.language.compatibility.v1
-active_language_version: beta-0.3
+active_language_version: beta-0.4
 base_grammar_version: beta-0.2
 current_maturity: controlled_beta
 production_claim: false
 
-ShortHand beta-0.3 syntax is supported for controlled pilot users. Compatibility is governed by executable conformance fixtures, not documentation alone.
+ShortHand beta-0.4 syntax is supported for controlled pilot users. Compatibility is governed by executable conformance fixtures, not documentation alone.
 
 Covered constructs:
 
@@ -18,9 +18,11 @@ Covered constructs:
 - evidence mode
 - module/import/package preambles
 - C3-ECO candidate-evidence declarations
+- exact float, string and fixed typed-array execution
+- `shorthand.type_memory.v1` descriptor, storage and ownership rules
 
-Changes to covered syntax must include migration notes, updated examples, positive/negative validation coverage, and interpreter/bitcode/native differential tests when executable behavior changes. A breaking change requires a new language version and an explicit migration path; it may not silently reinterpret a valid beta-0.3 program.
+Changes to covered syntax must include migration notes, updated examples, positive/negative validation coverage, and interpreter/bitcode/native differential tests when executable behavior changes. A breaking change requires a new language version and an explicit migration path; it may not silently reinterpret a valid beta-0.4 program.
 
 Evidence report schema changes should include a schema version and release note.
 
-The frozen runtime ABI is independently versioned at 1.0.0. Language compatibility does not imply source, ABI or behavior support for parser-accepted but non-executable primitive types. Production packages, a supported standard library, long-term deprecation windows and stable FFI policy remain PR84-PR86 blockers.
+The frozen runtime ABI is independently versioned at 1.0.0. Language compatibility does not imply source syntax for descriptor-only composites or support for owned string arrays. Production control-flow completion, packages, a supported standard library, long-term deprecation windows and stable FFI policy remain PR85-PR86 blockers.

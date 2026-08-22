@@ -35,7 +35,7 @@ write_failure() {
   local case_name="$1"
   local mode="$2"
   local reason="$3"
-  printf '{"schema":"shorthand.semantic.differential.v1","status":"fail","case":"%s","mode":"%s","reason":"%s"}\n' \
+  printf '{"schema":"shorthand.semantic.differential.v2","status":"fail","case":"%s","mode":"%s","reason":"%s"}\n' \
     "${case_name}" "${mode}" "${reason//\"/\\\"}" >"${ARTIFACT}"
 }
 
@@ -59,7 +59,17 @@ done
 for file in \
   "${FIXTURE_DIR}/core_control.short" \
   "${FIXTURE_DIR}/core_control.expected" \
-  "${FIXTURE_DIR}/unsupported_float.short" \
+  "${FIXTURE_DIR}/production_types.short" \
+  "${FIXTURE_DIR}/production_types.expected" \
+  "${FIXTURE_DIR}/type_mismatch.short" \
+  "${FIXTURE_DIR}/invalid_string_operator.short" \
+  "${FIXTURE_DIR}/invalid_array_index_type.short" \
+  "${FIXTURE_DIR}/invalid_zero_array.short" \
+  "${FIXTURE_DIR}/invalid_string_condition.short" \
+  "${FIXTURE_DIR}/greenai_float_rejected.short" \
+  "${FIXTURE_DIR}/unsupported_owned_string_array.short" \
+  "${FIXTURE_DIR}/float_division_by_zero.short" \
+  "${FIXTURE_DIR}/float_array_bounds.short" \
   "${FIXTURE_DIR}/wrong_arity.short" \
   "${FIXTURE_DIR}/return_outside_function.short" \
   "${FIXTURE_DIR}/goto_rejected.short" \
@@ -153,6 +163,25 @@ if ! cmp -s "${WORK_DIR}/core.interpreter.out" "${WORK_DIR}/core.lli.out" ||
   exit 1
 fi
 
+TYPES="${FIXTURE_DIR}/production_types.short"
+run_valid_interpreter "${TYPES}" "${WORK_DIR}/types.interpreter.out"
+run_valid_lli "${TYPES}" "${WORK_DIR}/types.lli.out"
+run_valid_native "${TYPES}" "${WORK_DIR}/types.native.out"
+
+for mode in interpreter lli native; do
+  if ! cmp -s "${FIXTURE_DIR}/production_types.expected" "${WORK_DIR}/types.${mode}.out"; then
+    diff -u "${FIXTURE_DIR}/production_types.expected" "${WORK_DIR}/types.${mode}.out" >&2 || true
+    fail_case production_types "${mode}" "observable typed stdout differs from golden contract"
+    exit 1
+  fi
+done
+
+if ! cmp -s "${WORK_DIR}/types.interpreter.out" "${WORK_DIR}/types.lli.out" ||
+   ! cmp -s "${WORK_DIR}/types.interpreter.out" "${WORK_DIR}/types.native.out"; then
+  fail_case production_types differential "interpreter, lli and native typed stdout differ"
+  exit 1
+fi
+
 expect_semantic_failure() {
   local fixture="$1"
   local expected="$2"
@@ -178,7 +207,13 @@ expect_semantic_failure() {
   done
 }
 
-expect_semantic_failure "${FIXTURE_DIR}/unsupported_float.short" SHD3003
+expect_semantic_failure "${FIXTURE_DIR}/unsupported_owned_string_array.short" SHD3003
+expect_semantic_failure "${FIXTURE_DIR}/type_mismatch.short" SHD3013
+expect_semantic_failure "${FIXTURE_DIR}/invalid_string_operator.short" SHD3014
+expect_semantic_failure "${FIXTURE_DIR}/invalid_array_index_type.short" SHD3013
+expect_semantic_failure "${FIXTURE_DIR}/invalid_zero_array.short" SHD3010
+expect_semantic_failure "${FIXTURE_DIR}/invalid_string_condition.short" SHD3015
+expect_semantic_failure "${FIXTURE_DIR}/greenai_float_rejected.short" SHD3013
 expect_semantic_failure "${FIXTURE_DIR}/wrong_arity.short" SHD3004
 expect_semantic_failure "${FIXTURE_DIR}/return_outside_function.short" SHD3005
 expect_semantic_failure "${FIXTURE_DIR}/goto_rejected.short" SHD3006
@@ -257,6 +292,8 @@ expect_runtime_failure() {
 
 expect_runtime_failure "${FIXTURE_DIR}/division_by_zero.short" SHD7001
 expect_runtime_failure "${FIXTURE_DIR}/array_bounds.short" SHD7002
+expect_runtime_failure "${FIXTURE_DIR}/float_division_by_zero.short" SHD7001
+expect_runtime_failure "${FIXTURE_DIR}/float_array_bounds.short" SHD7002
 expect_runtime_failure "${WORK_DIR}/loop_step_zero.short" SHD7003
 
 for output in "${WORK_DIR}"/*.out "${WORK_DIR}"/*.err "${WORK_DIR}"/*/*.out "${WORK_DIR}"/*/*.err; do
@@ -268,5 +305,5 @@ for output in "${WORK_DIR}"/*.out "${WORK_DIR}"/*.err "${WORK_DIR}"/*/*.out "${W
   fi
 done
 
-printf '{"schema":"shorthand.semantic.differential.v1","status":"pass","engines":["interpreter","lli","native"],"valid_cases":1,"semantic_negative_cases":6,"runtime_negative_cases":3}\n' >"${ARTIFACT}"
+printf '{"schema":"shorthand.semantic.differential.v2","status":"pass","engines":["interpreter","lli","native"],"valid_cases":2,"semantic_negative_cases":12,"runtime_negative_cases":5}\n' >"${ARTIFACT}"
 printf 'PASS cross-mode semantic differential execution gate\n'

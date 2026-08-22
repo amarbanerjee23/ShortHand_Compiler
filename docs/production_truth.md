@@ -26,13 +26,15 @@ Workflow source is not execution evidence. A declared backend is not live qualif
 
 ## Active language contract
 
-The active language version is beta-0.3. It combines:
+The active language version is beta-0.4. It combines:
 
 - the beta-0.2 base grammar and executable matrix,
 - the beta-0.3 package, module, import and deterministic multi-file semantics,
+- the `shorthand.type_memory.v1` descriptors, checked storage and ownership-state contract,
+- exact cross-mode float, string and typed-array execution under `shorthand.semantic.differential.v2`,
 - the `shorthand.c3eco.language.v1` certification-oriented declaration extension.
 
-Only `int` and `bool` currently have the complete cross-mode executable core semantics documented in `docs/execution_semantics_beta_0_3.md`. Parser acceptance of `float`, `double` or `string` is not production execution support. PR84 owns the production type and memory model.
+The executable beta-0.4 subset covers `int`, `bool`, binary64 `float`/`double`, immutable string scalars and fixed numeric/boolean arrays as documented in `docs/execution_semantics_beta_0_4.md`. Composite descriptors are implemented, but record, enum, slice, option/result and ownership source syntax and owned string arrays remain fail-closed. PR85 owns the next functions, control-flow and error-semantics expansion.
 
 ## C3-ECO profile boundary
 

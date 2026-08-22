@@ -2,6 +2,8 @@
 #include "DiagnosticCodes.h"
 #include "../ai_runtime/AI_Types.h"
 
+#include <utility>
+
 namespace diag = shorthand::diagnostics;
 
 static bool validShape(const std::string &s) {
@@ -46,6 +48,18 @@ static const char *shortTypeName(ShortType type) {
         case ShortType::Void: return "void";
     }
     return "unknown";
+}
+
+static shorthand::types::TypeKind productionTypeKind(ShortType type) {
+    using shorthand::types::TypeKind;
+    switch (type) {
+        case ShortType::Int: return TypeKind::Int32;
+        case ShortType::Boolean: return TypeKind::Bool;
+        case ShortType::Float: return TypeKind::Float64;
+        case ShortType::String: return TypeKind::String;
+        case ShortType::Void: return TypeKind::Void;
+    }
+    return TypeKind::Void;
 }
 
 static std::set<std::string> c3EcoRequiredFields(C3EcoDeclarationKind kind) {
@@ -121,6 +135,23 @@ std::map<std::string, std::size_t> SemanticAnalyzer::functionArities(AST_PROGRAM
     return arities;
 }
 
+std::map<std::string, SemanticAnalyzer::FunctionSignature>
+SemanticAnalyzer::functionSignatures(AST_PROGRAM *program) {
+    std::map<std::string, FunctionSignature> signatures;
+    if (program == nullptr || program->functions == nullptr) return signatures;
+    for (AST_FUNCTION_RULE *function : program->functions->functions) {
+        if (function == nullptr || function->function_name == nullptr || function->parameters == nullptr) continue;
+        FunctionSignature signature;
+        signature.return_type = function->type;
+        for (const auto &parameter : function->parameters->typed_scalars)
+            signature.parameter_types.push_back(parameter.type);
+        for (const auto &parameter : function->parameters->typed_arrays)
+            signature.parameter_types.push_back(parameter.type);
+        signatures[function->function_name] = std::move(signature);
+    }
+    return signatures;
+}
+
 std::set<std::string> SemanticAnalyzer::globalNames(AST_PROGRAM *program) {
     std::set<std::string> names;
     if (program == nullptr || program->decl_block == nullptr) return names;
@@ -140,8 +171,23 @@ void SemanticAnalyzer::setImportedFunctions(const std::map<std::string, std::siz
     allow_external_function_calls = allow_external_calls;
 }
 
+void SemanticAnalyzer::setImportedFunctions(
+    const std::map<std::string, FunctionSignature> &signatures,
+    bool allow_external_calls) {
+    imported_functions.clear();
+    for (const auto &entry : signatures) {
+        imported_functions.insert(entry.first);
+        functions.insert(entry.first);
+        function_arity[entry.first] = entry.second.parameter_types.size();
+        function_return_types[entry.first] = entry.second.return_type;
+        function_parameter_types[entry.first] = entry.second.parameter_types;
+    }
+    allow_external_function_calls = allow_external_calls;
+}
+
 bool SemanticAnalyzer::isExecutableScalarType(ShortType type) {
-    return type == ShortType::Int || type == ShortType::Boolean;
+    return type == ShortType::Int || type == ShortType::Boolean ||
+           type == ShortType::Float || type == ShortType::String;
 }
 
 bool SemanticAnalyzer::isDeclared(const std::string &name) const {
@@ -149,6 +195,164 @@ bool SemanticAnalyzer::isDeclared(const std::string &name) const {
         if (it->count(name) != 0U) return true;
     }
     return globals.count(name) != 0U;
+}
+
+bool SemanticAnalyzer::lookupType(const std::string &name,
+                                  ShortType &type,
+                                  bool &is_array) const {
+    for (auto it = local_scopes.rbegin(); it != local_scopes.rend(); ++it) {
+        const auto found = it->find(name);
+        if (found != it->end()) {
+            type = found->second;
+            is_array = false;
+            return true;
+        }
+    }
+    const auto scalar = global_types.find(name);
+    if (scalar != global_types.end()) {
+        type = scalar->second;
+        is_array = false;
+        return true;
+    }
+    const auto array = global_array_types.find(name);
+    if (array != global_array_types.end()) {
+        type = array->second;
+        is_array = true;
+        return true;
+    }
+    return false;
+}
+
+ShortType SemanticAnalyzer::expressionType(AST_EXPRESSION_RULE *expression) {
+    if (expression == nullptr) return ShortType::Void;
+    if (dynamic_cast<AST_LITERAL *>(expression) != nullptr) return ShortType::Int;
+    if (dynamic_cast<AST_BOOL_LITERAL *>(expression) != nullptr) return ShortType::Boolean;
+    if (dynamic_cast<AST_FLOAT_LITERAL *>(expression) != nullptr) return ShortType::Float;
+    if (dynamic_cast<AST_STRING_LITERAL *>(expression) != nullptr) return ShortType::String;
+
+    if (auto *variable = dynamic_cast<AST_SIMPLE_VARIABLE *>(expression)) {
+        ShortType type = ShortType::Void;
+        bool is_array = false;
+        if (!lookupType(variable->variable_name, type, is_array)) {
+            diagnostics.errorAtNode(variable, diag::SemanticUndeclaredVariable,
+                                    "undeclared variable: " + variable->variable_name);
+            return ShortType::Void;
+        }
+        if (is_array) {
+            diagnostics.errorAtNode(variable, diag::SemanticTypeMismatch,
+                                    "fixed array `" + variable->variable_name +
+                                    "` requires an index before use as a scalar value");
+            return ShortType::Void;
+        }
+        return type;
+    }
+
+    if (auto *array = dynamic_cast<AST_ARRAY_VARIABLE *>(expression)) {
+        ShortType type = ShortType::Void;
+        bool is_array = false;
+        if (!lookupType(array->array_name, type, is_array)) {
+            diagnostics.errorAtNode(array, diag::SemanticUndeclaredVariable,
+                                    "undeclared array: " + array->array_name);
+            return ShortType::Void;
+        }
+        if (!is_array) {
+            diagnostics.errorAtNode(array, diag::SemanticTypeMismatch,
+                                    "scalar `" + array->array_name + "` cannot be indexed");
+            return ShortType::Void;
+        }
+        const ShortType index_type = expressionType(array->index);
+        if (index_type != ShortType::Int) {
+            diagnostics.errorAtNode(array->index, diag::SemanticTypeMismatch,
+                                    "array index must have type int");
+        }
+        return type;
+    }
+
+    if (auto *unary = dynamic_cast<AST_UNARY_EXPRESSION_RULE *>(expression)) {
+        const ShortType operand = expressionType(unary->expression);
+        if (operand != ShortType::Int && operand != ShortType::Float) {
+            diagnostics.errorAtNode(unary, diag::SemanticInvalidOperator,
+                                    "unary minus requires int or float operand");
+            return ShortType::Void;
+        }
+        return operand;
+    }
+
+    if (auto *binary = dynamic_cast<AST_BINARY_EXPRESSION_RULE *>(expression)) {
+        const ShortType left = expressionType(binary->left);
+        const ShortType right = expressionType(binary->right);
+        if (left == ShortType::Void || right == ShortType::Void) return ShortType::Void;
+        const int op = binary->op;
+        const bool arithmetic = op == AST_BINARY_EXPRESSION_RULE::PLUS ||
+                                op == AST_BINARY_EXPRESSION_RULE::MINUS ||
+                                op == AST_BINARY_EXPRESSION_RULE::MULTIPLY ||
+                                op == AST_BINARY_EXPRESSION_RULE::DIVIDE ||
+                                op == AST_BINARY_EXPRESSION_RULE::MODULO;
+        const bool equality = op == AST_BINARY_EXPRESSION_RULE::EQUAL ||
+                              op == AST_BINARY_EXPRESSION_RULE::NOT_EQUAL;
+        const bool ordering = op == AST_BINARY_EXPRESSION_RULE::LESS ||
+                              op == AST_BINARY_EXPRESSION_RULE::GREATER ||
+                              op == AST_BINARY_EXPRESSION_RULE::LESS_OR_EQUAL ||
+                              op == AST_BINARY_EXPRESSION_RULE::GREATER_OR_EQUAL;
+        const bool logical = op == AST_BINARY_EXPRESSION_RULE::OR ||
+                             op == AST_BINARY_EXPRESSION_RULE::AND;
+        if (left != right) {
+            diagnostics.errorAtNode(binary, diag::SemanticTypeMismatch,
+                                    std::string("operator operands must have the same type; left=") +
+                                    shortTypeName(left) + " right=" + shortTypeName(right));
+            return ShortType::Void;
+        }
+        if (arithmetic) {
+            if (left != ShortType::Int && left != ShortType::Float) {
+                diagnostics.errorAtNode(binary, diag::SemanticInvalidOperator,
+                                        "arithmetic operators require int or float operands");
+                return ShortType::Void;
+            }
+            if (op == AST_BINARY_EXPRESSION_RULE::MODULO && left != ShortType::Int) {
+                diagnostics.errorAtNode(binary, diag::SemanticInvalidOperator,
+                                        "modulo requires int operands");
+                return ShortType::Void;
+            }
+            return left;
+        }
+        if (equality) return ShortType::Boolean;
+        if (ordering) {
+            if (left != ShortType::Int && left != ShortType::Float) {
+                diagnostics.errorAtNode(binary, diag::SemanticInvalidOperator,
+                                        "ordering operators require int or float operands");
+                return ShortType::Void;
+            }
+            return ShortType::Boolean;
+        }
+        if (logical) {
+            if (left != ShortType::Boolean && left != ShortType::Int) {
+                diagnostics.errorAtNode(binary, diag::SemanticInvalidOperator,
+                                        "logical operators require bool or int operands");
+                return ShortType::Void;
+            }
+            return ShortType::Boolean;
+        }
+        diagnostics.errorAtNode(binary, diag::SemanticInvalidOperator,
+                                "unknown expression operator");
+        return ShortType::Void;
+    }
+
+    if (auto *call = dynamic_cast<AST_FUNCTION_CALL_EXPRESSION *>(expression)) {
+        validateCallTypes(call, call->function_name, call->arguments);
+        const auto result = function_return_types.find(call->function_name);
+        return result == function_return_types.end() ? ShortType::Void : result->second;
+    }
+    diagnostics.errorAtNode(expression, diag::SemanticInvalidType,
+                            "expression has no production type");
+    return ShortType::Void;
+}
+
+bool SemanticAnalyzer::requireConditionType(const void *node, AST_EXPRESSION_RULE *expression) {
+    const ShortType type = expressionType(expression);
+    if (type == ShortType::Boolean || type == ShortType::Int) return true;
+    diagnostics.errorAtNode(node, diag::SemanticInvalidCondition,
+                            "condition must have type bool or int");
+    return false;
 }
 
 void SemanticAnalyzer::validateCall(const void *node, const std::string &name, std::size_t arity) {
@@ -171,8 +375,33 @@ void SemanticAnalyzer::validateCall(const void *node, const std::string &name, s
     }
 }
 
+void SemanticAnalyzer::validateCallTypes(
+    const void *node,
+    const std::string &name,
+    const std::vector<AST_EXPRESSION_RULE *> &arguments) {
+    validateCall(node, name, arguments.size());
+    const auto expected = function_parameter_types.find(name);
+    if (expected == function_parameter_types.end() || expected->second.size() != arguments.size()) return;
+    for (std::size_t i = 0; i < arguments.size(); ++i) {
+        const ShortType actual = expressionType(arguments[i]);
+        if (actual != ShortType::Void && actual != expected->second[i]) {
+            diagnostics.errorAtNode(
+                arguments[i], diag::SemanticTypeMismatch,
+                "function " + name + " argument " + std::to_string(i + 1) +
+                " expects " + shortTypeName(expected->second[i]) +
+                " but received " + shortTypeName(actual));
+        }
+    }
+}
+
 int SemanticAnalyzer::visit(AST_PROGRAM *p) {
     globals = globalNames(p);
+    global_types.clear();
+    global_array_types.clear();
+    if (p != nullptr && p->decl_block != nullptr) {
+        for (const auto &entry : p->decl_block->typed_scalars) global_types[entry.name] = entry.type;
+        for (const auto &entry : p->decl_block->typed_arrays) global_array_types[entry.name] = entry.type;
+    }
     if (p->decl_block) p->decl_block->accept(*this);
     if (p->functions) p->functions->accept(*this);
     if (p->code_block) p->code_block->accept(*this);
@@ -181,21 +410,43 @@ int SemanticAnalyzer::visit(AST_PROGRAM *p) {
 
 int SemanticAnalyzer::visit(AST_DATA_DECLARATION_BLOCK *block) {
     if (block == nullptr) return 0;
+    std::set<std::string> names;
     for (const auto &entry : block->typed_scalars) {
+        if (!names.insert(entry.name).second) {
+            diagnostics.errorAtNode(block, diag::SemanticInvalidType,
+                                    "duplicate declaration: " + entry.name);
+        }
         if (!isExecutableScalarType(entry.type)) {
             diagnostics.errorAtNode(
                 block, diag::SemanticUnsupportedExecutableType,
-                std::string("beta-0.3 executable semantics do not silently coerce ") +
+                std::string("production executable semantics do not accept ") +
                 shortTypeName(entry.type) + " declaration `" + entry.name + "`");
         }
+        std::string type_diagnostic;
+        const auto descriptor = shorthand::types::TypeDescriptor::scalar(productionTypeKind(entry.type));
+        if (!descriptor.validate(type_diagnostic))
+            diagnostics.errorAtNode(block, diag::SemanticInvalidType, type_diagnostic);
     }
     for (const auto &entry : block->typed_arrays) {
+        if (!names.insert(entry.name).second) {
+            diagnostics.errorAtNode(block, diag::SemanticInvalidType,
+                                    "duplicate declaration: " + entry.name);
+        }
         if (!isExecutableScalarType(entry.type)) {
             diagnostics.errorAtNode(
                 block, diag::SemanticUnsupportedExecutableType,
-                std::string("beta-0.3 executable semantics do not silently coerce ") +
+                std::string("production executable semantics do not accept ") +
                 shortTypeName(entry.type) + " array `" + entry.name + "`");
         }
+        if (entry.type == ShortType::String) {
+            diagnostics.errorAtNode(block, diag::SemanticUnsupportedExecutableType,
+                                    "string arrays require owned element destruction and are reserved by shorthand.type_memory.v1");
+        }
+        std::string type_diagnostic;
+        const auto descriptor = shorthand::types::TypeDescriptor::array(
+            productionTypeKind(entry.type), entry.size < 0 ? 0U : static_cast<std::size_t>(entry.size));
+        if (!descriptor.validate(type_diagnostic))
+            diagnostics.errorAtNode(block, diag::SemanticInvalidType, type_diagnostic);
     }
     return 0;
 }
@@ -213,6 +464,15 @@ int SemanticAnalyzer::visit(AST_FUNCTION_LIST_RULE *f) {
         const std::size_t arity = function->parameters == nullptr ? 0U :
             function->parameters->single_ints.size() + function->parameters->array_ints.size();
         function_arity[name] = arity;
+        function_return_types[name] = function->type;
+        std::vector<ShortType> parameter_types;
+        if (function->parameters != nullptr) {
+            for (const auto &parameter : function->parameters->typed_scalars)
+                parameter_types.push_back(parameter.type);
+            for (const auto &parameter : function->parameters->typed_arrays)
+                parameter_types.push_back(parameter.type);
+        }
+        function_parameter_types[name] = parameter_types;
     }
     for (auto *function : f->functions) {
         if (function) function->accept(*this);
@@ -222,25 +482,19 @@ int SemanticAnalyzer::visit(AST_FUNCTION_LIST_RULE *f) {
 
 int SemanticAnalyzer::visit(AST_FUNCTION_RULE *n) {
     if (n == nullptr) return 0;
-    if (n->type == ShortType::Float || n->type == ShortType::String) {
-        diagnostics.errorAtNode(
-            n, diag::SemanticUnsupportedExecutableType,
-            std::string("function return type ") + shortTypeName(n->type) +
-            " is not executable in the beta-0.3 differential contract");
-    }
     if (n->parameters) {
         n->parameters->accept(*this);
         if (!n->parameters->array_ints.empty()) {
             diagnostics.errorAtNode(
                 n, diag::SemanticUnsupportedExecutableType,
-                "array parameters are not part of the beta-0.3 executable function contract");
+                "array parameters are not part of the beta-0.4 executable function contract");
         }
     }
 
-    std::set<std::string> scope;
+    std::map<std::string, ShortType> scope;
     if (n->parameters) {
-        for (const std::string &name : n->parameters->single_ints) scope.insert(name);
-        for (const auto &entry : n->parameters->array_ints) scope.insert(entry.first);
+        for (const auto &entry : n->parameters->typed_scalars) scope[entry.name] = entry.type;
+        for (const auto &entry : n->parameters->typed_arrays) scope[entry.name] = entry.type;
     }
     local_scopes.push_back(scope);
     return_types.push_back(n->type);
@@ -270,26 +524,35 @@ int SemanticAnalyzer::visit(AST_EXPRESSION_STATEMENT_RULE *n) {
 
 int SemanticAnalyzer::visit(AST_FUNCTION_CALL_RULE *n) {
     const std::string name = n->function_name == nullptr ? std::string() : std::string(n->function_name);
-    const std::size_t arity = n->parameters == nullptr ? 0U : n->parameters->variables.size();
-    validateCall(n, name, arity);
-    if (n->parameters) n->parameters->accept(*this);
+    std::vector<AST_EXPRESSION_RULE *> arguments;
+    if (n->parameters) {
+        for (AST_VARIABLE_RULE *argument : n->parameters->variables) arguments.push_back(argument);
+    }
+    validateCallTypes(n, name, arguments);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_ASSIGNMENT_RULE *n) {
-    if (n->variable) n->variable->accept(*this);
-    if (n->expression) n->expression->accept(*this);
+    const ShortType target = expressionType(n->variable);
+    const ShortType source = expressionType(n->expression);
+    if (target != ShortType::Void && source != ShortType::Void && target != source) {
+        diagnostics.errorAtNode(
+            n, diag::SemanticTypeMismatch,
+            std::string("assignment requires identical types; target=") + shortTypeName(target) +
+            " source=" + shortTypeName(source) +
+            ". Use an explicit checked conversion when conversion syntax is available.");
+    }
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_IF_STATEMENT *n) {
-    if (n->condition) n->condition->accept(*this);
+    requireConditionType(n, n->condition);
     if (n->if_block) n->if_block->accept(*this);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_IF_ELSE_STATEMENT *n) {
-    if (n->condition) n->condition->accept(*this);
+    requireConditionType(n, n->condition);
     if (n->if_block) n->if_block->accept(*this);
     if (n->else_block) n->else_block->accept(*this);
     return 0;
@@ -484,10 +747,15 @@ int SemanticAnalyzer::visit(AST_CONTINUE *n) {
 }
 
 int SemanticAnalyzer::visit(AST_FOR_LOOP_STATEMENT_RULE *n) {
-    if (n->variable) n->variable->accept(*this);
-    if (n->from) n->from->accept(*this);
-    if (n->step) n->step->accept(*this);
-    if (n->to) n->to->accept(*this);
+    const ShortType variable = expressionType(n->variable);
+    const ShortType from = expressionType(n->from);
+    const ShortType step = expressionType(n->step);
+    const ShortType to = expressionType(n->to);
+    if (variable != ShortType::Int || from != ShortType::Int ||
+        step != ShortType::Int || to != ShortType::Int) {
+        diagnostics.errorAtNode(n, diag::SemanticTypeMismatch,
+                                "counted loop variable, start, step and bound must all have type int");
+    }
     loopDepth++;
     if (n->for_block) n->for_block->accept(*this);
     loopDepth--;
@@ -495,7 +763,7 @@ int SemanticAnalyzer::visit(AST_FOR_LOOP_STATEMENT_RULE *n) {
 }
 
 int SemanticAnalyzer::visit(AST_WHILE_LOOP_STATEMENT_RULE *n) {
-    if (n->condition) n->condition->accept(*this);
+    requireConditionType(n, n->condition);
     loopDepth++;
     if (n->while_block) n->while_block->accept(*this);
     loopDepth--;
@@ -511,13 +779,20 @@ int SemanticAnalyzer::visit(AST_GOTO_STATEMENT_RULE *n) {
 }
 
 int SemanticAnalyzer::visit(AST_READ_RULE *n) {
-    for (auto *variable : n->variables) if (variable) variable->accept(*this);
+    for (auto *variable : n->variables) {
+        const ShortType type = expressionType(variable);
+        if (type == ShortType::String) {
+            diagnostics.errorAtNode(variable, diag::SemanticUnsupportedExecutableType,
+                                    "read into string is unavailable until a bounded input-capacity syntax is declared");
+        }
+    }
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_PRINT_RULE *n) {
     for (auto &item : n->printables) {
-        if (item.expression) item.expression->accept(*this);
+        if (item.expression) expressionType(item.expression);
+        else if (item.string_literal) expressionType(item.string_literal);
     }
     return 0;
 }
@@ -525,9 +800,14 @@ int SemanticAnalyzer::visit(AST_PRINT_RULE *n) {
 int SemanticAnalyzer::visit(AST_LABEL_RULE*) { return 0; }
 
 int SemanticAnalyzer::visit(AST_GREENAI_REPORT_RULE *n) {
-    if (n->inferences) n->inferences->accept(*this);
-    if (n->watts) n->watts->accept(*this);
-    if (n->seconds) n->seconds->accept(*this);
+    const ShortType inferences = expressionType(n->inferences);
+    const ShortType watts = expressionType(n->watts);
+    const ShortType seconds = expressionType(n->seconds);
+    if (inferences != ShortType::Int || watts != ShortType::Int || seconds != ShortType::Int) {
+        diagnostics.errorAtNode(
+            n, diag::SemanticTypeMismatch,
+            "greenai report inferences, watts and seconds require exact int values; implicit measurement conversion is forbidden");
+    }
     return 0;
 }
 
@@ -536,42 +816,42 @@ int SemanticAnalyzer::visit(AST_AI_INFER_RULE*) { return 0; }
 int SemanticAnalyzer::visit(AST_RETURN_STATEMENT *n) {
     if (return_types.empty()) {
         diagnostics.errorAtNode(n, diag::SemanticReturnOutsideFunction, "return outside function");
-        if (n->expression) n->expression->accept(*this);
+        if (n->expression) expressionType(n->expression);
         return 0;
     }
     if (return_types.back() == ShortType::Void && n->expression != nullptr) {
         diagnostics.errorAtNode(n, diag::SemanticReturnTypeMismatch,
                                 "void function cannot return a value");
     }
-    if (n->expression) n->expression->accept(*this);
+    if (n->expression && return_types.back() != ShortType::Void) {
+        const ShortType actual = expressionType(n->expression);
+        if (actual != ShortType::Void && actual != return_types.back()) {
+            diagnostics.errorAtNode(
+                n, diag::SemanticReturnTypeMismatch,
+                std::string("return expression has type ") + shortTypeName(actual) +
+                " but function returns " + shortTypeName(return_types.back()));
+        }
+    }
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_BINARY_EXPRESSION_RULE *n) {
-    if (n->left) n->left->accept(*this);
-    if (n->right) n->right->accept(*this);
+    expressionType(n);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_UNARY_EXPRESSION_RULE *n) {
-    if (n->expression) n->expression->accept(*this);
+    expressionType(n);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_SIMPLE_VARIABLE *n) {
-    if (!isDeclared(n->variable_name)) {
-        diagnostics.errorAtNode(n, diag::SemanticUndeclaredVariable,
-                                "undeclared variable: " + n->variable_name);
-    }
+    expressionType(n);
     return 0;
 }
 
 int SemanticAnalyzer::visit(AST_ARRAY_VARIABLE *n) {
-    if (!isDeclared(n->array_name)) {
-        diagnostics.errorAtNode(n, diag::SemanticUndeclaredVariable,
-                                "undeclared array: " + n->array_name);
-    }
-    if (n->index) n->index->accept(*this);
+    expressionType(n);
     return 0;
 }
 
@@ -579,15 +859,9 @@ int SemanticAnalyzer::visit(AST_LITERAL*) { return 0; }
 int SemanticAnalyzer::visit(AST_STRING_LITERAL*) { return 0; }
 int SemanticAnalyzer::visit(AST_BOOL_LITERAL*) { return 0; }
 
-int SemanticAnalyzer::visit(AST_FLOAT_LITERAL *n) {
-    diagnostics.errorAtNode(
-        n, diag::SemanticUnsupportedExecutableType,
-        "float literals are parser-valid but not silently truncated in beta-0.3 executable semantics");
-    return 0;
-}
+int SemanticAnalyzer::visit(AST_FLOAT_LITERAL *) { return 0; }
 
 int SemanticAnalyzer::visit(AST_FUNCTION_CALL_EXPRESSION *n) {
-    validateCall(n, n->function_name, n->arguments.size());
-    for (auto *argument : n->arguments) if (argument) argument->accept(*this);
+    validateCallTypes(n, n->function_name, n->arguments);
     return 0;
 }

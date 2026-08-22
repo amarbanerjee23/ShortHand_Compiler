@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-08-22-pr83
+enterprise_release_scorecard_version: 2026-08-22-pr84
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -22,7 +22,7 @@ This scorecard summarizes active release controls. The machine-readable authorit
 
 | Control family | Status | Evidence / remaining condition |
 | --- | --- | --- |
-| Build, grammar, diagnostics and cross-mode tests | Implemented for defined beta-0.3 core | CI, Make, CMake/CTest, conformance and differential gates; PR84-PR85 expand the language. |
+| Build, grammar, diagnostics and cross-mode tests | Implemented for defined beta-0.4 typed core | CI, Make, CMake/CTest, conformance, type/memory and differential gates; PR85 completes the next language layer. |
 | Memory, UB, fuzz and concurrency safety | Implemented for current baseline | ASan/LSan/UBSan, libFuzzer and TSan; PR87 adds serving load/fault/soak evidence. |
 | Toolchain, platform, ABI and packaging | Implemented for declared tiers | Reproducible clean builds, frozen ABI and installed consumers; PR86 adds enterprise packages/stdlib/FFI. |
 | Security and dependency governance | Implemented for current contract | CodeQL, Trivy, dependency delta, license policy, pinned actions and expiring exceptions. |

@@ -1,12 +1,12 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-22-pr83
+production_readiness_plan_version: 2026-08-22-pr84
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 82
-CURRENT_GITHUB_PR: 83
+LAST_MERGED_GITHUB_PR: 83
+CURRENT_GITHUB_PR: 84
 LAST_PLANNED_GITHUB_PR: 96
-CURRENT_IMPLEMENTATION_SCOPE: production_truth_and_c3eco_traceability
-BASELINE_LANGUAGE_VERSION: beta-0.3
+CURRENT_IMPLEMENTATION_SCOPE: production_type_system_and_memory_model
+BASELINE_LANGUAGE_VERSION: beta-0.4
 TARGET: enterprise production usage ready language
 
 ## Goal
@@ -17,33 +17,34 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR82 is merged. It implemented first-class C3-ECO declarations and preserved the zero-skip ONNX Runtime CPU and Kubernetes qualification contracts. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
+GitHub PR83 is merged. It established the machine-readable production truth and complete C3-ECO control ownership while preserving all PR82 zero-skip qualification contracts. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. It covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
+The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. PR83 is merged and PR84 is the active implementation. The plan covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
 
-## PR83 completion contract
+## PR84 completion contract
 
-PR83 - Production truth baseline and C3-ECO traceability is IN PROGRESS.
+PR84 - Production type system and memory model is IN PROGRESS.
 
 Implementation requirements:
 
-1. Establish `shorthand.production.truth.v1` as the machine-readable active maturity and roadmap authority.
-2. Record merged PR82, active PR83, final planned PR96 and the corrected count of fourteen remaining implementation PRs including PR83.
-3. Keep `controlled_beta` and `production_claim: false` until all production blockers and the protected release exercise close.
-4. Record beta-0.3 as the active language contract, with beta-0.2 as its base grammar and `shorthand.c3eco.language.v1` as an extension.
-5. Record `linux-x64-cpu-v1` as the only qualified backend scope and reject any active GPU/TPU/NPU production claim.
-6. Version the supplied C3-ECO draft v0.6 as the normative candidate and the 2026-07-18 v0.7 documents as the inclusion/eligibility overlay.
-7. Map every mandatory gate G1-G14, scoring domain A-K, and applicable S9/S12 software class to status, implementation evidence, verification evidence, owner, closure target and blocker state.
-8. Fail CI on missing traceability rows, duplicate identifiers, invalid evidence paths or an implemented row without executable verification evidence.
-9. Reconcile the roadmap, feature tracker, compiler strategy, language specification, compatibility notes, known limitations, release status and public readiness wording.
-10. Add TST028 for the production truth and certification traceability contract.
-11. Add the production-truth gate to direct CI, Makefile test parity and CTest.
-12. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend and C3-ECO gates.
-13. Do not grant certification, claim standards adoption, claim inherent language greenness or convert financial estimates into guaranteed savings.
-14. Final PR head must have `ci / ubuntu (push)` successful.
-15. Final PR head must have `ci / ubuntu (pull_request)` successful.
+1. Establish `shorthand.type_memory.v1` as the stable descriptor, checked-storage and ownership-state contract.
+2. Advance the active language to beta-0.4 because string literals become expressions and float/string declarations gain executable meaning.
+3. Execute signed 32-bit integers, booleans, binary64 floats, immutable strings and fixed numeric/boolean arrays across interpreter, LLVM bitcode and native modes.
+4. Enforce exact assignment, argument, return, operand, condition and index typing with stable `SHD3010` through `SHD3016` diagnostics.
+5. Reject implicit numeric narrowing, invalid operators, invalid conditions, zero/overflowing storage and owned string arrays without destruction semantics.
+6. Provide deterministic composite descriptors for arrays, slices, records, enums, options and results without claiming parser syntax that does not exist.
+7. Enforce uninitialized, owned, shared-borrowed, mutably-borrowed and moved lifetime transitions in a strict unit-tested ownership checker.
+8. Expand the differential schema and require exact typed positive output plus semantic and runtime negative parity in interpreter, `lli` and native execution.
+9. Add the beta-0.4 type conformance matrix and TST029 production coverage row.
+10. Add the type/memory gate to direct CI, Makefile governance parity and CTest.
+11. Preserve runtime ABI 1.0.0 and all 25 exported `short_*` symbols.
+12. Update production truth, compatibility, feature status, test strategy and active readiness documents without changing C3-ECO claim boundaries.
+13. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend and C3-ECO gates.
+14. Keep `controlled_beta` and `production_claim: false`; this PR does not claim full composite syntax or enterprise production readiness.
+15. Final PR head must have `ci / ubuntu (push)` successful.
+16. Final PR head must have `ci / ubuntu (pull_request)` successful.
 
 ## Mandatory rule for every remaining PR
 
@@ -73,8 +74,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80 | Scanner-aligned editor grammar plus native compiler-backed LSP. | Dedicated protocol job plus inherited ubuntu-core execution. | Framing, diagnostics, UTF-16, navigation, cancellation and sanitizers. |
 | PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | MERGED as GitHub PR81 | Versioned production backend/device support with mandatory ONNX Runtime CPU live numerical evidence and fail-closed accelerator boundaries. | Pinned qualification SDK plus mandatory inherited ubuntu-core live gate. | Output `42`, no fallback/skip, route rejection and structured support matrix. |
 | Roadmap PR81 / GitHub PR82 - C3-ECO language blocks and zero-skip CI | MERGED | Ten first-class C3-ECO parser/AST/semantic/evidence declarations without granting certification. | C3-ECO language and zero-skip policy gates. | Positive/negative grammar, semantics, evidence, sanitizer and exact-head CI. |
-| PR83 - Production truth baseline and C3-ECO traceability | IN PROGRESS | Machine-readable active state and G1-G14/A-K/S9/S12 evidence ownership. | First-class production-truth gate in CI, Make and CTest. | Schema, duplicate, missing-row, evidence-path and contradiction tests. |
-| PR84 - Production type system and memory model | PLANNED | Executable floats, strings, arrays/slices, records, enums, option/result, conversions and ownership. | Expanded differential and sanitizer gates. | Cross-mode values, lifetime, overflow, bounds and ABI evidence. |
+| PR83 - Production truth baseline and C3-ECO traceability | MERGED | Machine-readable active state and G1-G14/A-K/S9/S12 evidence ownership. | First-class production-truth gate in CI, Make and CTest. | Schema, duplicate, missing-row, evidence-path and contradiction tests. |
+| PR84 - Production type system and memory model | IN PROGRESS | Beta-0.4 executable floats, strings and typed arrays plus guarded slices, records, enums, option/result, conversions and ownership descriptors. | Expanded differential, strict unit, sanitizer, Make and CTest gates. | Cross-mode values, lifetime, overflow, bounds and unchanged ABI evidence. |
 | PR85 - Functions, structured control flow and error semantics | PLANNED | Expression calls, arbitrary arguments, scopes, loops, deterministic errors and `goto` resolution. | Language conformance and differential expansion. | Positive, negative, recursion, cleanup and compatibility tests. |
 | PR86 - Enterprise packages, standard library and FFI | PLANNED | Versioned cryptographic dependencies, offline builds, namespaces, core libraries and safe C/C++ interop. | Package supply-chain and installed-consumer gates. | Tamper, reproducibility, ABI, license, SBOM and portability tests. |
 | PR87 - Concurrent serving and operational runtime | PLANNED | Cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification. | TSan, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
@@ -90,16 +91,16 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr83_through_pr96: 14
-remaining_planned_implementation_prs_after_pr83: 13
+remaining_planned_implementation_prs_pr84_through_pr96: 13
+remaining_planned_implementation_prs_after_pr84: 12
 
-Next recommended PR after PR83 is merged:
+Next recommended PR after PR84 is merged:
 
-PR84 - Production type system and memory model.
+PR85 - Functions, structured control flow and error semantics.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the fourteen remaining implementation PRs.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the thirteen remaining implementation PRs.
 
 ## Historical roadmap anchors
 

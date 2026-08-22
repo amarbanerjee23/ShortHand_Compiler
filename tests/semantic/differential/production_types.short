@@ -1,0 +1,17 @@
+float left,right,total,values[2];
+string greeting,copy;
+bool equal;
+int numbers[3];
+def float show_float(float value;) { print "fn_float", value; return value; };
+def string show_string(string value;) { print "fn_string", value; return value; };
+left = 1.5;
+right = 2.25;
+total = left + right * 2.0;
+greeting = "hello";
+copy = "hello";
+equal = greeting == copy;
+numbers[0] = 7;
+values[1] = total;
+show_float(total);
+show_string(greeting);
+print "types", total, greeting, equal, numbers[0], values[1];

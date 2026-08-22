@@ -1,0 +1,4 @@
+int count;
+float ratio;
+ratio = 1.5;
+count = ratio;

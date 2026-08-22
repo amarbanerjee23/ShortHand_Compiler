@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-08-22-pr83
+ci_pipeline_architecture_version: 2026-08-22-pr84
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -132,6 +132,8 @@ GitHub PR80 adds the independent `lsp-editor` tooling job under GCC, Clang and A
 
 GitHub PR83 adds `scripts/check_production_truth.sh` and its negative mutation suite directly to `ubuntu-core`, Make parity and CTest. The gate rejects contradictory maturity/version/scope/roadmap claims, incomplete G1-G14/A-K/S9/S12 coverage, incorrect v0.6-to-v0.7 gate aliases, invalid evidence paths and implemented controls without verification evidence.
 
+GitHub PR84 adds `scripts/check_production_type_memory_model.sh`, the beta-0.4 type matrix and expanded semantic differential evidence. Strict descriptor, storage, conversion and ownership unit tests join CI, Make governance parity and CTest; typed runtime behavior must also agree in interpreter, LLVM and native modes.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -180,7 +182,8 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR79: syntax highlighting and native LSP/editor protocol qualification.
 - PR80: CPU/GPU/TPU/NPU and backend execution qualification.
 - PR83: production truth and C3-ECO traceability.
-- PR84-PR87: production language, packages/FFI and concurrent serving.
+- PR84: production type and memory model plus beta-0.4 typed execution.
+- PR85-PR87: remaining production language, packages/FFI and concurrent serving.
 - PR88-PR91: typed C3-ECO profile, measurement, scoring and auditor evidence.
 - PR92-PR94: generated MLIR, lowering and representative AI qualification.
 - PR95: performance and measured-energy qualification.

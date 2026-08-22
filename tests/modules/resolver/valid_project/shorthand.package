@@ -3,3 +3,6 @@ package acme.demo
 module acme.demo.app src/app.short
 module acme.demo.lib src/lib.short
 module acme.demo.native_app src/native_app.short
+module acme.demo.typed_lib src/typed_lib.short
+module acme.demo.typed_app src/typed_app.short
+module acme.demo.typed_mismatch src/typed_mismatch.short

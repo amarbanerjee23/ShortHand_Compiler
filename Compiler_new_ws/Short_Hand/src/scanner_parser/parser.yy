@@ -425,6 +425,7 @@ EXPRESSION_RULE:
     | VARIABLE_RULE { $$=$1; }
     | INT_LITERAL { $$=located(new AST_LITERAL($1), @$); }
     | FLOAT_LITERAL { $$=located(new AST_FLOAT_LITERAL($1), @$); }
+    | STRING_LITERAL { $$=located(new AST_STRING_LITERAL(string($1)), @$); }
     | TRUE { $$=located(new AST_BOOL_LITERAL(true), @$); }
     | FALSE { $$=located(new AST_BOOL_LITERAL(false), @$); };
 
@@ -437,9 +438,7 @@ READ_VARIABLE_LIST_RULE:
     | VARIABLE_RULE { $$=located(new AST_READ_RULE(), @$); $$->push_back($1); };
 
 PRINT_VARIABLE_LIST_RULE:
-      PRINT_VARIABLE_LIST_RULE ',' STRING_LITERAL { $$=$1; $$->push_back(located(new AST_STRING_LITERAL(string($3)), @3)); located($$, @$); }
-    | PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE { $$=$1; $$->push_back($3); located($$, @$); }
-    | STRING_LITERAL { $$=located(new AST_PRINT_RULE(), @$); $$->push_back(located(new AST_STRING_LITERAL(string($1)), @1)); }
+      PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE { $$=$1; $$->push_back($3); located($$, @$); }
     | EXPRESSION_RULE { $$=located(new AST_PRINT_RULE(), @$); $$->push_back($1); };
 
 %%

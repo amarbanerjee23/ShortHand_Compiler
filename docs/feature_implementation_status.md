@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-22-pr83
-language_version: beta-0.3
+feature_status_version: 2026-08-22-pr84
+language_version: beta-0.4
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 83
-current_roadmap_scope: production_truth_and_c3eco_traceability
+current_github_pr: 84
+current_roadmap_scope: production_type_system_and_memory_model
 
 ## Goal
 
@@ -13,9 +13,9 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 implemented and merged roadmap PR80, the versioned production backend and hardware qualification contract. GitHub PR82 implemented and merged roadmap PR81, first-class C3-ECO language declarations and the zero-skip mandatory qualification contract. GitHub PR83 now implements the machine-readable production truth and C3-ECO traceability contract.
+Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75. Roadmap PR75 was implemented and merged as GitHub PR76. GitHub PR77 implemented and merged roadmap PR76. GitHub PR78 implemented and merged roadmap PR77. GitHub PR79 implemented and merged roadmap PR78. GitHub PR80 implemented and merged roadmap PR79, the scanner-aligned syntax-highlighting and native compiler-backed LSP baseline. GitHub PR81 implemented and merged roadmap PR80, the versioned production backend and hardware qualification contract. GitHub PR82 implemented and merged roadmap PR81, first-class C3-ECO language declarations and the zero-skip mandatory qualification contract. GitHub PR83 implemented and merged the machine-readable production truth and C3-ECO traceability contract. GitHub PR84 now implements the beta-0.4 type and memory contract.
 
-The compiler test audit records **22 implemented, 3 partial and 3 open** areas for the PR83 candidate. ShortHand remains a controlled beta because the production language, serving runtime, complete C3-ECO preparation, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
+The compiler test audit records **23 implemented, 3 partial and 3 open** areas for the PR84 candidate. ShortHand remains a controlled beta because source-level composites and ownership, the remaining production language, serving runtime, complete C3-ECO preparation, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
 
 ## Production truth authority
 
@@ -30,7 +30,8 @@ The current certification profile treats the supplied C3-ECO draft v0.6 as the n
 | Base grammar and module extension matrices | Implemented | beta-0.2 grammar plus beta-0.3 module conformance gates. |
 | Module/import/package syntax and AST scaffold | Implemented | module AST and source identity contract. |
 | Deterministic module resolver and multi-file codegen | Implemented | manifest/lock graph, confinement, imported execution and native linking. |
-| Cross-mode semantic equivalence | Implemented for defined beta-0.3 core contract | interpreter, `lli` and native differential execution. |
+| Cross-mode semantic equivalence | Implemented for defined beta-0.4 typed contract | interpreter, `lli` and native differential execution. |
+| Production type and memory model | Implemented for `shorthand.type_memory.v1` | Exact float/string/typed-array execution plus composite descriptors, checked storage and guarded ownership states; composite source syntax remains bounded. |
 | Source-aware diagnostics | Implemented for current coded matrix | LSP publication uses the same compiler diagnostic oracle. |
 | Full sanitizer coverage | Implemented for current baseline | ASan/LSan/UBSan compiler/runtime coverage. |
 | Continuous fuzzing | Implemented for current compiler stages | parser/module/semantic/lowering libFuzzer plus scheduled extension. |
@@ -121,15 +122,14 @@ GitHub PR78 implemented roadmap PR77 through a multi-stage production image, Res
 
 ## Production blockers
 
-1. Production type system and memory model (PR84).
-2. Functions, structured control flow and deterministic error semantics (PR85).
-3. Enterprise packages, standard library and FFI (PR86).
-4. Concurrent serving and operational runtime (PR87).
-5. Typed C3-ECO profile, measurement, scoring and auditor lifecycle (PR88-PR91).
-6. Generated MLIR dialect and production lowering (PR92-PR93).
-7. Representative production AI workload qualification (PR94).
-8. Measured performance/energy comparison and zero-skip production RC gate (PR95-PR96).
-9. Configure and exercise the protected signed-release environment for TST017 after the implementation backlog closes.
+1. Source-level composite and ownership integration plus functions, structured control flow and deterministic error semantics (PR85).
+2. Enterprise packages, standard library and FFI (PR86).
+3. Concurrent serving and operational runtime (PR87).
+4. Typed C3-ECO profile, measurement, scoring and auditor lifecycle (PR88-PR91).
+5. Generated MLIR dialect and production lowering (PR92-PR93).
+6. Representative production AI workload qualification (PR94).
+7. Measured performance/energy comparison and zero-skip production RC gate (PR95-PR96).
+8. Configure and exercise the protected signed-release environment for TST017 after the implementation backlog closes.
 
 GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` production backend contract because those device classes are explicitly not production-supported in v1. Any future support expansion becomes a production blocker for that expanded version until its live device-backed tests pass.
 

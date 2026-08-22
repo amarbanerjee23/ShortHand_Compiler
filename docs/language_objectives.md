@@ -139,7 +139,8 @@ The objectives are satisfied for enterprise production usage only when:
 
 - Merged foundations through GitHub PR82: diagnostics, conformance, modules, deterministic resolution, cross-mode execution, safety, portability, security, deployment, tooling, qualified ONNX Runtime CPU and first-class C3-ECO declarations.
 - Production truth and certification traceability: PR83.
-- Production type/memory/control flow, enterprise packages/stdlib/FFI and concurrent serving: PR84 through PR87.
+- Production type and memory model: PR84.
+- Remaining control flow, enterprise packages/stdlib/FFI and concurrent serving: PR85 through PR87.
 - Typed C3-ECO profile, measurement, scoring, claims and auditor lifecycle: PR88 through PR91.
 - Generated MLIR dialect, production lowering and representative AI qualification: PR92 through PR94.
 - Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.

@@ -1,0 +1,2 @@
+int placeholder;
+greenai("typed-energy", 10.5, 20.0, 30.0);

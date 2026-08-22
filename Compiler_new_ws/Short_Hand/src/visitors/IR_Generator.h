@@ -45,10 +45,18 @@ private:
     std::map<std::string, llvm::BasicBlock*> goto_labels;
     std::vector<llvm::BasicBlock*> break_targets;
     std::vector<llvm::BasicBlock*> continue_targets;
+    std::map<std::string, ShortType> global_scalar_types;
+    std::map<std::string, ShortType> global_array_types;
+    std::map<std::string, ShortType> active_local_types;
+    ShortType ret_type;
+    ShortType load_type;
 
     void emitRuntimeFailureIf(llvm::Value *condition,
                               const std::string &code,
                               const std::string &message);
+    ShortType variableType(const std::string &name, bool array) const;
+    llvm::Constant *zeroValue(ShortType type);
+    llvm::Value *safeStringPointer(llvm::Value *value);
 
     static const int ERROR = 0;
     static const int PLUS = 1;
