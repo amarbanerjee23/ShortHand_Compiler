@@ -122,6 +122,16 @@ C3OPTGAP [ \t\r\n]*
 "model_routing"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return MODEL_ROUTING;
 "guardrails"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return GUARDRAILS;
 "greenai_contract" return GREENAI_CONTRACT_T;
+"greenai" {
+    if (!shorthand_accept_token_size()) return ETOK;
+    yylval.string_val = shorthand_strdup_token(yytext);
+    return GREENAI_REPORT_BUILTIN;
+}
+"ai_infer"|"aiinfer" {
+    if (!shorthand_accept_token_size()) return ETOK;
+    yylval.string_val = shorthand_strdup_token(yytext);
+    return AI_INFER_BUILTIN;
+}
 "functional_unit" return FUNCTIONAL_UNIT;
 "success_criteria" return SUCCESS_CRITERIA;
 "boundary" return BOUNDARY;
