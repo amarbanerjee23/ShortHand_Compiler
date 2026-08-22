@@ -29,7 +29,7 @@ require_file Compiler_new_ws/Short_Hand/src/ai_runtime/backends/OnnxRuntimeBacke
 require_file docs/compiled_infer_bridge.md
 require_file docs/ai_runtime_execution_adapter.md
 
-require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'ONNXRUNTIME_ROOT is not set'
+require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'requires ONNXRUNTIME_ROOT; mandatory production qualification cannot skip'
 require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'
 require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'SHORTHAND_HAS_ONNXRUNTIME=1'
 require_contains tests/integration/test_compiled_hook_onnxruntime_success.sh 'short_ai_infer_f32("identity"'

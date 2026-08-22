@@ -115,8 +115,8 @@ require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'SH
 require_contains docs/compiled_infer_bridge.md 'typed buffer bridge'
 require_contains docs/compiled_infer_bridge.md 'must not claim that compiled inference executed through ONNX Runtime'
 
-# Optional SDK gates must skip safely without SDKs and must reject fallback on real execution runs.
-require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'SKIP onnxruntime_sdk_gate: ONNXRUNTIME_ROOT is not set'
+# Production-supported ONNX Runtime must fail closed without the SDK and reject fallback on real execution runs.
+require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'mandatory production qualification cannot skip'
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'PASS onnxruntime_sdk_gate: real ONNX Runtime CPU execution succeeded'
 require_contains tests/integration/test_onnxruntime_sdk_gate.sh 'fallback\|backend_unavailable\|not_executed'
 

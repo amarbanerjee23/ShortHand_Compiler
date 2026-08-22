@@ -9,6 +9,7 @@ required_files=(
   docs/compiler_test_strategy.md
   docs/production_readiness_pr_plan.md
   docs/production_backend_hardware_qualification.md
+  docs/c3eco_language_contract.md
   docs/execution_semantics_beta_0_3.md
   docs/fuzz_sanitizer_race_hardening.md
   docs/signed_release_publication.md
@@ -40,6 +41,8 @@ required_files=(
   scripts/check_lsp_editor.sh
   scripts/install_ci_onnxruntime_cpu.sh
   scripts/check_production_backend_hardware_qualification.sh
+  scripts/check_c3eco_language_blocks.sh
+  scripts/check_no_mandatory_test_skips.sh
   Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
@@ -86,7 +89,7 @@ for term in "${required_status_terms[@]}"; do
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-18-pr81' \
+  'feature_status_version: 2026-08-21-pr82' \
   'language_version: beta-0.3' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
@@ -96,7 +99,8 @@ for anchor in \
   'GitHub PR78 implemented and merged roadmap PR77' \
   'GitHub PR79 implemented and merged roadmap PR78' \
   'GitHub PR80 implemented and merged roadmap PR79' \
-  'GitHub PR81 now implements roadmap PR80' \
+  'GitHub PR81 implemented and merged roadmap PR80' \
+  'GitHub PR82 now implements roadmap PR81' \
   'Cross-platform portability | Implemented for PR74 tiers' \
   'Cross-platform reproducibility | Implemented' \
   'Signed releases | Partial' \
@@ -155,11 +159,15 @@ bash scripts/check_container_kubernetes_hardening.sh
 bash tests/deployment/test_container_kubernetes_hardening_negative.sh
 bash scripts/check_formatter_linter.sh
 bash scripts/check_lsp_editor.sh
+bash scripts/check_no_mandatory_test_skips.sh
+bash scripts/check_c3eco_language_blocks.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "x86_64" ]]; then
-  ORT_ROOT="${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.20.1"
-  bash scripts/install_ci_onnxruntime_cpu.sh "${ORT_ROOT}"
+  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.20.1}"
+  if [[ ! -s "${ORT_ROOT}/include/onnxruntime_cxx_api.h" ]]; then
+    bash scripts/install_ci_onnxruntime_cpu.sh "${ORT_ROOT}"
+  fi
   ONNXRUNTIME_ROOT="${ORT_ROOT}" bash scripts/check_production_backend_hardware_qualification.sh
   bash scripts/check_kubernetes_ephemeral_cluster.sh
 fi
@@ -195,4 +203,9 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. Roadmap PR80 backend/hardware contract shorthand.backend_hardware_qualification.v1 is implemented for the versioned Linux x64 CPU candidate; signed publication and later production blockers remain fail-closed."
+echo "Feature plan status check passed. GitHub PR82 implements roadmap PR81 C3-ECO language contract shorthand.c3eco.language.v1 while preserving the roadmap PR80 backend/hardware qualification; signed publication and later production blockers remain fail-closed."
+
+grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
+grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md
+grep -Fq 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate' scripts/check_c3eco_language_blocks.sh
+grep -Fq 'PASS mandatory qualification zero-skip policy gate' scripts/check_no_mandatory_test_skips.sh

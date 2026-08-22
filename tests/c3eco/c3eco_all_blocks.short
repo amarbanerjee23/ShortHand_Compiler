@@ -1,0 +1,66 @@
+int seed;
+certification c3eco_v1 {
+  version "1.0";
+  owner "platform-team";
+  software_class "ai-application";
+  deployment_mode "production-candidate";
+  geography "in-west";
+  validity_period "90d";
+};
+functional_unit inference_request {
+  denominator "successful_inference";
+  success_condition "response_returned";
+  quality_threshold "accuracy>=0.90";
+};
+workload serving_profile {
+  traffic_profile "steady";
+  batch_size "1";
+  concurrency "8";
+  warmup_runs "10";
+  measured_runs "100";
+  cache_state "warm";
+};
+boundary measured_scope {
+  include "compute,accelerator,storage,network";
+  exclude "thirdparty-control-plane";
+  evidence "component=thirdparty-control-plane reason=provider-managed materiality=below-threshold";
+};
+measurement_plan runtime_plan {
+  instrument "host-energy-meter";
+  carbon_factor "source=grid-authority unit=gCO2e/kWh";
+  sampling "1s";
+  uncertainty "+/-5%";
+  retention "365d";
+};
+ai_lifecycle model_lifecycle {
+  role "inference";
+  model_provider "declared-provider";
+  lifecycle_scope "serving";
+  training_included "false";
+  fine_tuning_included "false";
+  evaluation_included "true";
+};
+rag_pipeline retrieval_path {
+  embedding_model "embedding-v1";
+  vector_db "declared-vector-store";
+  retrieval_top_k "5";
+  cache_policy "bounded-lru";
+};
+token_budget request_budget {
+  input_tokens_p95 "2048";
+  output_tokens_p95 "512";
+  cache_hit_rate_min_percent "20";
+};
+model_routing inference_route {
+  route "onnxruntime_cpu";
+  fallback "fail_closed";
+};
+guardrails production_guardrails {
+  functional_tests "required";
+  accuracy ">=0.90";
+  p95_latency_ms "<=250";
+  error_rate_percent "<=1";
+  security_scan "required";
+  accessibility "required";
+  privacy_telemetry "required";
+};

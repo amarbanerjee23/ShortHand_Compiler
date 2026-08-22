@@ -29,7 +29,7 @@ The LibTorch fixture gate must prove all of the following:
 4. The caller output buffer remains unchanged.
 5. Runtime success counters remain zero.
 6. Runtime telemetry records a non-success status.
-7. The shared backend live SDK matrix records the LibTorch row as `skip_safe`, not `live_success`.
+7. The shared backend live SDK matrix records the LibTorch row as `negative_qualified`, not `live_success`.
 
 ## Default CI behavior
 

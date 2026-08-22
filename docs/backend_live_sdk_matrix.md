@@ -1,6 +1,6 @@
 # Backend live SDK matrix harness
 
-backend_live_sdk_matrix_status: optional_matrix_harness
+backend_live_sdk_matrix_status: fail_closed_qualification_matrix
 schema: shorthand.backend_live_sdk_matrix.v1
 full_backend_matrix_claim: false
 
@@ -8,14 +8,15 @@ full_backend_matrix_claim: false
 
 This document defines the backend live SDK matrix harness. The harness gives the project one repeatable place to record whether each marketed backend has a live SDK success fixture, a skip-safe optional SDK path, or only policy-compatible coverage.
 
-The matrix is intentionally conservative. A backend row may report `live_success` only when a real fixture runs through the runtime path and returns expected output without fallback. All other rows must report `skip_safe` until a dedicated live fixture is implemented.
+The matrix is intentionally conservative. A backend row may report `live_success` only when a real fixture runs through the runtime path and returns expected output without fallback. Unavailable optional rows report `negative_qualified` when their failure path is executed, or `not_production_qualified` when no live qualification contract exists. Mandatory production rows never skip.
 
 ## Row statuses
 
 | Status | Meaning | Claim boundary |
 | --- | --- | --- |
 | `live_success` | The backend ran a real SDK-backed fixture and returned expected output. | This can support a backend-specific claim for the tested configuration only. |
-| `skip_safe` | The backend did not run because the SDK is absent, direct backend support is unavailable, or the dedicated live fixture is not implemented yet. | This is not proof of live backend support. It is safe default-CI behavior. |
+| `negative_qualified` | The unavailable path was executed and proved fail-closed with no false output or success. | This is negative qualification, not live support. |
+| `not_production_qualified` | No production live qualification contract exists for this backend/device pair. | The row is explicitly outside the production-supported set. |
 | `policy_compatible_only` | The backend is understood by the compatibility policy, but has no live fixture yet. | Do not market this backend as production-supported. |
 | `dedicated_fixture_planned` | The SDK path was detected or named, but the backend-specific live fixture belongs to a later PR. | Do not claim live support before that later PR lands. |
 | `unavailable_path_proved` | A backend-specific fixture proved the backend path does not falsely report success while unavailable. | This is reliability evidence, not live support evidence. |
@@ -24,13 +25,13 @@ The matrix is intentionally conservative. A backend row may report `live_success
 
 | Backend | Model format | Current harness behavior | Dedicated fixture owner |
 | --- | --- | --- | --- |
-| `onnxruntime_cpu` | `onnx` | Runs `tests/integration/test_compiled_hook_onnxruntime_success.sh` when `ONNXRUNTIME_ROOT` is set; otherwise records `skip_safe`. | Existing ONNX Runtime fixture |
-| `onnxruntime_cuda` | `onnx` | Records `skip_safe` and `policy_compatible_only` until the failure matrix or a dedicated live fixture is added. | PR58 decision or future split |
-| `onnxruntime_tensorrt` | `onnx` | Uses the PR53 TensorRT optional fixture path and records `skip_safe` with no false success until ONNX Runtime TensorRT EP support exists. | PR53 unavailable-path proof; future live EP fixture still open |
-| `tensorrt` | `engine` | Runs `tests/integration/test_tensorrt_optional_fixture.sh`; records `skip_safe` after proving the current TensorRT path is unavailable and does not copy outputs or report success. | PR53 TensorRT unavailable-path proof |
-| `openvino` | `openvino_ir` | Runs `tests/integration/test_openvino_optional_fixture.sh`; records `skip_safe` after proving the current OpenVINO path is unavailable and does not copy outputs or report success. | PR54 OpenVINO unavailable-path proof |
-| `libtorch` | `torchscript` | Runs `tests/integration/test_libtorch_optional_fixture.sh`; records `skip_safe` after proving the current LibTorch path is unavailable and does not copy outputs or report success. | PR55 LibTorch unavailable-path proof |
-| `llamacpp` | `gguf` | Runs `tests/integration/test_llamacpp_optional_fixture.sh`; records `skip_safe` after proving the current Llama.cpp path is unavailable, hardware selection is not execution-ready, and no output or success is reported. | PR57 Llama.cpp unavailable-path proof |
+| `onnxruntime_cpu` | `onnx` | Runs `tests/integration/test_compiled_hook_onnxruntime_success.sh` when `ONNXRUNTIME_ROOT` is set; missing `ONNXRUNTIME_ROOT` is a hard failure. | Existing ONNX Runtime fixture |
+| `onnxruntime_cuda` | `onnx` | Records `not_production_qualified` and `policy_compatible_only` until the failure matrix or a dedicated live fixture is added. | PR58 decision or future split |
+| `onnxruntime_tensorrt` | `onnx` | Uses the PR53 TensorRT optional fixture path and records `negative_qualified` with no false success until ONNX Runtime TensorRT EP support exists. | PR53 unavailable-path proof; future live EP fixture still open |
+| `tensorrt` | `engine` | Runs `tests/integration/test_tensorrt_optional_fixture.sh`; records `negative_qualified` after proving the current TensorRT path is unavailable and does not copy outputs or report success. | PR53 TensorRT unavailable-path proof |
+| `openvino` | `openvino_ir` | Runs `tests/integration/test_openvino_optional_fixture.sh`; records `negative_qualified` after proving the current OpenVINO path is unavailable and does not copy outputs or report success. | PR54 OpenVINO unavailable-path proof |
+| `libtorch` | `torchscript` | Runs `tests/integration/test_libtorch_optional_fixture.sh`; records `negative_qualified` after proving the current LibTorch path is unavailable and does not copy outputs or report success. | PR55 LibTorch unavailable-path proof |
+| `llamacpp` | `gguf` | Runs `tests/integration/test_llamacpp_optional_fixture.sh`; records `negative_qualified` after proving the current Llama.cpp path is unavailable, hardware selection is not execution-ready, and no output or success is reported. | PR57 Llama.cpp unavailable-path proof |
 
 ## TensorRT unavailable-path proof
 

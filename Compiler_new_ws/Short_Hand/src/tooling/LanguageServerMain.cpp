@@ -724,10 +724,12 @@ static Json::Array documentSymbols(const std::string &text) {
 }
 
 static Json::Array completions(const std::string &text) {
-    static const std::array<const char *, 24> keywords = {
+    static const std::array<const char *, 34> keywords = {
         "package", "module", "import", "as", "def", "int", "float", "string", "bool",
         "tensor", "model", "infer", "print", "if", "else", "while", "return", "greenai_contract",
-        "greenai_measure", "true", "false", "cpu", "gpu", "auto"};
+        "greenai_measure", "certification", "functional_unit", "workload", "boundary",
+        "measurement_plan", "ai_lifecycle", "rag_pipeline", "token_budget", "model_routing",
+        "guardrails", "true", "false", "cpu", "gpu", "auto"};
     std::set<std::string> labels;
     for (const char *keyword : keywords) labels.insert(keyword);
     const std::regex identifier(R"([A-Za-z_][A-Za-z0-9_]*)");
@@ -922,7 +924,7 @@ private:
             if (!position) { sendError(id, -32602, "Missing position"); return; }
             std::string word = wordAt(found->second.text, *position);
             if (word.empty()) { sendResult(id, Json(nullptr)); return; }
-            static const std::set<std::string> keywords = {"package","module","import","as","def","int","float","string","bool","tensor","model","infer","print","if","else","while","return"};
+            static const std::set<std::string> keywords = {"package","module","import","as","def","int","float","string","bool","tensor","model","infer","print","if","else","while","return","greenai_contract","greenai_measure","certification","functional_unit","workload","boundary","measurement_plan","ai_lifecycle","rag_pipeline","token_budget","model_routing","guardrails"};
             std::string value = keywords.count(word) ? "`" + word + "` - ShortHand language keyword"
                                                      : "`" + word + "` - ShortHand source symbol";
             sendResult(id, Json::Object{{"contents", Json::Object{{"kind", "markdown"}, {"value", value}}}});

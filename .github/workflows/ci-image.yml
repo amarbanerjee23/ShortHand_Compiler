@@ -1,0 +1,43 @@
+name: ci-image
+
+on:
+  push:
+    branches:
+      - master
+      - 'agent/**'
+    paths:
+      - ci/ubuntu/Dockerfile
+      - scripts/install_ci_onnxruntime_cpu.sh
+      - .github/workflows/ci-image.yml
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  ubuntu-qualification-image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Build and publish immutable CI image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          registry=ghcr.io
+          image="${registry}/${GITHUB_REPOSITORY_OWNER,,}/shorthand-ci-ubuntu:sha-${GITHUB_SHA}"
+          printf '%s' "${GH_TOKEN}" | docker login "${registry}" -u "${GITHUB_ACTOR}" --password-stdin
+          docker build --pull --file ci/ubuntu/Dockerfile --tag "${image}" .
+          docker push "${image}" | tee /tmp/shorthand_ci_image_push.out
+          digest="$(grep -Eo 'digest: sha256:[0-9a-f]{64}' /tmp/shorthand_ci_image_push.out | tail -1 | awk '{print $2}')"
+          [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "error: CI image push did not report immutable digest" >&2; exit 1; }
+          printf 'CI_IMAGE=%s@%s\n' "${registry}/${GITHUB_REPOSITORY_OWNER,,}/shorthand-ci-ubuntu" "${digest}"
+          printf '%s@%s\n' "${registry}/${GITHUB_REPOSITORY_OWNER,,}/shorthand-ci-ubuntu" "${digest}" > /tmp/shorthand_ci_image_ref.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ubuntu-qualification-image-${{ github.sha }}
+          path: /tmp/shorthand_ci_image_ref.txt
+          if-no-files-found: error

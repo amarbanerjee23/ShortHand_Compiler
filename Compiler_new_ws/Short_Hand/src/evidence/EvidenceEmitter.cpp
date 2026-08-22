@@ -18,6 +18,7 @@ void EvidenceEmitter::collect(AST_PROGRAM *p) {
     tensors.clear();
     contracts.clear();
     measures.clear();
+    c3eco_declarations.clear();
     infer_calls.clear();
     if (p) p->accept(*this);
 }
@@ -46,6 +47,25 @@ void EvidenceEmitter::writeCandidateReport(AST_PROGRAM *p, std::ostream &out) {
     out << "  \"compiler_version\": \"shorthand-greenai-core\",\n";
     out << "  \"minimum_c3eco_evidence_present\": " << (minimum ? "true" : "false") << ",\n";
     out << "  \"official_certification_granted\": false,\n";
+    out << "  \"c3eco_language_contract\": \"shorthand.c3eco.language.v1\",\n";
+    out << "  \"c3eco_declarations\": [";
+    for (size_t i = 0; i < c3eco_declarations.size(); ++i) {
+        if (i) out << ",";
+        const auto &decl = c3eco_declarations[i];
+        out << "{\"kind\":\"" << esc(c3EcoDeclarationKindName(decl.kind))
+            << "\",\"name\":\"" << esc(decl.name) << "\",\"fields\":{";
+        for (size_t j = 0; j < decl.fields.size(); ++j) {
+            if (j) out << ",";
+            out << "\"" << esc(decl.fields[j].name) << "\":[";
+            for (size_t k = 0; k < decl.fields[j].values.size(); ++k) {
+                if (k) out << ",";
+                out << "\"" << esc(decl.fields[j].values[k]) << "\"";
+            }
+            out << "]";
+        }
+        out << "}}";
+    }
+    out << "],\n";
     out << "  \"workload\": \"" << esc(c.name) << "\",\n";
     out << "  \"functional_unit\": \"" << esc(c.functional_unit) << "\",\n";
     out << "  \"success_criteria\": \"" << esc(c.success_criteria) << "\",\n";
@@ -166,6 +186,7 @@ int EvidenceEmitter::visit(AST_MODEL_DECLARATION *n) { models.push_back(n->data)
 int EvidenceEmitter::visit(AST_TENSOR_DECLARATION *n) { tensors.push_back(n->data); return 0; }
 int EvidenceEmitter::visit(AST_GREENAI_CONTRACT *n) { contracts.push_back(n->data); return 0; }
 int EvidenceEmitter::visit(AST_GREENAI_MEASUREMENT *n) { measures.push_back(n->data); return 0; }
+int EvidenceEmitter::visit(AST_C3ECO_DECLARATION *n) { c3eco_declarations.push_back(n->data); return 0; }
 int EvidenceEmitter::visit(AST_INFER_STATEMENT *n) { infer_calls.push_back({n->model_name, n->input_name, n->output_name}); return 0; }
 
 #define ESTUB(T) int EvidenceEmitter::visit(T*){ return 0; }

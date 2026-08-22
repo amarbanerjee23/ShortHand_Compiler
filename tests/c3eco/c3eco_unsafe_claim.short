@@ -1,0 +1,10 @@
+int seed;
+certification unsafe_claim {
+  version "1.0";
+  owner "platform-team";
+  software_class "ai-application";
+  deployment_mode "production-candidate";
+  geography "in-west";
+  validity_period "90d";
+  official_certification_granted "true";
+};

@@ -5,11 +5,12 @@ PLAN="${ROOT_DIR}/docs/production_readiness_pr_plan.md"
 PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
 LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
 BACKEND_DOC="${ROOT_DIR}/docs/production_backend_hardware_qualification.md"
+C3ECO_DOC="${ROOT_DIR}/docs/c3eco_language_contract.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing required file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" \
+for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" \
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
@@ -32,18 +33,18 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-18-pr80' \
+  'production_readiness_plan_version: 2026-08-21-pr81' \
   'PLAN_STATUS: active' \
-  'LAST_COMPLETED_PR: 79' \
+  'LAST_COMPLETED_PR: 80' \
   'MERGED_OUT_OF_BAND_PR: 71' \
-  'CURRENT_IMPLEMENTATION_PR: 80' \
-  'GITHUB_IMPLEMENTATION_PR: 81' \
-  'NEXT_IMPLEMENTATION_PR_AFTER_PR80: 81' \
+  'CURRENT_IMPLEMENTATION_PR: 81' \
+  'GITHUB_IMPLEMENTATION_PR: 82' \
+  'NEXT_IMPLEMENTATION_PR_AFTER_PR81: 82' \
   'BASELINE_LANGUAGE_VERSION: beta-0.3' \
   'TARGET: enterprise production usage ready language' \
-  'Roadmap PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix is IN PROGRESS as GitHub PR81.' \
-  'remaining_planned_implementation_prs_pr80_through_pr86: 7' \
-  'remaining_planned_implementation_prs_after_pr80: 6' \
+  'Roadmap PR81 - Complete C3-ECO language blocks is IN PROGRESS as GitHub PR82.' \
+  'remaining_planned_implementation_prs_pr81_through_pr86: 6' \
+  'remaining_planned_implementation_prs_after_pr81: 5' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -60,8 +61,8 @@ require_contains "${PLAN}" '| PR76 - External vulnerability, SAST, dependency an
 require_contains "${PLAN}" '| PR77 - Container and Kubernetes production hardening | MERGED as GitHub PR78'
 require_contains "${PLAN}" '| PR78 - Formatter and linter baseline | MERGED as GitHub PR79'
 require_contains "${PLAN}" '| PR79 - Syntax highlighting and LSP implementation | MERGED as GitHub PR80'
-require_contains "${PLAN}" '| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | IN PROGRESS as GitHub PR81'
-require_contains "${PLAN}" '| PR81 - Complete C3-ECO language blocks | PLANNED'
+require_contains "${PLAN}" '| PR80 - Production backend and CPU/GPU/TPU/NPU hardware qualification matrix | MERGED as GitHub PR81'
+require_contains "${PLAN}" '| PR81 - Complete C3-ECO language blocks | IN PROGRESS as GitHub PR82'
 
 for anchor in \
   'ci_pipeline_architecture_version: 2026-08-09-v1' \
@@ -138,3 +139,6 @@ for anchor in \
 done
 
 printf 'PASS production readiness PR plan gate\n'
+
+require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
+require_contains "${ROOT_DIR}/scripts/check_c3eco_language_blocks.sh" 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'

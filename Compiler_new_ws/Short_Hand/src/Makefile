@@ -53,8 +53,12 @@ endif
 
 OPTIONAL_BACKEND_DEFS := -DSHORTHAND_HAS_ONNXRUNTIME=$(SHORTHAND_HAS_ONNXRUNTIME) -DSHORTHAND_HAS_TENSORRT=$(SHORTHAND_HAS_TENSORRT) -DSHORTHAND_HAS_OPENVINO=$(SHORTHAND_HAS_OPENVINO) -DSHORTHAND_HAS_LIBTORCH=$(SHORTHAND_HAS_LIBTORCH) -DSHORTHAND_HAS_LLAMACPP=$(SHORTHAND_HAS_LLAMACPP) -DSHORTHAND_HAS_OPENBLAS=$(SHORTHAND_HAS_OPENBLAS) -DSHORTHAND_HAS_EIGEN=$(SHORTHAND_HAS_EIGEN)
 AI_CXXFLAGS := $(OPTIONAL_BACKEND_DEFS)
+ONNX_EXCEPTION_CXXFLAGS :=
 ifneq ($(ONNXRUNTIME_ROOT),)
 AI_CXXFLAGS += -I$(ONNXRUNTIME_ROOT)/include
+# llvm-config may inject -fno-exceptions; ONNX Runtime C++ uses Ort::Exception.
+# Keep recoverable backend failures by making -fexceptions the final policy flag.
+ONNX_EXCEPTION_CXXFLAGS := -fexceptions
 endif
 ifneq ($(LIBTORCH_ROOT),)
 AI_CXXFLAGS += -I$(LIBTORCH_ROOT)/include -I$(LIBTORCH_ROOT)/include/torch/csrc/api/include
@@ -131,7 +135,7 @@ short_hand: patch-generated-parser runtime-source-lowering $(SRC)
 		echo "error: llvm-config not found or LLVM flags unavailable. Install LLVM with llvm-config in PATH."; \
 		exit 1; \
 	fi
-	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) $(LLVM_CXXFLAGS) $(ONNX_EXCEPTION_CXXFLAGS) -o $(BIN) $(SRC) $(LDFLAGS) $(LDLIBS) $(AI_LDLIBS) $(LLVM_LDFLAGS)
 
 runtime_lib: $(SHORTHAND_RUNTIME_LIB)
 
@@ -161,8 +165,9 @@ c3eco_gate: green_ai_tool
 	../build/green_ai_tool report ../../../examples/green_ai/image_classification.greenai --output /tmp/short_hand_c3eco_report.json --strict strict
 	grep -q "Evidence report only; this tool does not grant certification." /tmp/short_hand_c3eco_report.json
 
-test-c3eco: c3eco_gate
+test-c3eco: c3eco_gate short_hand
 	../build/green_ai_tool check ../../../examples/green_ai/image_classification.greenai --baseline /tmp/short_hand_c3eco_report.json --threshold-percent 10
+	SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
@@ -175,7 +180,7 @@ clean:
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-unit test-integration test-green test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai
+test: test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-llvm test-ai
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -220,6 +225,7 @@ sanitize:
 	$(MAKE) clean
 	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool runtime_lib
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \

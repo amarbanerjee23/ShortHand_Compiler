@@ -273,6 +273,14 @@ if(SHORTHAND_HAS_ONNXRUNTIME)
   target_include_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/include)
   target_link_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/lib)
   target_link_libraries(short_hand PRIVATE onnxruntime)
+  # llvm-config commonly contributes -fno-exceptions. The ONNX Runtime C++ API
+  # throws Ort::Exception, and ShortHand deliberately catches it to return a
+  # recoverable inference result instead of terminating the process.
+  if(MSVC)
+    target_compile_options(short_hand PRIVATE /EHsc)
+  else()
+    target_compile_options(short_hand PRIVATE -fexceptions)
+  endif()
 endif()
 target_link_libraries(short_hand PRIVATE ${LLVM_LDFLAGS})
 
@@ -394,6 +402,15 @@ if(SHORTHAND_BUILD_TESTING)
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/green_ai/test_green_ai_tool.sh
   )
   set_tests_properties(green_ai_tool_tests PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+  add_test(
+    NAME c3eco_language_blocks
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_language_blocks.sh
+  )
+  set_tests_properties(c3eco_language_blocks PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>"
+  )
 
   add_test(
     NAME cmake_short_hand_greenai_run

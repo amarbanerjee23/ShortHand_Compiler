@@ -233,6 +233,7 @@ int AST_Printer::visit(AST_MODEL_DECLARATION * n){ cout << "model " << n->data.n
 int AST_Printer::visit(AST_TENSOR_DECLARATION * n){ cout << "tensor " << n->data.name << " " << n->data.element_type << "[" << n->data.shape_csv << "]" << endl; return 0; }
 int AST_Printer::visit(AST_GREENAI_CONTRACT * n){ cout << "greenai_contract " << n->data.name << " functional_unit=" << n->data.functional_unit << endl; return 0; }
 int AST_Printer::visit(AST_GREENAI_MEASUREMENT * n){ cout << "greenai_measure " << n->data.workload << endl; return 0; }
+int AST_Printer::visit(AST_C3ECO_DECLARATION * n){ cout << c3EcoDeclarationKindName(n->data.kind) << " " << n->data.name << " fields=" << n->data.fields.size() << endl; return 0; }
 int AST_Printer::visit(AST_INFER_STATEMENT * n){ cout << "infer " << n->model_name << endl; return 0; }
 int AST_Printer::visit(AST_CONTINUE *){ cout << "continue" << endl; return 0; }
 int AST_Printer::visit(AST_RETURN_STATEMENT * n){ cout << "return" << endl; if(n->expression) n->expression->accept(*this); return 0; }

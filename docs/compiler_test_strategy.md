@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-18-pr81
+compiler_test_strategy_version: 2026-08-21-pr82
 language_version: beta-0.3
 current_maturity: controlled_beta
 production_claim: false
@@ -13,17 +13,17 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 27-area production test matrix records for the GitHub PR81 candidate:
+The 27-area production test matrix records for the GitHub PR82 candidate:
 
 - 21 implemented areas,
 - 3 partial areas,
 - 3 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the current security contract. GitHub PR78 closed TST019 for the declared deployment contract. GitHub PR79 closed TST020 for formatter/linter. GitHub PR80 closed TST021 for the native LSP/editor baseline. GitHub PR81 now closes TST022 only for the versioned `linux-x64-cpu-v1` production backend support set after exact-head live numerical execution passes.
+Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the current security contract. GitHub PR78 closed TST019 for the declared deployment contract. GitHub PR79 closed TST020 for formatter/linter. GitHub PR80 closed TST021 for the native LSP/editor baseline. GitHub PR81 closed TST022 for the versioned `linux-x64-cpu-v1` production backend support set. GitHub PR82 adds executable first-class C3-ECO language declarations to TST023 while keeping that area partial until measured scoring and authority-ready lineage are implemented.
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 compiler execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, formatter/linter preservation, native LSP/editor qualification and qualification-aware AI backend routing.
 
-Production-critical gaps remain for protected signed-release execution, complete C3-ECO evidence, production MLIR lowering, measured performance/energy and the final zero-skip release-candidate gate.
+Production-critical gaps remain for protected signed-release execution, measured C3-ECO scoring and authority-ready evidence lineage, production MLIR lowering, measured performance/energy and the final release-candidate gate.
 
 ## Production backend and hardware qualification contract
 
@@ -138,6 +138,11 @@ ShortHand may claim enterprise production readiness only when:
 
 The following exact strings are retained only for milestone guards and are not current counts:
 
+- compiler_test_strategy_version: 2026-08-18-pr81
+- 21 implemented areas
+- 3 partial areas
+- 3 open areas
+
 - compiler_test_strategy_version: 2026-08-18-pr80
 - 20 implemented areas
 - 4 partial areas
@@ -160,4 +165,4 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-08-18-pr81`.
+The current strategy is `2026-08-21-pr82`.
