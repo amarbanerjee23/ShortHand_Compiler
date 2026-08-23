@@ -1,0 +1,8 @@
+language shorthand.enterprise_language.v1;
+namespace policyclub.invalid;
+record Evidence {
+    string id;
+};
+owned Evidence original;
+move original to transferred;
+read original;

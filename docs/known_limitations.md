@@ -1,11 +1,11 @@
 # Known Limitations
 
-known_limitations_version: 2026-08-22-pr85
+known_limitations_version: 2026-08-22-pr86
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
 
-The active beta-0.5 language has cross-mode execution for exact `int`, `bool`, binary64 `float`/`double`, immutable string scalars, fixed numeric/boolean arrays, arbitrary-expression calls, recursion, lexical locals, structured loops/returns and same-block label transfers. Cross-mode recursion/control-flow qualification is limited to terminating programs within the interpreter's documented safety budgets; PR87 owns cross-engine serving deadlines and resource ceilings. The guarded descriptor and ownership model exists, but record, enum, slice, option/result and ownership source syntax, owned string arrays, the package ecosystem, standard library and stable FFI are not complete. Concurrent multi-tenant serving, production MLIR lowering, representative AI workloads and measured performance/energy evidence are also open.
+The active beta-0.6 contract retains beta-0.5 cross-mode execution for exact scalars, fixed numeric/boolean arrays, functions, recursion, lexical locals, structured loops/returns and same-block label transfers. Beta-0.6 adds composite ABI schemas and ownership-plan validation, not composite execution. Owned string arrays, by-value composite FFI, nested package dependencies and a network registry remain unavailable. Package v2 is deliberately offline, the core library is bounded to its 1.0.0 C ABI, and qualified member dispatch is not yet syntax. Concurrent multi-tenant serving, production MLIR/composite lowering, representative AI workloads and measured performance/energy evidence are also open.
 
 ONNX Runtime CPU is mandatory live numerical evidence for the declared `linux-x64-cpu-v1` production backend scope on the inherited Linux x64 CI lane. TensorRT, OpenVINO, LibTorch, llama.cpp, GPU, TPU and NPU paths remain experimental or inventory-only. Their absent SDKs or devices are never counted as production execution evidence.
 

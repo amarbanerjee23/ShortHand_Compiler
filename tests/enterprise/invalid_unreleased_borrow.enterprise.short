@@ -1,0 +1,7 @@
+language shorthand.enterprise_language.v1;
+namespace policyclub.invalid;
+enum State {
+    ready;
+};
+owned State state;
+borrow shared state as leaked_view;

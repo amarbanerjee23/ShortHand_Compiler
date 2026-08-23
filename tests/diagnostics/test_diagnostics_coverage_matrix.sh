@@ -66,6 +66,8 @@ expect_warning ai SHD4007 tests/diagnostics/fixtures/ai_incompatible_backend_war
 expect_failure ai SHD4014 tests/semantic/invalid/ai_shape_mismatch.short run "infer input tensor shape"
 expect_failure greenai SHD5001 tests/diagnostics/fixtures/greenai_missing_functional_unit.short run "missing functional_unit"
 expect_failure semantic SHD3023 tests/semantic/functions_control/undefined_function.short compile "undefined function: missing"
+expect_failure semantic SHD3024 tests/enterprise/invalid_enterprise_syntax.enterprise.short enterprise-check "first declaration must be"
+expect_failure semantic SHD3025 tests/enterprise/invalid_duplicate_type.enterprise.short enterprise-check "duplicate enterprise type"
 
 CURRENT_STAGE="complete"
 echo "PASS diagnostics coverage matrix gate"

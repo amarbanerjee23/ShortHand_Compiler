@@ -34,6 +34,7 @@ jobs:
             llvm-dev \
             clang \
             clang-format \
+            jq \
             cmake \
             ninja-build
 
@@ -54,6 +55,7 @@ jobs:
           command -v base64
           command -v timeout
           command -v curl
+          command -v jq
           llvm-config --version
           lli --version
           llc --version
@@ -104,6 +106,9 @@ jobs:
 
       - name: Functions control flow and deterministic errors beta-0.5
         run: CXX=g++ bash scripts/check_functions_control_error_semantics.sh
+
+      - name: Enterprise language packages standard library and FFI beta-0.6
+        run: CXX=g++ CC=gcc bash scripts/check_enterprise_packages_stdlib_ffi.sh
 
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
@@ -419,7 +424,7 @@ jobs:
       - name: Install CTest parity dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build jq
 
       - name: Verify CTest parity manifest
         run: |

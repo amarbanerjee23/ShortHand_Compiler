@@ -1,0 +1,25 @@
+id	area	stage	contract_anchor	fixture	expectation	rationale
+ENT001	language	parser	language shorthand.enterprise_language.v1	tests/enterprise/valid.enterprise.short	accept	The enterprise schema is explicitly versioned.
+ENT002	namespace	semantic	validNamespace	tests/enterprise/valid.enterprise.short	accept	Composite identities are qualified by a stable dotted namespace.
+ENT003	record	semantic	TypeDescriptor::record	tests/enterprise/valid.enterprise.short	accept	Record fields are scalar and unique.
+ENT004	enum	semantic	TypeDescriptor::enumeration	tests/enterprise/valid.enterprise.short	accept	Enum variants are deterministic and unique.
+ENT005	slice-option-result	semantic	TypeDescriptor::slice/option/result	tests/enterprise/valid.enterprise.short	accept	All guarded composite descriptor families have source declarations.
+ENT006	ownership	semantic	OwnershipTracker::moveValue	tests/enterprise/valid.enterprise.short	accept	Moves transfer ownership to a distinct named owner.
+ENT007	ownership	semantic	OwnershipTracker::borrowShared	tests/enterprise/valid.enterprise.short	accept	Shared borrows permit reads until explicit release.
+ENT008	ownership	semantic	OwnershipTracker::borrowMutable	tests/enterprise/valid.enterprise.short	accept	Mutable borrows remain exclusive and explicitly released.
+ENT009	ownership-negative	semantic	SHD3016	tests/enterprise/invalid_use_after_move.enterprise.short	reject	Use after move fails deterministically.
+ENT010	ownership-negative	semantic	SHD3016	tests/enterprise/invalid_borrow_conflict.enterprise.short	reject	Shared and mutable borrows cannot overlap.
+ENT011	type-negative	semantic	SHD3010	tests/enterprise/invalid_duplicate_field.enterprise.short	reject	Duplicate record fields fail descriptor validation.
+ENT012	lifetime-negative	semantic	SHD3016	tests/enterprise/invalid_unreleased_borrow.enterprise.short	reject	Borrow lifetimes must close before source completion.
+ENT013	package	resolver	shorthand.package.v2	scripts/check_enterprise_packages_stdlib_ffi.sh	accept	Root and vendored packages use exact identity, version and license metadata.
+ENT014	package-integrity	resolver	SHA-256	scripts/check_enterprise_packages_stdlib_ffi.sh	reject	Dependency manifests and reachable sources are cryptographically locked.
+ENT015	offline	resolver	offline_only	scripts/check_enterprise_packages_stdlib_ffi.sh	reject	Missing local dependencies fail without registry or network fallback.
+ENT016	license	resolver	SHD2032	scripts/check_enterprise_packages_stdlib_ffi.sh	reject	A prohibited redistributed license cannot enter the graph.
+ENT017	version	resolver	SHD2033	scripts/check_enterprise_packages_stdlib_ffi.sh	reject	A dependency or package range cannot replace an exact version.
+ENT018	sbom	resolver	SPDX-2.3+SHD2034	scripts/check_enterprise_packages_stdlib_ffi.sh	accept_and_reject	A verified v2 lock and explicit source epoch produce conformant deterministic creation metadata and dependency-manifest references.
+ENT019	ffi	core	SHORTHAND_CORE_FFI_ABI_VERSION	tests/enterprise/test_core_ffi.cpp	accept	C ABI version and status behavior are stable.
+ENT020	ffi-bounds	core	short_core_slice_i32_get	tests/enterprise/test_core_ffi.cpp	reject	Out-of-range slice access returns a stable error.
+ENT021	ffi-utf8	core	short_core_string_create	tests/enterprise/test_core_ffi.cpp	reject	Malformed UTF-8 cannot create an owned string.
+ENT022	ffi-symbols	link	core_ffi_public_symbols_v1.txt	scripts/check_enterprise_packages_stdlib_ffi.sh	accept	The shared-library export set is exact.
+ENT023	installed-consumer	package	ShortHand::core	tests/packaging/installed_consumer/core_c_consumer.c	accept	Installed C consumers link static and shared core targets.
+ENT024	installed-consumer	package	ShortHand::core_shared	tests/packaging/installed_consumer/core_cpp_consumer.cpp	accept	Installed C++ consumers use the versioned namespace and RAII wrapper.

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ShortHandInstalledConsumer LANGUAGES CXX)
+project(ShortHandInstalledConsumer LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,3 +32,21 @@ add_test(NAME installed_bridge_static COMMAND bridge_static)
 add_executable(bridge_shared bridge_consumer.cpp)
 target_link_libraries(bridge_shared PRIVATE ShortHand::ai_bridge_shared)
 add_test(NAME installed_bridge_shared COMMAND bridge_shared)
+
+add_executable(core_c_static core_c_consumer.c)
+set_target_properties(core_c_static PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(core_c_static PRIVATE ShortHand::core)
+add_test(NAME installed_core_c_static COMMAND core_c_static)
+
+add_executable(core_c_shared core_c_consumer.c)
+set_target_properties(core_c_shared PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(core_c_shared PRIVATE ShortHand::core_shared)
+add_test(NAME installed_core_c_shared COMMAND core_c_shared)
+
+add_executable(core_cpp_static core_cpp_consumer.cpp)
+target_link_libraries(core_cpp_static PRIVATE ShortHand::core)
+add_test(NAME installed_core_cpp_static COMMAND core_cpp_static)
+
+add_executable(core_cpp_shared core_cpp_consumer.cpp)
+target_link_libraries(core_cpp_shared PRIVATE ShortHand::core_shared)
+add_test(NAME installed_core_cpp_shared COMMAND core_cpp_shared)

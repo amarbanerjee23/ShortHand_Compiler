@@ -10,7 +10,7 @@ trap 'rm -rf "${WORK_DIR}"' EXIT
 [[ -f "${TEST}" ]] || { echo "error: missing module resolver unit source" >&2; exit 1; }
 ${CXX:-g++} -std=c++17 -Wall -Wextra -Wpedantic \
   -I"${SRC_DIR}" \
-  "${TEST}" "${SRC_DIR}/module/ModuleResolver.cpp" \
+  "${TEST}" "${SRC_DIR}/module/ModuleResolver.cpp" "${SRC_DIR}/module/Sha256.cpp" \
   -o "${WORK_DIR}/module_resolver_unit"
 "${WORK_DIR}/module_resolver_unit"
 

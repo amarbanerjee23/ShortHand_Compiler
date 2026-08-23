@@ -41,4 +41,4 @@ Conditions accept `bool` or `int`; zero is false and non-zero is true. A string 
 - runtime negatives for integer and floating arithmetic domains, integer and floating array bounds and zero loop steps;
 - no sanitizer, undefined-behavior or signal-crash markers.
 
-At the beta-0.4 boundary, record, enum, slice, option/result and ownership syntax, a conversion expression, general function/control-flow syntax, a package registry, a standard library, FFI and any production-readiness claim were unavailable. Beta-0.5 supersedes only the general function/control-flow boundary through `shorthand.control_flow.v1`; the other limitations remain fail-closed for PR86 and later work.
+At the beta-0.4 boundary, record, enum, slice, option/result and ownership syntax, a conversion expression, general function/control-flow syntax, a package registry, a standard library, FFI and any production-readiness claim were unavailable. Beta-0.5 supersedes the function/control-flow boundary. Beta-0.6 adds ABI schemas, offline packages and a bounded core FFI, but not composite execution or production readiness.

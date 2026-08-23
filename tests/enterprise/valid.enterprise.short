@@ -1,0 +1,28 @@
+language shorthand.enterprise_language.v1;
+namespace policyclub.sustainable_ai;
+
+record InferenceEvidence {
+    float64 energy_j;
+    bool quality_passed;
+    string evidence_id;
+};
+
+enum ExecutionState {
+    success;
+    not_executed;
+    failed;
+};
+
+slice Scores<float64>;
+option MaybeScore<float64>;
+result Prediction<float64,string>;
+
+owned InferenceEvidence pending;
+borrow shared pending as audit_view;
+read pending;
+release audit_view;
+move pending to verified;
+borrow mutable verified as verifier;
+release verifier;
+assign verified;
+read verified;

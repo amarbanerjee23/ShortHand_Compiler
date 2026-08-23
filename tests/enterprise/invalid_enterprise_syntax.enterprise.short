@@ -1,0 +1,4 @@
+namespace policyclub.invalid;
+record Evidence {
+    string id;
+};

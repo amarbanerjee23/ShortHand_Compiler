@@ -1,0 +1,8 @@
+language shorthand.enterprise_language.v1;
+namespace policyclub.invalid;
+enum State {
+    ready;
+};
+enum State {
+    failed;
+};

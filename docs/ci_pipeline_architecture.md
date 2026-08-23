@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-08-22-pr85
+ci_pipeline_architecture_version: 2026-08-22-pr86
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -38,6 +38,7 @@ Runs first and fails quickly.
 - Bison/Flex regeneration with conflicts as errors,
 - grammar/conformance matrices,
 - beta-0.5 call, scope, return and same-block label conformance,
+- beta-0.6 enterprise schema, package supply-chain, core ABI and installed-consumer conformance,
 - AST/source ranges,
 - diagnostics codes,
 - module manifest/graph/lockfile determinism,
@@ -137,6 +138,8 @@ GitHub PR84 adds `scripts/check_production_type_memory_model.sh`, the beta-0.4 t
 
 GitHub PR85 adds `scripts/check_functions_control_error_semantics.sh` and the beta-0.5 control-flow matrix. Expression calls, recursion, lexical cleanup, structured returns and safe label transfers must agree in interpreter, LLVM bitcode and native modes; undefined calls/labels, duplicate declarations/labels, illegal lifetime crossings, missing returns and void-value use fail with stable diagnostics before lowering.
 
+GitHub PR86 adds `scripts/check_enterprise_packages_stdlib_ffi.sh` and the beta-0.6 enterprise matrix. Namespaced composite schemas and ownership plans, offline exact-version dependencies, SHA-256 locks, license policy, SPDX dependency output, core ABI exports, sanitizer paths and static/shared installed C/C++ consumers fail closed as one first-class gate.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -187,7 +190,8 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR83: production truth and C3-ECO traceability.
 - PR84: production type and memory model plus beta-0.4 typed execution.
 - PR85: functions, lexical scopes, structured control flow and deterministic errors under beta-0.5.
-- PR86-PR87: remaining source composites/ownership, packages/FFI and concurrent serving.
+- PR86: enterprise ABI schemas/ownership plans, cryptographic offline packages, core library and safe FFI under beta-0.6.
+- PR87: concurrent serving and operational runtime.
 - PR88-PR91: typed C3-ECO profile, measurement, scoring and auditor evidence.
 - PR92-PR94: generated MLIR, lowering and representative AI qualification.
 - PR95: performance and measured-energy qualification.

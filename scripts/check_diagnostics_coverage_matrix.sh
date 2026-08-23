@@ -51,6 +51,9 @@ for file in \
   "${ROOT_DIR}/tests/semantic/functions_control/void_value.short" \
   "${ROOT_DIR}/tests/semantic/functions_control/undefined_function.short" \
   "${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh" \
+  "${ROOT_DIR}/tests/enterprise/invalid_enterprise_syntax.enterprise.short" \
+  "${ROOT_DIR}/tests/enterprise/invalid_duplicate_type.enterprise.short" \
+  "${ROOT_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh" \
   "${ROOT_DIR}/tests/semantic/differential/division_by_zero.short" \
   "${ROOT_DIR}/tests/semantic/differential/array_bounds.short" \
   "${ROOT_DIR}/tests/modules/invalid/duplicate_package.short" \
@@ -69,7 +72,7 @@ bash -n "${ROOT_DIR}/scripts/check_module_resolution.sh"
 bash -n "${DIFFERENTIAL}"
 
 for anchor in \
-  'diagnostics_coverage_contract_version: 1.4.0' \
+  'diagnostics_coverage_contract_version: 1.5.0' \
   'diagnostics_coverage_status: stable_coded_stage_matrix_guarded' \
   'covered_stages: parser, module, semantic, ai, greenai, lowering, runtime' \
   'warning_delivery_status: printed_without_failing_successful_compilation' \
@@ -120,8 +123,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 85 ]] || {
-  echo "error: expected 85 stable diagnostics after the PR85 control-flow expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 91 ]] || {
+  echo "error: expected 91 stable diagnostics after the PR86 enterprise expansion" >&2
   exit 1
 }
 
@@ -135,7 +138,7 @@ awk -F '\t' '
   $2 !~ /^(parser|module|semantic|ai|greenai|lowering|runtime)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 86) exit 16 }
+  END { if (NR != 92) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1

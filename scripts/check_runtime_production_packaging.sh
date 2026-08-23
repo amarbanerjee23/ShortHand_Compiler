@@ -25,7 +25,8 @@ for file in \
   "${TEST}" \
   "${ROOT_DIR}/cmake/ShortHandConfig.cmake.in" \
   "${ROOT_DIR}/cmake/shorthand-runtime.pc.in" \
-  "${ROOT_DIR}/cmake/shorthand-ai-bridge.pc.in"; do
+  "${ROOT_DIR}/cmake/shorthand-ai-bridge.pc.in" \
+  "${ROOT_DIR}/cmake/shorthand-core.pc.in"; do
   [[ -f "${file}" ]] || { echo "error: missing required file: ${file}" >&2; exit 1; }
 done
 
@@ -36,6 +37,7 @@ for anchor in \
   'runtime_packaging_status: installable_static_shared_and_consumer_checked' \
   'runtime_shared_soversion: 1' \
   'ai_bridge_packaging_status: adapter_static_shared_and_consumer_checked' \
+  'core_packaging_status: core_ffi_static_shared_and_consumer_checked' \
   'production_claim_boundary: packaging_gate_is_not_full_production_readiness'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -45,21 +47,25 @@ for anchor in \
   'add_library(shorthand_runtime_shared SHARED' \
   'add_library(shorthand_ai_bridge STATIC' \
   'add_library(shorthand_ai_bridge_shared SHARED' \
+  'add_library(shorthand_core STATIC' \
+  'add_library(shorthand_core_shared SHARED' \
   'SOVERSION ${SHORTHAND_RUNTIME_ABI_VERSION_MAJOR}' \
   'install(EXPORT ShortHandTargets' \
   'configure_package_config_file(' \
   'write_basic_package_version_file(' \
   'shorthand-runtime.pc' \
-  'shorthand-ai-bridge.pc'; do
+  'shorthand-ai-bridge.pc' \
+  'shorthand-core.pc'; do
   require_contains "${CMAKE_FILE}" "${anchor}"
 done
 
 require_contains "${TEST}" 'find_package(ShortHand 1 CONFIG REQUIRED)'
 require_contains "${TEST}" 'ShortHand::runtime_shared'
 require_contains "${TEST}" 'ShortHand::ai_bridge_shared'
+require_contains "${TEST}" 'ShortHand::core_shared'
 require_contains "${TEST}" 'SONAME.*libshorthand_runtime'
 require_contains "${TEST}" 'pkg-config --modversion shorthand-runtime'
-require_contains "${TEST}" 'PASS production runtime and AI bridge packaging consumer gate'
+require_contains "${TEST}" 'PASS production runtime and AI bridge packaging consumer gate with core FFI'
 
 bash "${TEST}"
 

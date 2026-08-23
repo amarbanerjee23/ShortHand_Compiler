@@ -144,6 +144,8 @@ set(SHORTHAND_RUNTIME_ABI_VERSION "1.0.0")
 set(SHORTHAND_RUNTIME_API_VERSION "1.0.0")
 set(SHORTHAND_RUNTIME_ABI_VERSION_MAJOR 1)
 set(SHORTHAND_AI_BRIDGE_CONTRACT_VERSION "shorthand.runtime.ai_runtime_execution_adapter.v1")
+set(SHORTHAND_CORE_FFI_ABI_VERSION "1.0.0")
+set(SHORTHAND_CORE_FFI_ABI_VERSION_MAJOR 1)
 
 set(SHORTHAND_RUNTIME_ABI_RENAMES
   short_runtime_reset=shimpl_runtime_reset
@@ -234,6 +236,36 @@ if(WIN32)
   set_target_properties(shorthand_ai_bridge_shared PROPERTIES OUTPUT_NAME shorthand_ai_bridge_shared)
 endif()
 
+add_library(shorthand_core STATIC ${SRC_DIR}/core/ShorthandCore.cpp)
+target_compile_features(shorthand_core PUBLIC cxx_std_17)
+target_include_directories(shorthand_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+set_target_properties(shorthand_core PROPERTIES EXPORT_NAME core OUTPUT_NAME shorthand_core)
+
+add_library(shorthand_core_shared SHARED ${SRC_DIR}/core/ShorthandCore.cpp)
+target_compile_features(shorthand_core_shared PUBLIC cxx_std_17)
+target_include_directories(shorthand_core_shared PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+target_compile_definitions(shorthand_core_shared
+  PUBLIC SHORTHAND_CORE_SHARED=1
+  PRIVATE SHORTHAND_CORE_BUILDING_LIBRARY=1
+)
+set_target_properties(shorthand_core_shared PROPERTIES
+  EXPORT_NAME core_shared
+  OUTPUT_NAME shorthand_core
+  VERSION ${SHORTHAND_CORE_FFI_ABI_VERSION}
+  SOVERSION ${SHORTHAND_CORE_FFI_ABI_VERSION_MAJOR}
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES
+)
+if(WIN32)
+  set_target_properties(shorthand_core_shared PROPERTIES OUTPUT_NAME shorthand_core_shared)
+endif()
+
 if(SHORTHAND_BUILD_PROMETHEUS_ADAPTER)
   add_executable(shorthand_prometheus_adapter
     ${SRC_DIR}/operations/PrometheusScrapeAdapter.cpp
@@ -256,7 +288,9 @@ add_executable(short_hand
   ${SCANNER_SRC}
   ${SRC_DIR}/ast/AST.cpp
   ${SRC_DIR}/module/ModuleResolver.cpp
+  ${SRC_DIR}/module/Sha256.cpp
   ${SRC_DIR}/type_system/ProductionTypeSystem.cpp
+  ${SRC_DIR}/enterprise/EnterpriseLanguage.cpp
   ${SRC_DIR}/visitors/AST_Printer.cpp
   ${SRC_DIR}/visitors/Interpreter.cpp
   ${SRC_DIR}/visitors/IR_Generator.cpp
@@ -320,6 +354,8 @@ install(TARGETS
   shorthand_runtime_shared
   shorthand_ai_bridge
   shorthand_ai_bridge_shared
+  shorthand_core
+  shorthand_core_shared
   EXPORT ShortHandTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -349,6 +385,14 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/runtime
 )
 install(FILES
+  ${SRC_DIR}/core/ShorthandCore.hpp
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/core
+)
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/abi/shorthand_core_ffi_v1.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/abi
+)
+install(FILES
   ${SRC_DIR}/ai_runtime/AI_Types.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/ai_runtime
 )
@@ -374,6 +418,11 @@ configure_file(
   @ONLY
 )
 configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/shorthand-core.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/shorthand-core.pc
+  @ONLY
+)
+configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/shorthand-ai-bridge.pc.in
   ${CMAKE_CURRENT_BINARY_DIR}/shorthand-ai-bridge.pc
   @ONLY
@@ -392,6 +441,7 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/shorthand-runtime.pc
   ${CMAKE_CURRENT_BINARY_DIR}/shorthand-ai-bridge.pc
+  ${CMAKE_CURRENT_BINARY_DIR}/shorthand-core.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
@@ -419,6 +469,15 @@ if(SHORTHAND_BUILD_TESTING)
   add_test(
     NAME functions_control_error_semantics
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_functions_control_error_semantics.sh
+  )
+
+  add_test(
+    NAME enterprise_packages_stdlib_ffi
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh
+  )
+  set_tests_properties(enterprise_packages_stdlib_ffi PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>"
   )
   set_tests_properties(functions_control_error_semantics PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

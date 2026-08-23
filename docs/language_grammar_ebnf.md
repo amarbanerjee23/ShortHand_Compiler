@@ -269,9 +269,39 @@ greenai_report      = "greenai" , "(" , string_literal , "," ,
 
 The parser accepts generic measurement field identifiers. The current AST recognizes `inferences`, `watts`, `seconds`, and `backend`. The Green AI report production validates that the call identifier is exactly `greenai`.
 
+## Beta-0.6 enterprise schema grammar
+
+The enterprise schema is parsed only by `enterprise-check`. It is intentionally separate from the executable base grammar.
+
+```ebnf
+enterprise_source       = language_marker , namespace_declaration ,
+                          enterprise_declaration , { enterprise_declaration } ;
+language_marker         = "language" , "shorthand.enterprise_language.v1" , ";" ;
+namespace_declaration   = "namespace" , dotted_identifier , ";" ;
+enterprise_declaration = record_declaration | enum_declaration
+                       | slice_declaration | option_declaration
+                       | result_declaration | ownership_operation ;
+scalar                  = "bool" | "int32" | "float64" | "string" ;
+record_declaration      = "record" , identifier , "{" ,
+                          scalar , identifier , ";" ,
+                          { scalar , identifier , ";" } , "}" , ";" ;
+enum_declaration        = "enum" , identifier , "{" ,
+                          identifier , ";" , { identifier , ";" } , "}" , ";" ;
+slice_declaration       = "slice" , identifier , "<" , scalar , ">" , ";" ;
+option_declaration      = "option" , identifier , "<" , scalar , ">" , ";" ;
+result_declaration      = "result" , identifier , "<" , scalar , "," , scalar , ">" , ";" ;
+ownership_operation    = "owned" , identifier , identifier , ";"
+                       | "move" , identifier , "to" , identifier , ";"
+                       | "borrow" , ( "shared" | "mutable" ) , identifier , "as" , identifier , ";"
+                       | "release" , identifier , ";"
+                       | ( "read" | "assign" ) , identifier , ";" ;
+```
+
+Composite execution lowering, nested payload types, owned string arrays, nested vendored dependencies and by-value composite FFI are outside this contract and remain rejected.
+
 ## Conformance rules
 
-The authoritative executable mapping is `tests/conformance/grammar_matrix_beta_0_2.tsv`.
+The authoritative base mapping is `tests/conformance/grammar_matrix_beta_0_2.tsv`; the separate enterprise mapping is `tests/conformance/enterprise_matrix_beta_0_6.tsv`.
 
 Every matrix row records:
 

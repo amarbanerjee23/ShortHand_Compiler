@@ -43,6 +43,9 @@ for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${
   "${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh" \
   "${ROOT_DIR}/docs/functions_control_error_semantics.md" \
   "${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv" \
+  "${ROOT_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh" \
+  "${ROOT_DIR}/docs/enterprise_packages_stdlib_ffi.md" \
+  "${ROOT_DIR}/tests/conformance/enterprise_matrix_beta_0_6.tsv" \
   "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" \
   "${ROOT_DIR}/scripts/check_no_mandatory_test_skips.sh" \
   "${ROOT_DIR}/tests/integration/test_production_backend_hardware_qualification.sh" \
@@ -69,24 +72,24 @@ row_count="$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' 
 implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END { print count+0 }' "${MATRIX}")"
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
-[[ "${row_count}" == 30 ]] || { echo "error: expected 30 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 24 ]] || { echo "error: expected 24 implemented rows in the PR85 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR85 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR85 candidate" >&2; exit 1; }
+[[ "${row_count}" == 31 ]] || { echo "error: expected 31 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
+[[ "${implemented_count}" == 25 ]] || { echo "error: expected 25 implemented rows in the PR86 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR86 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR86 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
 duplicate_ids="$(tail -n +2 "${MATRIX}" | cut -f1 | sort | uniq -d)"
 [[ -z "${duplicate_ids}" ]] || { echo "error: duplicate compiler test matrix IDs: ${duplicate_ids}" >&2; exit 1; }
-for number in $(seq 1 30); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 31); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 for pr in $(seq 68 80); do require_contains "${PLAN}" "PR${pr} -"; done
 require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-08-22-pr85' \
+  'compiler_test_strategy_version: 2026-08-22-pr86' \
   'production_claim: false' \
-  '24 implemented areas' \
+  '25 implemented areas' \
   '3 partial areas' \
   '3 open areas' \
   'Required test layers for every implementation PR' \
@@ -111,8 +114,8 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-08-22-pr85'
-require_contains "${STATUS}" '24 implemented, 3 partial and 3 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-08-22-pr86'
+require_contains "${STATUS}" '25 implemented, 3 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
@@ -134,6 +137,7 @@ require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
+require_contains "${MATRIX}" $'TST031\tenterprise language packages core library and FFI\timplemented'
 
 require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\tpartial\tFirst-class C3-ECO grammar AST semantics evidence and SHD5101-SHD5104 claim-safety gate'
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
@@ -143,6 +147,7 @@ require_contains "${ROOT_DIR}/scripts/check_no_mandatory_test_skips.sh" 'PASS ma
 require_contains "${ROOT_DIR}/scripts/check_production_truth.sh" 'PASS production truth and C3-ECO traceability gate'
 require_contains "${ROOT_DIR}/scripts/check_production_type_memory_model.sh" 'PASS production type and memory model gate'
 require_contains "${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh" 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate'
+require_contains "${ROOT_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh" 'PASS enterprise packages standard library and safe FFI gate'
 bash "${ROOT_DIR}/scripts/check_production_truth.sh"
 bash "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"
 

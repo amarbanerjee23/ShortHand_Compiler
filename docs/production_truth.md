@@ -26,16 +26,17 @@ Workflow source is not execution evidence. A declared backend is not live qualif
 
 ## Active language contract
 
-The active language version is beta-0.5. It combines:
+The active layered language version is beta-0.6. It combines:
 
 - the beta-0.2 base grammar and executable matrix,
 - the beta-0.3 package, module, import and deterministic multi-file semantics,
 - the `shorthand.type_memory.v1` descriptors, checked storage and ownership-state contract,
 - exact cross-mode float, string and typed-array execution under `shorthand.semantic.differential.v2`,
 - `shorthand.control_flow.v1` expression calls, recursion, lexical cleanup, structured returns and same-block label resolution,
+- `shorthand.enterprise_language.v1`, package/lock v2 and the separate core FFI ABI 1.0.0,
 - the `shorthand.c3eco.language.v1` certification-oriented declaration extension.
 
-The executable beta-0.5 subset covers `int`, `bool`, binary64 `float`/`double`, immutable string scalars, fixed numeric/boolean arrays, arbitrary-expression calls, recursion, typed lexical locals, structured loops/returns and safe label transfers as documented in `docs/execution_semantics_beta_0_4.md` and `docs/functions_control_error_semantics.md`. Composite descriptors are implemented, but record, enum, slice, option/result and ownership source syntax and owned string arrays remain fail-closed. PR86 owns the next enterprise package, library, FFI and remaining language-surface expansion.
+The executable subset remains beta-0.5 and covers `int`, `bool`, binary64 `float`/`double`, immutable string scalars, fixed numeric/boolean arrays, arbitrary-expression calls, recursion, typed lexical locals, structured loops/returns and safe label transfers. Beta-0.6 adds namespaced record, enum, slice, option/result schemas and explicit ownership-plan validation through `enterprise-check`; it does not claim composite interpreter/LLVM execution. Package v2, SHA-256 locks, SPDX dependency output and core FFI ABI 1.0.0 are documented in `docs/enterprise_packages_stdlib_ffi.md`.
 
 ## C3-ECO profile boundary
 

@@ -12,7 +12,8 @@ PREFIX="$(cd "${PREFIX}" && pwd)"
 BUILD_DIR="${2:-${TMPDIR:-/tmp}/shorthand-installed-consumer-build}"
 FIXTURE="${ROOT_DIR}/tests/packaging/installed_consumer"
 
-for file in "${FIXTURE}/CMakeLists.txt" "${FIXTURE}/runtime_consumer.cpp" "${FIXTURE}/bridge_consumer.cpp"; do
+for file in "${FIXTURE}/CMakeLists.txt" "${FIXTURE}/runtime_consumer.cpp" "${FIXTURE}/bridge_consumer.cpp" \
+  "${FIXTURE}/core_c_consumer.c" "${FIXTURE}/core_cpp_consumer.cpp"; do
   [[ -s "${file}" ]] || { echo "error: missing installed-consumer fixture: ${file}" >&2; exit 1; }
 done
 
