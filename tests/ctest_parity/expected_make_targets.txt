@@ -11,5 +11,6 @@ test-conformance
 test-semantic-differential
 test-control-flow
 test-enterprise-language
+test-serving
 test-llvm
 test-ai

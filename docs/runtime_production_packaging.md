@@ -6,6 +6,7 @@ runtime_shared_version: 1.0.0
 runtime_shared_soversion: 1
 ai_bridge_packaging_status: adapter_static_shared_and_consumer_checked
 core_packaging_status: core_ffi_static_shared_and_consumer_checked
+serving_packaging_status: bounded_scheduler_worker_and_consumer_checked
 cmake_package_name: ShortHand
 pkg_config_runtime_name: shorthand-runtime
 pkg_config_ai_bridge_name: shorthand-ai-bridge
@@ -14,16 +15,17 @@ production_claim_boundary: packaging_gate_is_not_full_production_readiness
 
 ## Scope
 
-PR61 turns the frozen runtime ABI and the AI bridge adapter into repeatable installable build artifacts.
+PR61 introduced the frozen runtime and bridge packages, PR86 added the core FFI package, and PR87 adds the bounded serving scheduler and operational worker.
 
 The production CMake build installs:
 
 1. `libshorthand_runtime` as static and shared libraries.
 2. `libshorthand_ai_bridge` as static and shared libraries.
 3. `libshorthand_core` as static and shared libraries with separate FFI ABI 1.0.0.
-4. runtime, bridge, frozen runtime ABI, core C ABI and core C++ wrapper headers.
-5. `ShortHandConfig.cmake`, `ShortHandConfigVersion.cmake`, and exported `ShortHandTargets.cmake` metadata.
-6. runtime, AI bridge and core pkg-config metadata.
+4. `libshorthand_serving` as a static C++17 library and `shorthand_serving_worker` as an installed executable.
+5. runtime, bridge, frozen runtime ABI, core C ABI, core C++ wrapper and serving headers.
+6. `ShortHandConfig.cmake`, `ShortHandConfigVersion.cmake`, and exported `ShortHandTargets.cmake` metadata.
+7. runtime, AI bridge and core pkg-config metadata.
 
 ## Installed CMake targets
 
@@ -34,6 +36,7 @@ The installed package exports these targets:
 - `ShortHand::ai_bridge` for the static C++ adapter.
 - `ShortHand::ai_bridge_shared` for the shared C++ adapter.
 - `ShortHand::core` and `ShortHand::core_shared` for the safe core/FFI library.
+- `ShortHand::serving` for the bounded C++17 scheduling runtime.
 
 A downstream CMake project uses `find_package(ShortHand 1 CONFIG REQUIRED)` and links exactly one static or shared variant for each component it needs.
 
@@ -61,7 +64,8 @@ The full artifact remains versioned as `1.0.0`. Platform-specific CMake naming i
 6. runtime ABI version and basic registry behavior,
 7. bridge adapter contract version and status mapping,
 8. core C and C++ static/shared consumers plus exact core exported symbols,
-9. ELF SONAME values when `readelf` is available.
+9. the installed `ShortHand::serving` consumer and worker self-test,
+10. ELF SONAME values when `readelf` is available.
 
 The gate uses only the installation prefix for downstream compilation. Repository include paths and build-tree library paths are not allowed in the consumer project.
 
@@ -69,6 +73,6 @@ The gate uses only the installation prefix for downstream compilation. Repositor
 
 The packaged `shorthand_ai_bridge` library contains the dependency-light C++ mapping adapter and AI type conversion helpers. It does not package third-party backend SDKs and it does not claim that ONNX Runtime, TensorRT, OpenVINO, LibTorch or llama.cpp executed successfully.
 
-The runtime remains one process-wide serialized ABI v1 context. Packaging does not add tenant handles, parallel backend execution, network exporters, deployment hardening, signed releases or a full production-readiness claim.
+The frozen runtime remains one process-wide serialized ABI v1 context. The serving library adds process-scoped tenant admission and bounded concurrent host execution without changing that C ABI. Packaging does not add authenticated public ingress, TLS, parallel backend qualification, signed-release execution or a full production-readiness claim.
 
 PR62 remains responsible for the Prometheus scrape endpoint host adapter.

@@ -266,6 +266,17 @@ if(WIN32)
   set_target_properties(shorthand_core_shared PROPERTIES OUTPUT_NAME shorthand_core_shared)
 endif()
 
+add_library(shorthand_serving STATIC ${SRC_DIR}/serving/ServingRuntime.cpp)
+shorthand_configure_installable_target(shorthand_serving serving)
+target_link_libraries(shorthand_serving PUBLIC Threads::Threads)
+set_target_properties(shorthand_serving PROPERTIES OUTPUT_NAME shorthand_serving)
+
+add_executable(shorthand_serving_worker
+  ${SRC_DIR}/serving/ServingWorkerMain.cpp
+)
+target_compile_features(shorthand_serving_worker PRIVATE cxx_std_17)
+target_link_libraries(shorthand_serving_worker PRIVATE shorthand_serving)
+
 if(SHORTHAND_BUILD_PROMETHEUS_ADAPTER)
   add_executable(shorthand_prometheus_adapter
     ${SRC_DIR}/operations/PrometheusScrapeAdapter.cpp
@@ -356,6 +367,7 @@ install(TARGETS
   shorthand_ai_bridge_shared
   shorthand_core
   shorthand_core_shared
+  shorthand_serving
   EXPORT ShortHandTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -363,7 +375,7 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-install(TARGETS shorthand_lsp
+install(TARGETS shorthand_lsp shorthand_serving_worker
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
@@ -387,6 +399,10 @@ install(FILES
 install(FILES
   ${SRC_DIR}/core/ShorthandCore.hpp
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/core
+)
+install(FILES
+  ${SRC_DIR}/serving/ServingRuntime.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/serving
 )
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/abi/shorthand_core_ffi_v1.h
@@ -478,6 +494,14 @@ if(SHORTHAND_BUILD_TESTING)
   set_tests_properties(enterprise_packages_stdlib_ffi PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>"
+  )
+
+  add_test(
+    NAME concurrent_serving_runtime
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_concurrent_serving_runtime.sh
+  )
+  set_tests_properties(concurrent_serving_runtime PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
   set_tests_properties(functions_control_error_semantics PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

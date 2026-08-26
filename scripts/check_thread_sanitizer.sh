@@ -4,6 +4,8 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 STRESS_SRC="${ROOT_DIR}/tests/runtime/tsan_runtime_stress.cpp"
+SERVING_STRESS_SRC="${ROOT_DIR}/tests/runtime/serving_runtime_stress.cpp"
+SERVING_SRC="${SRC_DIR}/serving/ServingRuntime.cpp"
 WORK_DIR="$(mktemp -d)"
 CXX="${SHORTHAND_TSAN_CXX:-clang++}"
 trap 'rm -rf "${WORK_DIR}"' EXIT
@@ -13,6 +15,10 @@ command -v "${CXX}" >/dev/null 2>&1 || {
   exit 1
 }
 [[ -f "${STRESS_SRC}" ]] || { echo "error: missing TSan stress source" >&2; exit 1; }
+[[ -f "${SERVING_STRESS_SRC}" && -f "${SERVING_SRC}" ]] || {
+  echo "error: missing concurrent serving TSan stress source" >&2
+  exit 1
+}
 
 COMMON_FLAGS=(
   -std=c++17
@@ -90,5 +96,31 @@ if grep -Eq 'WARNING: ThreadSanitizer|SUMMARY: ThreadSanitizer|data race|lock-or
 fi
 grep -Fq 'PASS runtime concurrency stress' /tmp/shorthand_tsan_runtime.out
 
+"${CXX}" "${COMMON_FLAGS[@]}" \
+  "${SERVING_SRC}" "${SERVING_STRESS_SRC}" \
+  -pie \
+  -o "${WORK_DIR}/tsan_serving_stress"
+set +e
+TSAN_OPTIONS="halt_on_error=1:history_size=7:second_deadlock_stack=1" \
+  timeout --signal=TERM --kill-after=2 60 \
+  "${WORK_DIR}/tsan_serving_stress" \
+  >/tmp/shorthand_tsan_serving.out \
+  2>/tmp/shorthand_tsan_serving.err
+serving_status=$?
+set -e
+cat /tmp/shorthand_tsan_serving.out
+cat /tmp/shorthand_tsan_serving.err >&2 || true
+if (( serving_status != 0 )); then
+  echo "error: ThreadSanitizer serving stress failed with status ${serving_status}" >&2
+  exit "${serving_status}"
+fi
+if grep -Eq 'WARNING: ThreadSanitizer|SUMMARY: ThreadSanitizer|data race|lock-order-inversion' \
+    /tmp/shorthand_tsan_serving.out /tmp/shorthand_tsan_serving.err; then
+  echo "error: ThreadSanitizer reported a serving concurrency defect" >&2
+  exit 1
+fi
+grep -Fq 'PASS serving runtime concurrent load and soak stress' /tmp/shorthand_tsan_serving.out
+
+printf 'SERVING_TSAN contract=shorthand.serving.runtime.v1 compiler=%s\n' "${CXX}"
 printf 'TSAN contract=shorthand.runtime.tsan.v1 compiler=%s\n' "${CXX}"
 printf 'PASS mandatory ThreadSanitizer race gate\n'

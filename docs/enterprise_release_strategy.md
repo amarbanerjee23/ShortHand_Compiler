@@ -15,7 +15,7 @@ The repository has useful foundations:
 - CI gates for setup, strict validation, smoke tests, Makefile tests, sanitizer checks, CMake build, and CTest.
 - Explicit evidence-only policy and complete G1-G14/A-K/S9/S12 traceability for C3-ECO-aligned candidate reports.
 
-It is not yet ready for general enterprise production use because the complete language/type/memory/control-flow contract, enterprise packages/stdlib/FFI, concurrent serving, full C3-ECO preparation, generated MLIR lowering, representative AI workload, measured performance/energy, final RC aggregate and protected publication exercise remain incomplete.
+It is not yet ready for general enterprise production use because composite execution lowering, public authenticated service ingress, full C3-ECO preparation, generated MLIR lowering, representative AI workload, measured performance/energy, final RC aggregate and protected publication exercise remain incomplete. The process-scoped `shorthand.serving.runtime.v1` contract is implemented without claiming a hardened public service.
 
 ## Enterprise target
 

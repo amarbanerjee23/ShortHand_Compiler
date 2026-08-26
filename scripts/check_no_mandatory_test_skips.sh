@@ -8,6 +8,7 @@ mandatory=(
   tests/integration/test_production_backend_hardware_qualification.sh
   scripts/check_production_backend_hardware_qualification.sh
   scripts/check_kubernetes_ephemeral_cluster.sh
+  scripts/check_concurrent_serving_runtime.sh
 )
 
 for rel in "${mandatory[@]}"; do
@@ -25,5 +26,6 @@ grep -Fq 'negative_qualified' "${ROOT_DIR}/tests/integration/test_backend_live_s
 grep -Fq 'not_production_qualified' "${ROOT_DIR}/tests/integration/test_backend_live_sdk_matrix.sh"
 grep -Fq 'mandatory_skips":0' "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh"
 grep -Fq 'PASS ephemeral Kubernetes production gate' "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh"
+grep -Fq 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate' "${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh"
 
 echo "PASS mandatory qualification zero-skip policy gate"

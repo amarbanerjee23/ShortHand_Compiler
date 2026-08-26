@@ -18,6 +18,7 @@ required_files=(
   docs/production_type_memory_model.md
   docs/functions_control_error_semantics.md
   docs/enterprise_packages_stdlib_ffi.md
+  docs/concurrent_serving_runtime.md
   docs/fuzz_sanitizer_race_hardening.md
   docs/signed_release_publication.md
   docs/external_security_policy.md
@@ -56,8 +57,14 @@ required_files=(
   scripts/check_production_type_memory_model.sh
   scripts/check_functions_control_error_semantics.sh
   scripts/check_enterprise_packages_stdlib_ffi.sh
+  scripts/check_concurrent_serving_runtime.sh
   tests/governance/test_production_truth_negative.sh
   Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+  Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.h
+  Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.cpp
+  Compiler_new_ws/Short_Hand/src/serving/ServingWorkerMain.cpp
+  tests/runtime/test_serving_runtime.cpp
+  tests/runtime/serving_runtime_stress.cpp
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
   Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
   Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
@@ -101,21 +108,23 @@ required_status_terms=(
   "Functions, structured control flow and deterministic errors"
   "Enterprise schemas and ownership plans"
   "Offline packages, core library and safe FFI"
+  "Concurrent serving and operational runtime"
 )
 for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-22-pr86' \
+  'feature_status_version: 2026-08-23-pr87' \
   'language_version: beta-0.6' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 86' \
-  'current_roadmap_scope: enterprise_packages_standard_library_and_safe_ffi' \
-  '25 implemented, 3 partial and 3 open' \
+  'current_github_pr: 87' \
+  'current_roadmap_scope: concurrent_serving_and_operational_runtime' \
+  '26 implemented, 3 partial and 3 open' \
   'GitHub PR85 implemented beta-0.5 functions/control flow' \
-  'GitHub PR86 now implements the bounded beta-0.6 enterprise schema' \
+  'GitHub PR86 implemented the bounded beta-0.6 enterprise schema' \
+  'GitHub PR87 now implements the process-scoped concurrent serving and operational runtime' \
   'Cross-platform portability | Implemented for PR74 tiers' \
   'Cross-platform reproducibility | Implemented' \
   'Signed releases | Partial' \
@@ -134,6 +143,7 @@ grep -Fq 'execution_semantics_contract: beta-0.4-pr84-v1' docs/execution_semanti
 grep -Fq 'type_system_contract: shorthand.type_memory.v1' docs/production_type_memory_model.md
 grep -Fq 'control_flow_contract: shorthand.control_flow.v1' docs/functions_control_error_semantics.md
 grep -Fq 'enterprise_contract: shorthand.enterprise_language.v1' docs/enterprise_packages_stdlib_ffi.md
+grep -Fq 'serving_runtime_contract: shorthand.serving.runtime.v1' docs/concurrent_serving_runtime.md
 grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
 grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
 grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
@@ -167,6 +177,7 @@ grep -Fq 'PASS verified ONNX Runtime CPU qualification SDK acquisition' scripts/
 grep -Fq 'PASS production type and memory model gate' scripts/check_production_type_memory_model.sh
 grep -Fq 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate' scripts/check_functions_control_error_semantics.sh
 grep -Fq 'PASS enterprise packages standard library and safe FFI gate' scripts/check_enterprise_packages_stdlib_ffi.sh
+grep -Fq 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate' scripts/check_concurrent_serving_runtime.sh
 
 grep -Fq 'GCC formatter and linter gate' .github/workflows/tooling.yml
 grep -Fq 'Clang formatter and linter gate' .github/workflows/tooling.yml
@@ -188,6 +199,7 @@ bash scripts/check_production_truth.sh
 bash scripts/check_production_type_memory_model.sh
 bash scripts/check_functions_control_error_semantics.sh
 bash scripts/check_enterprise_packages_stdlib_ffi.sh
+bash scripts/check_concurrent_serving_runtime.sh
 bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
@@ -231,7 +243,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR86 establishes beta-0.6 enterprise schemas, cryptographic offline packages, core ABI 1.0.0 and safe FFI while preserving beta-0.5 execution and all zero-skip qualification gates; PR87-PR96 and the protected release exercise remain fail-closed."
+echo "Feature plan status check passed. GitHub PR87 establishes bounded process-scoped serving, cancellation, deadlines, backpressure, isolation, health, metrics and graceful drain while preserving beta-0.6 language/package/FFI and all zero-skip qualification gates; PR88-PR96 and the protected release exercise remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

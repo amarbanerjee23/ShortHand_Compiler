@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-22-pr86
+feature_status_version: 2026-08-23-pr87
 language_version: beta-0.6
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 86
-current_roadmap_scope: enterprise_packages_standard_library_and_safe_ffi
+current_github_pr: 87
+current_roadmap_scope: concurrent_serving_and_operational_runtime
 
 ## Goal
 
@@ -13,9 +13,9 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, roadmap PR75 as GitHub PR76, and roadmap PR76 through PR81 as GitHub PR77 through PR82. GitHub PR83 implemented production truth and C3-ECO traceability, GitHub PR84 implemented beta-0.4 type/memory, and GitHub PR85 implemented beta-0.5 functions/control flow. GitHub PR86 now implements the bounded beta-0.6 enterprise schema, offline cryptographic packages, package SBOM, installable core library and safe FFI.
+Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, roadmap PR75 as GitHub PR76, and roadmap PR76 through PR81 as GitHub PR77 through PR82. GitHub PR83 implemented production truth and C3-ECO traceability, GitHub PR84 implemented beta-0.4 type/memory, GitHub PR85 implemented beta-0.5 functions/control flow and GitHub PR86 implemented the bounded beta-0.6 enterprise schema, offline cryptographic packages, package SBOM, installable core library and safe FFI. GitHub PR87 now implements the process-scoped concurrent serving and operational runtime.
 
-The compiler test audit records **25 implemented, 3 partial and 3 open** areas for the PR86 candidate. ShortHand remains a controlled beta because composite execution lowering, serving runtime, complete C3-ECO preparation, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
+The compiler test audit records **26 implemented, 3 partial and 3 open** areas for the PR87 candidate. ShortHand remains a controlled beta because composite execution lowering, public authenticated service ingress, complete C3-ECO preparation, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
 
 ## Production truth authority
 
@@ -44,6 +44,7 @@ The current certification profile treats the supplied C3-ECO draft v0.6 as the n
 | Cross-platform reproducibility | Implemented | independent clean builds and checksum/tamper gate. |
 | Runtime ABI compatibility | Implemented v1 | frozen 25-symbol ABI consumer plus multi-platform installed consumers. |
 | Packaging and installed consumers | Implemented | install/reinstall/uninstall lifecycle on qualified platforms. |
+| Concurrent serving and operational runtime | Implemented for `shorthand.serving.runtime.v1` | Bounded concurrency/admission, cooperative cancellation, deadlines, process-scoped tenant isolation, health, metrics, graceful drain and installed worker evidence; public ingress/authentication/TLS are not claimed. |
 | Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1` | Active maturity/roadmap authority plus G1-G14, A-K and S9/S12 evidence ownership. |
 
 Historical compatibility term: Module/import/package model.
@@ -55,7 +56,7 @@ Historical compatibility gate: language versioning and conformance policy gate.
 | --- | --- | --- |
 | Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` | Pinned ONNX Runtime SDK, real identity-model execution and numerical output `42`; representative production AI workload qualification remains PR94. |
 | Full backend compatibility | Implemented for declared v1 production support set | Only `onnxruntime_cpu` + CPU is production-supported. Other backend/device pairs remain experimental or unavailable and are not advertised as production support. |
-| Runtime observability implementation | Partial | JSON, Prometheus and OTLP-shaped adapters exist; public network exposure is not implied. |
+| Runtime observability implementation | Implemented for process-scoped serving v1 | Versioned health JSON and low-cardinality Prometheus metrics are integrated with readiness, saturation and drain; public network exposure is not implied. |
 | CPU/GPU/TPU/NPU routing | Implemented for qualification-aware v1 policy | Inventory remains available for all device classes. Production routing rejects unqualified accelerator pairs by default. |
 
 ## Security, release, deployment and tooling status
@@ -67,7 +68,7 @@ Historical compatibility gate: language versioning and conformance policy gate.
 | Signed releases | Partial | Immutable tag policy, OIDC artifact/SBOM attestations, cryptographic verification, draft verification and rollback exist; real signed publication still requires protected-environment execution. |
 | Protected publication | Partial | Workflow fails closed unless required reviewers, prevent-self-review and exact `v*` deployment policy are live. |
 | External vulnerability gate | Implemented for current repository/dependency contract | mandatory CodeQL, Trivy, dependency delta review, license policy and expiring exceptions. |
-| Container and Kubernetes hardening | Implemented for the PR78 CLI/compiler deployment contract | native amd64/arm64 hardened images plus restricted live Kind qualification. |
+| Container and Kubernetes hardening | Implemented for the PR87 serving-worker deployment contract | Native amd64/arm64 hardened images plus restricted live Kind qualification, worker health probes and pre-stop drain. |
 | Formatter and linter | Implemented for `shorthand.tooling.format_lint.v1` | deterministic trivia-only formatting, machine diagnostics and safe explicit-output fixes. |
 | Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1` | scanner-aligned grammar; native bounded JSON-RPC; compiler diagnostics; UTF-16; completion, hover, definitions, symbols, module navigation and cancellation. |
 
@@ -121,16 +122,23 @@ GitHub PR77 implemented roadmap PR76 with mandatory CodeQL C++ `security-extende
 
 ## Container and Kubernetes PR78 boundary
 
-GitHub PR78 implemented roadmap PR77 through a multi-stage production image, Restricted Pod Security workload and live ephemeral-cluster evidence. No public service or ingress claim is introduced.
+GitHub PR78 implemented roadmap PR77 through a multi-stage production image and Restricted Pod Security workload. GitHub PR87 extends that deployment with the real bounded serving worker, versioned startup/liveness/readiness probes, self-test and pre-stop drain evidence. No public service or ingress claim is introduced.
+
+## Concurrent serving PR87 boundary
+
+serving_runtime_contract: shorthand.serving.runtime.v1
+
+GitHub PR87 implements bounded process-scoped scheduling with nonblocking overload rejection, enforced deadlines, cooperative cancellation, tenant isolation, bounded request/response/result retention, low-cardinality metrics and graceful drain. The same installable worker is exercised by native tests, installed consumers, sanitizers, TSan, Docker and Kubernetes lifecycle checks.
+
+The contract deliberately does not create a public listener. Authentication, authorization, TLS, external rate limiting and hard termination of handlers that ignore the cancellation token remain host/process-boundary responsibilities. These limits keep `production_claim: false` honest.
 
 ## Production blockers
 
-1. Concurrent serving and operational runtime (PR87).
-2. Typed C3-ECO profile, measurement, scoring and auditor lifecycle (PR88-PR91).
-3. Generated MLIR dialect, composite execution integration and production lowering (PR92-PR93).
-4. Representative production AI workload qualification (PR94).
-5. Measured performance/energy comparison and zero-skip production RC gate (PR95-PR96).
-6. Configure and exercise the protected signed-release environment for TST017 after the implementation backlog closes.
+1. Typed C3-ECO profile, measurement, scoring and auditor lifecycle (PR88-PR91).
+2. Generated MLIR dialect, composite execution integration and production lowering (PR92-PR93).
+3. Representative production AI workload qualification (PR94).
+4. Measured performance/energy comparison and zero-skip production RC gate (PR95-PR96).
+5. Configure and exercise the protected signed-release environment for TST017 after the implementation backlog closes.
 
 GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` production backend contract because those device classes are explicitly not production-supported in v1. Any future support expansion becomes a production blocker for that expanded version until its live device-backed tests pass.
 

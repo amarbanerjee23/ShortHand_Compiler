@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-08-22-pr86
+ci_pipeline_architecture_version: 2026-08-23-pr87
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -140,6 +140,8 @@ GitHub PR85 adds `scripts/check_functions_control_error_semantics.sh` and the be
 
 GitHub PR86 adds `scripts/check_enterprise_packages_stdlib_ffi.sh` and the beta-0.6 enterprise matrix. Namespaced composite schemas and ownership plans, offline exact-version dependencies, SHA-256 locks, license policy, SPDX dependency output, core ABI exports, sanitizer paths and static/shared installed C/C++ consumers fail closed as one first-class gate.
 
+GitHub PR87 adds `scripts/check_concurrent_serving_runtime.sh` directly to `ubuntu-core`. Deterministic unit/load/soak evidence covers bounded admission, deadlines, cooperative cancellation, quota/isolation, health/metrics, restart and graceful drain. The same stress path joins ASan/LSan/UBSan and TSan, while installed consumers and the Docker/Kubernetes lifecycle use the installable serving worker.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -154,9 +156,9 @@ The normal `security` job is read-only. CodeQL produces SARIF with upload disabl
 
 ## Deployment execution model
 
-ShortHand is a compiler/CLI workload, not a network service. Production probes execute the real parser against a bundled valid ShortHand source. The production manifest exposes no Service or Ingress and applies default-deny ingress/egress policy. A future network-facing runtime must explicitly add protocol, port, authentication and NetworkPolicy contracts rather than weakening this baseline.
+ShortHand's PR87 deployment is a process-scoped serving worker, not a public network service. Production probes execute its versioned liveness/readiness state and pre-stop initiates drain. The production manifest exposes no Service or Ingress and applies default-deny ingress/egress policy. A future network-facing host must explicitly add protocol, port, authentication, TLS and NetworkPolicy contracts rather than weakening this baseline.
 
-The live deployment gate proves runtime uid/capability/seccomp/no-new-privileges state, ResourceQuota rejection, positive-control versus denied egress, two Ready replicas and bounded replacement after pod deletion. Static YAML presence alone does not close TST019.
+The live deployment gate proves runtime uid/capability/seccomp/no-new-privileges state, worker self-test and health, ResourceQuota rejection, positive-control versus denied egress, two Ready replicas, bounded replacement after pod deletion and pre-stop graceful drain. Static YAML presence alone does not close TST019/TST032.
 
 ## Determinism and caching
 

@@ -4,6 +4,8 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_DIR="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src"
 STRESS_SRC="${ROOT_DIR}/tests/runtime/tsan_runtime_stress.cpp"
+SERVING_STRESS_SRC="${ROOT_DIR}/tests/runtime/serving_runtime_stress.cpp"
+SERVING_SRC="${SRC_DIR}/serving/ServingRuntime.cpp"
 WORK_DIR="$(mktemp -d)"
 CXX="${SHORTHAND_MEMORY_SANITIZER_CXX:-clang++}"
 trap 'rm -rf "${WORK_DIR}"' EXIT
@@ -13,6 +15,10 @@ command -v "${CXX}" >/dev/null 2>&1 || {
   exit 1
 }
 [[ -f "${STRESS_SRC}" ]] || { echo "error: missing runtime stress source" >&2; exit 1; }
+[[ -f "${SERVING_STRESS_SRC}" && -f "${SERVING_SRC}" ]] || {
+  echo "error: missing concurrent serving sanitizer stress source" >&2
+  exit 1
+}
 
 COMMON_FLAGS=(
   -std=c++17
@@ -90,5 +96,31 @@ if grep -Eq 'AddressSanitizer|LeakSanitizer|UndefinedBehaviorSanitizer|runtime e
 fi
 grep -Fq 'PASS runtime concurrency stress' /tmp/shorthand_runtime_memory_sanitizer.out
 
+"${CXX}" "${COMMON_FLAGS[@]}" \
+  "${SERVING_SRC}" "${SERVING_STRESS_SRC}" \
+  -o "${WORK_DIR}/serving_memory_stress"
+set +e
+ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" \
+UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" \
+  timeout --signal=TERM --kill-after=2 60 \
+  "${WORK_DIR}/serving_memory_stress" \
+  >/tmp/shorthand_serving_memory_sanitizer.out \
+  2>/tmp/shorthand_serving_memory_sanitizer.err
+serving_status=$?
+set -e
+cat /tmp/shorthand_serving_memory_sanitizer.out
+cat /tmp/shorthand_serving_memory_sanitizer.err >&2 || true
+if (( serving_status != 0 )); then
+  echo "error: serving ASan/LSan/UBSan stress failed with status ${serving_status}" >&2
+  exit "${serving_status}"
+fi
+if grep -Eq 'AddressSanitizer|LeakSanitizer|UndefinedBehaviorSanitizer|runtime error:|SUMMARY:.*Sanitizer' \
+    /tmp/shorthand_serving_memory_sanitizer.out /tmp/shorthand_serving_memory_sanitizer.err; then
+  echo "error: serving memory/undefined-behavior sanitizer reported a defect" >&2
+  exit 1
+fi
+grep -Fq 'PASS serving runtime concurrent load and soak stress' /tmp/shorthand_serving_memory_sanitizer.out
+
+printf 'SERVING_MEMORY_SANITIZER contract=shorthand.serving.runtime.v1 compiler=%s\n' "${CXX}"
 printf 'RUNTIME_MEMORY_SANITIZER contract=shorthand.runtime.asan_lsan_ubsan.v1 compiler=%s\n' "${CXX}"
 printf 'PASS runtime ASan LSan UBSan stress gate\n'

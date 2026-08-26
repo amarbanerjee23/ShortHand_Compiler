@@ -42,6 +42,7 @@ required_files=(
   scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_production_truth.sh
+  scripts/check_concurrent_serving_runtime.sh
   scripts/check_semantic_differential.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
@@ -76,6 +77,7 @@ required_files=(
   docs/runtime_abi_api_stability.md
   docs/runtime_state_and_thread_safety.md
   docs/runtime_production_packaging.md
+  docs/concurrent_serving_runtime.md
   docs/prometheus_scrape_host_adapter.md
   docs/compiled_infer_bridge.md
   docs/backend_compatibility_matrix.md
@@ -97,6 +99,9 @@ required_files=(
   Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.h
   Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp
   Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp
+  Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.h
+  Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.cpp
+  Compiler_new_ws/Short_Hand/src/serving/ServingWorkerMain.cpp
   Compiler_new_ws/Short_Hand/src/operations/PrometheusScrapeAdapter.cpp
   Compiler_new_ws/Short_Hand/src/ai_runtime/HardwareDiscovery.h
   Compiler_new_ws/Short_Hand/src/Makefile
@@ -104,6 +109,8 @@ required_files=(
   tests/conformance/manifest.txt
   tests/abi/test_runtime_abi_api_stability.sh
   tests/runtime/test_runtime_state_thread_safety.sh
+  tests/runtime/test_serving_runtime.cpp
+  tests/runtime/serving_runtime_stress.cpp
   tests/packaging/test_runtime_production_packaging.sh
   tests/operations/test_prometheus_scrape_adapter.sh
   tests/codegen/test_runtime_ai_bridge_link_build.sh
@@ -125,6 +132,7 @@ for task in \
   'Strict language validation' \
   'Semantic differential execution' \
   'Production truth and C3-ECO traceability' \
+  'Concurrent serving and operational runtime' \
   'Smoke tests' \
   'Feature plan status check' \
   'Enterprise hardening check' \
@@ -164,9 +172,12 @@ for gate in \
 done
 
 require_contains scripts/check_enterprise_hardening.sh 'check_production_truth.sh'
+require_contains scripts/check_enterprise_hardening.sh 'check_concurrent_serving_runtime.sh'
 require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-governance'
+require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-serving'
 require_contains CMakeLists.txt 'NAME production_truth_traceability'
 require_contains CMakeLists.txt 'NAME production_truth_negative'
+require_contains CMakeLists.txt 'NAME concurrent_serving_runtime'
 
 require_contains scripts/check_language_correctness.sh 'check_runtime_abi_api_stability.sh'
 require_contains scripts/check_language_correctness.sh 'check_runtime_state_thread_safety.sh'
@@ -188,6 +199,7 @@ shell_files=(
   scripts/check_prometheus_scrape_adapter.sh
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_production_truth.sh
+  scripts/check_concurrent_serving_runtime.sh
   scripts/check_semantic_differential.sh
   scripts/check_c3eco_claims_and_schema.sh
   scripts/check_mlir_foundation.sh
@@ -320,7 +332,7 @@ require_contains CMakeLists.txt 'install(EXPORT ShortHandTargets'
 require_contains CMakeLists.txt 'configure_package_config_file('
 require_contains CMakeLists.txt 'write_basic_package_version_file('
 require_contains tests/packaging/test_runtime_production_packaging.sh 'find_package(ShortHand 1 CONFIG REQUIRED)'
-require_contains tests/packaging/test_runtime_production_packaging.sh 'PASS production runtime and AI bridge packaging consumer gate'
+require_contains tests/packaging/test_runtime_production_packaging.sh 'PASS production runtime AI bridge core FFI and serving packaging consumer gate'
 require_contains scripts/check_runtime_production_packaging.sh 'PASS runtime production packaging guard'
 
 for anchor in \

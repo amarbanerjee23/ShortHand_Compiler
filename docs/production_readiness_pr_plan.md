@@ -1,11 +1,11 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-22-pr86
+production_readiness_plan_version: 2026-08-23-pr87
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 85
-CURRENT_GITHUB_PR: 86
+LAST_MERGED_GITHUB_PR: 86
+CURRENT_GITHUB_PR: 87
 LAST_PLANNED_GITHUB_PR: 96
-CURRENT_IMPLEMENTATION_SCOPE: enterprise_packages_standard_library_and_safe_ffi
+CURRENT_IMPLEMENTATION_SCOPE: concurrent_serving_and_operational_runtime
 BASELINE_LANGUAGE_VERSION: beta-0.6
 TARGET: enterprise production usage ready language
 
@@ -17,37 +17,36 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR85 is merged. It established `shorthand.control_flow.v1` and the beta-0.5 function/control-flow execution contract while preserving all PR84 typed execution, production-truth and C3-ECO traceability controls. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
+GitHub PR86 is merged. It established beta-0.6 enterprise schemas, cryptographically verified offline packages, an installable core library and the safe core FFI while preserving all earlier production-truth and C3-ECO traceability controls. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. PR85 is merged and PR86 is the active implementation. The plan covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
+The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. PR86 is merged and PR87 is the active implementation. The plan covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
 
-## PR86 completion contract
+## PR87 completion contract
 
-PR86 - Enterprise packages, standard library and FFI is IN PROGRESS.
+PR87 - Concurrent serving and operational runtime is IN PROGRESS.
 
 Implementation requirements:
 
-1. Establish `shorthand.enterprise_language.v1` and beta-0.6 as a bounded source ABI-schema and ownership-plan contract.
-2. Validate namespaced records, enums, slices, options and results with deterministic canonical identities.
-3. Validate explicit owned values, moves, shared/mutable borrows, releases, reads and assignments through the existing ownership state machine.
-4. Keep composite interpreter/LLVM execution, nested payloads, owned string arrays and by-value composite FFI fail closed.
-5. Add stable SHD3024-SHD3025 enterprise diagnostics without reusing historical codes.
-6. Establish `shorthand.package.v2`, `shorthand.lock.v2` and `shorthand.module.graph.v2` while preserving v1 compatibility.
-7. Require exact semantic versions, allowlisted SPDX licenses, package-owned namespaces and local vendored dependency roots.
-8. Verify dependency manifests and every reachable source with SHA-256; missing, changed, ranged or prohibited dependencies fail closed.
-9. Perform no package registry or network resolution and reject nested dependencies in contract v1.
-10. Emit SPDX 2.3 dependency evidence only after a v2 lock verifies.
-11. Ship static/shared `ShortHand::core` targets with core FFI ABI 1.0.0, explicit allocator ownership and bounded UTF-8/string/slice/option/result operations.
-12. Freeze the exact core shared-library symbols separately from the unchanged runtime ABI 1.0.0 and its 25 `short_*` symbols.
-13. Add static/shared installed C and C++ consumers to every existing lifecycle/platform lane.
-14. Add positive, negative, tamper, reproducibility, version, license, SPDX, sanitizer, ABI and installed-consumer evidence.
-15. Add the enterprise gate to direct CI, Make governance/aggregate parity, CTest, language versioning and production truth.
-16. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend and C3-ECO gates.
-17. Keep `controlled_beta` and `production_claim: false`; this PR does not claim composite execution, production readiness, energy savings or certification.
-18. Final PR head must have `ci / ubuntu (push)` successful.
-19. Final PR head must have `ci / ubuntu (pull_request)` successful.
+1. Establish `shorthand.serving.runtime.v1` as an immutable process-scoped serving contract.
+2. Bound worker concurrency, admission queue depth, in-flight work, retained results, request bytes, response bytes and deadline duration.
+3. Reject overload immediately and deterministically without unbounded queues or blocking admission callers.
+4. Enforce deadlines before admission, while queued and after handler return so late successes cannot be reported as successful.
+5. Support cooperative cancellation for queued and running work with stable terminal states.
+6. Isolate every runtime instance to one configured tenant scope and reject cross-tenant submission and lookup.
+7. Expose versioned liveness/readiness JSON and low-cardinality Prometheus metrics without request or tenant labels.
+8. Implement drain and bounded graceful shutdown semantics, including queued-work termination and running-work cancellation signals.
+9. Install `ShortHand::serving`, its public header and `shorthand_serving_worker`; exercise the installed target and worker in existing platform lifecycle lanes.
+10. Run deterministic unit, saturation, deadline, quota, isolation, restart, shutdown, load and bounded-soak tests.
+11. Execute the concurrent stress path under ASan/LSan/UBSan and TSan.
+12. Replace the container's idle PID 1 with the serving worker and connect Kubernetes startup, liveness, readiness and pre-stop drain to its bounded state contract.
+13. Keep public ingress, authentication, authorization and TLS outside this process-scoped contract and fail closed on any broader production claim.
+14. Add the serving gate to direct CI, Make governance/aggregate parity, CTest, packaging and production truth.
+15. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend, enterprise-language and C3-ECO gates.
+16. Keep `controlled_beta` and `production_claim: false`; this PR does not claim public service readiness, energy savings or certification.
+17. Final PR head must have `ci / ubuntu (push)` successful.
+18. Final PR head must have `ci / ubuntu (pull_request)` successful.
 
 ## Mandatory rule for every remaining PR
 
@@ -80,8 +79,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR83 - Production truth baseline and C3-ECO traceability | MERGED | Machine-readable active state and G1-G14/A-K/S9/S12 evidence ownership. | First-class production-truth gate in CI, Make and CTest. | Schema, duplicate, missing-row, evidence-path and contradiction tests. |
 | PR84 - Production type system and memory model | MERGED | Beta-0.4 executable floats, strings and typed arrays plus guarded slices, records, enums, option/result, conversions and ownership descriptors. | Expanded differential, strict unit, sanitizer, Make and CTest gates. | Cross-mode values, lifetime, overflow, bounds and unchanged ABI evidence. |
 | PR85 - Functions, structured control flow and error semantics | MERGED | Beta-0.5 expression calls, arbitrary arguments, lexical scopes, loops, deterministic errors and safe `goto` resolution. | First-class control-flow conformance and cross-mode differential gate. | Positive, negative, recursion, cleanup and compatibility tests. |
-| PR86 - Enterprise packages, standard library and FFI | IN PROGRESS | Complete the versioned composite/ownership ABI-schema prerequisite, then add cryptographic offline dependencies, namespaces, core libraries and safe C/C++ interop. Composite execution remains assigned to production lowering. | Language-surface, package supply-chain and installed-consumer gates. | Type/lifetime, tamper, reproducibility, ABI, license, SBOM and portability tests. |
-| PR87 - Concurrent serving and operational runtime | PLANNED | Cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification. | TSan, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
+| PR86 - Enterprise packages, standard library and FFI | MERGED | Complete the versioned composite/ownership ABI-schema prerequisite, then add cryptographic offline dependencies, namespaces, core libraries and safe C/C++ interop. Composite execution remains assigned to production lowering. | Language-surface, package supply-chain and installed-consumer gates. | Type/lifetime, tamper, reproducibility, ABI, license, SBOM and portability tests. |
+| PR87 - Concurrent serving and operational runtime | IN PROGRESS | Versioned process-scoped cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification plus installed worker lifecycle and Kubernetes drain probes. | TSan, sanitizer, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
 | PR88 - Typed C3-ECO certification profile | PLANNED | Typed identities, units, functional links, boundary/materiality, AI roles, validity and migration. | Certification-profile conformance gate. | G1-G3/G7/G14 positive, negative, migration and claim-safety evidence. |
 | PR89 - Measurement, carbon accounting and cost workbook | PLANNED | Real instrumentation, allocation, PUE, component accounting, MQ/DQ, uncertainty and tariff provenance. | Deterministic measurement/workbook gate. | Calibration, missing-instrument, unit, factor, double-counting and reconciliation tests. |
 | PR90 - Eligibility, scoring, claims and eco-regression | PLANNED | G1-G14 algorithm, A-K scoring, level caps, AI routes, permitted claims and surveillance thresholds. | Golden scoring and claim-control gate. | Tier boundaries, critical-gate precedence, restricted claims and regression tests. |
@@ -94,16 +93,16 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr86_through_pr96: 11
-remaining_planned_implementation_prs_after_pr86: 10
+remaining_planned_implementation_prs_pr87_through_pr96: 10
+remaining_planned_implementation_prs_after_pr87: 9
 
-Next recommended PR after PR86 is merged:
+Next recommended PR after PR87 is merged:
 
-PR87 - Concurrent serving and operational runtime.
+PR88 - Typed C3-ECO certification profile.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the eleven remaining implementation PRs.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the ten remaining implementation PRs.
 
 ## Historical roadmap anchors
 
