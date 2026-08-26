@@ -38,7 +38,7 @@ cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_runtime shorthand_runtime_shared \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \
-  shorthand_lsp \
+  shorthand_serving shorthand_serving_worker shorthand_lsp \
   shorthand_prometheus_adapter shorthand_otlp_exporter
 
 stage install-artifacts
@@ -63,10 +63,13 @@ require_installed '*/include/shorthand/ai_runtime/AI_Types.h'
 require_installed '*/include/shorthand/abi/shorthand_runtime_abi_v1.h'
 require_installed '*/include/shorthand/abi/shorthand_core_ffi_v1.h'
 require_installed '*/include/shorthand/core/ShorthandCore.hpp'
+require_installed '*/include/shorthand/serving/ServingRuntime.h'
 require_installed '*/libshorthand_runtime.a'
 require_installed '*/libshorthand_ai_bridge.a'
 require_installed '*/libshorthand_core.a'
+require_installed '*/libshorthand_serving.a'
 require_installed '*/bin/shorthand_lsp'
+require_installed '*/bin/shorthand_serving_worker'
 require_installed '*/bin/shorthand_prometheus_adapter'
 require_installed '*/bin/shorthand_otlp_exporter'
 require_installed '*/ShortHandConfig.cmake'
@@ -190,6 +193,28 @@ int main() {
 }
 CPP
 
+cat > "${CONSUMER_DIR}/serving_consumer.cpp" <<'CPP'
+#include <serving/ServingRuntime.h>
+#include <chrono>
+#include <utility>
+int main() {
+    using namespace shorthand::serving;
+    RuntimeLimits limits;
+    limits.tenant_scope = "packaging";
+    limits.worker_threads = 1;
+    limits.queue_capacity = 2;
+    limits.max_in_flight = 3;
+    ServingRuntime runtime(limits, [](const Request &request, const CancellationToken &) {
+        return HandlerResult::succeeded(request.payload);
+    });
+    Request request{"package-1", "packaging", "ok", std::chrono::milliseconds(500)};
+    if (!runtime.submit(std::move(request)).accepted()) return 50;
+    const ResultLookup result = runtime.wait("packaging", "package-1", std::chrono::seconds(1));
+    if (result.status != LookupStatus::Ready || result.result.output != "ok") return 51;
+    return runtime.shutdown(std::chrono::seconds(1)) ? 0 : 52;
+}
+CPP
+
 cat > "${CONSUMER_DIR}/CMakeLists.txt" <<'CMAKE'
 cmake_minimum_required(VERSION 3.16)
 project(ShortHandInstalledConsumer LANGUAGES C CXX)
@@ -222,6 +247,9 @@ target_link_libraries(core_cpp_static PRIVATE ShortHand::core)
 
 add_executable(core_cpp_shared core_cpp_consumer.cpp)
 target_link_libraries(core_cpp_shared PRIVATE ShortHand::core_shared)
+
+add_executable(serving_static serving_consumer.cpp)
+target_link_libraries(serving_static PRIVATE ShortHand::serving)
 CMAKE
 
 stage configure-cmake-consumers
@@ -241,6 +269,7 @@ stage run-cmake-consumers
 "${CONSUMER_BUILD_DIR}/core_c_shared"
 "${CONSUMER_BUILD_DIR}/core_cpp_static"
 "${CONSUMER_BUILD_DIR}/core_cpp_shared"
+"${CONSUMER_BUILD_DIR}/serving_static"
 
 stage verify-installed-adapters
 "${INSTALL_DIR}/bin/shorthand_prometheus_adapter" --help >"${WORK_DIR}/prometheus-help.txt"
@@ -249,6 +278,8 @@ grep -Fq -- '--request-limit-bytes BYTES' "${WORK_DIR}/prometheus-help.txt"
 "${INSTALL_DIR}/bin/shorthand_otlp_exporter" --help >"${WORK_DIR}/otlp-help.txt"
 grep -Fq -- '--authorization-env NAME' "${WORK_DIR}/otlp-help.txt"
 grep -Fq -- '--snapshot-limit-bytes BYTES' "${WORK_DIR}/otlp-help.txt"
+"${INSTALL_DIR}/bin/shorthand_serving_worker" self-test >"${WORK_DIR}/serving-self-test.txt"
+grep -Fq 'PASS serving worker self-test contract=shorthand.serving.runtime.v1' "${WORK_DIR}/serving-self-test.txt"
 
 stage verify-pkg-config-consumers
 if command -v pkg-config >/dev/null 2>&1; then
@@ -292,4 +323,4 @@ if command -v pkg-config >/dev/null 2>&1; then
 fi
 
 stage complete
-echo "PASS production runtime and AI bridge packaging consumer gate with core FFI"
+echo "PASS production runtime AI bridge core FFI and serving packaging consumer gate"

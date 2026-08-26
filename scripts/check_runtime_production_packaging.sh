@@ -38,6 +38,7 @@ for anchor in \
   'runtime_shared_soversion: 1' \
   'ai_bridge_packaging_status: adapter_static_shared_and_consumer_checked' \
   'core_packaging_status: core_ffi_static_shared_and_consumer_checked' \
+  'serving_packaging_status: bounded_scheduler_worker_and_consumer_checked' \
   'production_claim_boundary: packaging_gate_is_not_full_production_readiness'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -49,6 +50,8 @@ for anchor in \
   'add_library(shorthand_ai_bridge_shared SHARED' \
   'add_library(shorthand_core STATIC' \
   'add_library(shorthand_core_shared SHARED' \
+  'add_library(shorthand_serving STATIC' \
+  'add_executable(shorthand_serving_worker' \
   'SOVERSION ${SHORTHAND_RUNTIME_ABI_VERSION_MAJOR}' \
   'install(EXPORT ShortHandTargets' \
   'configure_package_config_file(' \
@@ -63,9 +66,10 @@ require_contains "${TEST}" 'find_package(ShortHand 1 CONFIG REQUIRED)'
 require_contains "${TEST}" 'ShortHand::runtime_shared'
 require_contains "${TEST}" 'ShortHand::ai_bridge_shared'
 require_contains "${TEST}" 'ShortHand::core_shared'
+require_contains "${TEST}" 'ShortHand::serving'
 require_contains "${TEST}" 'SONAME.*libshorthand_runtime'
 require_contains "${TEST}" 'pkg-config --modversion shorthand-runtime'
-require_contains "${TEST}" 'PASS production runtime and AI bridge packaging consumer gate with core FFI'
+require_contains "${TEST}" 'PASS production runtime AI bridge core FFI and serving packaging consumer gate'
 
 bash "${TEST}"
 

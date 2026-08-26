@@ -19,9 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /opt/shorthand
 COPY . .
-RUN make -C Compiler_new_ws/Short_Hand/src compiler green_ai_tool runtime_lib \
+RUN make -C Compiler_new_ws/Short_Hand/src compiler green_ai_tool runtime_lib serving_worker \
   && test -x Compiler_new_ws/Short_Hand/build/short_hand \
-  && test -s Compiler_new_ws/Short_Hand/build/libshorthand_runtime.a
+  && test -s Compiler_new_ws/Short_Hand/build/libshorthand_runtime.a \
+  && test -x Compiler_new_ws/Short_Hand/build/shorthand_serving_worker
 
 FROM ubuntu:24.04 AS runtime
 
@@ -53,10 +54,10 @@ LABEL org.opencontainers.image.title="ShortHand Compiler" \
 
 USER 10001:10001
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD ["/opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand", "/opt/shorthand/smoke/core_control.short", "parse"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD ["/opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker", "probe", "--state-file", "/tmp/shorthand-serving-health.json", "--live"]
 
-# The production image is a compiler worker, not a one-shot demo process. Keep
-# PID 1 alive so Docker/Kubernetes health and termination semantics are real;
-# actual compilation/execution is invoked explicitly by qualification/tests.
-CMD ["/bin/bash", "-lc", "trap 'exit 0' TERM INT; while true; do sleep 3600 & wait $!; done"]
+# The worker is an operational host for the bounded serving scheduler. It does
+# not expose public ingress; an authenticated host adapter remains a separate
+# deployment responsibility.
+CMD ["/opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker", "serve", "--tenant", "default", "--state-file", "/tmp/shorthand-serving-health.json", "--workers", "2", "--queue-capacity", "64", "--max-in-flight", "66", "--max-request-bytes", "1048576", "--max-response-bytes", "1048576", "--max-in-flight-request-bytes", "67108864", "--max-retained-result-bytes", "67108864", "--max-deadline-ms", "30000", "--grace-ms", "15000"]

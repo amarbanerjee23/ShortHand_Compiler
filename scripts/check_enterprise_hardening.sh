@@ -173,7 +173,23 @@ check_contains docs/release_supply_chain_hardening.md 'candidate release evidenc
 check_contains docs/production_truth.tsv $'current_github_pr\t'
 check_contains docs/c3eco_traceability.tsv $'G14\tmandatory_gate\tmateriality_control'
 check_contains scripts/check_production_truth.sh 'PASS production truth and C3-ECO traceability gate'
-check_contains tests/governance/test_production_truth_negative.sh 'PASS production truth negative contradiction, completeness, mapping and evidence cases'
+check_contains tests/governance/test_production_truth_negative.sh 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases'
+check_contains docs/concurrent_serving_runtime.md 'serving_runtime_contract: shorthand.serving.runtime.v1'
+check_contains Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.h 'kServingRuntimeContract'
+check_contains Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.cpp 'AdmissionStatus::RejectedCapacity'
+check_contains Compiler_new_ws/Short_Hand/src/serving/ServingWorkerMain.cpp 'self-test'
+check_contains CMakeLists.txt 'add_library(shorthand_serving STATIC'
+check_contains CMakeLists.txt 'NAME concurrent_serving_runtime'
+check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-serving'
+check_contains scripts/check_concurrent_serving_runtime.sh 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
+
+if bash scripts/check_concurrent_serving_runtime.sh >/tmp/shorthand_concurrent_serving.out 2>&1; then
+  log "PASS concurrent serving and operational runtime gate completed"
+  cat /tmp/shorthand_concurrent_serving.out | tee -a "${LOG_FILE}"
+else
+  fail_check "concurrent serving and operational runtime gate failed"
+  cat /tmp/shorthand_concurrent_serving.out | tee -a "${LOG_FILE}" || true
+fi
 
 if bash scripts/check_production_truth.sh >/tmp/shorthand_production_truth.out 2>&1 \
    && bash tests/governance/test_production_truth_negative.sh >>/tmp/shorthand_production_truth.out 2>&1; then

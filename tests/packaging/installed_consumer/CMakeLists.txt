@@ -50,3 +50,7 @@ add_test(NAME installed_core_cpp_static COMMAND core_cpp_static)
 add_executable(core_cpp_shared core_cpp_consumer.cpp)
 target_link_libraries(core_cpp_shared PRIVATE ShortHand::core_shared)
 add_test(NAME installed_core_cpp_shared COMMAND core_cpp_shared)
+
+add_executable(serving_static serving_consumer.cpp)
+target_link_libraries(serving_static PRIVATE ShortHand::serving)
+add_test(NAME installed_serving_static COMMAND serving_static)

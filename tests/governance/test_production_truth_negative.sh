@@ -34,6 +34,13 @@ mv "${WORK_DIR}/truth-production-claim.tmp" "${WORK_DIR}/truth-production-claim.
 expect_failure production_claim "${WORK_DIR}/truth-production-claim.tsv" "${WORK_DIR}/trace.tsv" \
   'production truth production_claim expected false, found true'
 
+cp "${WORK_DIR}/truth.tsv" "${WORK_DIR}/truth-serving-contract.tsv"
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "serving_runtime_contract" { $2="shorthand.serving.runtime.v2" } { print }' \
+  "${WORK_DIR}/truth-serving-contract.tsv" >"${WORK_DIR}/truth-serving-contract.tmp"
+mv "${WORK_DIR}/truth-serving-contract.tmp" "${WORK_DIR}/truth-serving-contract.tsv"
+expect_failure serving_contract "${WORK_DIR}/truth-serving-contract.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth serving_runtime_contract expected shorthand.serving.runtime.v1, found shorthand.serving.runtime.v2'
+
 awk -F '\t' '$1 != "G14" { print }' "${WORK_DIR}/trace.tsv" >"${WORK_DIR}/trace-missing-g14.tsv"
 expect_failure missing_g14 "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-missing-g14.tsv" \
   'C3-ECO traceability requires exactly one G14 row, found 0'
@@ -48,4 +55,4 @@ awk -F '\t' 'BEGIN { OFS="\t" } $1 == "G12" { $5="implemented"; $6="none"; $7="n
 expect_failure implemented_without_evidence "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-implemented-without-evidence.tsv" \
   'implemented traceability row G12 lacks execution evidence'
 
-printf 'PASS production truth negative contradiction, completeness, mapping and evidence cases\n'
+printf 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases\n'

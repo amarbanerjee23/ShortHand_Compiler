@@ -78,6 +78,11 @@ SHORTHAND_RUNTIME_FACADE_SRC := runtime/RuntimeThreadSafeFacade.cpp
 SHORTHAND_RUNTIME_OBJ := ../build/ShorthandRuntimeImpl.o
 SHORTHAND_RUNTIME_FACADE_OBJ := ../build/RuntimeThreadSafeFacade.o
 SHORTHAND_RUNTIME_LIB := ../build/libshorthand_runtime.a
+SHORTHAND_SERVING_SRC := serving/ServingRuntime.cpp
+SHORTHAND_SERVING_WORKER_SRC := serving/ServingWorkerMain.cpp
+SHORTHAND_SERVING_OBJ := ../build/ServingRuntime.o
+SHORTHAND_SERVING_LIB := ../build/libshorthand_serving.a
+SHORTHAND_SERVING_WORKER_BIN := ../build/shorthand_serving_worker
 RUNTIME_ABI_RENAME_DEFS := \
 	-Dshort_runtime_reset=shimpl_runtime_reset \
 	-Dshort_runtime_model_count=shimpl_runtime_model_count \
@@ -145,6 +150,18 @@ $(SHORTHAND_RUNTIME_LIB): $(SHORTHAND_RUNTIME_SRC) $(SHORTHAND_RUNTIME_FACADE_SR
 	$(CXX) $(CXXFLAGS) -c $(SHORTHAND_RUNTIME_FACADE_SRC) -o $(SHORTHAND_RUNTIME_FACADE_OBJ)
 	ar rcs $(SHORTHAND_RUNTIME_LIB) $(SHORTHAND_RUNTIME_OBJ) $(SHORTHAND_RUNTIME_FACADE_OBJ)
 
+serving_runtime_lib: $(SHORTHAND_SERVING_LIB)
+
+$(SHORTHAND_SERVING_LIB): $(SHORTHAND_SERVING_SRC) serving/ServingRuntime.h
+	@mkdir -p ../build
+	$(CXX) $(CXXFLAGS) -pthread -c $(SHORTHAND_SERVING_SRC) -o $(SHORTHAND_SERVING_OBJ)
+	ar rcs $(SHORTHAND_SERVING_LIB) $(SHORTHAND_SERVING_OBJ)
+
+serving_worker: $(SHORTHAND_SERVING_WORKER_BIN)
+
+$(SHORTHAND_SERVING_WORKER_BIN): $(SHORTHAND_SERVING_WORKER_SRC) $(SHORTHAND_SERVING_LIB)
+	$(CXX) $(CXXFLAGS) -pthread $(SHORTHAND_SERVING_WORKER_SRC) $(SHORTHAND_SERVING_LIB) -o $(SHORTHAND_SERVING_WORKER_BIN)
+
 ai_app: ai_app.cpp $(AI_RUNTIME_SRC)
 	@mkdir -p ../build
 	$(CXX) $(CXXFLAGS) $(AI_CXXFLAGS) -o $(AI_APP_BIN) ai_app.cpp $(AI_RUNTIME_CORE_SRC) $(LDFLAGS) $(AI_LDLIBS)
@@ -173,14 +190,14 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand runtime-source-lowering runtime_lib ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime-source-lowering runtime_lib serving_runtime_lib serving_worker ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/libshorthand_runtime.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o *.bc *.ir *.o
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/shorthand_serving_worker ../build/libshorthand_runtime.a ../build/libshorthand_serving.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o ../build/ServingRuntime.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-llvm test-ai
+test: test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai
 
 test-governance:
 	bash ../../../scripts/check_production_truth.sh
@@ -188,6 +205,7 @@ test-governance:
 	bash ../../../scripts/check_production_type_memory_model.sh
 	bash ../../../scripts/check_functions_control_error_semantics.sh
 	bash ../../../scripts/check_enterprise_packages_stdlib_ffi.sh
+	bash ../../../scripts/check_concurrent_serving_runtime.sh
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -218,6 +236,9 @@ test-control-flow: short_hand runtime_lib
 
 test-enterprise-language: short_hand
 	SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_enterprise_packages_stdlib_ffi.sh
+
+test-serving: serving_worker
+	CXX=$(CXX) bash ../../../scripts/check_concurrent_serving_runtime.sh
 
 test-fuzz-sanitizers: short_hand
 	bash ../../../scripts/check_fuzz_sanitizers.sh

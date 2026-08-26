@@ -9,8 +9,8 @@ KIND_NODE_IMAGE="kindest/node:v1.36.1@sha256:3489c7674813ba5d8b1a9977baea8a6e553
 CALICO_VERSION="v3.31.6"
 CALICO_COMMIT="cc4364f81fbb6dc6fe6e140456c98169dac99f1c"
 CALICO_MANIFEST_URL="https://raw.githubusercontent.com/projectcalico/calico/${CALICO_COMMIT}/manifests/calico.yaml"
-CLUSTER_NAME="shorthand-pr78-${GITHUB_RUN_ID:-local}-$$"
-IMAGE="shorthand:pr78"
+CLUSTER_NAME="shorthand-pr87-${GITHUB_RUN_ID:-local}-$$"
+IMAGE="shorthand:pr87"
 TMP="$(mktemp -d)"
 KIND_BIN="${TMP}/kind"
 CONTROL_PLANE="${CLUSTER_NAME}-control-plane"
@@ -129,6 +129,13 @@ gid="$(action_kubectl exec -n shorthand-system "${pod}" -- id -g)"
 [[ "${uid}" == 10001 && "${gid}" == 10001 ]] || { echo "error: Kubernetes runtime identity mismatch uid=${uid} gid=${gid}" >&2; exit 1; }
 action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'test ! -e /var/run/secrets/kubernetes.io/serviceaccount/token'
 action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'touch /tmp/shorthand-k8s-writable /work/shorthand-k8s-work-writable && test -f /tmp/shorthand-k8s-writable && test -f /work/shorthand-k8s-work-writable'
+action_kubectl exec -n shorthand-system "${pod}" -- /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker \
+  probe --state-file /tmp/shorthand-serving-health.json --live
+action_kubectl exec -n shorthand-system "${pod}" -- /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker \
+  probe --state-file /tmp/shorthand-serving-health.json --ready
+action_kubectl exec -n shorthand-system "${pod}" -- /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker self-test \
+  >"${TMP}/k8s-serving-self-test.out"
+grep -Fq 'PASS serving worker self-test contract=shorthand.serving.runtime.v1' "${TMP}/k8s-serving-self-test.out"
 if action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'touch /etc/shorthand-forbidden' >/dev/null 2>&1; then
   echo "error: Kubernetes root filesystem unexpectedly writable" >&2
   exit 1
@@ -183,7 +190,7 @@ spec:
       type: RuntimeDefault
   containers:
     - name: shorthand
-      image: shorthand:pr78
+      image: shorthand:pr87
       imagePullPolicy: IfNotPresent
       command: ["/bin/bash", "-lc", "sleep 30"]
       securityContext:
@@ -222,7 +229,7 @@ spec:
       type: RuntimeDefault
   containers:
     - name: shorthand
-      image: shorthand:pr78
+      image: shorthand:pr87
       imagePullPolicy: IfNotPresent
       command: ["/bin/bash", "-lc"]
       args: ["trap 'exit 0' TERM INT; while true; do sleep 3600 & wait $!; done"]
@@ -299,6 +306,49 @@ if [[ "${network_policy_converged}" != 1 ]]; then
   exit 1
 fi
 
+restart_before="$(action_kubectl get pod -n shorthand-system "${pod}" -o jsonpath='{.status.containerStatuses[0].restartCount}')"
+action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'kill -USR1 1'
+drain_observed=0
+for _ in $(seq 1 30); do
+  if ! action_kubectl exec -n shorthand-system "${pod}" -- \
+      /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker \
+      probe --state-file /tmp/shorthand-serving-health.json --ready >/dev/null 2>&1 \
+     && action_kubectl exec -n shorthand-system "${pod}" -- \
+      /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker \
+      probe --state-file /tmp/shorthand-serving-health.json --live >/dev/null 2>&1; then
+    drain_observed=1
+    break
+  fi
+  sleep 1
+done
+[[ "${drain_observed}" == 1 ]] || {
+  echo "error: live serving worker did not become unready while remaining live during drain" >&2
+  exit 1
+}
+
+# The exec stream may close nonzero when PID 1 exits. The restart-count,
+# readiness and previous-log assertions below are the authoritative evidence.
+action_kubectl exec -n shorthand-system "${pod}" -- /bin/bash -lc 'kill -TERM 1' \
+  >/dev/null 2>&1 || true
+graceful_restart=0
+for _ in $(seq 1 60); do
+  restart_after="$(action_kubectl get pod -n shorthand-system "${pod}" -o jsonpath='{.status.containerStatuses[0].restartCount}' 2>/dev/null || true)"
+  ready_condition="$(action_kubectl get pod -n shorthand-system "${pod}" -o jsonpath='{.status.containerStatuses[0].ready}' 2>/dev/null || true)"
+  if [[ "${restart_after:-0}" -gt "${restart_before:-0}" && "${ready_condition}" == true ]]; then
+    graceful_restart=1
+    break
+  fi
+  sleep 1
+done
+[[ "${graceful_restart}" == 1 ]] || {
+  echo "error: serving worker did not restart and recover readiness after graceful termination" >&2
+  action_kubectl describe pod -n shorthand-system "${pod}" >&2 || true
+  exit 1
+}
+action_kubectl logs -n shorthand-system "${pod}" --previous >"${TMP}/serving-previous.log"
+grep -Fq 'SERVING_WORKER_DRAINING' "${TMP}/serving-previous.log"
+grep -Fq 'SERVING_WORKER_STOPPED graceful=true' "${TMP}/serving-previous.log"
+
 before="$(action_kubectl get pods -n shorthand-system -l app.kubernetes.io/name=shorthand,app.kubernetes.io/component=compiler-runtime -o name | sort)"
 action_kubectl delete pod -n shorthand-system "${pod}" --wait=true --timeout=60s >/dev/null
 
@@ -331,5 +381,5 @@ if [[ "${replacement_converged}" != 1 ]]; then
   exit 1
 fi
 
-printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 cni=%s arch=%s replicas=2 restricted=true native_compile=true native_output_isolated=true quota_negative=true network_negative=true restart=true\n' \
+printf 'PASS ephemeral Kubernetes production gate kind=%s kubernetes=1.36.1 cni=%s arch=%s replicas=2 restricted=true native_compile=true serving_self_test=true serving_health=true native_output_isolated=true quota_negative=true network_negative=true restart=true graceful_drain=true\n' \
   "${KIND_VERSION}" "${CALICO_VERSION}" "${image_arch}"

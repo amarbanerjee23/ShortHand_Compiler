@@ -10,6 +10,8 @@ production_claim: false
 
 `docs/production_truth.tsv` is the machine-readable authority for the active maturity, roadmap, language-version, backend-support and certification-claim state. `docs/c3eco_traceability.tsv` records the implementation and verification state of every C3-ECO mandatory gate G1-G14, scoring domain A-K, and the S9/S12 software classes that directly apply to the ShortHand compiler and platform.
 
+GitHub PR87 adds `shorthand.serving.runtime.v1`: a bounded process-scoped runtime with nonblocking backpressure, deadlines, cooperative cancellation, single-tenant isolation, low-cardinality health/metrics and graceful drain. It does not expose public ingress or claim authentication, authorization, TLS, hard termination of non-cooperative handlers, energy savings, certification or general production readiness.
+
 The gate `scripts/check_production_truth.sh` fails CI when an active control document contradicts these sources, a traceability row is missing, an evidence path is invalid, or a production blocker is represented as complete without retained verification evidence.
 
 ## Authority order

@@ -48,6 +48,16 @@ expect_failure missing-limits run_gate
 grep -Fq 'resource limits' "${TMP}/missing-limits.err"
 
 reset_fixture
+sed -i '/            - --max-retained-result-bytes/,+1d' "${TMP}/production.yaml"
+expect_failure missing-serving-byte-budget run_gate
+grep -Fq 'aggregate retained-result byte limit' "${TMP}/missing-serving-byte-budget.err"
+
+reset_fixture
+sed -i 's/kill -USR1 1/true/' "${TMP}/production.yaml"
+expect_failure missing-drain run_gate
+grep -Fq 'preStop initiates serving drain' "${TMP}/missing-drain.err"
+
+reset_fixture
 sed -i 's/^  egress: \[\]$/  egress: [{}]/' "${TMP}/production.yaml"
 expect_failure open-egress run_gate
 grep -Fq 'default-deny egress' "${TMP}/open-egress.err"

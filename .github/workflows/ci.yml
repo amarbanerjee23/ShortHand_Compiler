@@ -110,6 +110,9 @@ jobs:
       - name: Enterprise language packages standard library and FFI beta-0.6
         run: CXX=g++ CC=gcc bash scripts/check_enterprise_packages_stdlib_ffi.sh
 
+      - name: Concurrent serving and operational runtime
+        run: CXX=g++ bash scripts/check_concurrent_serving_runtime.sh
+
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
 

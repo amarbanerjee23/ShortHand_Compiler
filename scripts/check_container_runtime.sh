@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE="${1:-shorthand:pr78}"
+IMAGE="${1:-shorthand:pr87}"
 EXPECTED_ARCH="${2:-amd64}"
 TMP="$(mktemp -d)"
 CONTAINER_ID=""
@@ -55,10 +55,13 @@ run_stage readonly docker run "${common[@]}" "${IMAGE}" /bin/bash -lc 'if touch 
 run_stage native docker run "${common[@]}" --workdir /work "${IMAGE}" /bin/bash -lc \
   'short_hand /opt/shorthand/smoke/core_control.short compile-native && test -x ./core_control && ./core_control'
 if ! diff -u "${ROOT_DIR}/tests/semantic/differential/core_control.expected" "${TMP}/native.out"; then fail_stage native; fi
+run_stage serving_self_test docker run "${common[@]}" "${IMAGE}" \
+  /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker self-test
+grep -Fq 'PASS serving worker self-test contract=shorthand.serving.runtime.v1' "${TMP}/serving_self_test.out"
 
 health_test="$(docker image inspect --format '{{json .Config.Healthcheck.Test}}' "${IMAGE}")"
-[[ "${health_test}" == *'core_control.short'* && "${health_test}" == *'parse'* ]] || {
-  echo "error: image healthcheck does not execute the ShortHand parser" >&2
+[[ "${health_test}" == *'shorthand_serving_worker'* && "${health_test}" == *'--live'* ]] || {
+  echo "error: image healthcheck does not execute serving runtime liveness" >&2
   exit 1
 }
 
@@ -81,7 +84,10 @@ done
 docker stop --time 5 "${CONTAINER_ID}" >/dev/null
 exit_code="$(docker inspect --format '{{.State.ExitCode}}' "${CONTAINER_ID}")"
 [[ "${exit_code}" == 0 ]] || { echo "error: graceful container shutdown exit code=${exit_code}" >&2; exit 1; }
+docker logs "${CONTAINER_ID}" >"${TMP}/worker-lifecycle.out" 2>"${TMP}/worker-lifecycle.err"
+grep -Fq 'SERVING_WORKER_READY contract=shorthand.serving.runtime.v1' "${TMP}/worker-lifecycle.out"
+grep -Fq 'SERVING_WORKER_STOPPED graceful=true' "${TMP}/worker-lifecycle.out"
 docker rm "${CONTAINER_ID}" >/dev/null
 CONTAINER_ID=""
 
-printf 'PASS hardened container runtime image=%s arch=%s uid=%s gid=%s native_compile=true health=healthy graceful_shutdown=true\n' "${IMAGE}" "${actual_arch}" "${uid}" "${gid}"
+printf 'PASS hardened container runtime image=%s arch=%s uid=%s gid=%s native_compile=true serving_self_test=true health=healthy graceful_shutdown=true\n' "${IMAGE}" "${actual_arch}" "${uid}" "${gid}"

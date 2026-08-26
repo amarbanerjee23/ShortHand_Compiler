@@ -21,6 +21,7 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
   "${ROOT_DIR}/docs/production_type_memory_model.md" \
   "${ROOT_DIR}/docs/functions_control_error_semantics.md" \
   "${ROOT_DIR}/docs/enterprise_packages_stdlib_ffi.md" \
+  "${ROOT_DIR}/docs/concurrent_serving_runtime.md" \
   "${ROOT_DIR}/docs/fuzz_sanitizer_race_hardening.md" \
   "${ROOT_DIR}/docs/toolchain_platform_reproducibility.md" \
   "${ROOT_DIR}/docs/signed_release_publication.md" \
@@ -41,23 +42,24 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
   "${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh" \
   "${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv" \
   "${ROOT_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh" \
+  "${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh" \
   "${ROOT_DIR}/tests/conformance/enterprise_matrix_beta_0_6.tsv" \
   "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"; do
   require_file "${file}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-22-pr86' \
+  'production_readiness_plan_version: 2026-08-23-pr87' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 85' \
-  'CURRENT_GITHUB_PR: 86' \
+  'LAST_MERGED_GITHUB_PR: 86' \
+  'CURRENT_GITHUB_PR: 87' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'CURRENT_IMPLEMENTATION_SCOPE: enterprise_packages_standard_library_and_safe_ffi' \
+  'CURRENT_IMPLEMENTATION_SCOPE: concurrent_serving_and_operational_runtime' \
   'BASELINE_LANGUAGE_VERSION: beta-0.6' \
   'TARGET: enterprise production usage ready language' \
-  'PR86 - Enterprise packages, standard library and FFI is IN PROGRESS.' \
-  'remaining_planned_implementation_prs_pr86_through_pr96: 11' \
-  'remaining_planned_implementation_prs_after_pr86: 10' \
+  'PR87 - Concurrent serving and operational runtime is IN PROGRESS.' \
+  'remaining_planned_implementation_prs_pr87_through_pr96: 10' \
+  'remaining_planned_implementation_prs_after_pr87: 9' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -83,10 +85,11 @@ require_contains "${PLAN}" '| PR80 - Production backend and CPU/GPU/TPU/NPU hard
 require_contains "${PLAN}" '| PR83 - Production truth baseline and C3-ECO traceability | MERGED'
 require_contains "${PLAN}" '| PR84 - Production type system and memory model | MERGED'
 require_contains "${PLAN}" '| PR85 - Functions, structured control flow and error semantics | MERGED'
-require_contains "${PLAN}" '| PR86 - Enterprise packages, standard library and FFI | IN PROGRESS'
+require_contains "${PLAN}" '| PR86 - Enterprise packages, standard library and FFI | MERGED'
+require_contains "${PLAN}" '| PR87 - Concurrent serving and operational runtime | IN PROGRESS'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-08-22-pr86' \
+  'ci_pipeline_architecture_version: 2026-08-23-pr87' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \
@@ -99,6 +102,7 @@ for anchor in \
   'PR84: production type and memory model plus beta-0.4 typed execution.' \
   'PR85: functions, lexical scopes, structured control flow and deterministic errors under beta-0.5.' \
   'PR86: enterprise ABI schemas/ownership plans, cryptographic offline packages, core library and safe FFI under beta-0.6.' \
+  'PR87: concurrent serving and operational runtime.' \
   'PR96: enterprise pilot and zero-skip production RC aggregation.'; do
   require_contains "${PIPELINE}" "${anchor}"
 done
@@ -132,7 +136,9 @@ require_contains "${ROOT_DIR}/docs/functions_control_error_semantics.md" 'contro
 require_contains "${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh" 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate'
 require_contains "${ROOT_DIR}/docs/enterprise_packages_stdlib_ffi.md" 'enterprise_contract: shorthand.enterprise_language.v1'
 require_contains "${ROOT_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh" 'PASS enterprise packages standard library and safe FFI gate'
-require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, completeness, mapping and evidence cases'
+require_contains "${ROOT_DIR}/docs/concurrent_serving_runtime.md" 'serving_runtime_contract: shorthand.serving.runtime.v1'
+require_contains "${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh" 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
+require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases'
 
 # Historical milestones remain auditable without being mistaken for active state.
 for anchor in \

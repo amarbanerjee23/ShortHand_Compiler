@@ -71,17 +71,33 @@ spec:
           type: RuntimeDefault
       containers:
         - name: shorthand
-          image: shorthand:pr78
+          image: shorthand:pr87
           imagePullPolicy: IfNotPresent
-          command: ["/bin/bash", "-lc"]
+          command: ["/opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker"]
           args:
-            - |
-              set -euo pipefail
-              trap 'exit 0' TERM INT
-              while true; do
-                sleep 3600 &
-                wait $!
-              done
+            - serve
+            - --tenant
+            - default
+            - --state-file
+            - /tmp/shorthand-serving-health.json
+            - --workers
+            - "2"
+            - --queue-capacity
+            - "64"
+            - --max-in-flight
+            - "66"
+            - --max-request-bytes
+            - "1048576"
+            - --max-response-bytes
+            - "1048576"
+            - --max-in-flight-request-bytes
+            - "67108864"
+            - --max-retained-result-bytes
+            - "67108864"
+            - --max-deadline-ms
+            - "30000"
+            - --grace-ms
+            - "15000"
           securityContext:
             runAsNonRoot: true
             runAsUser: 10001
@@ -101,34 +117,40 @@ spec:
           startupProbe:
             exec:
               command:
-                - /opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand
-                - /opt/shorthand/smoke/core_control.short
-                - parse
+                - /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker
+                - probe
+                - --state-file
+                - /tmp/shorthand-serving-health.json
+                - --live
             periodSeconds: 2
             timeoutSeconds: 5
             failureThreshold: 30
           readinessProbe:
             exec:
               command:
-                - /opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand
-                - /opt/shorthand/smoke/core_control.short
-                - parse
+                - /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker
+                - probe
+                - --state-file
+                - /tmp/shorthand-serving-health.json
+                - --ready
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
             exec:
               command:
-                - /opt/shorthand/Compiler_new_ws/Short_Hand/build/short_hand
-                - /opt/shorthand/smoke/core_control.short
-                - parse
+                - /opt/shorthand/Compiler_new_ws/Short_Hand/build/shorthand_serving_worker
+                - probe
+                - --state-file
+                - /tmp/shorthand-serving-health.json
+                - --live
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
           lifecycle:
             preStop:
               exec:
-                command: ["/bin/bash", "-lc", "touch /tmp/shorthand-terminating"]
+                command: ["/bin/bash", "-lc", "kill -USR1 1 && sleep 1"]
           volumeMounts:
             - name: tmp
               mountPath: /tmp

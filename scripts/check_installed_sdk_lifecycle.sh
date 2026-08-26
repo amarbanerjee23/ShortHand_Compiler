@@ -110,7 +110,7 @@ echo "PASS installed ShortHand SDK install/reinstall/uninstall lifecycle"
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "aarch64" ]]; then
   command -v docker >/dev/null 2>&1 || { echo "error: Docker is required for native Linux arm64 image qualification" >&2; exit 1; }
   docker info >/dev/null 2>&1 || { echo "error: Docker daemon unavailable for native Linux arm64 image qualification" >&2; exit 1; }
-  docker build --pull --platform linux/arm64 -t shorthand:pr78-arm64 "${ROOT_DIR}"
-  bash "${ROOT_DIR}/scripts/check_container_runtime.sh" shorthand:pr78-arm64 arm64
+  docker build --pull --platform linux/arm64 -t shorthand:pr87-arm64 "${ROOT_DIR}"
+  bash "${ROOT_DIR}/scripts/check_container_runtime.sh" shorthand:pr87-arm64 arm64
   echo "PASS native Linux arm64 production container qualification"
 fi
