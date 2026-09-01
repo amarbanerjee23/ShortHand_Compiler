@@ -19,6 +19,9 @@ SBOM_STATUS="${ROOT_DIR}/docs/sbom_plan.md"
 OBSERVABILITY_STATUS="${ROOT_DIR}/docs/observability_plan.md"
 PIPELINE="${ROOT_DIR}/docs/ci_pipeline_architecture.md"
 C3ECO_CONTRACT="${ROOT_DIR}/docs/c3eco_language_contract.md"
+PROFILE_CONTRACT="${ROOT_DIR}/docs/c3eco_certification_profile.md"
+PROFILE_MATRIX="${ROOT_DIR}/tests/conformance/c3eco_profile_matrix_beta_0_7.tsv"
+PROFILE_GATE="${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh"
 CONTROL_FLOW_CONTRACT="${ROOT_DIR}/docs/functions_control_error_semantics.md"
 CONTROL_FLOW_MATRIX="${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv"
 CONTROL_FLOW_GATE="${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh"
@@ -40,7 +43,7 @@ truth_value() { awk -F '\t' -v key="$1" 'NR > 1 && $1 == key { print $2 }' "${TR
 
 for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATEGY}" "${MATRIX}" \
   "${LANGUAGE_SPEC}" "${LANGUAGE_COMPATIBILITY}" "${LIMITATIONS}" "${RELEASE_STATUS}" \
-  "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" "${C3ECO_CONTRACT}" \
+  "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" "${C3ECO_CONTRACT}" "${PROFILE_CONTRACT}" "${PROFILE_MATRIX}" "${PROFILE_GATE}" \
   "${CONTROL_FLOW_CONTRACT}" "${CONTROL_FLOW_MATRIX}" "${CONTROL_FLOW_GATE}" \
   "${ENTERPRISE_CONTRACT}" "${ENTERPRISE_MATRIX}" "${ENTERPRISE_GATE}" \
   "${SERVING_CONTRACT}" "${SERVING_GATE}" "${README}"; do
@@ -58,18 +61,18 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-08-23'
+  'as_of_date=2026-09-01'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
-  'active_language_version=beta-0.6'
+  'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=86'
-  'current_github_pr=87'
+  'last_merged_github_pr=87'
+  'current_github_pr=88'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=10'
-  'remaining_implementation_prs_after_current=9'
-  'coverage_matrix_status=implemented=26,partial=3,open=3,total=32'
+  'remaining_implementation_prs_including_current=9'
+  'remaining_implementation_prs_after_current=8'
+  'coverage_matrix_status=implemented=27,partial=3,open=3,total=33'
   'type_system_contract=shorthand.type_memory.v1'
   'control_flow_contract=shorthand.control_flow.v1'
   'enterprise_language_contract=shorthand.enterprise_language.v1'
@@ -79,6 +82,7 @@ expected_truth=(
   'production_backend_scope=linux-x64-cpu-v1'
   'accelerator_production_support=false'
   'c3eco_language_contract=shorthand.c3eco.language.v1'
+  'c3eco_profile_contract=shorthand.c3eco.profile.v2'
   'c3eco_normative_candidate=draft-v0.6'
   'c3eco_inclusion_overlay=draft-v0.7-2026-07-18'
   'c3eco_claim_status=candidate_evidence_only'
@@ -154,7 +158,7 @@ for anchor in \
   'production_truth_contract: shorthand.production.truth.v1' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'beta-0.6' \
+  'beta-0.7' \
   'shorthand.type_memory.v1' \
   'shorthand.control_flow.v1' \
   'shorthand.enterprise_language.v1' \
@@ -171,70 +175,71 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-08-23-pr87' \
-  'LAST_MERGED_GITHUB_PR: 86' \
-  'CURRENT_GITHUB_PR: 87' \
+  'production_readiness_plan_version: 2026-09-01-pr88' \
+  'LAST_MERGED_GITHUB_PR: 87' \
+  'CURRENT_GITHUB_PR: 88' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr87_through_pr96: 10' \
-  'remaining_planned_implementation_prs_after_pr87: 9'; do
+  'remaining_planned_implementation_prs_pr88_through_pr96: 9' \
+  'remaining_planned_implementation_prs_after_pr88: 8'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-08-23-pr87' \
-  'current_github_pr: 87' \
-  'current_roadmap_scope: concurrent_serving_and_operational_runtime' \
-  '26 implemented, 3 partial and 3 open'; do
+  'feature_status_version: 2026-09-01-pr88' \
+  'current_github_pr: 88' \
+  'current_roadmap_scope: typed_c3eco_certification_profile' \
+  '27 implemented, 3 partial and 3 open'; do
   require_contains "${STATUS}" "${anchor}"
 done
 
-require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-08-23-pr87'
-require_contains "${STRATEGY}" '32-area production test matrix'
+require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-09-01-pr88'
+require_contains "${STRATEGY}" '33-area production test matrix'
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
 require_contains "${MATRIX}" $'TST031\tenterprise language packages core library and FFI\timplemented'
 require_contains "${MATRIX}" $'TST032\tconcurrent serving and operational runtime\timplemented'
+require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timplemented'
 
 for anchor in \
-  'Language version: beta-0.6' \
+  'Language version: beta-0.7' \
   'Base grammar version: beta-0.2' \
   'production_claim: false'; do
   require_contains "${LANGUAGE_SPEC}" "${anchor}"
 done
 for anchor in \
   'language_compatibility_contract: shorthand.language.compatibility.v1' \
-  'active_language_version: beta-0.6' \
+  'active_language_version: beta-0.7' \
   'production_claim: false'; do
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-08-23-pr87' \
+  'known_limitations_version: 2026-09-01-pr88' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-08-23-pr87' \
+  'release_level_status_version: 2026-09-01-pr88' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: 96'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-08-23-pr87' \
+  'public_release_readiness_version: 2026-09-01-pr88' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-08-23-pr87' \
+  'enterprise_release_scorecard_version: 2026-09-01-pr88' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-08-23-pr87'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-01-pr88'
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
 require_contains "${CONTROL_FLOW_GATE}" 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate'
@@ -243,13 +248,16 @@ require_contains "${ENTERPRISE_MATRIX}" $'ENT024\tinstalled-consumer'
 require_contains "${ENTERPRISE_GATE}" 'PASS enterprise packages standard library and safe FFI gate'
 require_contains "${SERVING_CONTRACT}" 'serving_runtime_contract: shorthand.serving.runtime.v1'
 require_contains "${SERVING_GATE}" 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
+require_contains "${PROFILE_CONTRACT}" 'c3eco_profile_contract: shorthand.c3eco.profile.v2'
+require_contains "${PROFILE_MATRIX}" $'C3P021\tclaim-safety'
+require_contains "${PROFILE_GATE}" 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate'
 require_contains "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" 'SERVING_MEMORY_SANITIZER contract=shorthand.serving.runtime.v1'
 require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'SERVING_TSAN contract=shorthand.serving.runtime.v1'
 require_contains "${C3ECO_CONTRACT}" 'normative_candidate: C3-ECO draft v0.6'
 require_contains "${C3ECO_CONTRACT}" 'inclusion_overlay: C3-ECO draft v0.7 dated 2026-07-18'
 require_contains "${C3ECO_CONTRACT}" 'A programming language, framework, cloud, backend or model is not inherently green.'
 require_contains "${README}" 'Current maturity: `controlled_beta`. Production claim: `false`.'
-require_contains "${README}" 'Active language: beta-0.6'
+require_contains "${README}" 'Active language: beta-0.7'
 require_contains "${README}" 'shorthand.control_flow.v1'
 require_contains "${README}" 'shorthand.serving.runtime.v1'
 require_contains "${README}" 'The only qualified backend scope is `linux-x64-cpu-v1`'
@@ -258,6 +266,7 @@ require_contains "${OBJECTIVES}" 'Production type and memory model: PR84.'
 require_contains "${OBJECTIVES}" 'Functions, lexical scopes, structured control flow and deterministic errors: PR85.'
 require_contains "${OBJECTIVES}" 'Enterprise composite/ownership schemas, cryptographic offline packages, core library and safe FFI: PR86.'
 require_contains "${OBJECTIVES}" 'Concurrent serving and operational runtime: PR87.'
+require_contains "${OBJECTIVES}" 'Typed C3-ECO profile and deterministic migration: PR88.'
 require_contains "${OBJECTIVES}" 'Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.'
 require_contains "${ENTERPRISE_STRATEGY}" 'Current maturity: controlled enterprise beta (ER3), not an enterprise release candidate.'
 require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_superseded'
@@ -267,6 +276,6 @@ require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_s
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-printf 'PRODUCTION_TRUTH current_pr=87 remaining=10 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=88 remaining=9 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 printf 'PASS production truth and C3-ECO traceability gate\n'

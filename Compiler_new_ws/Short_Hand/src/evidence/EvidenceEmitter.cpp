@@ -1,4 +1,5 @@
 #include "EvidenceEmitter.h"
+#include <map>
 #include <ostream>
 
 static std::string esc(const std::string &s) {
@@ -9,6 +10,15 @@ static std::string esc(const std::string &s) {
         else { o += c; }
     }
     return o;
+}
+
+static void writeTypedC3EcoValue(std::ostream &out, const C3EcoValueData &value) {
+    if (value.kind == C3EcoValueKind::Integer || value.kind == C3EcoValueKind::Decimal ||
+        value.kind == C3EcoValueKind::Boolean) {
+        out << value.text;
+    } else {
+        out << "\"" << esc(value.text) << "\"";
+    }
 }
 
 EvidenceEmitter::EvidenceEmitter(const std::string &s) : source(s) {}
@@ -31,6 +41,13 @@ bool EvidenceEmitter::hasMinimumC3EcoEvidence() const {
            c.claims_mode == "evidence_only";
 }
 
+bool EvidenceEmitter::hasC3EcoProfileV2() const {
+    for (const auto &declaration : c3eco_declarations) {
+        if (declaration.kind == C3EcoDeclarationKind::CertificationProfile) return true;
+    }
+    return false;
+}
+
 void EvidenceEmitter::write(AST_PROGRAM *p, std::ostream &out) {
     writeCandidateReport(p, out);
 }
@@ -39,6 +56,8 @@ void EvidenceEmitter::writeCandidateReport(AST_PROGRAM *p, std::ostream &out) {
     collect(p);
     auto c = contracts.empty() ? GreenAIContractData() : contracts.front();
     bool minimum = hasMinimumC3EcoEvidence();
+    const bool profile_v2 = hasC3EcoProfileV2();
+    const bool migration_required = !profile_v2 && !c3eco_declarations.empty();
 
     out << "{\n";
     out << "  \"schema\": \"shorthand.c3eco.candidate_report.v1\",\n";
@@ -48,6 +67,11 @@ void EvidenceEmitter::writeCandidateReport(AST_PROGRAM *p, std::ostream &out) {
     out << "  \"minimum_c3eco_evidence_present\": " << (minimum ? "true" : "false") << ",\n";
     out << "  \"official_certification_granted\": false,\n";
     out << "  \"c3eco_language_contract\": \"shorthand.c3eco.language.v1\",\n";
+    out << "  \"c3eco_profile_contract\": \"shorthand.c3eco.profile.v2\",\n";
+    out << "  \"c3eco_profile_status\": \""
+        << (profile_v2 ? "conformant" : (migration_required ? "legacy_migration_review_required" : "not_declared"))
+        << "\",\n";
+    out << "  \"c3eco_profile_migration_required\": " << (migration_required ? "true" : "false") << ",\n";
     out << "  \"c3eco_declarations\": [";
     for (size_t i = 0; i < c3eco_declarations.size(); ++i) {
         if (i) out << ",";
@@ -59,7 +83,20 @@ void EvidenceEmitter::writeCandidateReport(AST_PROGRAM *p, std::ostream &out) {
             out << "\"" << esc(decl.fields[j].name) << "\":[";
             for (size_t k = 0; k < decl.fields[j].values.size(); ++k) {
                 if (k) out << ",";
-                out << "\"" << esc(decl.fields[j].values[k]) << "\"";
+                out << "\"" << esc(decl.fields[j].values[k].text) << "\"";
+            }
+            out << "]";
+        }
+        out << "},\"typed_fields\":{";
+        for (size_t j = 0; j < decl.fields.size(); ++j) {
+            if (j) out << ",";
+            out << "\"" << esc(decl.fields[j].name) << "\":[";
+            for (size_t k = 0; k < decl.fields[j].values.size(); ++k) {
+                if (k) out << ",";
+                out << "{\"type\":\"" << c3EcoValueKindName(decl.fields[j].values[k].kind)
+                    << "\",\"value\":";
+                writeTypedC3EcoValue(out, decl.fields[j].values[k]);
+                out << "}";
             }
             out << "]";
         }
@@ -141,6 +178,7 @@ void EvidenceEmitter::writeCandidateReport(AST_PROGRAM *p, std::ostream &out) {
     if (models.empty()) add_blocker("missing_model_declaration");
     if (tensors.empty()) add_blocker("missing_tensor_declaration");
     if (infer_calls.empty()) add_blocker("missing_infer_statement");
+    if (!profile_v2) add_blocker("typed_c3eco_profile_not_declared");
     add_blocker("real_backend_execution_not_yet_verified");
     add_blocker("external_certifier_not_signed");
     out << "],\n";
@@ -169,13 +207,64 @@ void EvidenceEmitter::writeWorkbookCsv(AST_PROGRAM *p, std::ostream &out) {
 void EvidenceEmitter::writeCheck(AST_PROGRAM *p, std::ostream &out) {
     collect(p);
     bool minimum = hasMinimumC3EcoEvidence();
+    const bool profile_v2 = hasC3EcoProfileV2();
+    const bool migration_required = !profile_v2 && !c3eco_declarations.empty();
     out << "{\n";
     out << "  \"schema\": \"shorthand.c3eco.check.v1\",\n";
     out << "  \"status\": \"" << (minimum ? "candidate_ready_with_blockers" : "missing_required_evidence") << "\",\n";
     out << "  \"minimum_c3eco_evidence_present\": " << (minimum ? "true" : "false") << ",\n";
     out << "  \"official_certification_granted\": false,\n";
-    out << "  \"blocking_items\": [\"real_backend_execution_not_yet_verified\",\"external_certifier_not_signed\"],\n";
+    out << "  \"c3eco_profile_contract\": \"shorthand.c3eco.profile.v2\",\n";
+    out << "  \"c3eco_profile_status\": \""
+        << (profile_v2 ? "conformant" : (migration_required ? "legacy_migration_review_required" : "not_declared"))
+        << "\",\n";
+    out << "  \"c3eco_profile_migration_required\": "
+        << (migration_required ? "true" : "false") << ",\n";
+    out << "  \"blocking_items\": [";
+    if (!profile_v2) out << "\"typed_c3eco_profile_not_declared\",";
+    out << "\"real_backend_execution_not_yet_verified\",\"external_certifier_not_signed\"],\n";
     out << "  \"disclaimer\": \"Candidate readiness check only; this tool does not grant certification.\"\n";
+    out << "}\n";
+}
+
+void EvidenceEmitter::writeProfileMigration(AST_PROGRAM *p, std::ostream &out) {
+    collect(p);
+    const bool profile_v2 = hasC3EcoProfileV2();
+    std::map<C3EcoDeclarationKind, std::string> first_names;
+    for (const auto &declaration : c3eco_declarations) {
+        first_names.emplace(declaration.kind, declaration.name);
+    }
+    out << "{\n";
+    out << "  \"schema\": \"shorthand.c3eco.profile_migration.v1\",\n";
+    out << "  \"source_contract\": \"shorthand.c3eco.language.v1\",\n";
+    out << "  \"target_contract\": \"shorthand.c3eco.profile.v2\",\n";
+    out << "  \"status\": \"" << (profile_v2 ? "already_current" : "review_required") << "\",\n";
+    out << "  \"migration_required\": " << (profile_v2 ? "false" : "true") << ",\n";
+    out << "  \"official_certification_granted\": false,\n";
+    out << "  \"declaration_count\": " << c3eco_declarations.size() << ",\n";
+    out << "  \"suggested_profile_references\": {";
+    const std::vector<std::pair<const char *, C3EcoDeclarationKind>> references = {
+        {"certification", C3EcoDeclarationKind::Certification},
+        {"functional_unit", C3EcoDeclarationKind::FunctionalUnit},
+        {"workload", C3EcoDeclarationKind::Workload},
+        {"boundary", C3EcoDeclarationKind::Boundary},
+        {"ai_lifecycle", C3EcoDeclarationKind::AILifecycle},
+        {"guardrails", C3EcoDeclarationKind::Guardrails}};
+    for (std::size_t i = 0; i < references.size(); ++i) {
+        if (i) out << ",";
+        out << "\"" << references[i].first << "\":";
+        const auto found = first_names.find(references[i].second);
+        if (found == first_names.end()) out << "null";
+        else out << "\"" << esc(found->second) << "\"";
+    }
+    out << "},\n";
+    out << "  \"review_reasons\": [";
+    if (!profile_v2) {
+        out << "\"legacy_string_fields_require_typed_review\","
+               "\"profile_links_and_validity_window_required\"";
+    }
+    out << "],\n";
+    out << "  \"claim_safe_text\": \"Migration output is candidate preparation only and does not grant C3-ECO certification.\"\n";
     out << "}\n";
 }
 

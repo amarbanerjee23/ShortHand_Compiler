@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-08-23-pr87
+enterprise_release_scorecard_version: 2026-09-01-pr88
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -22,7 +22,7 @@ This scorecard summarizes active release controls. The machine-readable authorit
 
 | Control family | Status | Evidence / remaining condition |
 | --- | --- | --- |
-| Build, grammar, diagnostics and cross-mode tests | Implemented for beta-0.5 execution and beta-0.6 enterprise schema | CI, Make, CMake/CTest, conformance, type/memory, control-flow and enterprise gates; composite execution remains a lowering boundary. |
+| Build, grammar, diagnostics and cross-mode tests | Implemented for beta-0.5 execution, beta-0.6 enterprise schema and beta-0.7 typed profile | CI, Make, CMake/CTest, conformance, type/memory, control-flow, enterprise and typed-profile gates; composite execution remains a lowering boundary. |
 | Memory, UB, fuzz and concurrency safety | Implemented for current baseline | ASan/LSan/UBSan, libFuzzer and TSan include bounded serving load/fault/soak evidence. |
 | Toolchain, platform, ABI and packaging | Implemented for declared tiers | Reproducible clean builds, frozen runtime/core ABIs and installed static/shared C/C++ consumers. |
 | Security and dependency governance | Implemented for current contract | CodeQL, Trivy, dependency delta, license policy, pinned actions, expiring exceptions and package v2 SHA-256/exact-version/license gates. |
@@ -31,7 +31,7 @@ This scorecard summarizes active release controls. The machine-readable authorit
 | SBOM and provenance generation | Implemented | SPDX 2.3 source/artifact bundles, package dependency output and candidate provenance. |
 | Protected signed publication | Partial | Source contract exists; real protected tag exercise and verified attestations remain. |
 | Process-scoped serving and observability | Implemented for `shorthand.serving.runtime.v1` | Bounded admission, deadlines, cancellation, tenant isolation, health, low-cardinality metrics and graceful drain; public ingress/authentication/TLS are not claimed. |
-| C3-ECO readiness | Partial | Candidate language/evidence and full traceability exist; PR88-PR91 close typed profile, measurement, scoring and auditor lifecycle. |
+| C3-ECO readiness | Partial | Candidate language/evidence, full traceability and the typed preparation profile exist; PR89-PR91 close measurement, scoring and auditor lifecycle. |
 | MLIR production lowering | Partial | Hand-authored foundation exists; PR92-PR93 add generated dialect and full lowering. |
 | Measured performance and energy | Open | PR95 requires equivalent work, repeated trials, raw data, provenance and uncertainty. |
 | Final production RC aggregate | Open | PR96 requires zero mandatory skips, enterprise pilot, upgrade/rollback/DR and retained evidence. |

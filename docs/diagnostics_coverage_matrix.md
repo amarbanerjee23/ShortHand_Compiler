@@ -1,6 +1,6 @@
 # Diagnostics coverage matrix
 
-diagnostics_coverage_contract_version: 1.5.0
+diagnostics_coverage_contract_version: 1.6.0
 diagnostics_coverage_status: stable_coded_stage_matrix_guarded
 diagnostic_code_prefix: SHD
 covered_stages: parser, module, semantic, ai, greenai, lowering, runtime
@@ -11,7 +11,7 @@ runtime_failure_status: stable_code_cross_mode_differential_guarded
 runtime_abi_change: none
 production_claim_boundary: matrix_is_not_parser_recovery_or_localization_completion
 
-PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 added exact type, storage, conversion, operator, condition and ownership failures. PR85 added deterministic function, scope, return and label-resolution failures. PR86 adds package dependency integrity, license, version, reproducible-SBOM and enterprise schema failures.
+PR65 turned compiler diagnostics into a versioned and testable contract. PR67 added bounded-input and lexical-failure codes. PR69 added module-preamble ordering, uniqueness and completeness diagnostics. PR70 added manifest, graph, lockfile and multi-file module diagnostics. PR72 extended the contract to executable core semantics and deterministic runtime failures. PR84 added exact type, storage, conversion, operator, condition and ownership failures. PR85 added deterministic function, scope, return and label-resolution failures. PR86 added package dependency integrity, license, version, reproducible-SBOM and enterprise schema failures. PR88 adds typed C3-ECO literal, domain, range, reference, validity, materiality and completeness failures.
 
 ## Code allocation
 
@@ -107,6 +107,19 @@ Runtime errors are deterministic language failures, not sanitizer crashes. `scri
 
 Ownership-state failures continue to use `SHD3016` so the reusable state-machine meaning remains stable.
 
+## PR88 typed C3-ECO profile allocation
+
+| Code | Contract |
+| --- | --- |
+| `SHD5201` | A profile literal type or field cardinality is invalid. |
+| `SHD5202` | A closed profile domain or enum value is invalid. |
+| `SHD5203` | A typed numeric value is outside its allowed range. |
+| `SHD5204` | A profile reference is unknown after full source collection. |
+| `SHD5205` | A profile reference resolves to the wrong declaration kind. |
+| `SHD5206` | A calendar date or validity ordering is invalid. |
+| `SHD5207` | Exclusion evidence or cumulative materiality violates the boundary contract. |
+| `SHD5208` | A v2-linked declaration is missing a v2-only field. |
+
 ## Output contract
 
 A ranged compile-time error is rendered as:
@@ -125,7 +138,7 @@ Undefined function calls are validated before LLVM IR generation and emit `SHD30
 
 ## Guarded evidence
 
-The live diagnostics gate proves representative behavior for parser syntax, core semantics, undefined functions, enterprise schemas, AI warnings, AI shape validation and Green AI contracts. Parser robustness proves deterministic resource and lexical failures. Module gates prove package and resolver failures. The PR72 differential gate adds semantic negatives and runtime-domain failures across interpreter, `lli` and native execution. The PR85 control-flow gate covers SHD3017 through SHD3023, and the PR86 enterprise gate covers SHD2031-SHD2034 and SHD3024-SHD3025.
+The live diagnostics gate proves representative behavior for parser syntax, core semantics, undefined functions, enterprise schemas, AI warnings, AI shape validation and Green AI contracts. Parser robustness proves deterministic resource and lexical failures. Module gates prove package and resolver failures. The PR72 differential gate adds semantic negatives and runtime-domain failures across interpreter, `lli` and native execution. The PR85 control-flow gate covers SHD3017 through SHD3023, the PR86 enterprise gate covers SHD2031-SHD2034 and SHD3024-SHD3025, and the PR88 typed-profile gate requires SHD5201 through SHD5208 from one deterministic negative matrix.
 
 Each error case must fail, each warning-only case must succeed, and every catalogued code must remain unique and stage-owned.
 

@@ -299,9 +299,27 @@ ownership_operation    = "owned" , identifier , identifier , ";"
 
 Composite execution lowering, nested payload types, owned string arrays, nested vendored dependencies and by-value composite FFI are outside this contract and remain rejected.
 
+## Beta-0.7 typed C3-ECO profile grammar
+
+The additive beta-0.7 surface extends first-class C3-ECO declarations with native field values and one contextual profile declaration. `certification_profile` is recognized as a declaration keyword only when followed by a declaration name and `{`, so existing scalar identifiers with that spelling remain accepted.
+
+```ebnf
+c3eco_value          = string_literal | identifier | integer_literal
+                     | float_literal | "true" | "false" ;
+c3eco_field          = identifier , c3eco_value , ";" ;
+c3eco_declaration    = c3eco_kind , identifier , "{" ,
+                       { c3eco_field } , "}" , ";" ;
+c3eco_kind           = "certification_profile" | "certification"
+                     | "functional_unit" | "workload" | "boundary"
+                     | "measurement_plan" | "ai_lifecycle" | "rag_pipeline"
+                     | "token_budget" | "model_routing" | "guardrails" ;
+```
+
+The parser preserves each value's literal kind. `shorthand.c3eco.profile.v2` semantic validation owns required fields, reference kinds, closed domains, ranges, dates and materiality; those rules are not approximated in the grammar.
+
 ## Conformance rules
 
-The authoritative base mapping is `tests/conformance/grammar_matrix_beta_0_2.tsv`; the separate enterprise mapping is `tests/conformance/enterprise_matrix_beta_0_6.tsv`.
+The authoritative base mapping is `tests/conformance/grammar_matrix_beta_0_2.tsv`; separate layered mappings are `tests/conformance/enterprise_matrix_beta_0_6.tsv` and `tests/conformance/c3eco_profile_matrix_beta_0_7.tsv`.
 
 Every matrix row records:
 

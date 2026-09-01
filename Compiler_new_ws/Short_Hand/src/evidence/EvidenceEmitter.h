@@ -20,6 +20,7 @@ public:
     void writeCandidateReport(AST_PROGRAM *p, std::ostream &out);
     void writeWorkbookCsv(AST_PROGRAM *p, std::ostream &out);
     void writeCheck(AST_PROGRAM *p, std::ostream &out);
+    void writeProfileMigration(AST_PROGRAM *p, std::ostream &out);
 
     int visit(AST_PROGRAM*) override;
     int visit(AST_DATA_DECLARATION_BLOCK*) override;
@@ -62,6 +63,7 @@ public:
 private:
     void collect(AST_PROGRAM *p);
     bool hasMinimumC3EcoEvidence() const;
+    bool hasC3EcoProfileV2() const;
 
     std::string source;
     std::vector<ModelDeclarationData> models;

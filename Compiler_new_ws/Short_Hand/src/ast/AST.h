@@ -417,6 +417,7 @@ struct GreenAIContractData { std::string name, functional_unit, success_criteria
 struct GreenAIMeasurementData { std::string workload, backend; int inferences=0; double watts=0, seconds=0; };
 
 enum class C3EcoDeclarationKind {
+    CertificationProfile,
     Certification,
     FunctionalUnit,
     Workload,
@@ -431,9 +432,24 @@ enum class C3EcoDeclarationKind {
 
 const char *c3EcoDeclarationKindName(C3EcoDeclarationKind kind);
 
+enum class C3EcoValueKind {
+    String,
+    Identifier,
+    Integer,
+    Decimal,
+    Boolean
+};
+
+const char *c3EcoValueKindName(C3EcoValueKind kind);
+
+struct C3EcoValueData {
+    C3EcoValueKind kind = C3EcoValueKind::String;
+    std::string text;
+};
+
 struct C3EcoFieldData {
     std::string name;
-    std::vector<std::string> values;
+    std::vector<C3EcoValueData> values;
 };
 
 struct C3EcoDeclarationData {

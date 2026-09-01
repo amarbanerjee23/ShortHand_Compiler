@@ -10,7 +10,7 @@ production_claim: false
 
 `docs/production_truth.tsv` is the machine-readable authority for the active maturity, roadmap, language-version, backend-support and certification-claim state. `docs/c3eco_traceability.tsv` records the implementation and verification state of every C3-ECO mandatory gate G1-G14, scoring domain A-K, and the S9/S12 software classes that directly apply to the ShortHand compiler and platform.
 
-GitHub PR87 adds `shorthand.serving.runtime.v1`: a bounded process-scoped runtime with nonblocking backpressure, deadlines, cooperative cancellation, single-tenant isolation, low-cardinality health/metrics and graceful drain. It does not expose public ingress or claim authentication, authorization, TLS, hard termination of non-cooperative handlers, energy savings, certification or general production readiness.
+GitHub PR87 added `shorthand.serving.runtime.v1`: a bounded process-scoped runtime with nonblocking backpressure, deadlines, cooperative cancellation, single-tenant isolation, low-cardinality health/metrics and graceful drain. GitHub PR88 adds `shorthand.c3eco.profile.v2`, which types and links identity, functional-unit, workload, boundary, AI-lifecycle, safeguard and validity declarations. Neither contract claims energy savings, certification or general production readiness.
 
 The gate `scripts/check_production_truth.sh` fails CI when an active control document contradicts these sources, a traceability row is missing, an evidence path is invalid, or a production blocker is represented as complete without retained verification evidence.
 
@@ -28,7 +28,7 @@ Workflow source is not execution evidence. A declared backend is not live qualif
 
 ## Active language contract
 
-The active layered language version is beta-0.6. It combines:
+The active layered language version is beta-0.7. It combines:
 
 - the beta-0.2 base grammar and executable matrix,
 - the beta-0.3 package, module, import and deterministic multi-file semantics,
@@ -36,9 +36,10 @@ The active layered language version is beta-0.6. It combines:
 - exact cross-mode float, string and typed-array execution under `shorthand.semantic.differential.v2`,
 - `shorthand.control_flow.v1` expression calls, recursion, lexical cleanup, structured returns and same-block label resolution,
 - `shorthand.enterprise_language.v1`, package/lock v2 and the separate core FFI ABI 1.0.0,
-- the `shorthand.c3eco.language.v1` certification-oriented declaration extension.
+- the `shorthand.c3eco.language.v1` certification-oriented declaration extension,
+- the `shorthand.c3eco.profile.v2` typed certification-preparation profile and deterministic migration manifest.
 
-The executable subset remains beta-0.5 and covers `int`, `bool`, binary64 `float`/`double`, immutable string scalars, fixed numeric/boolean arrays, arbitrary-expression calls, recursion, typed lexical locals, structured loops/returns and safe label transfers. Beta-0.6 adds namespaced record, enum, slice, option/result schemas and explicit ownership-plan validation through `enterprise-check`; it does not claim composite interpreter/LLVM execution. Package v2, SHA-256 locks, SPDX dependency output and core FFI ABI 1.0.0 are documented in `docs/enterprise_packages_stdlib_ffi.md`.
+The executable subset remains beta-0.5 and covers `int`, `bool`, binary64 `float`/`double`, immutable string scalars, fixed numeric/boolean arrays, arbitrary-expression calls, recursion, typed lexical locals, structured loops/returns and safe label transfers. Beta-0.6 adds namespaced record, enum, slice, option/result schemas and explicit ownership-plan validation through `enterprise-check`; beta-0.7 adds metadata-only typed certification profiles. Neither version claims composite interpreter/LLVM execution. Package v2, SHA-256 locks, SPDX dependency output and core FFI ABI 1.0.0 are documented in `docs/enterprise_packages_stdlib_ffi.md`.
 
 ## C3-ECO profile boundary
 

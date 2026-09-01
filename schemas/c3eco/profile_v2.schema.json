@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/profile_v2.schema.json",
+  "title": "ShortHand Typed C3-ECO Certification Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile_contract",
+    "profile_version",
+    "certification",
+    "functional_unit",
+    "workload",
+    "boundary",
+    "ai_lifecycle",
+    "guardrails",
+    "valid_from",
+    "valid_until",
+    "official_certification_granted"
+  ],
+  "properties": {
+    "profile_contract": { "const": "shorthand.c3eco.profile.v2" },
+    "profile_version": { "const": 2 },
+    "certification": { "type": "string", "minLength": 1 },
+    "functional_unit": { "type": "string", "minLength": 1 },
+    "workload": { "type": "string", "minLength": 1 },
+    "boundary": { "type": "string", "minLength": 1 },
+    "ai_lifecycle": { "type": "string", "minLength": 1 },
+    "guardrails": { "type": "string", "minLength": 1 },
+    "valid_from": { "type": "string", "format": "date" },
+    "valid_until": { "type": "string", "format": "date" },
+    "official_certification_granted": { "const": false }
+  }
+}

@@ -1,6 +1,6 @@
 # Observability Status and Production Plan
 
-observability_status_version: 2026-08-23-pr87
+observability_status_version: 2026-09-01-pr88
 current_status: implemented_process_scoped_serving_v1
 production_claim: false
 

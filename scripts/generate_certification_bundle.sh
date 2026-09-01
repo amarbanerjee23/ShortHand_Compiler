@@ -15,11 +15,14 @@ mkdir -p "${OUT_DIR}"
 "${SHORT_BIN}" "${INPUT_SHORT}" c3eco-report --output "${OUT_DIR}/candidate_report.json"
 "${SHORT_BIN}" "${INPUT_SHORT}" c3eco-check --output "${OUT_DIR}/candidate_check.json"
 "${SHORT_BIN}" "${INPUT_SHORT}" c3eco-workbook --output "${OUT_DIR}/carbon_workbook.csv"
+"${SHORT_BIN}" "${INPUT_SHORT}" c3eco-migrate --output "${OUT_DIR}/profile_migration.json"
 cp "${ROOT_DIR}/docs/backend_compatibility_matrix.md" "${OUT_DIR}/backend_compatibility_matrix.md"
 cp "${ROOT_DIR}/docs/telemetry_schema.md" "${OUT_DIR}/telemetry_schema.md"
 cp "${ROOT_DIR}/schemas/c3eco/candidate_report.schema.json" "${OUT_DIR}/candidate_report.schema.json"
 cp "${ROOT_DIR}/schemas/c3eco/candidate_check.schema.json" "${OUT_DIR}/candidate_check.schema.json"
 cp "${ROOT_DIR}/schemas/c3eco/bundle_manifest.schema.json" "${OUT_DIR}/bundle_manifest.schema.json"
+cp "${ROOT_DIR}/schemas/c3eco/profile_v2.schema.json" "${OUT_DIR}/profile_v2.schema.json"
+cp "${ROOT_DIR}/schemas/c3eco/profile_migration.schema.json" "${OUT_DIR}/profile_migration.schema.json"
 
 cat > "${OUT_DIR}/README.md" <<EOF
 # ShortHand C3-ECO Candidate Evidence Bundle
@@ -31,11 +34,14 @@ Generated artifacts:
 - candidate_report.json
 - candidate_check.json
 - carbon_workbook.csv
+- profile_migration.json
 - backend_compatibility_matrix.md
 - telemetry_schema.md
 - candidate_report.schema.json
 - candidate_check.schema.json
 - bundle_manifest.schema.json
+- profile_v2.schema.json
+- profile_migration.schema.json
 
 Important claim boundary: this bundle is candidate evidence only. It does not grant official C3-ECO certification and must be reviewed by the certifying authority/auditor before public certification claims.
 EOF
@@ -50,11 +56,14 @@ cat > "${OUT_DIR}/manifest.json" <<EOF
     "candidate_report.json",
     "candidate_check.json",
     "carbon_workbook.csv",
+    "profile_migration.json",
     "backend_compatibility_matrix.md",
     "telemetry_schema.md",
     "candidate_report.schema.json",
     "candidate_check.schema.json",
     "bundle_manifest.schema.json",
+    "profile_v2.schema.json",
+    "profile_migration.schema.json",
     "README.md"
   ]
 }
@@ -67,5 +76,7 @@ grep -q 'candidate_evidence_only' "${OUT_DIR}/manifest.json"
 grep -q '"shorthand.c3eco.candidate_report.v1"' "${OUT_DIR}/candidate_report.schema.json"
 grep -q '"shorthand.c3eco.check.v1"' "${OUT_DIR}/candidate_check.schema.json"
 grep -q '"shorthand.c3eco.bundle_manifest.v1"' "${OUT_DIR}/bundle_manifest.schema.json"
+grep -q '"shorthand.c3eco.profile.v2"' "${OUT_DIR}/profile_v2.schema.json"
+grep -q '"shorthand.c3eco.profile_migration.v1"' "${OUT_DIR}/profile_migration.schema.json"
 
 echo "Generated ShortHand C3-ECO candidate evidence bundle: ${OUT_DIR}"

@@ -1,0 +1,52 @@
+int seed;
+certification_profile invalid_profile {
+  profile_version 2;
+  certification product_identity;
+  functional_unit typed_unit;
+  workload unknown_workload;
+  boundary product_boundary;
+  ai_lifecycle hosted_model_lifecycle;
+  guardrails product_boundary;
+  valid_from "2027-02-30";
+  valid_until "2026-08-27";
+};
+certification product_identity {
+  version "1.2.0";
+  owner "ExampleCo";
+  software_class S6_AI_GENAI;
+  deployment_mode unbounded_host;
+  geography "GB";
+  validity_period 365;
+};
+functional_unit typed_unit {
+  denominator "1000";
+  unit successful_inference;
+  success_condition "valid response";
+  quality_metric accuracy;
+  quality_threshold 1.50;
+};
+boundary product_boundary {
+  include compute;
+  exclude thirdparty_ai_api;
+  exclusion_reason "opaque provider";
+  exclusion_materiality_percent 2.0;
+  materiality_threshold_percent 1.0;
+  opaque_provider_treatment conservative_estimate;
+};
+ai_lifecycle hosted_model_lifecycle {
+  role hosted_model_consumer;
+  model_provider "LLMProviderX";
+  lifecycle_scope inference;
+  training_included false;
+  fine_tuning_included false;
+  evaluation_included true;
+};
+guardrails service_guardrails {
+  functional_tests true;
+  accuracy 0.90;
+  p95_latency_ms 500;
+  error_rate_percent 1.0;
+  security_scan true;
+  accessibility true;
+  privacy_telemetry true;
+};

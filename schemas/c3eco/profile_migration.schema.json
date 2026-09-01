@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/profile_migration.schema.json",
+  "title": "ShortHand C3-ECO Profile Migration Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_contract",
+    "target_contract",
+    "status",
+    "migration_required",
+    "official_certification_granted",
+    "declaration_count",
+    "suggested_profile_references",
+    "review_reasons",
+    "claim_safe_text"
+  ],
+  "properties": {
+    "schema": { "const": "shorthand.c3eco.profile_migration.v1" },
+    "source_contract": { "const": "shorthand.c3eco.language.v1" },
+    "target_contract": { "const": "shorthand.c3eco.profile.v2" },
+    "status": { "enum": ["already_current", "review_required"] },
+    "migration_required": { "type": "boolean" },
+    "official_certification_granted": { "const": false },
+    "declaration_count": { "type": "integer", "minimum": 0 },
+    "suggested_profile_references": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["certification", "functional_unit", "workload", "boundary", "ai_lifecycle", "guardrails"],
+      "properties": {
+        "certification": { "type": ["string", "null"] },
+        "functional_unit": { "type": ["string", "null"] },
+        "workload": { "type": ["string", "null"] },
+        "boundary": { "type": ["string", "null"] },
+        "ai_lifecycle": { "type": ["string", "null"] },
+        "guardrails": { "type": ["string", "null"] }
+      }
+    },
+    "review_reasons": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "legacy_string_fields_require_typed_review",
+          "profile_links_and_validity_window_required"
+        ]
+      }
+    },
+    "claim_safe_text": { "type": "string", "minLength": 1 }
+  }
+}

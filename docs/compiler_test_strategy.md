@@ -1,7 +1,7 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-08-23-pr87
-language_version: beta-0.6
+compiler_test_strategy_version: 2026-09-01-pr88
+language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
 
@@ -13,13 +13,13 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 32-area production test matrix records for the GitHub PR87 candidate:
+The 33-area production test matrix records for the GitHub PR88 candidate:
 
-- 26 implemented areas,
+- 27 implemented areas,
 - 3 partial areas,
 - 3 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the original security contract. GitHub PR78 closed TST019 for deployment, GitHub PR79 closed TST020 for formatter/linter, GitHub PR80 closed TST021 for LSP/editor, GitHub PR81 closed TST022 for the live CPU backend, GitHub PR82 added first-class C3-ECO declarations, GitHub PR83 closed TST028 production truth, GitHub PR84 closed TST029 type/memory descriptors, GitHub PR85 closed TST030 functions/control flow and GitHub PR86 closed TST031 enterprise language/package/FFI. GitHub PR87 closes TST032 with `shorthand.serving.runtime.v1`, bounded admission, cooperative cancellation, deadlines, tenant isolation, health, metrics, graceful drain, installed consumers and concurrent sanitizer/race evidence.
+Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the original security contract. GitHub PR78 closed TST019 for deployment, GitHub PR79 closed TST020 for formatter/linter, GitHub PR80 closed TST021 for LSP/editor, GitHub PR81 closed TST022 for the live CPU backend, GitHub PR82 added first-class C3-ECO declarations, GitHub PR83 closed TST028 production truth, GitHub PR84 closed TST029 type/memory descriptors, GitHub PR85 closed TST030 functions/control flow, GitHub PR86 closed TST031 enterprise language/package/FFI and GitHub PR87 closed TST032 concurrent serving. GitHub PR88 closes TST033 with `shorthand.c3eco.profile.v2`, native field types, cross-declaration validation, deterministic migration, stable diagnostics and claim-safety evidence.
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 compiler execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, bounded process-scoped serving, formatter/linter preservation, native LSP/editor qualification and qualification-aware AI backend routing.
 
@@ -108,6 +108,7 @@ Every remaining implementation PR through PR96 must include all applicable layer
 26. Function, scope and label changes must pass the beta-0.5 interpreter, `lli` and native differential plus every stable negative diagnostic mode.
 27. Enterprise schema, package, standard-library or FFI changes must pass the beta-0.6 language, tamper, exact-version, license, SPDX, sanitizer, ABI-symbol and installed-consumer gate.
 28. Serving changes must preserve bounded admission, deadlines, cooperative cancellation, tenant isolation, low-cardinality telemetry and graceful drain under unit, load, sanitizer, TSan, installed-consumer and Kubernetes lifecycle evidence.
+29. Typed C3-ECO profile changes must pass beta-0.7 positive, eight-code negative, migration, native-JSON, schema, metadata and claim-safety evidence without granting certification.
 
 ## CI profiles
 
@@ -173,4 +174,4 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-08-23-pr87`.
+The current strategy is `2026-09-01-pr88`.

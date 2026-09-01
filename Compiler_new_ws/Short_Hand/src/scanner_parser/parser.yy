@@ -130,18 +130,26 @@ static std::string shorthand_unquote(const char *value) {
     return text;
 }
 
-static void shorthand_add_c3eco_field(const char *name, const char *value) {
+static void shorthand_add_c3eco_field(const char *name,
+                                      C3EcoValueKind kind,
+                                      const std::string &value) {
     const std::string field_name = name == nullptr ? "" : std::string(name);
     for (auto &field : current_c3eco.fields) {
         if (field.name == field_name) {
-            field.values.push_back(shorthand_unquote(value));
+            field.values.push_back({kind, value});
             return;
         }
     }
     C3EcoFieldData field;
     field.name = field_name;
-    field.values.push_back(shorthand_unquote(value));
+    field.values.push_back({kind, value});
     current_c3eco.fields.push_back(field);
+}
+
+static std::string shorthand_decimal_text(double value) {
+    char buffer[64];
+    std::snprintf(buffer, sizeof(buffer), "%.15g", value);
+    return std::string(buffer);
 }
 }
 
@@ -166,7 +174,7 @@ static void shorthand_add_c3eco_field(const char *name, const char *value) {
 %type <c3eco_decl> C3ECO_DECLARATION
 %type <infer_statement> INFER_STATEMENT
 %type <return_statement> RETURN_STATEMENT
-%type <string_val> BACKEND_NAME FORMAT_NAME PRECISION_NAME MQ_NAME DQ_NAME BOUNDARY_NAME C3ECO_FIELD_NAME
+%type <string_val> BACKEND_NAME FORMAT_NAME PRECISION_NAME MQ_NAME DQ_NAME BOUNDARY_NAME C3ECO_FIELD_NAME C3ECO_IDENTIFIER_VALUE
 %type <expression> EXPRESSION_RULE
 %type <expression_list> EXPRESSION_LIST_RULE EXPRESSION_LIST_OPT
 %type <type> ShortType
@@ -190,7 +198,7 @@ static void shorthand_add_c3eco_field(const char *name, const char *value) {
 %token PACKAGE MODULE IMPORT AS
 %token MODEL FORMAT PATH TASK PRECISION INPUT_SHAPE OUTPUT_SHAPE BACKEND_PREFERENCE COMPACT QUALITY_GUARDRAIL
 %token GREENAI_CONTRACT_T FUNCTIONAL_UNIT SUCCESS_CRITERIA BOUNDARY MEASUREMENT_QUALITY DATA_QUALITY CARBON_FACTOR ENERGY_BUDGET_J CARBON_BUDGET_GCO2E EVIDENCE_RETENTION CLAIMS_MODE EVIDENCE_ONLY GREENAI_MEASURE INFER TENSOR
-%token CERTIFICATION WORKLOAD MEASUREMENT_PLAN AI_LIFECYCLE RAG_PIPELINE TOKEN_BUDGET MODEL_ROUTING GUARDRAILS
+%token CERTIFICATION_PROFILE CERTIFICATION WORKLOAD MEASUREMENT_PLAN AI_LIFECYCLE RAG_PIPELINE TOKEN_BUDGET MODEL_ROUTING GUARDRAILS
 %token INT8 FP16 FP32 BF16 INT4 FP64 ONNX ENGINE TORCHSCRIPT OPENVINO_IR GGUF TENSORRT ONNXRUNTIME_TENSORRT ONNXRUNTIME_CUDA ONNXRUNTIME_CPU OPENVINO LIBTORCH LLAMACPP FALLBACK
 %token MQ1 MQ2 MQ3 MQ4 DQ1 DQ2 DQ3 DQ4 LOCATION CI_CD THIRDPARTY ACCELERATOR COMPUTE STORAGE NETWORK
 
@@ -379,7 +387,8 @@ MEASURE_FIELD_LIST: MEASURE_FIELD_LIST MEASURE_FIELD | %empty;
 MEASURE_FIELD: IDENTIFIER INT_LITERAL ';' { string n=$1; if(n=="inferences") current_measure.inferences=$2; else if(n=="watts") current_measure.watts=$2; else if(n=="seconds") current_measure.seconds=$2; } | IDENTIFIER IDENTIFIER ';' { if(string($1)=="backend") current_measure.backend=$2; };
 
 C3ECO_DECLARATION:
-      CERTIFICATION IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Certification, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+      CERTIFICATION_PROFILE IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::CertificationProfile, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
+    | CERTIFICATION IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Certification, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
     | FUNCTIONAL_UNIT IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::FunctionalUnit, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
     | WORKLOAD IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Workload, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
     | BOUNDARY IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Boundary, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
@@ -390,7 +399,13 @@ C3ECO_DECLARATION:
     | MODEL_ROUTING IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::ModelRouting, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); }
     | GUARDRAILS IDENTIFIER '{' { shorthand_begin_c3eco(C3EcoDeclarationKind::Guardrails, $2); } C3ECO_FIELD_LIST '}' ';' { $$=located(new AST_C3ECO_DECLARATION(current_c3eco), @$); };
 C3ECO_FIELD_LIST: C3ECO_FIELD_LIST C3ECO_FIELD | %empty;
-C3ECO_FIELD: C3ECO_FIELD_NAME STRING_LITERAL ';' { shorthand_add_c3eco_field($1, $2); };
+C3ECO_FIELD:
+      C3ECO_FIELD_NAME STRING_LITERAL ';' { shorthand_add_c3eco_field($1, C3EcoValueKind::String, shorthand_unquote($2)); }
+    | C3ECO_FIELD_NAME C3ECO_IDENTIFIER_VALUE ';' { shorthand_add_c3eco_field($1, C3EcoValueKind::Identifier, $2 == nullptr ? "" : std::string($2)); }
+    | C3ECO_FIELD_NAME INT_LITERAL ';' { shorthand_add_c3eco_field($1, C3EcoValueKind::Integer, std::to_string($2)); }
+    | C3ECO_FIELD_NAME FLOAT_LITERAL ';' { shorthand_add_c3eco_field($1, C3EcoValueKind::Decimal, shorthand_decimal_text($2)); }
+    | C3ECO_FIELD_NAME TRUE ';' { shorthand_add_c3eco_field($1, C3EcoValueKind::Boolean, "true"); }
+    | C3ECO_FIELD_NAME FALSE ';' { shorthand_add_c3eco_field($1, C3EcoValueKind::Boolean, "false"); };
 C3ECO_FIELD_NAME:
       IDENTIFIER { $$=$1; }
     | CARBON_FACTOR { $$=(char*)"carbon_factor"; }
@@ -398,6 +413,15 @@ C3ECO_FIELD_NAME:
     | QUALITY_GUARDRAIL { $$=(char*)"quality_guardrail"; }
     | FUNCTIONAL_UNIT { $$=(char*)"functional_unit"; }
     | BOUNDARY { $$=(char*)"boundary"; };
+
+C3ECO_IDENTIFIER_VALUE:
+      IDENTIFIER { $$=$1; }
+    | BOUNDARY_NAME { $$=$1; }
+    | MQ_NAME { $$=$1; }
+    | DQ_NAME { $$=$1; }
+    | LOCATION { $$=(char*)"location"; }
+    | EVIDENCE_ONLY { $$=(char*)"evidence_only"; }
+    | FALLBACK { $$=(char*)"fallback"; };
 
 FORMAT_NAME: ONNX {$$=(char*)"onnx";} | ENGINE {$$=(char*)"engine";} | TORCHSCRIPT {$$=(char*)"torchscript";} | OPENVINO_IR {$$=(char*)"openvino_ir";} | GGUF {$$=(char*)"gguf";};
 PRECISION_NAME: INT8 {$$=(char*)"int8";} | INT4 {$$=(char*)"int4";} | FP16 {$$=(char*)"fp16";} | FP32 {$$=(char*)"fp32";} | BF16 {$$=(char*)"bf16";} | FP64 {$$=(char*)"fp64";} | FLOAT {$$=(char*)"float";};

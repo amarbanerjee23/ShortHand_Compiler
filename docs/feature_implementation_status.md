@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-08-23-pr87
-language_version: beta-0.6
+feature_status_version: 2026-09-01-pr88
+language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 87
-current_roadmap_scope: concurrent_serving_and_operational_runtime
+current_github_pr: 88
+current_roadmap_scope: typed_c3eco_certification_profile
 
 ## Goal
 
@@ -13,9 +13,9 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, roadmap PR75 as GitHub PR76, and roadmap PR76 through PR81 as GitHub PR77 through PR82. GitHub PR83 implemented production truth and C3-ECO traceability, GitHub PR84 implemented beta-0.4 type/memory, GitHub PR85 implemented beta-0.5 functions/control flow and GitHub PR86 implemented the bounded beta-0.6 enterprise schema, offline cryptographic packages, package SBOM, installable core library and safe FFI. GitHub PR87 now implements the process-scoped concurrent serving and operational runtime.
+Roadmap PR69 through PR79 are merged. Roadmap PR74 was implemented and merged as GitHub PR75, roadmap PR75 as GitHub PR76, and roadmap PR76 through PR81 as GitHub PR77 through PR82. GitHub PR83 implemented production truth and C3-ECO traceability, GitHub PR84 implemented beta-0.4 type/memory, GitHub PR85 implemented beta-0.5 functions/control flow, GitHub PR86 implemented the bounded beta-0.6 enterprise schema/packages/core FFI, and GitHub PR87 implemented the process-scoped concurrent serving and operational runtime. GitHub PR88 now implements the beta-0.7 typed C3-ECO certification-preparation profile.
 
-The compiler test audit records **26 implemented, 3 partial and 3 open** areas for the PR87 candidate. ShortHand remains a controlled beta because composite execution lowering, public authenticated service ingress, complete C3-ECO preparation, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
+The compiler test audit records **27 implemented, 3 partial and 3 open** areas for the PR88 candidate. ShortHand remains a controlled beta because measurement, carbon accounting, scoring, auditor lifecycle, composite execution lowering, public authenticated service ingress, MLIR, representative workloads, performance, measured-energy and protected-release blockers remain.
 
 ## Production truth authority
 
@@ -45,6 +45,7 @@ The current certification profile treats the supplied C3-ECO draft v0.6 as the n
 | Runtime ABI compatibility | Implemented v1 | frozen 25-symbol ABI consumer plus multi-platform installed consumers. |
 | Packaging and installed consumers | Implemented | install/reinstall/uninstall lifecycle on qualified platforms. |
 | Concurrent serving and operational runtime | Implemented for `shorthand.serving.runtime.v1` | Bounded concurrency/admission, cooperative cancellation, deadlines, process-scoped tenant isolation, health, metrics, graceful drain and installed worker evidence; public ingress/authentication/TLS are not claimed. |
+| Typed C3-ECO certification profile | Implemented for `shorthand.c3eco.profile.v2` | Native field types, deterministic profile links, identity, functional unit, boundary/materiality, lifecycle, safeguard and validity checks plus fail-closed v1 migration output. |
 | Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1` | Active maturity/roadmap authority plus G1-G14, A-K and S9/S12 evidence ownership. |
 
 Historical compatibility term: Module/import/package model.
@@ -76,8 +77,8 @@ Historical compatibility gate: language versioning and conformance policy gate.
 
 | Area | Status | Boundary |
 | --- | --- | --- |
-| Green AI contract/evidence syntax | Implemented for current beta syntax and first-class C3-ECO declarations | GitHub PR82 adds the versioned `shorthand.c3eco.language.v1` declaration contract; measured scoring remains separate. |
-| C3-ECO scoring/auditor evidence | Partial | First-class language blocks are implemented in GitHub PR82; typed profiles, measurement, scoring and auditor lineage remain PR88-PR91. |
+| Green AI contract/evidence syntax | Implemented for current beta syntax, first-class C3-ECO declarations and typed profile v2 | GitHub PR82 adds `shorthand.c3eco.language.v1`; GitHub PR88 adds `shorthand.c3eco.profile.v2`; measurement and scoring remain separate. |
+| C3-ECO scoring/auditor evidence | Partial | First-class language blocks and typed profiles are implemented; measurement, scoring and auditor lineage remain PR89-PR91. |
 | MLIR dialect scaffold | Partial | the hand-authored foundation exists; generated dialect and production lowering remain PR92-PR93. |
 | Measured ShortHand versus Python energy evidence | Open | PR95. No lower-energy claim is made by current CI. |
 | Zero-skip production RC gate | Open | PR96. |
@@ -132,9 +133,17 @@ GitHub PR87 implements bounded process-scoped scheduling with nonblocking overlo
 
 The contract deliberately does not create a public listener. Authentication, authorization, TLS, external rate limiting and hard termination of handlers that ignore the cancellation token remain host/process-boundary responsibilities. These limits keep `production_claim: false` honest.
 
+## Typed C3-ECO profile PR88 boundary
+
+c3eco_profile_contract: shorthand.c3eco.profile.v2
+
+GitHub PR88 adds a contextual `certification_profile` block and native string, identifier, integer, decimal and boolean values for the declarations it links. The compiler validates identity, useful-work units, workload bounds, materiality, lifecycle responsibility, safeguard floors and validity dates with `SHD5201` through `SHD5208`. Legacy v1 declarations remain valid and are explicitly marked for migration review.
+
+Profile conformance is not certification. Measurement, carbon/cost accounting, scoring, permitted level claims, signed auditor lineage and external authority approval remain PR89 through PR91. Candidate and migration outputs retain `official_certification_granted:false`.
+
 ## Production blockers
 
-1. Typed C3-ECO profile, measurement, scoring and auditor lifecycle (PR88-PR91).
+1. C3-ECO measurement, scoring and auditor lifecycle (PR89-PR91).
 2. Generated MLIR dialect, composite execution integration and production lowering (PR92-PR93).
 3. Representative production AI workload qualification (PR94).
 4. Measured performance/energy comparison and zero-skip production RC gate (PR95-PR96).

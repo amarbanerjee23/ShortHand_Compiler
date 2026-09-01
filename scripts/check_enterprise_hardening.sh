@@ -182,6 +182,10 @@ check_contains CMakeLists.txt 'add_library(shorthand_serving STATIC'
 check_contains CMakeLists.txt 'NAME concurrent_serving_runtime'
 check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-serving'
 check_contains scripts/check_concurrent_serving_runtime.sh 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
+check_contains docs/c3eco_certification_profile.md 'c3eco_profile_contract: shorthand.c3eco.profile.v2'
+check_contains CMakeLists.txt 'NAME c3eco_certification_profile'
+check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-c3eco-profile'
+check_contains scripts/check_c3eco_certification_profile.sh 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate'
 
 if bash scripts/check_concurrent_serving_runtime.sh >/tmp/shorthand_concurrent_serving.out 2>&1; then
   log "PASS concurrent serving and operational runtime gate completed"
@@ -189,6 +193,14 @@ if bash scripts/check_concurrent_serving_runtime.sh >/tmp/shorthand_concurrent_s
 else
   fail_check "concurrent serving and operational runtime gate failed"
   cat /tmp/shorthand_concurrent_serving.out | tee -a "${LOG_FILE}" || true
+fi
+
+if bash scripts/check_c3eco_certification_profile.sh >/tmp/shorthand_c3eco_profile.out 2>&1; then
+  log "PASS typed C3-ECO certification profile gate completed"
+  tee -a "${LOG_FILE}" </tmp/shorthand_c3eco_profile.out
+else
+  fail_check "typed C3-ECO certification profile gate failed"
+  tee -a "${LOG_FILE}" </tmp/shorthand_c3eco_profile.out || true
 fi
 
 if bash scripts/check_production_truth.sh >/tmp/shorthand_production_truth.out 2>&1 \

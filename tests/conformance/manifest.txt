@@ -6,12 +6,14 @@ version | shorthand.language.version | beta-0.1 | Current beta language contract
 version | shorthand.language.version | beta-0.2 | Previous executable base language contract marker.
 version | shorthand.language.version | beta-0.3 | Previous module and executable core language contract marker.
 version | shorthand.language.version | beta-0.5 | Previous executable function and control-flow contract marker.
-current-version | shorthand.language.version | beta-0.6 | Current layered language contract marker.
+version | shorthand.language.version | beta-0.6 | Previous enterprise language, package and core FFI contract marker.
+current-version | shorthand.language.version | beta-0.7 | Current layered language contract marker.
 grammar-matrix | tests/conformance/grammar_matrix_beta_0_2.tsv | accept | Every beta-0.2 base grammar obligation must remain implemented and executable.
 grammar-extension | tests/conformance/module_matrix_beta_0_3.tsv | accept | Every beta-0.3 package, module and import obligation maps to implementation and a fixture.
 type-matrix | tests/conformance/type_matrix_beta_0_4.tsv | accept | Every beta-0.4 executable type and memory obligation maps to implementation and a fixture.
 control-flow-matrix | tests/conformance/functions_control_matrix_beta_0_5.tsv | accept | Every beta-0.5 function, scope, control-flow and deterministic-error obligation maps to implementation and a fixture.
 enterprise-matrix | tests/conformance/enterprise_matrix_beta_0_6.tsv | accept | Every beta-0.6 enterprise language, package supply-chain, core and FFI obligation maps to implementation and evidence.
+c3eco-profile-matrix | tests/conformance/c3eco_profile_matrix_beta_0_7.tsv | accept | Every beta-0.7 typed profile, migration and claim-safety obligation maps to implementation and evidence.
 module-resolution | scripts/check_module_resolution.sh | accept | Explicit manifest resolution, graph ordering, lock determinism, path safety and multi-file LLVM/native behavior must remain executable.
 parser-valid | tests/conformance/beta_0_2/core_declarations.short | accept | Primitive declarations, arrays and the required non-empty logic section must parse.
 parser-valid | tests/conformance/beta_0_2/core_control.short | accept | Functions, statements, control flow, variables and expressions must parse.

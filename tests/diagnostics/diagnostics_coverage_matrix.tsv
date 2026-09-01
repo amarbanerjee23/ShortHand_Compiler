@@ -85,6 +85,14 @@ SHD5101	greenai	error	required	tests/c3eco/c3eco_duplicate_declaration.short	c3e
 SHD5102	greenai	error	required	tests/c3eco/c3eco_missing_required_field.short	c3eco-report	missing_required_c3eco_field
 SHD5103	greenai	error	required	tests/c3eco/c3eco_invalid_field.short	c3eco-report	invalid_c3eco_field
 SHD5104	greenai	error	required	tests/c3eco/c3eco_unsafe_claim.short	c3eco-report	unsafe_self_certification_claim
+SHD5201	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	invalid_typed_literal_or_cardinality
+SHD5202	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	invalid_profile_domain_value
+SHD5203	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	profile_value_out_of_range
+SHD5204	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	unknown_profile_reference
+SHD5205	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	profile_reference_kind_mismatch
+SHD5206	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	invalid_profile_validity_window
+SHD5207	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	profile_materiality_violation
+SHD5208	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	incomplete_v2_linked_declaration
 SHD6001	lowering	error	required	catalogued	compile	lowering_invariant_failure
 SHD7001	runtime	error	required	tests/semantic/differential/division_by_zero.short	run	semantic_differential_gate
 SHD7002	runtime	error	required	tests/semantic/differential/array_bounds.short	run	semantic_differential_gate

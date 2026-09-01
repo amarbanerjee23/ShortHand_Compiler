@@ -113,6 +113,7 @@ C3OPTGAP [ \t\r\n]*
 "backend_preference" return BACKEND_PREFERENCE;
 "compact" return COMPACT;
 "quality_guardrail" return QUALITY_GUARDRAIL;
+"certification_profile"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return CERTIFICATION_PROFILE;
 "certification"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return CERTIFICATION;
 "workload"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return WORKLOAD;
 "measurement_plan"/{C3GAP}{C3NAME}{C3OPTGAP}\{ return MEASUREMENT_PLAN;
