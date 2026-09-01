@@ -11,6 +11,11 @@
     "compiler_version",
     "minimum_c3eco_evidence_present",
     "official_certification_granted",
+    "c3eco_language_contract",
+    "c3eco_profile_contract",
+    "c3eco_profile_status",
+    "c3eco_profile_migration_required",
+    "c3eco_declarations",
     "workload",
     "functional_unit",
     "success_criteria",
@@ -29,6 +34,68 @@
     "report_status": { "const": "candidate_assessment_only" },
     "minimum_c3eco_evidence_present": { "type": "boolean" },
     "official_certification_granted": { "const": false },
+    "c3eco_language_contract": { "const": "shorthand.c3eco.language.v1" },
+    "c3eco_profile_contract": { "const": "shorthand.c3eco.profile.v2" },
+    "c3eco_profile_status": {
+      "enum": ["conformant", "legacy_migration_review_required", "not_declared"]
+    },
+    "c3eco_profile_migration_required": { "type": "boolean" },
+    "c3eco_declarations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "name", "fields", "typed_fields"],
+        "properties": {
+          "kind": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "typed_fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": ["type", "value"],
+                    "properties": {
+                      "type": { "enum": ["string", "identifier"] },
+                      "value": { "type": "string" }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": ["type", "value"],
+                    "properties": {
+                      "type": { "enum": ["integer", "decimal"] },
+                      "value": { "type": "number" }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": ["type", "value"],
+                    "properties": {
+                      "type": { "const": "boolean" },
+                      "value": { "type": "boolean" }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
     "measurement_status": {
       "enum": ["declared_budget_only", "measured", "estimated", "unavailable"]
     },

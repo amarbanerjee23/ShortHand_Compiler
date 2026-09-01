@@ -1,8 +1,8 @@
 # ShortHand Language Specification
 
-Language version: beta-0.6
+Language version: beta-0.7
 
-Conformance contract: beta-0.6
+Conformance contract: beta-0.7
 
 Base grammar version: beta-0.2
 
@@ -16,9 +16,9 @@ Historical stability marker retained for earlier gates: Language version: beta-0
 
 ShortHand is a C++ and LLVM-first compiled Green AI language. Python is not required for the official compiler, runtime, validation, conformance, tests or evidence path.
 
-## Beta-0.6 objective
+## Beta-0.7 objective
 
-Beta-0.6 is the active layered language contract. It combines the beta-0.2 base grammar, beta-0.3 modules, beta-0.4 executable types, beta-0.5 functions/control flow, the `shorthand.c3eco.language.v1` candidate-evidence declarations, and the bounded `shorthand.enterprise_language.v1` schema/ownership surface. Package v2 and the core FFI are defined in `docs/enterprise_packages_stdlib_ffi.md` and traced by `tests/conformance/enterprise_matrix_beta_0_6.tsv`.
+Beta-0.7 is the active layered language contract. It combines the beta-0.2 base grammar, beta-0.3 modules, beta-0.4 executable types, beta-0.5 functions/control flow, beta-0.6 enterprise schemas/packages/core FFI, the `shorthand.c3eco.language.v1` candidate-evidence declarations, and the typed `shorthand.c3eco.profile.v2` link and migration surface.
 
 The matrix covers:
 
@@ -35,6 +35,7 @@ The matrix covers:
 - beta-0.4 float, string and typed-array execution,
 - beta-0.5 expression calls, lexical declarations, recursion, cleanup and resolved labels,
 - beta-0.6 enterprise composite schemas, ownership plans, offline packages and safe FFI,
+- beta-0.7 typed C3-ECO profile links, domain validation and deterministic migration,
 - first-class C3-ECO candidate-evidence declarations,
 - explicit parser and execution boundaries that remain unsupported.
 
@@ -114,6 +115,8 @@ Evidence output includes the mandatory disclaimer: `Evidence report only; this t
 
 Beta-0.3 also provides the ten first-class `shorthand.c3eco.language.v1` declarations documented in `docs/c3eco_language_contract.md`: `certification`, `functional_unit`, `workload`, `boundary`, `measurement_plan`, `ai_lifecycle`, `rag_pipeline`, `token_budget`, `model_routing` and `guardrails`. These declarations preserve candidate metadata and reject unsafe self-certification fields. They do not calculate a certification score, issue a certificate or prove measured energy/carbon performance.
 
+Beta-0.7 adds `certification_profile name { ... };`. It uses native string, identifier, integer, decimal and boolean field values to link one identity, functional unit, workload, boundary, AI lifecycle, guardrail set and validity window. Legacy v1 blocks remain accepted and `c3eco-migrate` emits a fail-closed review manifest instead of guessing typed values. The complete contract is `docs/c3eco_certification_profile.md`.
+
 ## Executable type boundary
 
 `int`, `bool`, binary64 `float`/`double`, immutable `string` and fixed numeric or boolean arrays are covered by `docs/execution_semantics_beta_0_4.md`. `float` and `double` name the same binary64 type. Assignments, function arguments, returns, operators and indices are checked exactly, with no implicit narrowing. String literals are general expressions and string equality is content-based.
@@ -136,7 +139,7 @@ Interpreter frames and LLVM lexical symbol tables implement the same shadowing a
 
 ## Compatibility and boundaries
 
-Beta-0.6 is additive over valid beta-0.5, beta-0.4, beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest. The former empty-parameter-list rejection remains intentionally superseded by the beta-0.5 function contract.
+Beta-0.7 is additive over valid beta-0.6, beta-0.5, beta-0.4, beta-0.3, beta-0.2 and beta-0.1 fixtures. Existing accepted programs remain in the conformance manifest. The former empty-parameter-list rejection remains intentionally superseded by the beta-0.5 function contract.
 
 The following are explicitly outside the current grammar contract:
 
@@ -155,4 +158,4 @@ These are documented constraints, not production-readiness claims. Parser robust
 
 ## Runtime and ABI boundary
 
-Beta-0.6 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols. Core FFI ABI 1.0.0 is separately versioned and frozen.
+Beta-0.7 does not change the frozen runtime ABI, which remains version `1.0.0` with exactly 25 public `short_*` symbols. Core FFI ABI 1.0.0 is separately versioned and frozen.

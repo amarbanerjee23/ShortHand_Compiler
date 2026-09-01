@@ -43,6 +43,7 @@ required_files=(
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_production_truth.sh
   scripts/check_concurrent_serving_runtime.sh
+  scripts/check_c3eco_certification_profile.sh
   scripts/check_semantic_differential.sh
   scripts/check_backend_compatibility_matrix.sh
   scripts/check_backend_live_sdk_matrix.sh
@@ -78,6 +79,7 @@ required_files=(
   docs/runtime_state_and_thread_safety.md
   docs/runtime_production_packaging.md
   docs/concurrent_serving_runtime.md
+  docs/c3eco_certification_profile.md
   docs/prometheus_scrape_host_adapter.md
   docs/compiled_infer_bridge.md
   docs/backend_compatibility_matrix.md
@@ -111,6 +113,8 @@ required_files=(
   tests/runtime/test_runtime_state_thread_safety.sh
   tests/runtime/test_serving_runtime.cpp
   tests/runtime/serving_runtime_stress.cpp
+  tests/c3eco/profile/c3eco_profile_v2.short
+  tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short
   tests/packaging/test_runtime_production_packaging.sh
   tests/operations/test_prometheus_scrape_adapter.sh
   tests/codegen/test_runtime_ai_bridge_link_build.sh
@@ -133,6 +137,7 @@ for task in \
   'Semantic differential execution' \
   'Production truth and C3-ECO traceability' \
   'Concurrent serving and operational runtime' \
+  'Typed C3-ECO certification profile beta-0.7' \
   'Smoke tests' \
   'Feature plan status check' \
   'Enterprise hardening check' \
@@ -173,11 +178,14 @@ done
 
 require_contains scripts/check_enterprise_hardening.sh 'check_production_truth.sh'
 require_contains scripts/check_enterprise_hardening.sh 'check_concurrent_serving_runtime.sh'
+require_contains scripts/check_enterprise_hardening.sh 'check_c3eco_certification_profile.sh'
 require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-governance'
 require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-serving'
+require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-c3eco-profile'
 require_contains CMakeLists.txt 'NAME production_truth_traceability'
 require_contains CMakeLists.txt 'NAME production_truth_negative'
 require_contains CMakeLists.txt 'NAME concurrent_serving_runtime'
+require_contains CMakeLists.txt 'NAME c3eco_certification_profile'
 
 require_contains scripts/check_language_correctness.sh 'check_runtime_abi_api_stability.sh'
 require_contains scripts/check_language_correctness.sh 'check_runtime_state_thread_safety.sh'
@@ -200,6 +208,7 @@ shell_files=(
   scripts/check_production_readiness_pr_plan.sh
   scripts/check_production_truth.sh
   scripts/check_concurrent_serving_runtime.sh
+  scripts/check_c3eco_certification_profile.sh
   scripts/check_semantic_differential.sh
   scripts/check_c3eco_claims_and_schema.sh
   scripts/check_mlir_foundation.sh

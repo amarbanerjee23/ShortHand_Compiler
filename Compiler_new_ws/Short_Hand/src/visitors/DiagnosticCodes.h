@@ -93,6 +93,14 @@ inline constexpr const char *C3EcoDuplicateDeclaration = "SHD5101";
 inline constexpr const char *C3EcoMissingRequiredField = "SHD5102";
 inline constexpr const char *C3EcoInvalidField = "SHD5103";
 inline constexpr const char *C3EcoUnsafeCertificationClaim = "SHD5104";
+inline constexpr const char *C3EcoInvalidTypedLiteral = "SHD5201";
+inline constexpr const char *C3EcoInvalidDomainValue = "SHD5202";
+inline constexpr const char *C3EcoValueOutOfRange = "SHD5203";
+inline constexpr const char *C3EcoUnknownReference = "SHD5204";
+inline constexpr const char *C3EcoReferenceKindMismatch = "SHD5205";
+inline constexpr const char *C3EcoInvalidValidityWindow = "SHD5206";
+inline constexpr const char *C3EcoMaterialityViolation = "SHD5207";
+inline constexpr const char *C3EcoProfileIncomplete = "SHD5208";
 
 inline constexpr const char *LoweringUndefinedFunction = "SHD6001";
 

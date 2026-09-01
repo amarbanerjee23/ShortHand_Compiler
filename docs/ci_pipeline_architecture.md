@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-08-23-pr87
+ci_pipeline_architecture_version: 2026-09-01-pr88
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -39,6 +39,7 @@ Runs first and fails quickly.
 - grammar/conformance matrices,
 - beta-0.5 call, scope, return and same-block label conformance,
 - beta-0.6 enterprise schema, package supply-chain, core ABI and installed-consumer conformance,
+- beta-0.7 typed C3-ECO profile, migration, native-JSON and claim-safety conformance,
 - AST/source ranges,
 - diagnostics codes,
 - module manifest/graph/lockfile determinism,
@@ -142,6 +143,8 @@ GitHub PR86 adds `scripts/check_enterprise_packages_stdlib_ffi.sh` and the beta-
 
 GitHub PR87 adds `scripts/check_concurrent_serving_runtime.sh` directly to `ubuntu-core`. Deterministic unit/load/soak evidence covers bounded admission, deadlines, cooperative cancellation, quota/isolation, health/metrics, restart and graceful drain. The same stress path joins ASan/LSan/UBSan and TSan, while installed consumers and the Docker/Kubernetes lifecycle use the installable serving worker.
 
+GitHub PR88 adds `scripts/check_c3eco_certification_profile.sh` directly to `ubuntu-core`. Native literal types, forward-linked declarations, profile domains/ranges, validity, materiality, eight stable diagnostics, deterministic migration, JSON schemas, LLVM metadata and claim safety execute as one beta-0.7 contract. A passing profile remains preparation evidence and cannot grant certification.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -194,7 +197,8 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR85: functions, lexical scopes, structured control flow and deterministic errors under beta-0.5.
 - PR86: enterprise ABI schemas/ownership plans, cryptographic offline packages, core library and safe FFI under beta-0.6.
 - PR87: concurrent serving and operational runtime.
-- PR88-PR91: typed C3-ECO profile, measurement, scoring and auditor evidence.
+- PR88: typed C3-ECO profile and deterministic migration review.
+- PR89-PR91: measurement, scoring and auditor evidence.
 - PR92-PR94: generated MLIR, lowering and representative AI qualification.
 - PR95: performance and measured-energy qualification.
 - PR96: enterprise pilot and zero-skip production RC aggregation.

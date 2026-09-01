@@ -50,7 +50,7 @@ struct ParsedSourceUnit {
 };
 
 static void print_usage() {
-    fprintf(stderr, "Correct usage: short_hand filename [parse|enterprise-check|module-info|module-graph|package-sbom|lock|run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook] [--output file]\n");
+    fprintf(stderr, "Correct usage: short_hand filename [parse|enterprise-check|module-info|module-graph|package-sbom|lock|run|print|compile|compile-bc|compile-native|evidence|c3eco-report|c3eco-check|c3eco-workbook|c3eco-migrate] [--output file]\n");
 }
 
 static bool has_output_arg(int argc, char *argv[]) {
@@ -61,7 +61,7 @@ static bool supported_mode(const std::string &mode) {
     return mode == "parse" || mode == "enterprise-check" || mode == "module-info" || mode == "module-graph" || mode == "package-sbom" || mode == "lock" ||
            mode == "run" || mode == "print" || mode == "compile" || mode == "compile-bc" ||
            mode == "compile-native" || mode == "evidence" || mode == "c3eco-report" ||
-           mode == "c3eco-check" || mode == "c3eco-workbook";
+           mode == "c3eco-check" || mode == "c3eco-workbook" || mode == "c3eco-migrate";
 }
 
 static void cleanup_parser_resources() {
@@ -460,7 +460,8 @@ int main(int argc, char *argv[])
         if (semantic.diagnostics.hasErrors()) return finish_with(1);
     }
 
-    if(mode == "evidence" || mode == "c3eco-report" || mode == "c3eco-check" || mode == "c3eco-workbook")
+    if(mode == "evidence" || mode == "c3eco-report" || mode == "c3eco-check" ||
+       mode == "c3eco-workbook" || mode == "c3eco-migrate")
     {
         EvidenceEmitter emitter(path);
         if (has_output_arg(argc, argv)) {
@@ -471,10 +472,12 @@ int main(int argc, char *argv[])
             }
             if (mode == "c3eco-check") emitter.writeCheck(entry.program, out);
             else if (mode == "c3eco-workbook") emitter.writeWorkbookCsv(entry.program, out);
+            else if (mode == "c3eco-migrate") emitter.writeProfileMigration(entry.program, out);
             else emitter.writeCandidateReport(entry.program, out);
         } else {
             if (mode == "c3eco-check") emitter.writeCheck(entry.program, std::cout);
             else if (mode == "c3eco-workbook") emitter.writeWorkbookCsv(entry.program, std::cout);
+            else if (mode == "c3eco-migrate") emitter.writeProfileMigration(entry.program, std::cout);
             else emitter.writeCandidateReport(entry.program, std::cout);
         }
     }

@@ -1,0 +1,68 @@
+int seed;
+certification_profile product_profile {
+  profile_version 2;
+  certification product_identity;
+  functional_unit successful_inference_unit;
+  workload representative_workload;
+  boundary product_boundary;
+  ai_lifecycle hosted_model_lifecycle;
+  guardrails service_guardrails;
+  valid_from "2026-08-27";
+  valid_until "2027-08-27";
+};
+certification product_identity {
+  version "1.2.0";
+  owner "ExampleCo";
+  release_date "2026-08-27";
+  software_class S6_AI_GENAI;
+  deployment_mode kubernetes;
+  geography "GB";
+  cloud_region "uk-south";
+  validity_period 365;
+};
+functional_unit successful_inference_unit {
+  denominator 1000;
+  unit successful_inference;
+  success_condition "response returned with a valid prediction";
+  quality_metric accuracy;
+  quality_threshold 0.90;
+  latency_slo_ms 500;
+  error_rate_slo_percent 1.0;
+};
+workload representative_workload {
+  traffic_profile production_representative;
+  batch_size 1;
+  concurrency 32;
+  warmup_runs 5;
+  measured_runs 30;
+  cache_state mixed;
+};
+boundary product_boundary {
+  include compute;
+  include accelerator;
+  include memory;
+  include storage;
+  include network;
+  exclude thirdparty_ai_api;
+  exclusion_reason "provider-managed training is outside applicant control";
+  exclusion_materiality_percent 0.5;
+  materiality_threshold_percent 1.0;
+  opaque_provider_treatment conservative_estimate;
+};
+ai_lifecycle hosted_model_lifecycle {
+  role hosted_model_consumer;
+  model_provider "LLMProviderX";
+  lifecycle_scope inference;
+  training_included false;
+  fine_tuning_included false;
+  evaluation_included true;
+};
+guardrails service_guardrails {
+  functional_tests true;
+  accuracy 0.90;
+  p95_latency_ms 500;
+  error_rate_percent 1.0;
+  security_scan true;
+  accessibility true;
+  privacy_telemetry true;
+};

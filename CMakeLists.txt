@@ -524,6 +524,15 @@ if(SHORTHAND_BUILD_TESTING)
   )
 
   add_test(
+    NAME c3eco_certification_profile
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_certification_profile.sh
+  )
+  set_tests_properties(c3eco_certification_profile PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>"
+  )
+
+  add_test(
     NAME cmake_short_hand_greenai_run
     COMMAND $<TARGET_FILE:short_hand> ${CMAKE_CURRENT_SOURCE_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short run
   )

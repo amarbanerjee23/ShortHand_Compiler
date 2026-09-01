@@ -1093,8 +1093,12 @@ int IR_Generator::visit(AST_GREENAI_MEASUREMENT *n){
 int IR_Generator::visit(AST_C3ECO_DECLARATION *n){
     const auto &d = n->data;
     std::string payload = "kind=" + std::string(c3EcoDeclarationKindName(d.kind)) + ";name=" + d.name;
-    for (const auto &field : d.fields)
-        payload += ";" + field.name + "=" + joinStrings(field.values, "|");
+    for (const auto &field : d.fields) {
+        std::vector<std::string> values;
+        for (const auto &value : field.values)
+            values.push_back(std::string(c3EcoValueKindName(value.kind)) + ":" + value.text);
+        payload += ";" + field.name + "=" + joinStrings(values, "|");
+    }
     emitShortHandMetadata("c3eco_declaration", d.name, payload);
     return 0;
 }

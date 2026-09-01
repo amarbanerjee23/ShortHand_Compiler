@@ -186,18 +186,21 @@ test-c3eco: c3eco_gate short_hand
 	../build/green_ai_tool check ../../../examples/green_ai/image_classification.greenai --baseline /tmp/short_hand_c3eco_report.json --threshold-percent 10
 	SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 
+test-c3eco-profile: short_hand
+	SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_certification_profile.sh
+
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand runtime-source-lowering runtime_lib serving_runtime_lib serving_worker ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime-source-lowering runtime_lib serving_runtime_lib serving_worker ai_app ai_train green_ai_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
 	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/shorthand_serving_worker ../build/libshorthand_runtime.a ../build/libshorthand_serving.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o ../build/ServingRuntime.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-governance test-unit test-integration test-green test-c3eco test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai
+test: test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai
 
 test-governance:
 	bash ../../../scripts/check_production_truth.sh
@@ -206,6 +209,7 @@ test-governance:
 	bash ../../../scripts/check_functions_control_error_semantics.sh
 	bash ../../../scripts/check_enterprise_packages_stdlib_ffi.sh
 	bash ../../../scripts/check_concurrent_serving_runtime.sh
+	bash ../../../scripts/check_c3eco_certification_profile.sh
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -260,6 +264,7 @@ sanitize:
 	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool runtime_lib
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_certification_profile.sh
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \

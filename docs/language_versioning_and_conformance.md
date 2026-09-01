@@ -2,11 +2,11 @@
 
 ## Current contract
 
-`shorthand.language.version: beta-0.6`
+`shorthand.language.version: beta-0.7`
 
-`shorthand.conformance.contract: beta-0.6`
+`shorthand.conformance.contract: beta-0.7`
 
-`shorthand.grammar.matrix: beta-0.2-base+beta-0.3-modules+beta-0.4-types+beta-0.5-control+beta-0.6-enterprise`
+`shorthand.grammar.matrix: beta-0.2-base+beta-0.3-modules+beta-0.4-types+beta-0.5-control+beta-0.6-enterprise+beta-0.7-c3eco-profile`
 
 `shorthand.module.resolution.contract: shorthand.package.v1+shorthand.lock.v1+shorthand.package.v2+shorthand.lock.v2`
 
@@ -22,17 +22,19 @@ Historical markers retained for compatibility and old-task stability:
 - `shorthand.conformance.contract: beta-0.4`
 - `shorthand.language.version: beta-0.5`
 - `shorthand.conformance.contract: beta-0.5`
+- `shorthand.language.version: beta-0.6`
+- `shorthand.conformance.contract: beta-0.6`
 - `shorthand.grammar.matrix: beta-0.2`
 - `shorthand.language.version: beta-0.1`
 - `shorthand.conformance.contract: beta-0.1`
 
-Beta-0.6 is the current layered language contract. Beta-0.2 remains the base-language compatibility matrix, beta-0.3 adds the optional module/package/import preamble, beta-0.4 adds string expressions plus exact float, string and typed-array execution, and beta-0.5 adds expression calls, zero-argument functions, lexical declarations, scoped cleanup and executable label resolution. Beta-0.6 adds a separate enterprise ABI-schema and ownership-check surface plus versioned offline package and core FFI contracts. The executable compiler subset remains beta-0.5. Historical markers do not identify the active version.
+Beta-0.7 is the current layered language contract. Beta-0.2 remains the base-language compatibility matrix, beta-0.3 adds the optional module/package/import preamble, beta-0.4 adds string expressions plus exact float, string and typed-array execution, and beta-0.5 adds expression calls, zero-argument functions, lexical declarations, scoped cleanup and executable label resolution. Beta-0.6 adds a separate enterprise ABI-schema and ownership-check surface plus versioned offline package and core FFI contracts. Beta-0.7 adds the typed, cross-linked `shorthand.c3eco.profile.v2` preparation profile and deterministic v1-to-v2 migration review artifact. The executable compiler subset remains beta-0.5. Historical markers do not identify the active version.
 
 ## Purpose
 
 The version marker identifies the public parser and semantic surface that the repository protects. It is not a claim that ShortHand is complete or production ready.
 
-The beta-0.6 contract is grounded in:
+The beta-0.7 contract is grounded in:
 
 - the beta-0.2 base grammar in `docs/language_grammar_ebnf.md`,
 - the beta-0.2 base specification in `docs/language_spec.md`,
@@ -43,16 +45,19 @@ The beta-0.6 contract is grounded in:
 - `tests/conformance/type_matrix_beta_0_4.tsv`,
 - `tests/conformance/functions_control_matrix_beta_0_5.tsv`,
 - `tests/conformance/enterprise_matrix_beta_0_6.tsv`,
+- `tests/conformance/c3eco_profile_matrix_beta_0_7.tsv`,
 - `docs/production_type_memory_model.md`,
 - `docs/execution_semantics_beta_0_4.md`,
 - `docs/functions_control_error_semantics.md`,
 - `docs/enterprise_packages_stdlib_ffi.md`,
+- `docs/c3eco_certification_profile.md`,
 - `tests/conformance/manifest.txt`,
 - `scripts/check_grammar_conformance_matrix.sh`,
 - `scripts/check_module_ast_scaffold.sh`,
 - `scripts/check_module_resolution.sh`,
 - `scripts/check_functions_control_error_semantics.sh`,
 - `scripts/check_enterprise_packages_stdlib_ffi.sh`,
+- `scripts/check_c3eco_certification_profile.sh`,
 - `scripts/check_language_versioning.sh`,
 - parser, module, semantic, diagnostics, codegen, runtime and evidence tests.
 
@@ -123,6 +128,19 @@ Beta-0.6 adds a versioned enterprise surface without expanding the executable co
 7. adds the separately versioned core C ABI 1.0.0 and C++ namespace wrapper;
 8. preserves `shorthand.package.v1`, executable beta-0.5 behavior and runtime ABI 1.0.0.
 
+## What changed from beta-0.6
+
+Beta-0.7 adds a typed C3-ECO preparation surface without changing executable lowering or claiming certification. It:
+
+1. adds native string, identifier, integer, decimal and boolean C3-ECO field values;
+2. adds `shorthand.c3eco.profile.v2` to cross-link product identity, functional unit, workload, boundary, AI lifecycle, safeguards and validity;
+3. validates closed domains, ranges, calendar dates, reference identity and reference kind after full source collection;
+4. enforces exclusion reasons, cumulative materiality thresholds and opaque-provider treatment;
+5. emits native JSON values and typed-field evidence without weakening the legacy `fields` surface;
+6. adds deterministic `shorthand.c3eco.profile_migration.v1` review output for legacy v1 declarations;
+7. adds stable `SHD5201` through `SHD5208` typed-profile diagnostics;
+8. preserves legacy v1 source acceptance, runtime ABI 1.0.0, core FFI ABI 1.0.0 and `production_claim: false`.
+
 ## Conformance layers
 
 ### Base lexical and grammar conformance
@@ -180,13 +198,17 @@ A beta-0.5 implementation must satisfy every row in `tests/conformance/functions
 
 A beta-0.6 implementation must satisfy every row in `tests/conformance/enterprise_matrix_beta_0_6.tsv` and `scripts/check_enterprise_packages_stdlib_ffi.sh`. Enterprise source validation, offline package resolution, SHA-256 locks, dependency SBOM output, core ABI symbols and installed C/C++ consumers are mandatory. Composite execution lowering is not part of beta-0.6 and must remain fail closed outside `enterprise-check`.
 
+### Beta-0.7 typed C3-ECO profile conformance
+
+A beta-0.7 implementation must satisfy every row in `tests/conformance/c3eco_profile_matrix_beta_0_7.tsv` and `scripts/check_c3eco_certification_profile.sh`. Native literal types, exact linked-declaration kinds, profile domains and ranges, validity, materiality, deterministic migration, evidence JSON types and claim safety are mandatory. A conformant profile remains preparation evidence only and cannot set `official_certification_granted:true`.
+
 ### Production conformance
 
 There is no production conformance level yet. ShortHand remains controlled beta with `production_claim: false`.
 
 ## Compatibility rules
 
-A change is compatible with beta-0.6 when it:
+A change is compatible with beta-0.7 when it:
 
 1. keeps every beta-0.2 accept fixture accepted,
 2. keeps every beta-0.2 reject fixture rejected unless a later language version intentionally changes it, as beta-0.5 does for empty parameter lists,
@@ -194,12 +216,13 @@ A change is compatible with beta-0.6 when it:
 4. keeps every beta-0.4 type-matrix accept fixture accepted and every rejection boundary fail-closed,
 5. keeps every beta-0.5 control-flow matrix acceptance and rejection boundary guarded,
 6. keeps every beta-0.6 enterprise matrix acceptance and rejection boundary guarded,
-7. keeps module ordering, duplicate and malformed-path boundaries rejected with stable codes,
-8. preserves both deterministic resolver/lock contracts or versions them explicitly,
-9. preserves exact typing, checked storage and ownership-state rules or versions them explicitly,
-10. preserves stable diagnostics or documents a migration,
-11. preserves runtime and evidence honesty,
-12. updates the applicable grammar, extension matrix, package-resolution evidence, manifest and gates when behavior changes.
+7. keeps every beta-0.7 typed-profile matrix acceptance, rejection, migration and claim-safety boundary guarded,
+8. keeps module ordering, duplicate and malformed-path boundaries rejected with stable codes,
+9. preserves both deterministic resolver/lock contracts or versions them explicitly,
+10. preserves exact typing, checked storage and ownership-state rules or versions them explicitly,
+11. preserves stable diagnostics or documents a migration,
+12. preserves runtime and evidence honesty,
+13. updates the applicable grammar, extension matrix, package-resolution evidence, manifest and gates when behavior changes.
 
 A new source-language version is required when accepted syntax, top-level ordering or source-level semantic meaning changes. Package/lock, type/memory and control-flow schema changes require their own explicit schema-version changes even if source grammar remains beta-0.5.
 
@@ -221,14 +244,16 @@ Package-resolution behavior is executable evidence through `scripts/check_module
 
 `tests/conformance/enterprise_matrix_beta_0_6.tsv` is the authoritative enterprise schema, package, library and FFI matrix. It does not claim composite execution lowering.
 
+`tests/conformance/c3eco_profile_matrix_beta_0_7.tsv` is the authoritative typed C3-ECO profile, migration and claim-safety matrix. It does not claim measurement, scoring, certification or production readiness.
+
 ## Manifest rules
 
 The active marker is:
 
-`current-version | shorthand.language.version | beta-0.6 | Current layered language contract marker.`
+`current-version | shorthand.language.version | beta-0.7 | Current layered language contract marker.`
 
-Historical beta-0.1 through beta-0.5 markers are retained for compatibility. The conformance manifest must cover the base grammar matrix, module extension matrix, type matrix, control-flow matrix, enterprise matrix, module resolution, parser-valid, parser-invalid, semantic-invalid, diagnostics, codegen, runtime and evidence categories.
+Historical beta-0.1 through beta-0.6 markers are retained for compatibility. The conformance manifest must cover the base grammar matrix, module extension matrix, type matrix, control-flow matrix, enterprise matrix, typed-profile matrix, module resolution, parser-valid, parser-invalid, semantic-invalid, diagnostics, codegen, runtime and evidence categories.
 
 ## Review rule
 
-Any PR that changes scanner keywords, parser productions, semantic meaning, module metadata, resolver behavior, package/lock schema, type/memory or control-flow behavior, diagnostics, runtime hooks, evidence output or public examples must update the corresponding conformance evidence or explicitly prove why the beta-0.6 contract remains unchanged.
+Any PR that changes scanner keywords, parser productions, semantic meaning, module metadata, resolver behavior, package/lock schema, type/memory or control-flow behavior, typed profile meaning, diagnostics, runtime hooks, evidence output or public examples must update the corresponding conformance evidence or explicitly prove why the beta-0.7 contract remains unchanged.

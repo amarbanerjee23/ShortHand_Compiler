@@ -9,6 +9,9 @@
     "status",
     "minimum_c3eco_evidence_present",
     "official_certification_granted",
+    "c3eco_profile_contract",
+    "c3eco_profile_status",
+    "c3eco_profile_migration_required",
     "blocking_items",
     "disclaimer"
   ],
@@ -19,6 +22,11 @@
     },
     "minimum_c3eco_evidence_present": { "type": "boolean" },
     "official_certification_granted": { "const": false },
+    "c3eco_profile_contract": { "const": "shorthand.c3eco.profile.v2" },
+    "c3eco_profile_status": {
+      "enum": ["conformant", "legacy_migration_review_required", "not_declared"]
+    },
+    "c3eco_profile_migration_required": { "type": "boolean" },
     "blocking_items": { "type": "array" },
     "disclaimer": { "type": "string" }
   }

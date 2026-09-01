@@ -1,0 +1,22 @@
+id	area	stage	contract_anchor	fixture	expectation	rationale
+C3P001	contract	semantic	shorthand.c3eco.profile.v2	tests/c3eco/profile/c3eco_profile_v2.short	accept	The typed preparation profile is explicitly and immutably versioned.
+C3P002	parser	parser	CERTIFICATION_PROFILE	tests/c3eco/profile/c3eco_profile_v2.short	accept	The contextual certification_profile declaration is part of beta-0.7 syntax.
+C3P003	literal-types	ast	C3EcoValueKind	tests/c3eco/profile/c3eco_profile_v2.short	accept	Strings identifiers integers decimals and booleans remain distinct AST values.
+C3P004	identity	semantic	validateC3EcoCertification	tests/c3eco/profile/c3eco_profile_v2.short	accept	Product identity binds version owner release class deployment geography and validity.
+C3P005	functional-unit	semantic	validateC3EcoFunctionalUnit	tests/c3eco/profile/c3eco_profile_v2.short	accept	Useful work has a positive denominator unit success condition metric and quality floor.
+C3P006	workload	semantic	validateC3EcoWorkload	tests/c3eco/profile/c3eco_profile_v2.short	accept	Workload size concurrency runs traffic and cache state are bounded and typed.
+C3P007	boundary	semantic	validateC3EcoBoundary	tests/c3eco/profile/c3eco_profile_v2.short	accept	Included and excluded components use a closed boundary domain.
+C3P008	materiality	semantic	SHD5207	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	Exclusions require reasons bounded percentages and cumulative threshold compliance.
+C3P009	ai-lifecycle	semantic	validateC3EcoLifecycle	tests/c3eco/profile/c3eco_profile_v2.short	accept	AI roles scope and native lifecycle booleans bind responsibility.
+C3P010	guardrails	semantic	validateC3EcoGuardrails	tests/c3eco/profile/c3eco_profile_v2.short	accept	Accuracy latency error functional security accessibility and privacy floors are mandatory.
+C3P011	validity	semantic	SHD5206	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	Calendar dates must be real and the profile start must precede its end.
+C3P012	forward-reference	semantic	validateC3EcoProfiles	tests/c3eco/profile/c3eco_profile_v2.short	accept	Profile links resolve deterministically after collecting the complete source unit.
+C3P013	type-negative	semantic	SHD5201	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	Wrong literal types and field cardinality fail closed.
+C3P014	domain-negative	semantic	SHD5202	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	Unknown enum or domain members fail closed.
+C3P015	range-negative	semantic	SHD5203	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	Out-of-range numeric values fail closed.
+C3P016	unknown-reference	semantic	SHD5204	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	Unknown linked declarations fail closed.
+C3P017	kind-mismatch	semantic	SHD5205	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	A reference bound to the wrong declaration kind fails closed.
+C3P018	incomplete-declaration	semantic	SHD5208	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	reject	A v2-linked declaration missing v2-only fields fails closed.
+C3P019	migration	evidence	shorthand.c3eco.profile_migration.v1	scripts/check_c3eco_certification_profile.sh	accept_and_review	Legacy v1 sources remain accepted and produce deterministic review-required migration output.
+C3P020	native-json	evidence	typed_fields	scripts/check_c3eco_certification_profile.sh	accept	Evidence preserves integers decimals and booleans as native JSON values.
+C3P021	claim-safety	evidence	official_certification_granted:false	scripts/check_c3eco_certification_profile.sh	reject	Profile conformance cannot grant certification or create a production claim.

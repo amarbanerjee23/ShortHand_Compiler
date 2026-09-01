@@ -16,7 +16,7 @@ C3-ECO assessment is technology-neutral. A programming language, framework, clou
 
 ## Declaration kinds
 
-The language provides ten named blocks: `certification`, `functional_unit`, `workload`, `boundary`, `measurement_plan`, `ai_lifecycle`, `rag_pipeline`, `token_budget`, `model_routing` and `guardrails`. Each block uses string-valued fields so provenance-rich values and units remain explicit and serializable.
+The v1 language provides ten named blocks: `certification`, `functional_unit`, `workload`, `boundary`, `measurement_plan`, `ai_lifecycle`, `rag_pipeline`, `token_budget`, `model_routing` and `guardrails`. Each v1 block uses string-valued fields so provenance-rich values and units remain explicit and serializable. Beta-0.7 adds the separate `shorthand.c3eco.profile.v2` contract documented in `docs/c3eco_certification_profile.md`; a `certification_profile` links typed versions of the applicable v1 declarations without silently reinterpreting legacy strings.
 
 ```short
 certification release_candidate {
@@ -51,13 +51,15 @@ certification release_candidate {
 - `SHD5103`: invalid field or incomplete provenance/boundary evidence.
 - `SHD5104`: unsafe self-certification claim.
 
+Typed profile diagnostics `SHD5201` through `SHD5208` cover literal types, closed domains, ranges, references, validity, materiality and missing v2 fields.
+
 Fields such as `official_certification_granted`, `certified_level`, `certificate_id` and `certified` are rejected. Candidate reports always retain `official_certification_granted:false`.
 
 ## Compiler/evidence behavior
 
 The AST preserves declaration kind, name and fields. The semantic analyzer validates the contract. LLVM generation emits `shorthand.c3eco_declaration` metadata, so declarations do not introduce accidental runtime work. Candidate evidence serializes the same structure under `c3eco_language_contract: shorthand.c3eco.language.v1`.
 
-Measured energy/carbon/cost scoring and authority-ready signed auditor lineage are deliberately outside this contract and remain subsequent roadmap work.
+Measured energy/carbon/cost scoring and authority-ready signed auditor lineage are deliberately outside this contract and remain subsequent roadmap work. Profile v2 does not change that claim boundary.
 
 ## Measurement and claims boundary
 

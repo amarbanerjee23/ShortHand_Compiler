@@ -3,6 +3,10 @@
 #include "../ai_runtime/AI_Types.h"
 
 #include <algorithm>
+#include <cerrno>
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
 #include <utility>
 
 namespace diag = shorthand::diagnostics;
@@ -65,6 +69,9 @@ static shorthand::types::TypeKind productionTypeKind(ShortType type) {
 
 static std::set<std::string> c3EcoRequiredFields(C3EcoDeclarationKind kind) {
     switch (kind) {
+        case C3EcoDeclarationKind::CertificationProfile:
+            return {"profile_version", "certification", "functional_unit", "workload", "boundary",
+                    "ai_lifecycle", "guardrails", "valid_from", "valid_until"};
         case C3EcoDeclarationKind::Certification:
             return {"version", "owner", "software_class", "deployment_mode", "geography", "validity_period"};
         case C3EcoDeclarationKind::FunctionalUnit:
@@ -91,9 +98,23 @@ static std::set<std::string> c3EcoRequiredFields(C3EcoDeclarationKind kind) {
 
 static std::set<std::string> c3EcoAllowedFields(C3EcoDeclarationKind kind) {
     std::set<std::string> allowed = c3EcoRequiredFields(kind);
+    if (kind == C3EcoDeclarationKind::Certification) {
+        allowed.insert("release_date");
+        allowed.insert("cloud_region");
+    }
+    if (kind == C3EcoDeclarationKind::FunctionalUnit) {
+        allowed.insert("unit");
+        allowed.insert("quality_metric");
+        allowed.insert("latency_slo_ms");
+        allowed.insert("error_rate_slo_percent");
+    }
     if (kind == C3EcoDeclarationKind::Boundary) {
         allowed.insert("exclude");
         allowed.insert("evidence");
+        allowed.insert("exclusion_reason");
+        allowed.insert("exclusion_materiality_percent");
+        allowed.insert("materiality_threshold_percent");
+        allowed.insert("opaque_provider_treatment");
     }
     return allowed;
 }
@@ -109,10 +130,73 @@ static std::string c3EcoFieldText(const C3EcoDeclarationData &data, const std::s
         if (field.name != name) continue;
         for (const auto &value : field.values) {
             if (!text.empty()) text += " ";
-            text += value;
+            text += value.text;
         }
     }
     return text;
+}
+
+static const C3EcoFieldData *c3EcoField(const C3EcoDeclarationData &data,
+                                       const std::string &name) {
+    for (const auto &field : data.fields) {
+        if (field.name == name) return &field;
+    }
+    return nullptr;
+}
+
+static bool c3EcoParseInteger(const std::string &text, long long &value) {
+    if (text.empty()) return false;
+    errno = 0;
+    char *end = nullptr;
+    const long long parsed = std::strtoll(text.c_str(), &end, 10);
+    if (errno != 0 || end == text.c_str() || *end != '\0') return false;
+    value = parsed;
+    return true;
+}
+
+static bool c3EcoParseDecimal(const std::string &text, double &value) {
+    if (text.empty()) return false;
+    errno = 0;
+    char *end = nullptr;
+    const double parsed = std::strtod(text.c_str(), &end);
+    if (errno != 0 || end == text.c_str() || *end != '\0' || !std::isfinite(parsed)) return false;
+    value = parsed;
+    return true;
+}
+
+static bool c3EcoLeapYear(int year) {
+    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+static bool c3EcoIsoDate(const std::string &text) {
+    if (text.size() != 10 || text[4] != '-' || text[7] != '-') return false;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (i == 4 || i == 7) continue;
+        if (!std::isdigit(static_cast<unsigned char>(text[i]))) return false;
+    }
+    const int year = std::atoi(text.substr(0, 4).c_str());
+    const int month = std::atoi(text.substr(5, 2).c_str());
+    const int day = std::atoi(text.substr(8, 2).c_str());
+    if (year < 2000 || month < 1 || month > 12 || day < 1) return false;
+    static const int month_days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    const int limit = month == 2 && c3EcoLeapYear(year) ? 29 : month_days[month - 1];
+    return day <= limit;
+}
+
+static bool c3EcoSemver(const std::string &text) {
+    int dots = 0;
+    bool digit_in_part = false;
+    for (char c : text) {
+        if (std::isdigit(static_cast<unsigned char>(c))) {
+            digit_in_part = true;
+        } else if (c == '.' && digit_in_part && dots < 2) {
+            ++dots;
+            digit_in_part = false;
+        } else {
+            return false;
+        }
+    }
+    return dots == 2 && digit_in_part;
 }
 
 std::set<std::string> SemanticAnalyzer::functionNames(AST_PROGRAM *program) {
@@ -448,6 +532,8 @@ void SemanticAnalyzer::validateCallTypes(
 }
 
 int SemanticAnalyzer::visit(AST_PROGRAM *p) {
+    c3eco_declarations.clear();
+    c3eco_profile_nodes.clear();
     globals = globalNames(p);
     global_types.clear();
     global_array_types.clear();
@@ -458,6 +544,7 @@ int SemanticAnalyzer::visit(AST_PROGRAM *p) {
     if (p->decl_block) p->decl_block->accept(*this);
     if (p->functions) p->functions->accept(*this);
     if (p->code_block) p->code_block->accept(*this);
+    validateC3EcoProfiles();
     return diagnostics.hasErrors() ? 1 : 0;
 }
 
@@ -752,6 +839,7 @@ int SemanticAnalyzer::visit(AST_GREENAI_MEASUREMENT *n) {
 
 int SemanticAnalyzer::visit(AST_C3ECO_DECLARATION *n) {
     const auto &data = n->data;
+    c3eco_profile_nodes.push_back(n);
     const std::string kind = c3EcoDeclarationKindName(data.kind);
     const std::string key = kind + ":" + data.name;
     if (!c3eco_declarations.insert(key).second) {
@@ -795,7 +883,8 @@ int SemanticAnalyzer::visit(AST_C3ECO_DECLARATION *n) {
         }
     }
 
-    if (data.kind == C3EcoDeclarationKind::Boundary && c3EcoHasField(data, "exclude")) {
+    if (data.kind == C3EcoDeclarationKind::Boundary && c3EcoHasField(data, "exclude") &&
+        !c3EcoHasField(data, "exclusion_reason")) {
         const std::string evidence = c3EcoFieldText(data, "evidence");
         if (evidence.find("component") == std::string::npos ||
             evidence.find("reason") == std::string::npos ||
@@ -806,6 +895,330 @@ int SemanticAnalyzer::visit(AST_C3ECO_DECLARATION *n) {
         }
     }
     return 0;
+}
+
+void SemanticAnalyzer::validateC3EcoTypedDeclaration(AST_C3ECO_DECLARATION *node) {
+    if (node == nullptr) return;
+    const auto &data = node->data;
+    const std::string declaration = std::string(c3EcoDeclarationKindName(data.kind)) +
+                                    " `" + data.name + "`";
+
+    auto single = [&](const std::string &name, C3EcoValueKind kind) -> const C3EcoValueData * {
+        const C3EcoFieldData *field = c3EcoField(data, name);
+        if (field == nullptr) return nullptr;
+        if (field->values.size() != 1U || field->values.front().kind != kind) {
+            diagnostics.errorAtNode(
+                node, diag::C3EcoInvalidTypedLiteral,
+                declaration + " field `" + name + "` requires exactly one " +
+                    c3EcoValueKindName(kind) + " literal");
+            return nullptr;
+        }
+        return &field->values.front();
+    };
+    auto requireV2Field = [&](const std::string &name) {
+        if (!c3EcoHasField(data, name)) {
+            diagnostics.errorAtNode(
+                node, diag::C3EcoProfileIncomplete,
+                declaration + " is linked by profile v2 and requires field `" + name + "`");
+        }
+    };
+    auto enumValue = [&](const std::string &name, const std::set<std::string> &allowed) {
+        const C3EcoValueData *value = single(name, C3EcoValueKind::Identifier);
+        if (value != nullptr && allowed.count(value->text) == 0U) {
+            diagnostics.errorAtNode(
+                node, diag::C3EcoInvalidDomainValue,
+                declaration + " field `" + name + "` has unsupported domain value `" +
+                    value->text + "`");
+        }
+    };
+    auto integerRange = [&](const std::string &name, long long minimum, long long maximum) {
+        const C3EcoValueData *value = single(name, C3EcoValueKind::Integer);
+        if (value == nullptr) return;
+        long long parsed = 0;
+        if (!c3EcoParseInteger(value->text, parsed)) {
+            diagnostics.errorAtNode(node, diag::C3EcoInvalidTypedLiteral,
+                                    declaration + " field `" + name + "` is not a valid integer");
+        } else if (parsed < minimum || parsed > maximum) {
+            diagnostics.errorAtNode(
+                node, diag::C3EcoValueOutOfRange,
+                declaration + " field `" + name + "` is outside the allowed range");
+        }
+    };
+    auto decimalRange = [&](const std::string &name, double minimum, double maximum) {
+        const C3EcoValueData *value = single(name, C3EcoValueKind::Decimal);
+        if (value == nullptr) return;
+        double parsed = 0.0;
+        if (!c3EcoParseDecimal(value->text, parsed)) {
+            diagnostics.errorAtNode(node, diag::C3EcoInvalidTypedLiteral,
+                                    declaration + " field `" + name + "` is not a valid decimal");
+        } else if (parsed < minimum || parsed > maximum) {
+            diagnostics.errorAtNode(
+                node, diag::C3EcoValueOutOfRange,
+                declaration + " field `" + name + "` is outside the allowed range");
+        }
+    };
+    auto nonEmptyString = [&](const std::string &name) -> const C3EcoValueData * {
+        const C3EcoValueData *value = single(name, C3EcoValueKind::String);
+        if (value != nullptr && value->text.empty()) {
+            diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                    declaration + " field `" + name + "` must not be empty");
+        }
+        return value;
+    };
+    auto requiredBoolean = [&](const std::string &name) {
+        const C3EcoValueData *value = single(name, C3EcoValueKind::Boolean);
+        if (value != nullptr && value->text != "true") {
+            diagnostics.errorAtNode(
+                node, diag::C3EcoInvalidDomainValue,
+                declaration + " safeguard field `" + name + "` must be true in profile v2");
+        }
+    };
+
+    switch (data.kind) {
+        case C3EcoDeclarationKind::CertificationProfile:
+            integerRange("profile_version", 2, 2);
+            nonEmptyString("valid_from");
+            nonEmptyString("valid_until");
+            break;
+        case C3EcoDeclarationKind::Certification: {
+            const C3EcoValueData *version = nonEmptyString("version");
+            nonEmptyString("owner");
+            const C3EcoValueData *geography = nonEmptyString("geography");
+            requireV2Field("release_date");
+            const C3EcoValueData *release = nonEmptyString("release_date");
+            if (c3EcoHasField(data, "cloud_region")) nonEmptyString("cloud_region");
+            if (version != nullptr && !c3EcoSemver(version->text)) {
+                diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                        declaration + " version must use numeric MAJOR.MINOR.PATCH form");
+            }
+            if (release != nullptr && !c3EcoIsoDate(release->text)) {
+                diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                        declaration + " release_date must be a valid YYYY-MM-DD date");
+            }
+            if (geography != nullptr) {
+                const std::string &code = geography->text;
+                const bool valid = (code.size() == 2U || code.size() == 3U) &&
+                    std::all_of(code.begin(), code.end(), [](char c) {
+                        return std::isupper(static_cast<unsigned char>(c));
+                    });
+                if (!valid) {
+                    diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                            declaration + " geography must be a two- or three-letter uppercase code");
+                }
+            }
+            enumValue("software_class", {"S1", "S2", "S3", "S4", "S5", "S6", "S7",
+                                             "S8", "S9", "S10", "S11", "S12", "S13", "S14",
+                                             "S6_AI_GENAI", "S9_DEVELOPER_TOOLS_CI_CD",
+                                             "S12_INFRASTRUCTURE_PLATFORM"});
+            enumValue("deployment_mode", {"kubernetes", "container", "vm", "bare_metal",
+                                             "edge", "serverless", "hybrid"});
+            integerRange("validity_period", 1, 366);
+            break;
+        }
+        case C3EcoDeclarationKind::FunctionalUnit:
+            requireV2Field("unit");
+            requireV2Field("quality_metric");
+            integerRange("denominator", 1, 1000000000000LL);
+            nonEmptyString("success_condition");
+            decimalRange("quality_threshold", 0.0, 1.0);
+            enumValue("unit", {"inference", "successful_inference", "request", "successful_request",
+                                  "training_run", "token", "document", "gb_processed", "build"});
+            enumValue("quality_metric", {"accuracy", "f1", "precision", "recall", "pass_rate",
+                                            "quality_score"});
+            if (c3EcoHasField(data, "latency_slo_ms")) integerRange("latency_slo_ms", 1, 86400000);
+            if (c3EcoHasField(data, "error_rate_slo_percent"))
+                decimalRange("error_rate_slo_percent", 0.0, 100.0);
+            break;
+        case C3EcoDeclarationKind::Workload:
+            enumValue("traffic_profile", {"production_representative", "steady", "bursty", "trace_replay"});
+            integerRange("batch_size", 1, 1000000);
+            integerRange("concurrency", 1, 1000000);
+            integerRange("warmup_runs", 0, 1000000000);
+            integerRange("measured_runs", 1, 1000000000);
+            enumValue("cache_state", {"cold", "warm", "mixed", "disabled", "declared"});
+            break;
+        case C3EcoDeclarationKind::Boundary: {
+            requireV2Field("materiality_threshold_percent");
+            const std::set<std::string> components = {
+                "compute", "accelerator", "memory", "storage", "network", "ci_cd", "thirdparty",
+                "thirdparty_ai_api", "client_device", "training", "fine_tuning"};
+            const C3EcoFieldData *include = c3EcoField(data, "include");
+            if (include != nullptr) {
+                for (const auto &value : include->values) {
+                    if (value.kind != C3EcoValueKind::Identifier) {
+                        diagnostics.errorAtNode(node, diag::C3EcoInvalidTypedLiteral,
+                                                declaration + " include entries must be identifiers");
+                    } else if (components.count(value.text) == 0U) {
+                        diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                                declaration + " includes unknown component `" + value.text + "`");
+                    }
+                }
+            }
+            decimalRange("materiality_threshold_percent", 0.0, 100.0);
+            const C3EcoFieldData *exclude = c3EcoField(data, "exclude");
+            if (exclude != nullptr) {
+                const C3EcoFieldData *reasons = c3EcoField(data, "exclusion_reason");
+                const C3EcoFieldData *materiality = c3EcoField(data, "exclusion_materiality_percent");
+                if (reasons == nullptr || materiality == nullptr ||
+                    reasons->values.size() != exclude->values.size() ||
+                    materiality->values.size() != exclude->values.size()) {
+                    diagnostics.errorAtNode(
+                        node, diag::C3EcoMaterialityViolation,
+                        declaration + " requires one string reason and decimal materiality for every exclusion");
+                } else {
+                    double total = 0.0;
+                    for (std::size_t i = 0; i < exclude->values.size(); ++i) {
+                        if (exclude->values[i].kind != C3EcoValueKind::Identifier ||
+                            components.count(exclude->values[i].text) == 0U ||
+                            reasons->values[i].kind != C3EcoValueKind::String ||
+                            materiality->values[i].kind != C3EcoValueKind::Decimal) {
+                            diagnostics.errorAtNode(node, diag::C3EcoInvalidTypedLiteral,
+                                                    declaration + " has an invalid typed exclusion entry");
+                            continue;
+                        }
+                        double amount = 0.0;
+                        if (!c3EcoParseDecimal(materiality->values[i].text, amount) ||
+                            amount < 0.0 || amount > 100.0) {
+                            diagnostics.errorAtNode(node, diag::C3EcoValueOutOfRange,
+                                                    declaration + " exclusion materiality is outside 0..100 percent");
+                        } else {
+                            total += amount;
+                        }
+                    }
+                    const C3EcoValueData *threshold = single("materiality_threshold_percent",
+                                                              C3EcoValueKind::Decimal);
+                    double maximum = 0.0;
+                    if (threshold != nullptr && c3EcoParseDecimal(threshold->text, maximum) && total > maximum) {
+                        diagnostics.errorAtNode(
+                            node, diag::C3EcoMaterialityViolation,
+                            declaration + " cumulative exclusions exceed materiality_threshold_percent");
+                    }
+                }
+                bool excludes_opaque_provider = false;
+                for (const auto &value : exclude->values) {
+                    excludes_opaque_provider = excludes_opaque_provider || value.text == "thirdparty_ai_api";
+                }
+                if (excludes_opaque_provider) {
+                    requireV2Field("opaque_provider_treatment");
+                    enumValue("opaque_provider_treatment", {"conservative_estimate", "included", "provider_evidence"});
+                }
+            }
+            break;
+        }
+        case C3EcoDeclarationKind::AILifecycle: {
+            enumValue("role", {"application_provider", "model_provider", "hosted_model_consumer",
+                                 "trainer", "fine_tuner", "inference_operator"});
+            nonEmptyString("model_provider");
+            enumValue("lifecycle_scope", {"inference", "training", "fine_tuning", "end_to_end"});
+            const C3EcoValueData *training = single("training_included", C3EcoValueKind::Boolean);
+            const C3EcoValueData *fine_tuning = single("fine_tuning_included", C3EcoValueKind::Boolean);
+            requiredBoolean("evaluation_included");
+            const C3EcoValueData *role = c3EcoField(data, "role") != nullptr
+                ? single("role", C3EcoValueKind::Identifier) : nullptr;
+            if (role != nullptr && role->text == "trainer" && training != nullptr && training->text != "true") {
+                diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                        declaration + " trainer role must include training lifecycle evidence");
+            }
+            if (role != nullptr && role->text == "fine_tuner" && fine_tuning != nullptr &&
+                fine_tuning->text != "true") {
+                diagnostics.errorAtNode(node, diag::C3EcoInvalidDomainValue,
+                                        declaration + " fine_tuner role must include fine-tuning lifecycle evidence");
+            }
+            break;
+        }
+        case C3EcoDeclarationKind::Guardrails:
+            requiredBoolean("functional_tests");
+            decimalRange("accuracy", 0.0, 1.0);
+            integerRange("p95_latency_ms", 1, 86400000);
+            decimalRange("error_rate_percent", 0.0, 100.0);
+            requiredBoolean("security_scan");
+            requiredBoolean("accessibility");
+            requiredBoolean("privacy_telemetry");
+            break;
+        case C3EcoDeclarationKind::MeasurementPlan:
+        case C3EcoDeclarationKind::RAGPipeline:
+        case C3EcoDeclarationKind::TokenBudget:
+        case C3EcoDeclarationKind::ModelRouting:
+            break;
+    }
+}
+
+void SemanticAnalyzer::validateC3EcoProfiles() {
+    std::map<C3EcoDeclarationKind, std::map<std::string, AST_C3ECO_DECLARATION *>> declarations;
+    std::map<std::string, std::set<C3EcoDeclarationKind>> kinds_by_name;
+    std::vector<AST_C3ECO_DECLARATION *> profiles;
+    for (AST_C3ECO_DECLARATION *node : c3eco_profile_nodes) {
+        if (node == nullptr) continue;
+        declarations[node->data.kind].emplace(node->data.name, node);
+        kinds_by_name[node->data.name].insert(node->data.kind);
+        if (node->data.kind == C3EcoDeclarationKind::CertificationProfile) profiles.push_back(node);
+    }
+    std::set<AST_C3ECO_DECLARATION *> validated;
+    const std::vector<std::pair<std::string, C3EcoDeclarationKind>> references = {
+        {"certification", C3EcoDeclarationKind::Certification},
+        {"functional_unit", C3EcoDeclarationKind::FunctionalUnit},
+        {"workload", C3EcoDeclarationKind::Workload},
+        {"boundary", C3EcoDeclarationKind::Boundary},
+        {"ai_lifecycle", C3EcoDeclarationKind::AILifecycle},
+        {"guardrails", C3EcoDeclarationKind::Guardrails}};
+
+    for (AST_C3ECO_DECLARATION *profile : profiles) {
+        validateC3EcoTypedDeclaration(profile);
+        const C3EcoValueData *from = nullptr;
+        const C3EcoValueData *until = nullptr;
+        if (const C3EcoFieldData *field = c3EcoField(profile->data, "valid_from")) {
+            if (field->values.size() == 1U && field->values.front().kind == C3EcoValueKind::String)
+                from = &field->values.front();
+        }
+        if (const C3EcoFieldData *field = c3EcoField(profile->data, "valid_until")) {
+            if (field->values.size() == 1U && field->values.front().kind == C3EcoValueKind::String)
+                until = &field->values.front();
+        }
+        if (from != nullptr && until != nullptr) {
+            if (!c3EcoIsoDate(from->text) || !c3EcoIsoDate(until->text) || from->text >= until->text) {
+                diagnostics.errorAtNode(
+                    profile, diag::C3EcoInvalidValidityWindow,
+                    "certification_profile `" + profile->data.name +
+                        "` requires valid YYYY-MM-DD dates with valid_from before valid_until");
+            }
+        }
+
+        for (const auto &reference : references) {
+            const C3EcoFieldData *field = c3EcoField(profile->data, reference.first);
+            if (field == nullptr || field->values.size() != 1U ||
+                field->values.front().kind != C3EcoValueKind::Identifier) {
+                if (field != nullptr) {
+                    diagnostics.errorAtNode(
+                        profile, diag::C3EcoInvalidTypedLiteral,
+                        "certification_profile `" + profile->data.name + "` field `" +
+                            reference.first + "` requires exactly one identifier reference");
+                }
+                continue;
+            }
+            const std::string &name = field->values.front().text;
+            const auto by_kind = declarations.find(reference.second);
+            AST_C3ECO_DECLARATION *target = nullptr;
+            if (by_kind != declarations.end()) {
+                const auto found = by_kind->second.find(name);
+                if (found != by_kind->second.end()) target = found->second;
+            }
+            if (target == nullptr) {
+                if (kinds_by_name.count(name) != 0U) {
+                    diagnostics.errorAtNode(
+                        profile, diag::C3EcoReferenceKindMismatch,
+                        "certification_profile `" + profile->data.name + "` field `" +
+                            reference.first + "` references `" + name + "` with the wrong declaration kind");
+                } else {
+                    diagnostics.errorAtNode(
+                        profile, diag::C3EcoUnknownReference,
+                        "certification_profile `" + profile->data.name + "` field `" +
+                            reference.first + "` references unknown declaration `" + name + "`");
+                }
+                continue;
+            }
+            if (validated.insert(target).second) validateC3EcoTypedDeclaration(target);
+        }
+    }
 }
 
 int SemanticAnalyzer::visit(AST_INFER_STATEMENT *n) {

@@ -77,6 +77,7 @@ private:
     std::map<std::string, TensorDeclarationData> tensors;
     std::map<std::string, GreenAIContractData> contracts;
     std::set<std::string> c3eco_declarations;
+    std::vector<AST_C3ECO_DECLARATION *> c3eco_profile_nodes;
     std::set<std::string> functions;
     std::map<std::string, std::size_t> function_arity;
     std::set<std::string> imported_functions;
@@ -102,6 +103,8 @@ private:
     void validateCallTypes(const void *node,
                            const std::string &name,
                            const std::vector<AST_EXPRESSION_RULE *> &arguments);
+    void validateC3EcoProfiles();
+    void validateC3EcoTypedDeclaration(AST_C3ECO_DECLARATION *node);
 };
 
 #endif

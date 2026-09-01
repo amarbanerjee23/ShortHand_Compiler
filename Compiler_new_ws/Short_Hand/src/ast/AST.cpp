@@ -239,6 +239,7 @@ AST_GREENAI_MEASUREMENT::AST_GREENAI_MEASUREMENT(const GreenAIMeasurementData &d
 int AST_GREENAI_MEASUREMENT::accept(Visitor & v){ return v.visit(this); }
 const char *c3EcoDeclarationKindName(C3EcoDeclarationKind kind) {
     switch (kind) {
+        case C3EcoDeclarationKind::CertificationProfile: return "certification_profile";
         case C3EcoDeclarationKind::Certification: return "certification";
         case C3EcoDeclarationKind::FunctionalUnit: return "functional_unit";
         case C3EcoDeclarationKind::Workload: return "workload";
@@ -249,6 +250,16 @@ const char *c3EcoDeclarationKindName(C3EcoDeclarationKind kind) {
         case C3EcoDeclarationKind::TokenBudget: return "token_budget";
         case C3EcoDeclarationKind::ModelRouting: return "model_routing";
         case C3EcoDeclarationKind::Guardrails: return "guardrails";
+    }
+    return "unknown";
+}
+const char *c3EcoValueKindName(C3EcoValueKind kind) {
+    switch (kind) {
+        case C3EcoValueKind::String: return "string";
+        case C3EcoValueKind::Identifier: return "identifier";
+        case C3EcoValueKind::Integer: return "integer";
+        case C3EcoValueKind::Decimal: return "decimal";
+        case C3EcoValueKind::Boolean: return "boolean";
     }
     return "unknown";
 }

@@ -143,7 +143,8 @@ The objectives are satisfied for enterprise production usage only when:
 - Functions, lexical scopes, structured control flow and deterministic errors: PR85.
 - Enterprise composite/ownership schemas, cryptographic offline packages, core library and safe FFI: PR86.
 - Concurrent serving and operational runtime: PR87.
-- Typed C3-ECO profile, measurement, scoring, claims and auditor lifecycle: PR88 through PR91.
+- Typed C3-ECO profile and deterministic migration: PR88.
+- C3-ECO measurement, scoring, claims and auditor lifecycle: PR89 through PR91.
 - Generated MLIR dialect, production lowering and representative AI qualification: PR92 through PR94.
 - Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.
 

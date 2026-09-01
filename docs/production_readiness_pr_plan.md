@@ -1,12 +1,12 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-08-23-pr87
+production_readiness_plan_version: 2026-09-01-pr88
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 86
-CURRENT_GITHUB_PR: 87
+LAST_MERGED_GITHUB_PR: 87
+CURRENT_GITHUB_PR: 88
 LAST_PLANNED_GITHUB_PR: 96
-CURRENT_IMPLEMENTATION_SCOPE: concurrent_serving_and_operational_runtime
-BASELINE_LANGUAGE_VERSION: beta-0.6
+CURRENT_IMPLEMENTATION_SCOPE: typed_c3eco_certification_profile
+BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
 ## Goal
@@ -17,36 +17,38 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR86 is merged. It established beta-0.6 enterprise schemas, cryptographically verified offline packages, an installable core library and the safe core FFI while preserving all earlier production-truth and C3-ECO traceability controls. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
+GitHub PR87 is merged. It established the bounded process-scoped concurrent serving and operational runtime while preserving beta-0.6 language/package/FFI, production-truth and C3-ECO traceability controls. PR88 advances the layered language contract to beta-0.7 with a typed C3-ECO preparation profile; it does not change executable lowering or grant certification. The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. PR86 is merged and PR87 is the active implementation. The plan covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
+The post-PR82 audit found that the previous five-PR plan did not include several enterprise language and operating requirements. The corrected plan is GitHub-native PR83 through PR96. PR87 is merged and PR88 is the active implementation. The plan covers production truth, core language completion, packages and standard library, serving operations, complete C3-ECO preparation, MLIR, representative AI execution, measured energy and the final release candidate.
 
-## PR87 completion contract
+## PR88 completion contract
 
-PR87 - Concurrent serving and operational runtime is IN PROGRESS.
+PR88 - Typed C3-ECO certification profile is IN PROGRESS.
 
 Implementation requirements:
 
-1. Establish `shorthand.serving.runtime.v1` as an immutable process-scoped serving contract.
-2. Bound worker concurrency, admission queue depth, in-flight work, retained results, request bytes, response bytes and deadline duration.
-3. Reject overload immediately and deterministically without unbounded queues or blocking admission callers.
-4. Enforce deadlines before admission, while queued and after handler return so late successes cannot be reported as successful.
-5. Support cooperative cancellation for queued and running work with stable terminal states.
-6. Isolate every runtime instance to one configured tenant scope and reject cross-tenant submission and lookup.
-7. Expose versioned liveness/readiness JSON and low-cardinality Prometheus metrics without request or tenant labels.
-8. Implement drain and bounded graceful shutdown semantics, including queued-work termination and running-work cancellation signals.
-9. Install `ShortHand::serving`, its public header and `shorthand_serving_worker`; exercise the installed target and worker in existing platform lifecycle lanes.
-10. Run deterministic unit, saturation, deadline, quota, isolation, restart, shutdown, load and bounded-soak tests.
-11. Execute the concurrent stress path under ASan/LSan/UBSan and TSan.
-12. Replace the container's idle PID 1 with the serving worker and connect Kubernetes startup, liveness, readiness and pre-stop drain to its bounded state contract.
-13. Keep public ingress, authentication, authorization and TLS outside this process-scoped contract and fail closed on any broader production claim.
-14. Add the serving gate to direct CI, Make governance/aggregate parity, CTest, packaging and production truth.
-15. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend, enterprise-language and C3-ECO gates.
-16. Keep `controlled_beta` and `production_claim: false`; this PR does not claim public service readiness, energy savings or certification.
-17. Final PR head must have `ci / ubuntu (push)` successful.
-18. Final PR head must have `ci / ubuntu (pull_request)` successful.
+1. Establish `shorthand.c3eco.profile.v2` as the immutable typed certification-preparation contract.
+2. Add `certification_profile` as an additive, contextual top-level declaration without breaking legacy identifier use.
+3. Preserve string, identifier, integer, decimal and boolean literal kinds in the AST and evidence JSON.
+4. Link exactly one certification identity, functional unit, workload, boundary, AI lifecycle and guardrail declaration with deterministic forward-reference resolution.
+5. Validate product version, owner, release date, software class, deployment mode, geography and bounded validity period.
+6. Validate positive functional-unit denominator, unit enum, success condition, quality metric and bounded quality threshold.
+7. Validate representative workload enums and bounded batch, concurrency, warmup and measured-run integers.
+8. Validate boundary component enums, one reason and materiality value per exclusion, cumulative materiality threshold and conservative opaque-provider treatment.
+9. Validate AI lifecycle roles/scopes, native lifecycle booleans and role ownership constraints.
+10. Require functional, security, accessibility and privacy safeguard floors without accepting disabled controls as efficiency evidence.
+11. Validate calendar dates and enforce `valid_from < valid_until`.
+12. Add stable `SHD5201` through `SHD5208` diagnostics with a positive and negative semantic matrix.
+13. Emit deterministic `shorthand.c3eco.profile_migration.v1` output for legacy v1 sources without guessing typed values.
+14. Preserve `official_certification_granted:false`; no profile, migration or compiler output may grant certification.
+15. Add profile and migration schemas plus native JSON structure checks.
+16. Register the profile gate in direct CI, Make, sanitizer, CTest parity, coverage, production truth and C3-ECO traceability.
+17. Preserve all existing compiler, sanitizer/race, portability, security, deployment, tooling, backend, package, serving and C3-ECO gates.
+18. Keep `controlled_beta` and `production_claim: false`; measured energy, carbon, cost, scoring, levels and auditor approval remain outside PR88.
+19. Final PR head must have `ci / ubuntu (push)` successful.
+20. Final PR head must have `ci / ubuntu (pull_request)` successful.
 
 ## Mandatory rule for every remaining PR
 
@@ -80,8 +82,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR84 - Production type system and memory model | MERGED | Beta-0.4 executable floats, strings and typed arrays plus guarded slices, records, enums, option/result, conversions and ownership descriptors. | Expanded differential, strict unit, sanitizer, Make and CTest gates. | Cross-mode values, lifetime, overflow, bounds and unchanged ABI evidence. |
 | PR85 - Functions, structured control flow and error semantics | MERGED | Beta-0.5 expression calls, arbitrary arguments, lexical scopes, loops, deterministic errors and safe `goto` resolution. | First-class control-flow conformance and cross-mode differential gate. | Positive, negative, recursion, cleanup and compatibility tests. |
 | PR86 - Enterprise packages, standard library and FFI | MERGED | Complete the versioned composite/ownership ABI-schema prerequisite, then add cryptographic offline dependencies, namespaces, core libraries and safe C/C++ interop. Composite execution remains assigned to production lowering. | Language-surface, package supply-chain and installed-consumer gates. | Type/lifetime, tamper, reproducibility, ABI, license, SBOM and portability tests. |
-| PR87 - Concurrent serving and operational runtime | IN PROGRESS | Versioned process-scoped cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification plus installed worker lifecycle and Kubernetes drain probes. | TSan, sanitizer, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
-| PR88 - Typed C3-ECO certification profile | PLANNED | Typed identities, units, functional links, boundary/materiality, AI roles, validity and migration. | Certification-profile conformance gate. | G1-G3/G7/G14 positive, negative, migration and claim-safety evidence. |
+| PR87 - Concurrent serving and operational runtime | MERGED | Versioned process-scoped cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification plus installed worker lifecycle and Kubernetes drain probes. | TSan, sanitizer, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
+| PR88 - Typed C3-ECO certification profile | IN PROGRESS | Typed identities, units, functional links, boundary/materiality, AI roles, validity and migration. | Certification-profile conformance gate. | G1-G3/G7/G14 positive, negative, migration and claim-safety evidence. |
 | PR89 - Measurement, carbon accounting and cost workbook | PLANNED | Real instrumentation, allocation, PUE, component accounting, MQ/DQ, uncertainty and tariff provenance. | Deterministic measurement/workbook gate. | Calibration, missing-instrument, unit, factor, double-counting and reconciliation tests. |
 | PR90 - Eligibility, scoring, claims and eco-regression | PLANNED | G1-G14 algorithm, A-K scoring, level caps, AI routes, permitted claims and surveillance thresholds. | Golden scoring and claim-control gate. | Tier boundaries, critical-gate precedence, restricted claims and regression tests. |
 | PR91 - Auditor bundle, retention, surveillance and reporting | PLANNED | Signed lineage, canonical schemas, redaction, replay, retention, expiry, recertification and public reports. | Auditor-bundle verification dependency. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
@@ -93,16 +95,16 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr87_through_pr96: 10
-remaining_planned_implementation_prs_after_pr87: 9
+remaining_planned_implementation_prs_pr88_through_pr96: 9
+remaining_planned_implementation_prs_after_pr88: 8
 
-Next recommended PR after PR87 is merged:
+Next recommended PR after PR88 is merged:
 
-PR88 - Typed C3-ECO certification profile.
+PR89 - Measurement, carbon accounting and cost workbook.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the ten remaining implementation PRs.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the nine remaining implementation PRs.
 
 ## Historical roadmap anchors
 

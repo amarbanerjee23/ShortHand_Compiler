@@ -67,95 +67,124 @@ extern int yydebug;
     UMINUS = 268,                  /* UMINUS  */
     STRING_LITERAL = 269,          /* STRING_LITERAL  */
     IDENTIFIER = 270,              /* IDENTIFIER  */
-    INT_LITERAL = 271,             /* INT_LITERAL  */
-    FLOAT_LITERAL = 272,           /* FLOAT_LITERAL  */
-    READ = 273,                    /* READ  */
-    PRINT = 274,                   /* PRINT  */
-    GOTO = 275,                    /* GOTO  */
-    BREAK = 276,                   /* BREAK  */
-    WHILE = 277,                   /* WHILE  */
-    LOOP = 278,                    /* LOOP  */
-    ELSE = 279,                    /* ELSE  */
-    IF = 280,                      /* IF  */
-    DEF = 281,                     /* DEF  */
-    INT = 282,                     /* INT  */
-    FLOAT = 283,                   /* FLOAT  */
-    STRING = 284,                  /* STRING  */
-    VOID = 285,                    /* VOID  */
-    BOOL = 286,                    /* BOOL  */
-    DOUBLE = 287,                  /* DOUBLE  */
-    RETURN = 288,                  /* RETURN  */
-    CONTINUE = 289,                /* CONTINUE  */
-    TRUE = 290,                    /* TRUE  */
-    FALSE = 291,                   /* FALSE  */
-    MODEL = 292,                   /* MODEL  */
-    FORMAT = 293,                  /* FORMAT  */
-    PATH = 294,                    /* PATH  */
-    TASK = 295,                    /* TASK  */
-    PRECISION = 296,               /* PRECISION  */
-    INPUT_SHAPE = 297,             /* INPUT_SHAPE  */
-    OUTPUT_SHAPE = 298,            /* OUTPUT_SHAPE  */
-    BACKEND_PREFERENCE = 299,      /* BACKEND_PREFERENCE  */
-    COMPACT = 300,                 /* COMPACT  */
-    QUALITY_GUARDRAIL = 301,       /* QUALITY_GUARDRAIL  */
-    GREENAI_CONTRACT_T = 302,      /* GREENAI_CONTRACT_T  */
-    FUNCTIONAL_UNIT = 303,         /* FUNCTIONAL_UNIT  */
-    SUCCESS_CRITERIA = 304,        /* SUCCESS_CRITERIA  */
-    BOUNDARY = 305,                /* BOUNDARY  */
-    MEASUREMENT_QUALITY = 306,     /* MEASUREMENT_QUALITY  */
-    DATA_QUALITY = 307,            /* DATA_QUALITY  */
-    CARBON_FACTOR = 308,           /* CARBON_FACTOR  */
-    ENERGY_BUDGET_J = 309,         /* ENERGY_BUDGET_J  */
-    CARBON_BUDGET_GCO2E = 310,     /* CARBON_BUDGET_GCO2E  */
-    EVIDENCE_RETENTION = 311,      /* EVIDENCE_RETENTION  */
-    CLAIMS_MODE = 312,             /* CLAIMS_MODE  */
-    EVIDENCE_ONLY = 313,           /* EVIDENCE_ONLY  */
-    GREENAI_MEASURE = 314,         /* GREENAI_MEASURE  */
-    INFER = 315,                   /* INFER  */
-    TENSOR = 316,                  /* TENSOR  */
-    INT8 = 317,                    /* INT8  */
-    FP16 = 318,                    /* FP16  */
-    FP32 = 319,                    /* FP32  */
-    BF16 = 320,                    /* BF16  */
-    INT4 = 321,                    /* INT4  */
-    FP64 = 322,                    /* FP64  */
-    ONNX = 323,                    /* ONNX  */
-    ENGINE = 324,                  /* ENGINE  */
-    TORCHSCRIPT = 325,             /* TORCHSCRIPT  */
-    OPENVINO_IR = 326,             /* OPENVINO_IR  */
-    GGUF = 327,                    /* GGUF  */
-    TENSORRT = 328,                /* TENSORRT  */
-    ONNXRUNTIME_TENSORRT = 329,    /* ONNXRUNTIME_TENSORRT  */
-    ONNXRUNTIME_CUDA = 330,        /* ONNXRUNTIME_CUDA  */
-    ONNXRUNTIME_CPU = 331,         /* ONNXRUNTIME_CPU  */
-    OPENVINO = 332,                /* OPENVINO  */
-    LIBTORCH = 333,                /* LIBTORCH  */
-    LLAMACPP = 334,                /* LLAMACPP  */
-    FALLBACK = 335,                /* FALLBACK  */
-    MQ1 = 336,                     /* MQ1  */
-    MQ2 = 337,                     /* MQ2  */
-    MQ3 = 338,                     /* MQ3  */
-    MQ4 = 339,                     /* MQ4  */
-    DQ1 = 340,                     /* DQ1  */
-    DQ2 = 341,                     /* DQ2  */
-    DQ3 = 342,                     /* DQ3  */
-    DQ4 = 343,                     /* DQ4  */
-    LOCATION = 344,                /* LOCATION  */
-    CI_CD = 345,                   /* CI_CD  */
-    THIRDPARTY = 346,              /* THIRDPARTY  */
-    ACCELERATOR = 347,             /* ACCELERATOR  */
-    COMPUTE = 348,                 /* COMPUTE  */
-    STORAGE = 349,                 /* STORAGE  */
-    NETWORK = 350                  /* NETWORK  */
+    AI_INFER_BUILTIN = 271,        /* AI_INFER_BUILTIN  */
+    GREENAI_REPORT_BUILTIN = 272,  /* GREENAI_REPORT_BUILTIN  */
+    INT_LITERAL = 273,             /* INT_LITERAL  */
+    FLOAT_LITERAL = 274,           /* FLOAT_LITERAL  */
+    READ = 275,                    /* READ  */
+    PRINT = 276,                   /* PRINT  */
+    GOTO = 277,                    /* GOTO  */
+    BREAK = 278,                   /* BREAK  */
+    WHILE = 279,                   /* WHILE  */
+    LOOP = 280,                    /* LOOP  */
+    ELSE = 281,                    /* ELSE  */
+    IF = 282,                      /* IF  */
+    DEF = 283,                     /* DEF  */
+    INT = 284,                     /* INT  */
+    FLOAT = 285,                   /* FLOAT  */
+    STRING = 286,                  /* STRING  */
+    VOID = 287,                    /* VOID  */
+    BOOL = 288,                    /* BOOL  */
+    DOUBLE = 289,                  /* DOUBLE  */
+    RETURN = 290,                  /* RETURN  */
+    CONTINUE = 291,                /* CONTINUE  */
+    TRUE = 292,                    /* TRUE  */
+    FALSE = 293,                   /* FALSE  */
+    PACKAGE = 294,                 /* PACKAGE  */
+    MODULE = 295,                  /* MODULE  */
+    IMPORT = 296,                  /* IMPORT  */
+    AS = 297,                      /* AS  */
+    MODEL = 298,                   /* MODEL  */
+    FORMAT = 299,                  /* FORMAT  */
+    PATH = 300,                    /* PATH  */
+    TASK = 301,                    /* TASK  */
+    PRECISION = 302,               /* PRECISION  */
+    INPUT_SHAPE = 303,             /* INPUT_SHAPE  */
+    OUTPUT_SHAPE = 304,            /* OUTPUT_SHAPE  */
+    BACKEND_PREFERENCE = 305,      /* BACKEND_PREFERENCE  */
+    COMPACT = 306,                 /* COMPACT  */
+    QUALITY_GUARDRAIL = 307,       /* QUALITY_GUARDRAIL  */
+    GREENAI_CONTRACT_T = 308,      /* GREENAI_CONTRACT_T  */
+    FUNCTIONAL_UNIT = 309,         /* FUNCTIONAL_UNIT  */
+    SUCCESS_CRITERIA = 310,        /* SUCCESS_CRITERIA  */
+    BOUNDARY = 311,                /* BOUNDARY  */
+    MEASUREMENT_QUALITY = 312,     /* MEASUREMENT_QUALITY  */
+    DATA_QUALITY = 313,            /* DATA_QUALITY  */
+    CARBON_FACTOR = 314,           /* CARBON_FACTOR  */
+    ENERGY_BUDGET_J = 315,         /* ENERGY_BUDGET_J  */
+    CARBON_BUDGET_GCO2E = 316,     /* CARBON_BUDGET_GCO2E  */
+    EVIDENCE_RETENTION = 317,      /* EVIDENCE_RETENTION  */
+    CLAIMS_MODE = 318,             /* CLAIMS_MODE  */
+    EVIDENCE_ONLY = 319,           /* EVIDENCE_ONLY  */
+    GREENAI_MEASURE = 320,         /* GREENAI_MEASURE  */
+    INFER = 321,                   /* INFER  */
+    TENSOR = 322,                  /* TENSOR  */
+    CERTIFICATION_PROFILE = 323,   /* CERTIFICATION_PROFILE  */
+    CERTIFICATION = 324,           /* CERTIFICATION  */
+    WORKLOAD = 325,                /* WORKLOAD  */
+    MEASUREMENT_PLAN = 326,        /* MEASUREMENT_PLAN  */
+    AI_LIFECYCLE = 327,            /* AI_LIFECYCLE  */
+    RAG_PIPELINE = 328,            /* RAG_PIPELINE  */
+    TOKEN_BUDGET = 329,            /* TOKEN_BUDGET  */
+    MODEL_ROUTING = 330,           /* MODEL_ROUTING  */
+    GUARDRAILS = 331,              /* GUARDRAILS  */
+    INT8 = 332,                    /* INT8  */
+    FP16 = 333,                    /* FP16  */
+    FP32 = 334,                    /* FP32  */
+    BF16 = 335,                    /* BF16  */
+    INT4 = 336,                    /* INT4  */
+    FP64 = 337,                    /* FP64  */
+    ONNX = 338,                    /* ONNX  */
+    ENGINE = 339,                  /* ENGINE  */
+    TORCHSCRIPT = 340,             /* TORCHSCRIPT  */
+    OPENVINO_IR = 341,             /* OPENVINO_IR  */
+    GGUF = 342,                    /* GGUF  */
+    TENSORRT = 343,                /* TENSORRT  */
+    ONNXRUNTIME_TENSORRT = 344,    /* ONNXRUNTIME_TENSORRT  */
+    ONNXRUNTIME_CUDA = 345,        /* ONNXRUNTIME_CUDA  */
+    ONNXRUNTIME_CPU = 346,         /* ONNXRUNTIME_CPU  */
+    OPENVINO = 347,                /* OPENVINO  */
+    LIBTORCH = 348,                /* LIBTORCH  */
+    LLAMACPP = 349,                /* LLAMACPP  */
+    FALLBACK = 350,                /* FALLBACK  */
+    MQ1 = 351,                     /* MQ1  */
+    MQ2 = 352,                     /* MQ2  */
+    MQ3 = 353,                     /* MQ3  */
+    MQ4 = 354,                     /* MQ4  */
+    DQ1 = 355,                     /* DQ1  */
+    DQ2 = 356,                     /* DQ2  */
+    DQ3 = 357,                     /* DQ3  */
+    DQ4 = 358,                     /* DQ4  */
+    LOCATION = 359,                /* LOCATION  */
+    CI_CD = 360,                   /* CI_CD  */
+    THIRDPARTY = 361,              /* THIRDPARTY  */
+    ACCELERATOR = 362,             /* ACCELERATOR  */
+    COMPUTE = 363,                 /* COMPUTE  */
+    STORAGE = 364,                 /* STORAGE  */
+    NETWORK = 365                  /* NETWORK  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */
 
+/* Location type.  */
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
+
 
 extern YYSTYPE yylval;
-
+extern YYLTYPE yylloc;
 
 int yyparse (void);
 
