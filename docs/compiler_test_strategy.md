@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-01-pr88
+compiler_test_strategy_version: 2026-09-02-pr89
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,17 +13,19 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 33-area production test matrix records for the GitHub PR88 candidate:
+The 34-area production test matrix records for the GitHub PR89 candidate:
 
-- 27 implemented areas,
+- 28 implemented areas,
 - 3 partial areas,
 - 3 open areas.
 
-Roadmap PR74, merged as GitHub PR75, closed compiler/platform portability, independent reproducibility, frozen ABI consumer and installed SDK lifecycle blockers. Roadmap PR75, merged as GitHub PR76, added fail-closed signed-release publication architecture, while TST017 remains partial until a real protected tag publication is cryptographically verified. GitHub PR77 closed TST018 for the original security contract. GitHub PR78 closed TST019 for deployment, GitHub PR79 closed TST020 for formatter/linter, GitHub PR80 closed TST021 for LSP/editor, GitHub PR81 closed TST022 for the live CPU backend, GitHub PR82 added first-class C3-ECO declarations, GitHub PR83 closed TST028 production truth, GitHub PR84 closed TST029 type/memory descriptors, GitHub PR85 closed TST030 functions/control flow, GitHub PR86 closed TST031 enterprise language/package/FFI and GitHub PR87 closed TST032 concurrent serving. GitHub PR88 closes TST033 with `shorthand.c3eco.profile.v2`, native field types, cross-declaration validation, deterministic migration, stable diagnostics and claim-safety evidence.
+GitHub PR75 through PR88 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving and the typed C3-ECO profile.
 
-Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 compiler execution, CTest parity, reproducible clean builds, frozen ABI consumers, install/reinstall/uninstall package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, bounded process-scoped serving, formatter/linter preservation, native LSP/editor qualification and qualification-aware AI backend routing.
+GitHub PR89 adds TST034, `shorthand.c3eco.measurement_workbook.v1`, with native instrument-backed measurement accounting, provenance, deterministic reconciliation, double-count rejection and claim-safe separation from PR90 scoring and PR95 equivalent-workload energy comparison.
 
-Production-critical gaps remain for composite execution lowering beyond the bounded ABI schema, public authenticated service ingress, measured C3-ECO scoring and authority-ready evidence lineage, production MLIR lowering, representative AI workloads, measured performance/energy and the final release-candidate gate.
+Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing and measured-accounting validation.
+
+Production-critical gaps remain for C3-ECO scoring/auditor lifecycle, generated MLIR and full production lowering, representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
 
 ## Production backend and hardware qualification contract
 
@@ -48,15 +50,11 @@ TST022 requires all of the following on the exact candidate head:
 15. inherited `ubuntu-core` execution of the exact live CPU qualification,
 16. unchanged parser, semantic, sanitizer/race, portability, security, deployment and tooling gates.
 
-GPU, TPU and NPU are explicitly not production-supported in v1. If a future ShortHand version adds any accelerator or additional backend/platform to its production support matrix, that new row must provide real device-backed numerical execution before it can be called implemented.
+GPU, TPU and NPU are explicitly not production-supported in v1. A future support expansion must provide real device-backed numerical execution before it can be called implemented.
 
-## Syntax highlighting and LSP correctness contract
+## Tooling correctness contracts
 
-Roadmap PR79 was implemented as GitHub PR80 through `shorthand.tooling.lsp.v1`. It requires scanner-aligned configuration, native bounded JSON-RPC, UTF-16 positions, compiler-backed diagnostics, deterministic editor requests, cancellation, malformed-input handling, GCC/Clang/ASan/UBSan and inherited ubuntu-core execution.
-
-LSP/editor success is not inferred from JSON/text presence. An unavailable compiler oracle in editor tooling must fail visibly. The v1 LSP contract does not claim rename/refactor, semantic tokens, workspace-wide indexing or debugger integration.
-
-## Formatter and linter correctness contract
+Roadmap PR79 was implemented as GitHub PR80 through `shorthand.tooling.lsp.v1`. LSP/editor success is not inferred from JSON/text presence. An unavailable compiler oracle in editor tooling must fail visibly. The contract requires scanner-aligned configuration, native bounded JSON-RPC, UTF-16 positions, compiler-backed diagnostics, deterministic requests, cancellation and malformed-input handling.
 
 Roadmap PR78 was implemented as GitHub PR79 through native `shorthand_tool` and `shorthand.tooling.format_lint.v1`. Formatter success is not inferred from source-text checks. Parser acceptance, idempotence, behavior preservation, diagnostics and safe explicit-output fixes remain executable evidence.
 
@@ -75,7 +73,8 @@ Every remaining implementation PR through PR96 must include all applicable layer
 | Security | Untrusted input, path, network, dependency or privilege boundaries receive misuse tests. |
 | Portability | Platform-sensitive code gets independent toolchain/platform checks when available. |
 | Performance | Hot paths receive bounded regression evidence or an explicit non-performance rationale. |
-| Documentation guard | Roadmap, feature status and test coverage matrix update in the same PR. |
+| Energy/evidence | Measurement or energy changes prove units, provenance, uncertainty, allocation and claim boundaries. |
+| Documentation guard | Roadmap, feature status, production truth, traceability and test coverage matrix update together. |
 | Pipeline behavior | New mandatory jobs fail closed, emit usable evidence and cannot be satisfied by cancellation or unconditional skip. |
 
 ## Test quality rules
@@ -109,12 +108,15 @@ Every remaining implementation PR through PR96 must include all applicable layer
 27. Enterprise schema, package, standard-library or FFI changes must pass the beta-0.6 language, tamper, exact-version, license, SPDX, sanitizer, ABI-symbol and installed-consumer gate.
 28. Serving changes must preserve bounded admission, deadlines, cooperative cancellation, tenant isolation, low-cardinality telemetry and graceful drain under unit, load, sanitizer, TSan, installed-consumer and Kubernetes lifecycle evidence.
 29. Typed C3-ECO profile changes must pass beta-0.7 positive, eight-code negative, migration, native-JSON, schema, metadata and claim-safety evidence without granting certification.
+30. Measured-accounting changes must reject declared/modelled evidence, require instrument/calibration/factor/tariff provenance, prevent double counting, preserve offsets outside the base footprint and reconcile energy/carbon/cost deterministically.
 
 ## CI profiles
 
 ### Pull-request profile
 
-The mandatory DAG runs production-truth/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility, external security and deployment qualification. Tooling runs formatter/linter and LSP/editor jobs under GCC, Clang and ASan/UBSan. The inherited `ubuntu-core` feature-plan gate preserves the mandatory pinned ONNX Runtime CPU live qualification introduced by GitHub PR81. Normal PR jobs do not receive release OIDC or repository-write permissions.
+The mandatory DAG runs production-truth/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility, external security and deployment qualification. Tooling runs formatter/linter and LSP/editor jobs under GCC, Clang and ASan/UBSan. The inherited `ubuntu-core` feature-plan gate preserves the mandatory pinned ONNX Runtime CPU live qualification. Normal PR jobs do not receive release OIDC or repository-write permissions.
+
+PR89 additionally requires the native measured-accounting gate to run through the repository governance/build paths. A missing measurement executable, invalid provenance or failed negative fixture is a hard failure.
 
 ### Scheduled profile
 
@@ -142,30 +144,21 @@ ShortHand may claim enterprise production readiness only when:
 
 The following exact strings are retained only for milestone guards and are not current counts:
 
+- compiler_test_strategy_version: 2026-09-01-pr88
+- 27 implemented areas
+- 3 partial areas
+- 3 open areas
 - compiler_test_strategy_version: 2026-08-21-pr82
 - 21 implemented areas
-- 3 partial areas
-- 3 open areas
-
 - compiler_test_strategy_version: 2026-08-18-pr81
-- 21 implemented areas
-- 3 partial areas
-- 3 open areas
-
 - compiler_test_strategy_version: 2026-08-18-pr80
 - 20 implemented areas
-- 4 partial areas
-- 3 open areas
 - compiler_test_strategy_version: 2026-08-18-pr79
 - 19 implemented areas
-- 4 partial areas
-- 4 open areas
 - compiler_test_strategy_version: 2026-08-12-pr78
 - 18 implemented areas
-- 5 open areas
 - compiler_test_strategy_version: 2026-08-12-pr77
 - 17 implemented areas
-- 6 open areas
 - compiler_test_strategy_version: 2026-08-12-pr76
 - 16 implemented areas
 - 5 partial areas
@@ -174,4 +167,4 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-01-pr88`.
+The current strategy is `2026-09-02-pr89`.
