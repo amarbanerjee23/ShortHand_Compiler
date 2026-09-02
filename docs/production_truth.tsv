@@ -11,7 +11,7 @@ current_github_pr	89
 last_planned_github_pr	96
 remaining_implementation_prs_including_current	8
 remaining_implementation_prs_after_current	7
-coverage_matrix_status	implemented=27,partial=3,open=3,total=33
+coverage_matrix_status	implemented=28,partial=3,open=3,total=34
 type_system_contract	shorthand.type_memory.v1
 control_flow_contract	shorthand.control_flow.v1
 enterprise_language_contract	shorthand.enterprise_language.v1
