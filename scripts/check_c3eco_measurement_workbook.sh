@@ -4,11 +4,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC="$ROOT/Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp"
 CXX_BIN="${CXX:-c++}"
-TOOL="${SHORTHAND_C3ECO_MEASURE_BIN:-/tmp/shorthand_c3eco_measure_pr89}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-"$CXX_BIN" -std=c++17 -Wall -Wextra -Wpedantic -Werror "$SRC" -o "$TOOL"
+if [[ -n "${SHORTHAND_C3ECO_MEASURE_BIN:-}" ]]; then
+  TOOL="$SHORTHAND_C3ECO_MEASURE_BIN"
+  [[ -x "$TOOL" ]] || { echo "measurement tool is not executable: $TOOL" >&2; exit 1; }
+else
+  TOOL="$TMP/shorthand_c3eco_measure"
+  "$CXX_BIN" ${C3ECO_MEASURE_CXXFLAGS:--std=c++17 -Wall -Wextra -Wpedantic -Werror} "$SRC" -o "$TOOL"
+fi
 
 HEADER=$'record_id\tcomponent\tsource_kind\tinstrument_id\tcalibration_id\tcalibration_date\tmeasured_at\traw_energy_j\tallocation_fraction\tpue\tcarbon_factor_gco2e_per_kwh\tfactor_source\tfactor_date\ttariff_per_kwh\ttariff_currency\ttariff_source\tuncertainty_percent\tmeasurement_quality\tdata_quality\tevidence_ref'
 printf '%s\n' "$HEADER" \
@@ -40,7 +45,7 @@ expect_fail() {
     echo "expected failure for $name" >&2
     exit 1
   fi
-  grep -q "$1" "$TMP/$name.err"
+  grep -Fq "$1" "$TMP/$name.err"
 }
 
 # Modelled or declared values can remain candidate evidence, but cannot be promoted to measured evidence.
