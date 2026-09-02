@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.invalid/schemas/c3eco_measurement_workbook_v1.schema.json",
+  "title": "ShortHand C3-ECO measured accounting workbook v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "measurement_status",
+    "official_certification_granted",
+    "base_footprint_not_reduced_by_offsets",
+    "allocation_policy",
+    "record_count",
+    "totals",
+    "records",
+    "claim_safe_text",
+    "next_qualification"
+  ],
+  "properties": {
+    "schema": {"const": "shorthand.c3eco.measurement_workbook.v1"},
+    "measurement_status": {"const": "measured_instrumented"},
+    "official_certification_granted": {"const": false},
+    "base_footprint_not_reduced_by_offsets": {"const": true},
+    "allocation_policy": {"type": "string", "minLength": 1},
+    "record_count": {"type": "integer", "minimum": 1},
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allocated_it_energy_j", "facility_energy_kwh", "carbon_kgco2e", "uncertainty_kwh", "uncertainty_carbon_kgco2e", "cost_by_currency"],
+      "properties": {
+        "allocated_it_energy_j": {"type": "number", "exclusiveMinimum": 0},
+        "facility_energy_kwh": {"type": "number", "exclusiveMinimum": 0},
+        "carbon_kgco2e": {"type": "number", "exclusiveMinimum": 0},
+        "uncertainty_kwh": {"type": "number", "minimum": 0},
+        "uncertainty_carbon_kgco2e": {"type": "number", "minimum": 0},
+        "cost_by_currency": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0}}
+      }
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "record_id", "component", "source_kind", "instrument_id", "calibration_id", "calibration_date",
+          "measured_at", "raw_energy_j", "allocation_fraction", "allocated_it_energy_j", "pue", "facility_energy_kwh",
+          "carbon_factor_gco2e_per_kwh", "factor_source", "factor_date", "carbon_kgco2e", "tariff_per_kwh",
+          "tariff_currency", "tariff_source", "cost", "uncertainty_percent", "uncertainty_kwh",
+          "uncertainty_carbon_kgco2e", "measurement_quality", "data_quality", "evidence_ref"
+        ],
+        "properties": {
+          "record_id": {"type": "string", "minLength": 1},
+          "component": {"type": "string", "minLength": 1},
+          "source_kind": {"enum": ["physical_meter", "rapl", "accelerator_counter", "cloud_meter"]},
+          "instrument_id": {"type": "string", "minLength": 1},
+          "calibration_id": {"type": "string", "minLength": 1},
+          "calibration_date": {"type": "string", "format": "date"},
+          "measured_at": {"type": "string", "minLength": 10},
+          "raw_energy_j": {"type": "number", "exclusiveMinimum": 0},
+          "allocation_fraction": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+          "allocated_it_energy_j": {"type": "number", "exclusiveMinimum": 0},
+          "pue": {"type": "number", "minimum": 1, "maximum": 3},
+          "facility_energy_kwh": {"type": "number", "exclusiveMinimum": 0},
+          "carbon_factor_gco2e_per_kwh": {"type": "number", "exclusiveMinimum": 0, "maximum": 2500},
+          "factor_source": {"type": "string", "minLength": 1},
+          "factor_date": {"type": "string", "format": "date"},
+          "carbon_kgco2e": {"type": "number", "exclusiveMinimum": 0},
+          "tariff_per_kwh": {"type": "number", "minimum": 0, "maximum": 10000},
+          "tariff_currency": {"type": "string", "minLength": 3, "maxLength": 3},
+          "tariff_source": {"type": "string", "minLength": 1},
+          "cost": {"type": "number", "minimum": 0},
+          "uncertainty_percent": {"type": "number", "minimum": 0, "maximum": 100},
+          "uncertainty_kwh": {"type": "number", "minimum": 0},
+          "uncertainty_carbon_kgco2e": {"type": "number", "minimum": 0},
+          "measurement_quality": {"enum": ["high", "medium", "low"]},
+          "data_quality": {"enum": ["high", "medium", "low"]},
+          "evidence_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "claim_safe_text": {"type": "string", "minLength": 1},
+    "next_qualification": {"type": "string", "minLength": 1}
+  }
+}
