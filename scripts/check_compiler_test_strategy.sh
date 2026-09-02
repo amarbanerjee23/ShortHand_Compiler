@@ -17,6 +17,9 @@ LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
 BACKEND_DOC="${ROOT_DIR}/docs/production_backend_hardware_qualification.md"
 C3ECO_DOC="${ROOT_DIR}/docs/c3eco_language_contract.md"
 PROFILE_DOC="${ROOT_DIR}/docs/c3eco_certification_profile.md"
+MEASUREMENT_DOC="${ROOT_DIR}/docs/c3eco_measurement_workbook.md"
+MEASUREMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_measurement_workbook_v1.schema.json"
+MEASUREMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
@@ -24,7 +27,7 @@ TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
   "${ROOT_DIR}/scripts/check_semantic_differential.sh" \
   "${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh" \
   "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" \
@@ -79,24 +82,24 @@ row_count="$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' 
 implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END { print count+0 }' "${MATRIX}")"
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
-[[ "${row_count}" == 33 ]] || { echo "error: expected 33 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 27 ]] || { echo "error: expected 27 implemented rows in the PR88 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR88 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR88 candidate" >&2; exit 1; }
+[[ "${row_count}" == 34 ]] || { echo "error: expected 34 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
+[[ "${implemented_count}" == 28 ]] || { echo "error: expected 28 implemented rows in the PR89 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR89 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR89 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
 duplicate_ids="$(tail -n +2 "${MATRIX}" | cut -f1 | sort | uniq -d)"
 [[ -z "${duplicate_ids}" ]] || { echo "error: duplicate compiler test matrix IDs: ${duplicate_ids}" >&2; exit 1; }
-for number in $(seq 1 33); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 34); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 for pr in $(seq 68 80); do require_contains "${PLAN}" "PR${pr} -"; done
 require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-01-pr88' \
+  'compiler_test_strategy_version: 2026-09-02-pr89' \
   'production_claim: false' \
-  '27 implemented areas' \
+  '28 implemented areas' \
   '3 partial areas' \
   '3 open areas' \
   'Required test layers for every implementation PR' \
@@ -108,6 +111,7 @@ for anchor in \
   'LSP/editor success is not inferred from JSON/text presence.' \
   'An unavailable compiler oracle in editor tooling must fail visibly' \
   'Backend SDK installation or hardware detection is not backend qualification.' \
+  'Measured-accounting changes must reject declared/modelled evidence' \
   'CPU/GPU/TPU/NPU'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -121,8 +125,8 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-01-pr88'
-require_contains "${STATUS}" '27 implemented, 3 partial and 3 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-02-pr89'
+require_contains "${STATUS}" '28 implemented, 3 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
@@ -147,6 +151,7 @@ require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and det
 require_contains "${MATRIX}" $'TST031\tenterprise language packages core library and FFI\timplemented'
 require_contains "${MATRIX}" $'TST032\tconcurrent serving and operational runtime\timplemented'
 require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timplemented'
+require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
 
 require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\tpartial\tFirst-class C3-ECO grammar AST semantics evidence, typed profile v2 and SHD5101-SHD5208 claim-safety gates'
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
@@ -161,6 +166,9 @@ require_contains "${ROOT_DIR}/docs/concurrent_serving_runtime.md" 'serving_runti
 require_contains "${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh" 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
 require_contains "${PROFILE_DOC}" 'c3eco_profile_contract: shorthand.c3eco.profile.v2'
 require_contains "${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh" 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate'
+require_contains "${MEASUREMENT_DOC}" 'shorthand.c3eco.measurement_workbook.v1'
+require_contains "${MEASUREMENT_DOC}" 'PR95 owns equivalent-workload ShortHand/Python performance and energy comparison'
+require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
 require_contains "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" 'SERVING_MEMORY_SANITIZER contract=shorthand.serving.runtime.v1'
 require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'SERVING_TSAN contract=shorthand.serving.runtime.v1'
 bash "${ROOT_DIR}/scripts/check_production_truth.sh"
