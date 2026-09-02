@@ -48,7 +48,7 @@ C3-ECO outputs remain candidate evidence only. PR89 closes instrument-backed G4 
 | --- | --- | --- |
 | Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1` | pinned live SDK, real identity-model execution and output `42`; realistic production workload qualification remains PR94. |
 | Full backend compatibility | Implemented for declared v1 support set | `onnxruntime_cpu` + CPU is the only production-supported pair. |
-| Runtime observability | Implemented for process-scoped serving v1 | health JSON, Prometheus metrics and operational lifecycle evidence. |
+| Runtime observability implementation | Implemented for process-scoped serving v1 | health JSON, Prometheus metrics and operational lifecycle evidence. |
 | CPU/GPU/TPU/NPU routing | Implemented for qualification-aware v1 policy | accelerators remain inventory-only until live device-backed qualification. |
 
 ## Security, release, deployment and tooling status
@@ -101,6 +101,8 @@ GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` product
 
 These strings are historical, not active state:
 
+- Module/import/package model
+- Compiled-code metadata/runtime lowering
 - feature_status_version: 2026-09-01-pr88
 - current_github_pr: 88
 - current_roadmap_scope: typed_c3eco_certification_profile
