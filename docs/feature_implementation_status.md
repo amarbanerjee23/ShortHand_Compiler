@@ -99,10 +99,26 @@ GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` product
 
 ## Historical audit anchors
 
-These strings are historical, not active state:
+These strings are historical compatibility anchors required by the repository's fail-closed governance checks. They are not active-state claims:
 
-- Module/import/package model
+- Base grammar and module extension matrices
+- Module/import/package syntax and AST scaffold
+- Deterministic module resolver and multi-file codegen
+- Source-aware diagnostics
+- Full sanitizer coverage
+- Continuous fuzzing
+- Concurrency and race detection
 - Compiled-code metadata/runtime lowering
+- MLIR dialect scaffold
+- Module/import/package model
+- Enterprise schemas and ownership plans
+- Offline packages, core library and safe FFI
+- Cross-platform portability | Implemented for PR74 tiers
+- Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1`
+- GitHub PR85 implemented beta-0.5 functions/control flow
+- GitHub PR86 implemented the bounded beta-0.6 enterprise schema
+- GitHub PR87 implemented the process-scoped concurrent serving and operational runtime
+- GitHub PR88 now implements the beta-0.7 typed C3-ECO certification-preparation profile
 - feature_status_version: 2026-09-01-pr88
 - current_github_pr: 88
 - current_roadmap_scope: typed_c3eco_certification_profile
