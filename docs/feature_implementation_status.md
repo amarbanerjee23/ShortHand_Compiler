@@ -111,6 +111,7 @@ These strings are historical compatibility anchors required by the repository's 
 - Compiled-code metadata/runtime lowering
 - MLIR dialect scaffold
 - Module/import/package model
+- language versioning and conformance policy gate
 - Enterprise schemas and ownership plans
 - Offline packages, core library and safe FFI
 - Cross-platform portability | Implemented for PR74 tiers
