@@ -272,10 +272,10 @@ test-ai-app: ai_app
 sanitize:
 	$(MAKE) clean
 	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool c3eco_measurement_tool runtime_lib
-	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_certification_profile.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) bash ../../../scripts/check_c3eco_measurement_workbook.sh
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
 
 format-check:
 	@if ! command -v clang-format >/dev/null 2>&1; then \
