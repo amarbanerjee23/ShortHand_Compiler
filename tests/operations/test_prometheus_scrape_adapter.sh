@@ -45,7 +45,7 @@ cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \
   shorthand_serving shorthand_serving_worker shorthand_lsp \
-  shorthand_prometheus_adapter
+  shorthand_c3eco_measure shorthand_prometheus_adapter
 
 ADAPTER="${BUILD_DIR}/shorthand_prometheus_adapter"
 [[ -x "${ADAPTER}" ]] || { echo "error: adapter executable was not produced" >&2; exit 1; }
