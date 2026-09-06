@@ -48,7 +48,7 @@ cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \
   shorthand_serving shorthand_serving_worker shorthand_lsp \
-  shorthand_otlp_exporter
+  shorthand_c3eco_measure shorthand_otlp_exporter
 EXPORTER="${BUILD_DIR}/shorthand_otlp_exporter"
 [[ -x "${EXPORTER}" ]] || { echo "error: OTLP exporter executable was not produced" >&2; exit 1; }
 

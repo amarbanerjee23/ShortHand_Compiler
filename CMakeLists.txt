@@ -348,6 +348,11 @@ target_compile_features(shorthand_lsp PRIVATE cxx_std_17)
 
 add_executable(green_ai_tool ${SRC_DIR}/green_ai/GreenAITool.cpp)
 
+add_executable(shorthand_c3eco_measure
+  ${SRC_DIR}/evidence/MeasurementWorkbook.cpp
+)
+target_compile_features(shorthand_c3eco_measure PRIVATE cxx_std_17)
+
 if(DEFINED ENV{ONNXRUNTIME_ROOT})
   message(STATUS "ONNX Runtime root: $ENV{ONNXRUNTIME_ROOT}")
 else()
@@ -375,7 +380,7 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-install(TARGETS shorthand_lsp shorthand_serving_worker
+install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
@@ -533,6 +538,15 @@ if(SHORTHAND_BUILD_TESTING)
   )
 
   add_test(
+    NAME c3eco_measurement_workbook
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_measurement_workbook.sh
+  )
+  set_tests_properties(c3eco_measurement_workbook PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>"
+  )
+
+  add_test(
     NAME cmake_short_hand_greenai_run
     COMMAND $<TARGET_FILE:short_hand> ${CMAKE_CURRENT_SOURCE_DIR}/Compiler_new_ws/Short_Hand/examples/greenai_report.short run
   )
@@ -549,6 +563,11 @@ if(SHORTHAND_BUILD_TESTING)
   add_test(
     NAME cmake_shorthand_lsp_builds
     COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_lsp>"
+  )
+
+  add_test(
+    NAME cmake_shorthand_c3eco_measure_builds
+    COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:shorthand_c3eco_measure>"
   )
 
   add_test(

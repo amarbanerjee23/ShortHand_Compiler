@@ -52,6 +52,7 @@ for anchor in \
   'add_library(shorthand_core_shared SHARED' \
   'add_library(shorthand_serving STATIC' \
   'add_executable(shorthand_serving_worker' \
+  'add_executable(shorthand_c3eco_measure' \
   'SOVERSION ${SHORTHAND_RUNTIME_ABI_VERSION_MAJOR}' \
   'install(EXPORT ShortHandTargets' \
   'configure_package_config_file(' \
@@ -67,6 +68,8 @@ require_contains "${TEST}" 'ShortHand::runtime_shared'
 require_contains "${TEST}" 'ShortHand::ai_bridge_shared'
 require_contains "${TEST}" 'ShortHand::core_shared'
 require_contains "${TEST}" 'ShortHand::serving'
+require_contains "${TEST}" 'shorthand_c3eco_measure'
+require_contains "${TEST}" "require_installed '*/bin/shorthand_c3eco_measure'"
 require_contains "${TEST}" 'SONAME.*libshorthand_runtime'
 require_contains "${TEST}" 'pkg-config --modversion shorthand-runtime'
 require_contains "${TEST}" 'PASS production runtime AI bridge core FFI and serving packaging consumer gate'

@@ -39,6 +39,7 @@ cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \
   shorthand_serving shorthand_serving_worker shorthand_lsp \
+  shorthand_c3eco_measure \
   shorthand_prometheus_adapter shorthand_otlp_exporter
 
 stage install-artifacts
@@ -70,6 +71,7 @@ require_installed '*/libshorthand_core.a'
 require_installed '*/libshorthand_serving.a'
 require_installed '*/bin/shorthand_lsp'
 require_installed '*/bin/shorthand_serving_worker'
+require_installed '*/bin/shorthand_c3eco_measure'
 require_installed '*/bin/shorthand_prometheus_adapter'
 require_installed '*/bin/shorthand_otlp_exporter'
 require_installed '*/ShortHandConfig.cmake'

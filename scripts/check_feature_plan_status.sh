@@ -13,6 +13,10 @@ required_files=(
   docs/c3eco_traceability.tsv
   docs/production_backend_hardware_qualification.md
   docs/c3eco_language_contract.md
+  docs/c3eco_measurement_workbook.md
+  schemas/c3eco_measurement_workbook_v1.schema.json
+  Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp
+  scripts/check_c3eco_measurement_workbook.sh
   docs/execution_semantics_beta_0_3.md
   docs/execution_semantics_beta_0_4.md
   docs/production_type_memory_model.md
@@ -113,16 +117,34 @@ required_status_terms=(
   "Offline packages, core library and safe FFI"
   "Concurrent serving and operational runtime"
   "Typed C3-ECO certification profile"
+  "Instrumented C3-ECO measurement/accounting"
 )
 for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
+# Active PR89 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-01-pr88' \
+  'feature_status_version: 2026-09-02-pr89' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
+  'current_github_pr: 89' \
+  'current_roadmap_scope: measurement_carbon_accounting_cost_workbook' \
+  '28 implemented, 3 partial and 3 open' \
+  'GitHub PR89 now implements `shorthand.c3eco.measurement_workbook.v1`' \
+  'Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate' \
+  'c3eco_measurement_contract: shorthand.c3eco.measurement_workbook.v1' \
+  'measurement_status: measured_instrumented' \
+  'comparative_energy_claim: false' \
+  'official_certification_granted: false'; do
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR89 active anchor: ${anchor}" >&2; exit 1; }
+done
+
+# Stable historical anchors remain mandatory so a new PR cannot erase previously
+# qualified compiler/release evidence from the feature tracker.
+for anchor in \
+  'feature_status_version: 2026-09-01-pr88' \
   'current_github_pr: 88' \
   'current_roadmap_scope: typed_c3eco_certification_profile' \
   '27 implemented, 3 partial and 3 open' \
@@ -139,7 +161,7 @@ for anchor in \
   'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1`' \
   'Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1`' \
   'Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1`'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing current anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing historical audit anchor: ${anchor}" >&2; exit 1; }
 done
 
 grep -Fq 'resolution_status: deterministic_manifest_locked_multi_file_codegen' docs/module_resolution_and_lockfile.md
@@ -150,6 +172,11 @@ grep -Fq 'control_flow_contract: shorthand.control_flow.v1' docs/functions_contr
 grep -Fq 'enterprise_contract: shorthand.enterprise_language.v1' docs/enterprise_packages_stdlib_ffi.md
 grep -Fq 'serving_runtime_contract: shorthand.serving.runtime.v1' docs/concurrent_serving_runtime.md
 grep -Fq 'c3eco_profile_contract: shorthand.c3eco.profile.v2' docs/c3eco_certification_profile.md
+grep -Fq 'contract: `shorthand.c3eco.measurement_workbook.v1`' docs/c3eco_measurement_workbook.md
+grep -Fq 'official_certification_granted: false' docs/c3eco_measurement_workbook.md
+grep -Fq 'PR95 owns equivalent-workload ShortHand/Python performance and energy comparison' docs/c3eco_measurement_workbook.md
+grep -Fq 'shorthand.c3eco.measurement_workbook.v1' schemas/c3eco_measurement_workbook_v1.schema.json
+grep -Fq 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate' scripts/check_c3eco_measurement_workbook.sh
 grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
 grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
 grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
@@ -193,9 +220,9 @@ grep -Fq 'GCC LSP editor protocol gate' .github/workflows/tooling.yml
 grep -Fq 'Clang LSP editor protocol gate' .github/workflows/tooling.yml
 grep -Fq 'ASan UBSan LSP editor protocol gate' .github/workflows/tooling.yml
 
-# TST019-TST022 are executable contracts. Run deterministic portions on every
-# invocation. Live device/SDK evidence is mandatory on the inherited Linux x64
-# ubuntu-core CI lane and is never represented as a skip.
+# TST019-TST022 plus PR89 measurement evidence are executable contracts. Run
+# deterministic portions on every invocation. Live device/SDK evidence remains
+# mandatory on the inherited Linux x64 ubuntu-core CI lane and is never skipped.
 bash scripts/check_container_kubernetes_hardening.sh
 bash tests/deployment/test_container_kubernetes_hardening_negative.sh
 bash scripts/check_formatter_linter.sh
@@ -208,6 +235,7 @@ bash scripts/check_functions_control_error_semantics.sh
 bash scripts/check_enterprise_packages_stdlib_ffi.sh
 bash scripts/check_concurrent_serving_runtime.sh
 bash scripts/check_c3eco_certification_profile.sh
+bash scripts/check_c3eco_measurement_workbook.sh
 bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
@@ -251,7 +279,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR88 establishes typed C3-ECO identity, units, links, boundary/materiality, lifecycle, safeguards, validity and migration while preserving beta-0.7 compatibility and all zero-skip qualification gates; PR89-PR96 and the protected release exercise remain fail-closed."
+echo "Feature plan status check passed. GitHub PR89 adds instrument-backed energy, carbon and cost accounting while preserving beta-0.7 compatibility, all prior audit anchors and all zero-skip qualification gates; PR90-PR96 and the protected release exercise remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

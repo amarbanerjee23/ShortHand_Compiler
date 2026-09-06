@@ -22,6 +22,10 @@ C3ECO_CONTRACT="${ROOT_DIR}/docs/c3eco_language_contract.md"
 PROFILE_CONTRACT="${ROOT_DIR}/docs/c3eco_certification_profile.md"
 PROFILE_MATRIX="${ROOT_DIR}/tests/conformance/c3eco_profile_matrix_beta_0_7.tsv"
 PROFILE_GATE="${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh"
+MEASUREMENT_CONTRACT="${ROOT_DIR}/docs/c3eco_measurement_workbook.md"
+MEASUREMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_measurement_workbook_v1.schema.json"
+MEASUREMENT_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp"
+MEASUREMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
 CONTROL_FLOW_CONTRACT="${ROOT_DIR}/docs/functions_control_error_semantics.md"
 CONTROL_FLOW_MATRIX="${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv"
 CONTROL_FLOW_GATE="${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh"
@@ -43,7 +47,9 @@ truth_value() { awk -F '\t' -v key="$1" 'NR > 1 && $1 == key { print $2 }' "${TR
 
 for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATEGY}" "${MATRIX}" \
   "${LANGUAGE_SPEC}" "${LANGUAGE_COMPATIBILITY}" "${LIMITATIONS}" "${RELEASE_STATUS}" \
-  "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" "${C3ECO_CONTRACT}" "${PROFILE_CONTRACT}" "${PROFILE_MATRIX}" "${PROFILE_GATE}" \
+  "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" \
+  "${C3ECO_CONTRACT}" "${PROFILE_CONTRACT}" "${PROFILE_MATRIX}" "${PROFILE_GATE}" \
+  "${MEASUREMENT_CONTRACT}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_TOOL}" "${MEASUREMENT_GATE}" \
   "${CONTROL_FLOW_CONTRACT}" "${CONTROL_FLOW_MATRIX}" "${CONTROL_FLOW_GATE}" \
   "${ENTERPRISE_CONTRACT}" "${ENTERPRISE_MATRIX}" "${ENTERPRISE_GATE}" \
   "${SERVING_CONTRACT}" "${SERVING_GATE}" "${README}"; do
@@ -61,18 +67,18 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-01'
+  'as_of_date=2026-09-02'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=87'
-  'current_github_pr=88'
+  'last_merged_github_pr=88'
+  'current_github_pr=89'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=9'
-  'remaining_implementation_prs_after_current=8'
-  'coverage_matrix_status=implemented=27,partial=3,open=3,total=33'
+  'remaining_implementation_prs_including_current=8'
+  'remaining_implementation_prs_after_current=7'
+  'coverage_matrix_status=implemented=28,partial=3,open=3,total=34'
   'type_system_contract=shorthand.type_memory.v1'
   'control_flow_contract=shorthand.control_flow.v1'
   'enterprise_language_contract=shorthand.enterprise_language.v1'
@@ -83,9 +89,12 @@ expected_truth=(
   'accelerator_production_support=false'
   'c3eco_language_contract=shorthand.c3eco.language.v1'
   'c3eco_profile_contract=shorthand.c3eco.profile.v2'
+  'c3eco_measurement_contract=shorthand.c3eco.measurement_workbook.v1'
+  'c3eco_measurement_status=instrumented_accounting_candidate'
   'c3eco_normative_candidate=draft-v0.6'
   'c3eco_inclusion_overlay=draft-v0.7-2026-07-18'
   'c3eco_claim_status=candidate_evidence_only'
+  'comparative_energy_claim=false'
   'protected_release_exercise=pending'
   'mandatory_test_skip_policy=forbidden'
 )
@@ -154,6 +163,13 @@ while IFS=$'\t' read -r id category requirement source status implementation ver
   fi
 done < "${TRACE}"
 
+for id in G4 G5; do
+  status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
+  blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
+  [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR89 requires ${id} implemented and non-blocking" >&2; exit 1; }
+done
+
+# Preserve the full inherited production-truth documentation contract.
 for anchor in \
   'production_truth_contract: shorthand.production.truth.v1' \
   'current_maturity: controlled_beta' \
@@ -175,32 +191,61 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-01-pr88' \
-  'LAST_MERGED_GITHUB_PR: 87' \
-  'CURRENT_GITHUB_PR: 88' \
+  'production_readiness_plan_version: 2026-09-02-pr89' \
+  'LAST_MERGED_GITHUB_PR: 88' \
+  'CURRENT_GITHUB_PR: 89' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr88_through_pr96: 9' \
-  'remaining_planned_implementation_prs_after_pr88: 8'; do
+  'remaining_planned_implementation_prs_pr89_through_pr96: 8' \
+  'remaining_planned_implementation_prs_after_pr89: 7' \
+  'PR90 - Eligibility, scoring, claims and eco-regression'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-01-pr88' \
-  'current_github_pr: 88' \
-  'current_roadmap_scope: typed_c3eco_certification_profile' \
-  '27 implemented, 3 partial and 3 open'; do
+  'feature_status_version: 2026-09-02-pr89' \
+  'current_github_pr: 89' \
+  'current_roadmap_scope: measurement_carbon_accounting_cost_workbook' \
+  '28 implemented, 3 partial and 3 open' \
+  'comparative_energy_claim: false'; do
   require_contains "${STATUS}" "${anchor}"
 done
 
-require_contains "${STRATEGY}" 'compiler_test_strategy_version: 2026-09-01-pr88'
-require_contains "${STRATEGY}" '33-area production test matrix'
+for anchor in \
+  'compiler_test_strategy_version: 2026-09-02-pr89' \
+  '34-area production test matrix' \
+  '28 implemented areas' \
+  '3 partial areas' \
+  '3 open areas' \
+  'Measured-accounting changes must reject declared/modelled evidence'; do
+  require_contains "${STRATEGY}" "${anchor}"
+done
+
+[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 34 ]] || { echo "error: expected 34 compiler test coverage rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 28 ]] || { echo "error: expected 28 implemented compiler test rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 partial compiler test rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 open compiler test rows" >&2; exit 1; }
+for number in $(seq 1 34); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
 require_contains "${MATRIX}" $'TST031\tenterprise language packages core library and FFI\timplemented'
 require_contains "${MATRIX}" $'TST032\tconcurrent serving and operational runtime\timplemented'
 require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timplemented'
+require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
+require_contains "${MATRIX}" $'TST026\tmeasured energy comparison with Python\topen'
 
+# PR89 measurement/accounting contract is additive to all inherited checks.
+require_contains "${MEASUREMENT_CONTRACT}" 'shorthand.c3eco.measurement_workbook.v1'
+require_contains "${MEASUREMENT_CONTRACT}" '`modelled`, `declared_budget_only`'
+require_contains "${MEASUREMENT_CONTRACT}" 'cumulative allocation must not exceed 1.0'
+require_contains "${MEASUREMENT_CONTRACT}" 'PR95 owns equivalent-workload ShortHand/Python performance and energy comparison'
+require_contains "${MEASUREMENT_SCHEMA}" 'shorthand.c3eco.measurement_workbook.v1'
+require_contains "${MEASUREMENT_SCHEMA}" 'official_certification_granted'
+require_contains "${MEASUREMENT_TOOL}" 'double counting detected'
+require_contains "${MEASUREMENT_TOOL}" 'base_footprint_not_reduced_by_offsets'
+require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
+
+# Inherited language/release/security/observability evidence remains mandatory.
 for anchor in \
   'Language version: beta-0.7' \
   'Base grammar version: beta-0.2' \
@@ -240,6 +285,7 @@ done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
 require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-01-pr88'
+
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
 require_contains "${CONTROL_FLOW_GATE}" 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate'
@@ -273,9 +319,11 @@ require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_super
 require_contains "${HISTORICAL_BETA_REQUIREMENTS}" 'document_status: historical_baseline'
 require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_superseded'
 
+bash "${MEASUREMENT_GATE}"
+
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-printf 'PRODUCTION_TRUTH current_pr=88 remaining=9 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=89 remaining=8 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 printf 'PASS production truth and C3-ECO traceability gate\n'

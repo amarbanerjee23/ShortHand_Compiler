@@ -6,7 +6,11 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
 cp "${ROOT_DIR}/tests/ctest_parity/expected_make_targets.txt" "${TMP_DIR}/targets.txt"
-printf 'test-pr75-nonexistent-target\n' >> "${TMP_DIR}/targets.txt"
+# Force a record separator before the injected invalid target so this negative
+# fixture remains correct even if the source manifest accidentally lacks a
+# trailing newline. The checker must reject the intended synthetic target, not
+# a concatenated spelling of the previous real target.
+printf '\ntest-pr75-nonexistent-target\n' >> "${TMP_DIR}/targets.txt"
 
 set +e
 SHORTHAND_CTEST_EXPECTED_FILE="${TMP_DIR}/targets.txt" \
