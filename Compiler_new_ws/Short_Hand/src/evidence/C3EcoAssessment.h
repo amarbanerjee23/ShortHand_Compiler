@@ -112,5 +112,11 @@ void writeAssessmentJson(const std::string& path,
                          const std::map<char, DomainScore>& domains,
                          const Decision& decision,
                          const std::vector<ClaimDecision>& claims);
+void writeAssessmentMarkdown(const std::string& path,
+                             const ProfileInfo& profile,
+                             const MeasurementInfo& measurement,
+                             const std::map<char, DomainScore>& domains,
+                             const Decision& decision,
+                             const std::vector<ClaimDecision>& claims);
 
 }  // namespace shorthand::c3eco
