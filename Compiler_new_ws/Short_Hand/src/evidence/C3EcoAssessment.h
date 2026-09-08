@@ -37,12 +37,15 @@ struct AssessmentInput {
 struct ProfileInfo {
     bool ai_ml = false;
     std::string software_class;
+    double functional_unit_denominator = 0.0;
 };
 
 struct MeasurementInfo {
-    int mq = 4;
-    int dq = 4;
+    int mq = 0;
+    int dq = 0;
     double uncertainty_percent = 0.0;
+    double facility_energy_kwh = 0.0;
+    double carbon_kgco2e = 0.0;
     std::size_t record_count = 0U;
 };
 
@@ -59,12 +62,18 @@ struct DomainScore {
 
 struct Decision {
     bool eligible = false;
+    bool score_valid = false;
     int score_band = 0;
     int candidate_level = 0;
     double total_score = 0.0;
     int mq = 0;
     int dq = 0;
     double uncertainty = 0.0;
+    double current_energy_per_unit_j = 0.0;
+    bool baseline_present = false;
+    double baseline_energy_per_unit_j = 0.0;
+    double eco_regression_percent = 0.0;
+    bool eco_regression_triggered = false;
     bool corrective_action_required = false;
     std::vector<std::string> reasons;
     std::vector<std::string> failed_gates;
@@ -88,8 +97,10 @@ std::map<char, DomainScore> calculateDomains(const AssessmentInput& input, bool 
 Decision decide(const AssessmentInput& input, const ProfileInfo& profile,
                 const MeasurementInfo& measurement,
                 const std::map<char, DomainScore>& domains);
-ClaimDecision evaluateClaim(const AssessmentInput& input, const ProfileInfo& profile,
-                            const Decision& decision);
+std::vector<ClaimDecision> evaluateClaims(const AssessmentInput& input,
+                                          const ProfileInfo& profile,
+                                          const MeasurementInfo& measurement,
+                                          const Decision& decision);
 std::string levelName(int rank);
 void writeAssessmentJson(const std::string& path,
                          const std::string& profilePath,
@@ -100,6 +111,6 @@ void writeAssessmentJson(const std::string& path,
                          const AssessmentInput& input,
                          const std::map<char, DomainScore>& domains,
                          const Decision& decision,
-                         const ClaimDecision& claim);
+                         const std::vector<ClaimDecision>& claims);
 
 }  // namespace shorthand::c3eco
