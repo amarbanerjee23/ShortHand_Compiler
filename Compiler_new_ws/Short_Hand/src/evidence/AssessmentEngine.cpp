@@ -18,8 +18,8 @@ int main(int argc, char** argv) {
             throw std::runtime_error("control assessment_id must be a bounded identifier");
         const auto domains = calculateDomains(input, profile.ai_ml);
         const Decision decision = decide(input, profile, measurement, domains);
-        const ClaimDecision claim = evaluateClaim(input, profile, decision);
-        writeAssessmentJson(argv[4], argv[1], argv[2], argv[3], profile, measurement, input, domains, decision, claim);
+        const auto claims = evaluateClaims(input, profile, measurement, decision);
+        writeAssessmentJson(argv[4], argv[1], argv[2], argv[3], profile, measurement, input, domains, decision, claims);
         std::cout << "PASS: shorthand.c3eco.assessment.v1 eligibility="
                   << (decision.eligible ? "pass" : "fail") << " score=" << std::setprecision(6)
                   << decision.total_score << " candidate_level=" << levelName(decision.candidate_level) << "\n";
