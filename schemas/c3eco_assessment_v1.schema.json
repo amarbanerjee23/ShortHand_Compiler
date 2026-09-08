@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.dev/schemas/c3eco_assessment_v1.schema.json",
+  "title": "ShortHand C3-ECO assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "assessment_id",
+    "standard_profile",
+    "assessment_status",
+    "official_certification_granted",
+    "production_claim",
+    "profile_contract",
+    "measurement_contract",
+    "input_paths",
+    "profile",
+    "measurement",
+    "eligibility",
+    "gates",
+    "domains",
+    "criteria",
+    "score",
+    "eco_regression",
+    "corrective_action_required",
+    "reasons",
+    "claims",
+    "claim_safe_text",
+    "next_qualification"
+  ],
+  "properties": {
+    "schema": {"const": "shorthand.c3eco.assessment.v1"},
+    "assessment_id": {"type": "string", "minLength": 1, "maxLength": 96, "pattern": "^[A-Za-z0-9_.-]+$"},
+    "standard_profile": {"const": "C3-ECO authority-review draft v0.6"},
+    "assessment_status": {"enum": ["qualified_readiness", "provisional", "insufficient_evidence"]},
+    "official_certification_granted": {"const": false},
+    "production_claim": {"const": false},
+    "profile_contract": {"const": "shorthand.c3eco.profile.v2"},
+    "measurement_contract": {"const": "shorthand.c3eco.measurement_workbook.v1"},
+    "input_paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "measurement", "assessment"],
+      "properties": {
+        "profile": {"type": "string", "minLength": 1},
+        "measurement": {"type": "string", "minLength": 1},
+        "assessment": {"type": "string", "minLength": 1}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["software_class", "ai_ml", "functional_unit_denominator"],
+      "properties": {
+        "software_class": {"type": "string", "minLength": 1},
+        "ai_ml": {"type": "boolean"},
+        "functional_unit_denominator": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_count", "effective_mq", "effective_dq", "uncertainty_percent", "facility_energy_kwh", "carbon_kgco2e"],
+      "properties": {
+        "record_count": {"type": "integer", "minimum": 1},
+        "effective_mq": {"type": "integer", "minimum": 1, "maximum": 4},
+        "effective_dq": {"type": "integer", "minimum": 1, "maximum": 4},
+        "uncertainty_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "facility_energy_kwh": {"type": "number", "exclusiveMinimum": 0},
+        "carbon_kgco2e": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "score_valid", "failed_gates"],
+      "properties": {
+        "status": {"enum": ["eligible", "not_eligible"]},
+        "score_valid": {"type": "boolean"},
+        "failed_gates": {"type": "array", "uniqueItems": true, "items": {"pattern": "^G(?:[1-9]|1[0-4])$"}}
+      }
+    },
+    "gates": {
+      "type": "array",
+      "minItems": 14,
+      "maxItems": 14,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "declared_pass", "effective_pass", "evidence_status", "evidence_ref"],
+        "properties": {
+          "id": {"pattern": "^G(?:[1-9]|1[0-4])$"},
+          "declared_pass": {"type": "boolean"},
+          "effective_pass": {"type": "boolean"},
+          "evidence_status": {"enum": ["independent", "verified", "measured", "documented"]},
+          "evidence_ref": {"type": "string", "minLength": 1, "maxLength": 1024}
+        }
+      }
+    },
+    "domains": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "base_weight", "effective_weight", "applicable_count", "na_count", "percent", "weighted_points"],
+        "properties": {
+          "id": {"pattern": "^[A-K]$"},
+          "base_weight": {"type": "number", "minimum": 0, "maximum": 100},
+          "effective_weight": {"type": "number", "minimum": 0, "maximum": 100},
+          "applicable_count": {"type": "integer", "minimum": 0},
+          "na_count": {"type": "integer", "minimum": 0},
+          "percent": {"type": "number", "minimum": 0, "maximum": 100},
+          "weighted_points": {"type": "number", "minimum": 0, "maximum": 100}
+        }
+      }
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 76,
+      "maxItems": 76,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "applicable", "raw_score", "effective_score", "evidence_status", "evidence_ref"],
+        "properties": {
+          "id": {"pattern": "^[A-K][0-9]{1,2}$"},
+          "applicable": {"type": "boolean"},
+          "raw_score": {"type": "number", "minimum": 0, "maximum": 5},
+          "effective_score": {"type": "number", "minimum": 0, "maximum": 5},
+          "evidence_status": {"enum": ["independent", "verified", "measured", "documented", "insufficient", "missing", "na"]},
+          "evidence_ref": {"type": "string", "minLength": 1, "maxLength": 1024}
+        }
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["diagnostic_total", "score_band", "candidate_level_after_caps"],
+      "properties": {
+        "diagnostic_total": {"type": "number", "minimum": 0, "maximum": 100},
+        "score_band": {"enum": ["None", "Candidate", "Bronze", "Silver", "Gold", "Platinum", "Diamond"]},
+        "candidate_level_after_caps": {"enum": ["None", "Candidate", "Bronze", "Silver", "Gold", "Platinum", "Diamond"]}
+      }
+    },
+    "eco_regression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_defined", "baseline_present", "baseline_energy_per_unit_j", "current_energy_per_unit_j", "delta_percent", "triggered"],
+      "properties": {
+        "control_defined": {"type": "boolean"},
+        "baseline_present": {"type": "boolean"},
+        "baseline_energy_per_unit_j": {"type": "number", "minimum": 0},
+        "current_energy_per_unit_j": {"type": "number", "exclusiveMinimum": 0},
+        "delta_percent": {"type": "number"},
+        "triggered": {"type": "boolean"}
+      }
+    },
+    "corrective_action_required": {"type": "boolean"},
+    "reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requested", "status", "safe_text"],
+        "properties": {
+          "requested": {"type": "string", "minLength": 1},
+          "status": {"type": "string", "minLength": 1},
+          "safe_text": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "claim_safe_text": {"type": "string", "minLength": 1},
+    "next_qualification": {"type": "string", "minLength": 1}
+  }
+}
