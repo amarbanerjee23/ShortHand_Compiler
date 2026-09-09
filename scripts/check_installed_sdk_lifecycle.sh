@@ -50,6 +50,14 @@ hash_install_manifest() {
 
 cmake --install "${BUILD_DIR}"
 hash_install_manifest "${FIRST_MANIFEST}"
+# Exercise the installed auditor executable, including signatures and replay.
+audit_suffix=""
+[[ ! -f "${PREFIX}/bin/shorthand_c3eco_audit.exe" ]] || audit_suffix=".exe"
+SHORTHAND_BIN="${BUILD_DIR}/short_hand${audit_suffix}" \
+SHORTHAND_C3ECO_MEASURE_BIN="${PREFIX}/bin/shorthand_c3eco_measure${audit_suffix}" \
+SHORTHAND_C3ECO_AUDIT_BIN="${PREFIX}/bin/shorthand_c3eco_audit${audit_suffix}" \
+  bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
+
 bash "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" "${PREFIX}" "${CONSUMER_BUILD}-first"
 
 # Reinstalling the same release models an idempotent same-version upgrade. It

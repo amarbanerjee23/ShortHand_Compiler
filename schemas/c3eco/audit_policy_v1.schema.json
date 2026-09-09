@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/audit_policy_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "bundle_id",
+    "custodian",
+    "created_on",
+    "valid_until",
+    "retain_until",
+    "legal_hold",
+    "recertification_accepted",
+    "acceptance_ref",
+    "storage_ref",
+    "access_review_ref",
+    "restore_test_ref",
+    "last_surveillance_on",
+    "surveillance_ref",
+    "changes",
+    "nonconformities",
+    "public_scope_approved"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.audit_policy.v1"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "custodian": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_on": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "retain_until": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "legal_hold": {
+      "type": "boolean"
+    },
+    "recertification_accepted": {
+      "const": true
+    },
+    "acceptance_ref": {
+      "type": "string",
+      "pattern": "^evidence/[A-Za-z0-9_./-]+(?:#[^\\s]*)?$"
+    },
+    "storage_ref": {
+      "type": "string",
+      "pattern": "^evidence/[A-Za-z0-9_./-]+(?:#[^\\s]*)?$"
+    },
+    "access_review_ref": {
+      "type": "string",
+      "pattern": "^evidence/[A-Za-z0-9_./-]+(?:#[^\\s]*)?$"
+    },
+    "restore_test_ref": {
+      "type": "string",
+      "pattern": "^evidence/[A-Za-z0-9_./-]+(?:#[^\\s]*)?$"
+    },
+    "last_surveillance_on": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "surveillance_ref": {
+      "type": "string",
+      "pattern": "^evidence/[A-Za-z0-9_./-]+(?:#[^\\s]*)?$"
+    },
+    "changes": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "observed_on",
+          "review_ref"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "architecture",
+              "model",
+              "runtime",
+              "database",
+              "cloud_region",
+              "provider",
+              "hardware",
+              "traffic"
+            ]
+          },
+          "observed_on": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "review_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "nonconformities": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "severity",
+          "status",
+          "due_on",
+          "resolution_ref"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "severity": {
+            "enum": [
+              "minor",
+              "major",
+              "critical"
+            ]
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ]
+          },
+          "due_on": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          },
+          "resolution_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "public_scope_approved": {
+      "type": "boolean"
+    }
+  }
+}

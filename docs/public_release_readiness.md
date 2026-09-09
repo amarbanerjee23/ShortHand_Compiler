@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-08-pr90
+public_release_readiness_version: 2026-09-09-pr91
 current_maturity: controlled_beta
 production_claim: false
 release_candidate_target: PR96
 
-A PR90 candidate requires all mandatory commands to pass from a clean checkout:
+A PR91 candidate requires all mandatory commands to pass from a clean checkout:
 
 ```bash
 bash setup_build_infra.sh
@@ -20,6 +20,7 @@ bash scripts/check_concurrent_serving_runtime.sh
 bash scripts/check_c3eco_certification_profile.sh
 bash scripts/check_c3eco_measurement_workbook.sh
 bash scripts/check_c3eco_assessment.sh
+bash scripts/check_c3eco_auditor_bundle.sh
 bash scripts/check_semantic_differential.sh
 bash scripts/smoke_test.sh
 make -C Compiler_new_ws/Short_Hand/src test

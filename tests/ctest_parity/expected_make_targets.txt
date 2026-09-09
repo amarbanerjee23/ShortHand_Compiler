@@ -6,6 +6,7 @@ test-c3eco
 test-c3eco-profile
 test-c3eco-measurement
 test-c3eco-assessment
+test-c3eco-auditor
 test-compiler
 test-negative
 test-diagnostics

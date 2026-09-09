@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/audit_verification_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "bundle_id",
+    "manifest_sha256",
+    "signature_verified",
+    "inventory_verified",
+    "assessment_replayed",
+    "lifecycle",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.audit_verification.v1"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signature_verified": {
+      "const": true
+    },
+    "inventory_verified": {
+      "const": true
+    },
+    "assessment_replayed": {
+      "const": true
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "as_of",
+        "status",
+        "current_review_ready",
+        "next_surveillance_on",
+        "recertification_review_required",
+        "blocking_nonconformity",
+        "legal_hold",
+        "retain_until",
+        "disposal_policy_eligible",
+        "storage_retention_independently_verified"
+      ],
+      "properties": {
+        "as_of": {
+          "type": "string",
+          "format": "date"
+        },
+        "status": {
+          "enum": [
+            "expired",
+            "review_required",
+            "surveillance_due",
+            "candidate_review_ready"
+          ]
+        },
+        "current_review_ready": {
+          "type": "boolean"
+        },
+        "next_surveillance_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "recertification_review_required": {
+          "type": "boolean"
+        },
+        "blocking_nonconformity": {
+          "type": "boolean"
+        },
+        "legal_hold": {
+          "type": "boolean"
+        },
+        "retain_until": {
+          "type": "string",
+          "format": "date"
+        },
+        "disposal_policy_eligible": {
+          "type": "boolean"
+        },
+        "storage_retention_independently_verified": {
+          "const": false
+        }
+      }
+    },
+    "official_certification_granted": {
+      "const": false
+    },
+    "level_claim_permitted": {
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "const": false
+    },
+    "production_claim": {
+      "const": false
+    }
+  }
+}

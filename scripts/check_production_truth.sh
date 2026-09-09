@@ -72,18 +72,18 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-08'
+  'as_of_date=2026-09-09'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=89'
-  'current_github_pr=90'
+  'last_merged_github_pr=90'
+  'current_github_pr=91'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=7'
-  'remaining_implementation_prs_after_current=6'
-  'coverage_matrix_status=implemented=29,partial=3,open=3,total=35'
+  'remaining_implementation_prs_including_current=6'
+  'remaining_implementation_prs_after_current=5'
+  'coverage_matrix_status=implemented=31,partial=2,open=3,total=36'
   'type_system_contract=shorthand.type_memory.v1'
   'control_flow_contract=shorthand.control_flow.v1'
   'enterprise_language_contract=shorthand.enterprise_language.v1'
@@ -98,6 +98,8 @@ expected_truth=(
   'c3eco_measurement_status=instrumented_accounting_candidate'
   'c3eco_assessment_contract=shorthand.c3eco.assessment.v1'
   'c3eco_assessment_status=candidate_recommendation_only'
+  'c3eco_auditor_contract=shorthand.c3eco.auditor_bundle.v1'
+  'c3eco_auditor_status=signed_candidate_evidence_with_assessment_replay'
   'c3eco_normative_candidate=draft-v0.6'
   'c3eco_inclusion_overlay=draft-v0.7-2026-07-18'
   'c3eco_claim_status=candidate_evidence_only'
@@ -206,21 +208,21 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-08-pr90' \
-  'LAST_MERGED_GITHUB_PR: 89' \
-  'CURRENT_GITHUB_PR: 90' \
+  'production_readiness_plan_version: 2026-09-09-pr91' \
+  'LAST_MERGED_GITHUB_PR: 90' \
+  'CURRENT_GITHUB_PR: 91' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr90_through_pr96: 7' \
-  'remaining_planned_implementation_prs_after_pr90: 6' \
+  'remaining_planned_implementation_prs_pr91_through_pr96: 6' \
+  'remaining_planned_implementation_prs_after_pr91: 5' \
   'PR91 - Auditor bundle, retention, surveillance and reporting'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-08-pr90' \
-  'current_github_pr: 90' \
-  'current_roadmap_scope: eligibility_scoring_claims_eco_regression' \
-  '29 implemented, 3 partial and 3 open' \
+  'feature_status_version: 2026-09-09-pr91' \
+  'current_github_pr: 91' \
+  'current_roadmap_scope: auditor_bundle_retention_surveillance_reporting' \
+  '31 implemented, 2 partial and 3 open' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
@@ -229,21 +231,21 @@ for anchor in \
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-08-pr90' \
-  '35-area production test matrix' \
-  '29 implemented areas' \
-  '3 partial areas' \
+  'compiler_test_strategy_version: 2026-09-09-pr91' \
+  '36-area production test matrix' \
+  '31 implemented areas' \
+  '2 partial areas' \
   '3 open areas' \
   'Measured-accounting changes must reject declared/modelled evidence' \
   'Assessment changes must validate profile/workbook structure'; do
   require_contains "${STRATEGY}" "${anchor}"
 done
 
-[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 35 ]] || { echo "error: expected 35 compiler test coverage rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 29 ]] || { echo "error: expected 29 implemented compiler test rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 partial compiler test rows" >&2; exit 1; }
+[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 36 ]] || { echo "error: expected 36 compiler test coverage rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 31 ]] || { echo "error: expected 31 implemented compiler test rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 2 ]] || { echo "error: expected 2 partial compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 open compiler test rows" >&2; exit 1; }
-for number in $(seq 1 35); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 36); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
@@ -295,32 +297,32 @@ for anchor in \
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-09-08-pr90' \
+  'known_limitations_version: 2026-09-09-pr91' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-09-08-pr90' \
+  'release_level_status_version: 2026-09-09-pr91' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: 96'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-09-08-pr90' \
+  'public_release_readiness_version: 2026-09-09-pr91' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-09-08-pr90' \
+  'enterprise_release_scorecard_version: 2026-09-09-pr91' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-08-pr90'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-09-pr91'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -360,13 +362,34 @@ require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_s
 
 bash "${MEASUREMENT_GATE}"
 bash "${ASSESSMENT_GATE}"
+bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
 
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-[[ "${implemented}" == 13 ]] || { echo "error: expected 13 implemented C3-ECO traceability rows" >&2; exit 1; }
-[[ "${partial}" == 12 ]] || { echo "error: expected 12 partial C3-ECO traceability rows" >&2; exit 1; }
-[[ "${open}" == 2 ]] || { echo "error: expected 2 open C3-ECO traceability rows" >&2; exit 1; }
-printf 'PRODUCTION_TRUTH current_pr=90 remaining=7 maturity=controlled_beta production_claim=false\n'
+[[ "${implemented}" == 18 ]] || { echo "error: expected 18 implemented C3-ECO traceability rows" >&2; exit 1; }
+[[ "${partial}" == 8 ]] || { echo "error: expected 8 partial C3-ECO traceability rows" >&2; exit 1; }
+[[ "${open}" == 1 ]] || { echo "error: expected 1 open C3-ECO traceability rows" >&2; exit 1; }
+printf 'PRODUCTION_TRUTH current_pr=91 remaining=6 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
+
+# PR91 adds cryptographically verified, replayable candidate auditor evidence.
+require_contains "${ROOT_DIR}/docs/c3eco_auditor_bundle.md" 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1'
+require_contains "${ROOT_DIR}/schemas/c3eco/auditor_bundle_v1.schema.json" 'shorthand.c3eco.auditor_bundle.v1'
+require_contains "${ROOT_DIR}/schemas/c3eco/audit_policy_v1.schema.json" 'shorthand.c3eco.audit_policy.v1'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/AuditorBundle.cpp" 'EVP_DigestVerify('
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/AuditorBundle.cpp" 'assessment replay differs from signed output'
+require_contains "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh" 'PASS PR91 signed auditor lineage replay retention surveillance redaction and readiness gate'
+require_contains "${ROOT_DIR}/tests/c3eco/audit/test_auditor_bundle.py" 'CONFIDENTIAL_SENTINEL_91'
+require_contains "${ROOT_DIR}/CMakeLists.txt" 'NAME c3eco_auditor_bundle'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/Makefile" 'test-c3eco-auditor:'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'CXX=g++ bash scripts/check_c3eco_auditor_bundle.sh'
+require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'scripts/check_c3eco_auditor_bundle.sh'
+require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST036\tC3-ECO signed auditor evidence lifecycle\timplemented'
+for id in G6 G9 G12 I K; do
+  status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
+  blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
+  [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR91 requires ${id} implemented and non-blocking" >&2; exit 1; }
+done
+
 printf 'PASS production truth and C3-ECO traceability gate\n'

@@ -1,4 +1,5 @@
 #include "C3EcoAssessment.h"
+#include "C3EcoEvidenceIO.h"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -95,18 +96,6 @@ std::string jsonEscape(const std::string &value) {
     }
     return out.str();
 }
-
-class Json {
-  public:
-    enum class Kind { Null, Boolean, Number, String, Array, Object };
-
-    Kind kind = Kind::Null;
-    bool boolean = false;
-    double number = 0.0;
-    std::string string;
-    std::vector<Json> array;
-    std::map<std::string, Json> object;
-};
 
 class JsonParser {
   public:
@@ -384,6 +373,8 @@ class JsonParser {
         }
     }
 };
+
+Json parseJson(std::string source) { return JsonParser(std::move(source)).parse(); }
 
 const Json &jsonMember(const Json &object, const std::string &key) {
     require(object.kind == Json::Kind::Object, "JSON value must be an object");
@@ -1677,11 +1668,8 @@ void writeAssessmentMarkdown(const std::string &path, const Metadata &metadata,
     require(static_cast<bool>(out), "cannot close assessment Markdown output: " + path);
 }
 
-int run(int argc, char **argv) {
-    require(
-        argc == 3 || argc == 4,
-        "usage: shorthand_c3eco_assess <candidate-directory> <assessment-output.json> [report.md]");
-    const std::string directory = argv[1];
+void assessDirectory(const std::string &directory, const std::string &output,
+                     const std::string &markdownOutput) {
     Metadata metadata = loadMetadata(joinPath(directory, "metadata.tsv"));
     validateEvidenceArtifacts(directory, metadata);
     std::map<std::string, Gate> gates = loadGates(joinPath(directory, "gates.tsv"));
@@ -1701,15 +1689,22 @@ int run(int argc, char **argv) {
         decision = decide(metadata, gates, criteria, domains, materiality, regressions);
         evaluateClaims(claims, metadata, decision);
     }
-    writeAssessment(argv[2], metadata, gates, criteria, domains, materiality, regressions, claims,
+    writeAssessment(output, metadata, gates, criteria, domains, materiality, regressions, claims,
                     decision);
-    if (argc == 4)
-        writeAssessmentMarkdown(argv[3], metadata, domains, decision, claims);
+    if (!markdownOutput.empty())
+        writeAssessmentMarkdown(markdownOutput, metadata, domains, decision, claims);
+}
+
+int run(int argc, char **argv) {
+    require(argc == 3 || argc == 4,
+        "usage: shorthand_c3eco_assess <candidate-directory> <assessment-output.json> [report.md]");
+    assessDirectory(argv[1], argv[2], argc == 4 ? argv[3] : "");
     return 0;
 }
 
 } // namespace shorthand::c3eco
 
+#ifndef SHORTHAND_C3ECO_ASSESS_LIBRARY
 int main(int argc, char **argv) {
     try {
         return shorthand::c3eco::run(argc, argv);
@@ -1718,3 +1713,5 @@ int main(int argc, char **argv) {
         return 2;
     }
 }
+
+#endif

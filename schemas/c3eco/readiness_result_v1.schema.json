@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/readiness_result_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "product_id",
+    "readiness_state",
+    "measurement_quality",
+    "evidence_kind",
+    "measured_workbook_produced",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.readiness_result.v1"
+    },
+    "product_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "readiness_state": {
+      "enum": [
+        "Registered",
+        "Candidate"
+      ]
+    },
+    "measurement_quality": {
+      "enum": [
+        "MQ0",
+        "MQ1"
+      ]
+    },
+    "evidence_kind": {
+      "const": "estimated_readiness_only"
+    },
+    "measured_workbook_produced": {
+      "const": false
+    },
+    "official_certification_granted": {
+      "const": false
+    },
+    "level_claim_permitted": {
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "const": false
+    },
+    "production_claim": {
+      "const": false
+    }
+  }
+}

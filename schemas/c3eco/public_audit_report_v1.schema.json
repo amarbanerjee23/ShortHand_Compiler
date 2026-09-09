@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/public_audit_report_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "bundle_id",
+    "source_manifest_sha256",
+    "product",
+    "as_of",
+    "valid_until",
+    "next_surveillance_on",
+    "report_status",
+    "private_evidence_redacted",
+    "assessment_replayed_before_export",
+    "independent_certification_decision",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.public_audit_report.v1"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "software_class",
+        "functional_unit",
+        "boundary",
+        "workload"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "software_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "functional_unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workload": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "next_surveillance_on": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "report_status": {
+      "const": "candidate_evidence_only"
+    },
+    "private_evidence_redacted": {
+      "const": true
+    },
+    "assessment_replayed_before_export": {
+      "const": true
+    },
+    "independent_certification_decision": {
+      "const": false
+    },
+    "official_certification_granted": {
+      "const": false
+    },
+    "level_claim_permitted": {
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "const": false
+    },
+    "production_claim": {
+      "const": false
+    }
+  }
+}

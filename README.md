@@ -295,3 +295,5 @@ The AI abstraction example is allowed to use fallback diagnostics for local expe
 ## Current status
 
 ShortHand is ready for internal engineering review only. See `docs/known_limitations.md` before making external publication, certification, or production-readiness claims.
+
+The native PR91 [C3-ECO auditor tool](docs/c3eco_auditor_bundle.md) signs candidate evidence, verifies artifact/reference lineage, replays assessment, checks lifecycle policy and exports redacted signed reports. It requires OpenSSL 3.x and preserves all non-certification and non-production claim boundaries.

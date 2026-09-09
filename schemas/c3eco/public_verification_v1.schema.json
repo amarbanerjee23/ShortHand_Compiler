@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/public_verification_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "signature_verified",
+    "private_assessment_replayed",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.public_verification.v1"
+    },
+    "signature_verified": {
+      "const": true
+    },
+    "private_assessment_replayed": {
+      "const": false
+    },
+    "official_certification_granted": {
+      "const": false
+    },
+    "level_claim_permitted": {
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "const": false
+    },
+    "production_claim": {
+      "const": false
+    }
+  }
+}

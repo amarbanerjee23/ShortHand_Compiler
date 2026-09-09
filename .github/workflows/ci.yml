@@ -24,7 +24,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
+            libssl-dev openssl python3 jq build-essential \
             make \
             g++ \
             flex \
@@ -120,6 +120,7 @@ jobs:
         run: |
           CXX=g++ bash scripts/check_c3eco_measurement_workbook.sh
           CXX=g++ bash scripts/check_c3eco_assessment.sh
+          CXX=g++ bash scripts/check_c3eco_auditor_bundle.sh
 
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
@@ -215,7 +216,7 @@ jobs:
       - name: Install matrix build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
+          sudo apt-get install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
 
       - name: Record matrix toolchain
         run: |
@@ -232,7 +233,10 @@ jobs:
         run: cmake -S . -B build-toolchain -G Ninja -DCMAKE_BUILD_TYPE=Release -DLLVM_CONFIG=/usr/bin/llvm-config-18
 
       - name: Build matrix compiler and runtime
-        run: cmake --build build-toolchain --parallel 2 --target short_hand shorthand_runtime green_ai_tool
+        run: cmake --build build-toolchain --parallel 2 --target short_hand shorthand_runtime green_ai_tool shorthand_c3eco_audit
+
+      - name: Qualify native auditor with matrix compiler
+        run: SHORTHAND_BIN="$PWD/build-toolchain/short_hand" SHORTHAND_C3ECO_AUDIT_BIN="$PWD/build-toolchain/shorthand_c3eco_audit" bash scripts/check_c3eco_auditor_bundle.sh
 
       - name: Execute matrix compiler smoke
         run: |
@@ -251,7 +255,7 @@ jobs:
       - name: Install Linux arm64 dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
       - name: Record Linux arm64 environment
         run: |
@@ -295,10 +299,12 @@ jobs:
 
       - name: Install macOS build dependencies
         run: |
-          brew install bison flex llvm@18 ninja
+          brew install bison flex llvm@18 ninja openssl@3 jq
           echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
           echo "$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
           echo "$(brew --prefix llvm@18)/bin" >> "$GITHUB_PATH"
+          echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
+          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
 
       - name: Record macOS Apple Silicon environment
         run: |
@@ -359,7 +365,7 @@ jobs:
             mingw-w64-ucrt-x86_64-clang \
             mingw-w64-ucrt-x86_64-llvm \
             mingw-w64-ucrt-x86_64-cmake \
-            mingw-w64-ucrt-x86_64-ninja \
+            mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq \
             bison flex make diffutils
 
       - name: Record Windows UCRT64 environment
@@ -435,7 +441,7 @@ jobs:
       - name: Install CTest parity dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build jq
+          sudo apt-get install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build jq
 
       - name: Verify CTest parity manifest
         run: |
@@ -457,7 +463,7 @@ jobs:
       - name: Install reproducibility dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
       - name: Independent clean-build reproducibility
         run: bash scripts/check_reproducible_builds.sh
@@ -484,7 +490,7 @@ jobs:
       - name: Install security build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
+          sudo apt-get install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
 
       - name: Security policy and negative matrix
         run: bash scripts/check_external_security_policy.sh
