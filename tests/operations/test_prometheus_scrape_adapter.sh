@@ -26,7 +26,11 @@ on_error() {
 
 trap cleanup EXIT
 trap on_error ERR
-stage() { CURRENT_STAGE="$1"; printf 'PROMETHEUS_ADAPTER_STAGE %s\n' "${CURRENT_STAGE}"; }
+
+stage() {
+  CURRENT_STAGE="$1"
+  printf 'PROMETHEUS_ADAPTER_STAGE %s\n' "${CURRENT_STAGE}"
+}
 
 stage configure
 cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja \
@@ -47,8 +51,15 @@ ADAPTER="${BUILD_DIR}/shorthand_prometheus_adapter"
 [[ -x "${ADAPTER}" ]] || { echo "error: adapter executable was not produced" >&2; exit 1; }
 
 stage start-loopback-server
-"${ADAPTER}" --listen 127.0.0.1 --port 0 --max-requests 4 --read-timeout-ms 2000 --request-limit-bytes 4096 >"${SERVER_LOG}" 2>&1 &
+"${ADAPTER}" \
+  --listen 127.0.0.1 \
+  --port 0 \
+  --max-requests 4 \
+  --read-timeout-ms 2000 \
+  --request-limit-bytes 4096 \
+  >"${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
+
 port=""
 for _ in $(seq 1 100); do
   port="$(sed -n 's/.*PROMETHEUS_ADAPTER_LISTENING .* port=\([0-9][0-9]*\).*/\1/p' "${SERVER_LOG}" | tail -n 1)"
@@ -63,7 +74,8 @@ done
 [[ "${port}" =~ ^[0-9]+$ ]] || { echo "error: adapter readiness port was not reported" >&2; exit 1; }
 
 http_request() {
-  local request="$1" output="$2"
+  local request="$1"
+  local output="$2"
   exec 3<>"/dev/tcp/127.0.0.1/${port}"
   printf '%b' "${request}" >&3
   cat <&3 >"${output}"
@@ -109,10 +121,14 @@ grep -Fq 'invalid IPv4 listen address' "${WORK_DIR}/invalid.out"
 
 stage install
 cmake --install "${BUILD_DIR}"
-[[ -x "${INSTALL_DIR}/bin/shorthand_prometheus_adapter" ]] || { echo "error: installed Prometheus adapter executable is missing" >&2; exit 1; }
-[[ -x "${INSTALL_DIR}/bin/shorthand_c3eco_assess" ]] || { echo "error: installed C3-ECO assessment executable is missing" >&2; exit 1; }
+[[ -x "${INSTALL_DIR}/bin/shorthand_prometheus_adapter" ]] || {
+  echo "error: installed Prometheus adapter executable is missing" >&2
+  find "${INSTALL_DIR}" -maxdepth 4 -print >&2 || true
+  exit 1
+}
 
 stage abi-unchanged
 bash "${ROOT_DIR}/scripts/check_runtime_abi_api_stability.sh"
+
 stage complete
 echo "PASS Prometheus scrape endpoint host adapter gate"

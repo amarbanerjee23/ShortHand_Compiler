@@ -5,7 +5,7 @@ language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
 current_github_pr: 90
-current_roadmap_scope: c3eco_eligibility_scoring_claims_eco_regression
+current_roadmap_scope: eligibility_scoring_claims_eco_regression
 
 ## Goal
 
@@ -13,17 +13,19 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-GitHub PR83 through PR89 are merged. They established production truth and C3-ECO traceability, the production type/memory model, structured control flow and deterministic errors, enterprise packages/core FFI, bounded concurrent serving, the beta-0.7 typed C3-ECO profile and the instrument-backed measurement/carbon/cost workbook.
+GitHub PR83 through PR89 are merged. They established production truth and C3-ECO traceability, the production type/memory model, structured control flow and deterministic errors, enterprise packages/core FFI, bounded concurrent serving, the beta-0.7 typed C3-ECO certification-preparation profile, and instrument-backed energy/carbon/cost accounting.
 
-GitHub PR90 now implements the `shorthand.c3eco.assessment.v1` candidate: deterministic G1-G14 eligibility, the complete 76-criterion A-K scoring model, evidence sufficiency handling, MQ/DQ and uncertainty ceilings, approved N/A redistribution, materiality decisions, AI-specific scoring routes, >10% eco-regression control and restricted claim decisions. It consumes the real PR88 typed profile and PR89 measured workbook and remains a certification-readiness tool, not a certification authority.
+GitHub PR89 now implements `shorthand.c3eco.measurement_workbook.v1`: instrument-backed energy records, calibration provenance, allocation, PUE, carbon-factor provenance, tariff provenance, MQ/DQ, uncertainty and deterministic CSV/JSON accounting. Modelled or declared values cannot enter the measured evidence path.
 
-The compiler test audit records **29 implemented, 3 partial and 3 open** areas for the PR90 candidate, 35 areas total. ShortHand remains a controlled beta because the retained/signed auditor lifecycle, generated MLIR and lowering, representative AI workload qualification, performance/equivalent-workload measured-energy evidence, the production RC gate and the protected-release exercise remain incomplete.
+GitHub PR90 now implements `shorthand.c3eco.assessment.v1`: structural profile/workbook validation, mandatory G1-G14 precedence, the complete 76-criterion A-K catalog, evidence and uncertainty caps, controlled N/A reallocation, materiality, AI applicability, tier prerequisites, claim safety, eco/quality regression decisions and surveillance schedules. Its output is a candidate recommendation only.
+
+The compiler test audit records **29 implemented, 3 partial and 3 open** areas for the PR90 candidate, 35 areas total. ShortHand remains a controlled beta because the independent auditor lifecycle, generated MLIR and lowering, representative AI workload qualification, performance/equivalent-workload measured-energy evidence, the production RC gate and the protected-release exercise remain incomplete.
 
 ## Production truth authority
 
 The active state is machine-readable in `docs/production_truth.tsv`. C3-ECO readiness is tracked in `docs/c3eco_traceability.tsv` across mandatory gates G1-G14, scoring domains A-K and S9/S12. `scripts/check_production_truth.sh` fails on contradictory state, missing evidence, invalid traceability or unsupported production claims.
 
-C3-ECO outputs remain candidate evidence only. PR90 can calculate readiness, a diagnostic score band and permitted claim candidates, but it never sets `official_certification_granted:true`, never turns a failed mandatory gate into a warning, and never claims that ShortHand consumes less energy than Python.
+C3-ECO outputs remain candidate evidence only. PR90 can calculate a candidate eligibility and level recommendation from validated inputs, but it cannot grant certification, publish a certification level or claim that ShortHand consumes less energy than Python.
 
 ## Language and compiler status
 
@@ -40,7 +42,7 @@ C3-ECO outputs remain candidate evidence only. PR90 can calculate readiness, a d
 | Concurrent serving and operational runtime | Implemented for `shorthand.serving.runtime.v1` | bounded admission, deadlines, cooperative cancellation, quotas, health, metrics and graceful drain. |
 | Typed C3-ECO certification profile | Implemented for `shorthand.c3eco.profile.v2` | typed identity, units, links, boundary/materiality, lifecycle, safeguard and validity checks. |
 | Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate | real measurement source allowlist, calibration, allocation, PUE, carbon, tariff, uncertainty, deterministic reconciliation and fail-closed negatives. |
-| C3-ECO assessment, scoring and controlled claims | Implemented for `shorthand.c3eco.assessment.v1` candidate | G1-G14 precedence, full A-K catalog, evidence and level caps, N/A redistribution, materiality, AI route, eco-regression and claim-safety negatives. |
+| C3-ECO eligibility, scoring and claims | Implemented for `shorthand.c3eco.assessment.v1` candidate | G1-G14 precedence, complete 76-criterion A-K scoring, evidence caps, N/A reallocation, level prerequisites, claims, regressions and surveillance. |
 | Generated MLIR and production lowering | Partial | PR92-PR93. |
 
 ## Runtime, backend and hardware status
@@ -70,26 +72,28 @@ C3-ECO outputs remain candidate evidence only. PR90 can calculate readiness, a d
 | --- | --- | --- |
 | First-class C3-ECO language | Implemented | `shorthand.c3eco.language.v1`, typed profile v2 and claim-safety diagnostics. |
 | Measured energy accounting | Implemented candidate | PR89 only accepts instrument-backed evidence and keeps offsets outside the base footprint. |
-| Eligibility, scoring and controlled claims | Implemented candidate | PR90 computes readiness only; failed gates override score and official certification is always false. |
+| Eligibility, scoring and claims | Implemented candidate | PR90 emits controlled candidate recommendations only; independent certification remains outside the tool. |
 | Auditor bundle, retention and surveillance | Open | PR91. |
-| Measured ShortHand versus Python energy evidence | Open | PR95; no lower-energy comparative claim is made by PR90. |
+| Measured ShortHand versus Python energy evidence | Open | PR95; no lower-energy claim is made by PR90. |
 | Zero-skip production RC gate | Open | PR96. |
 
 ## PR90 assessment boundary
 
+c3eco_measurement_contract: shorthand.c3eco.measurement_workbook.v1
+measurement_status: measured_instrumented
 c3eco_assessment_contract: shorthand.c3eco.assessment.v1
-assessment_status: certification_readiness_candidate
+assessment_decision_kind: candidate_recommendation_only
 comparative_energy_claim: false
 official_certification_granted: false
-production_claim: false
+level_claim_permitted: false
 
-The PR90 engine accepts only a conformant compiler-generated typed profile, an instrument-backed PR89 workbook and a complete bounded assessor scorecard. It evaluates all 14 mandatory gates before recognizing a candidate level, scores all 76 A-K criteria, caps weak evidence, reallocates approved N/A weights without free points, enforces materiality, applies MQ/DQ and uncertainty ceilings, and detects unexplained energy deterioration greater than 10 percent.
+The PR90 tool consumes a structurally validated PR88 profile and PR89 measurement workbook. It rejects malformed or duplicate JSON, incomplete criteria, failed mandatory gates, unsupported applicability, unsafe claims, materiality omissions, quality regressions, unresolved eco-regressions and inconsistent measurement derivations. Mandatory gates are evaluated before scoring, and tier prerequisites are cumulative.
 
-Assessment is not certification. Certified-level wording is emitted only as a candidate for external review. Comparative energy superiority is explicitly deferred to PR95, which must use repeated equivalent workloads and quality-equivalence checks.
+The result is an internal candidate recommendation, not an auditor decision or certificate. PR91 must provide signed auditor lineage, retention and replayable reporting before certification operations can be considered. PR95 must use repeated equivalent workloads and quality-equivalence checks before any ShortHand-versus-Python energy conclusion can be considered.
 
 ## Production blockers
 
-1. Auditor bundle, retained evidence, surveillance, recertification and reporting (PR91).
+1. Auditor bundle, retention, surveillance, recertification and reporting (PR91).
 2. Generated MLIR dialect and production SemanticIR/LLVM lowering (PR92-PR93).
 3. Representative production AI workload qualification (PR94).
 4. Performance and repeated equivalent-workload measured-energy qualification (PR95).

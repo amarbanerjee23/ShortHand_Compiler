@@ -10,7 +10,7 @@ production_claim: false
 
 `docs/production_truth.tsv` is the machine-readable authority for the active maturity, roadmap, language-version, backend-support and certification-claim state. `docs/c3eco_traceability.tsv` records the implementation and verification state of every C3-ECO mandatory gate G1-G14, scoring domain A-K, and the S9/S12 software classes that directly apply to the ShortHand compiler and platform.
 
-GitHub PR87 added `shorthand.serving.runtime.v1`: a bounded process-scoped runtime with nonblocking backpressure, deadlines, cooperative cancellation, single-tenant isolation, low-cardinality health/metrics and graceful drain. GitHub PR88 adds `shorthand.c3eco.profile.v2`, which types and links identity, functional-unit, workload, boundary, AI-lifecycle, safeguard and validity declarations. Neither contract claims energy savings, certification or general production readiness.
+GitHub PR87 added `shorthand.serving.runtime.v1`: a bounded process-scoped runtime with nonblocking backpressure, deadlines, cooperative cancellation, single-tenant isolation, low-cardinality health/metrics and graceful drain. GitHub PR88 added `shorthand.c3eco.profile.v2`, which types and links identity, functional-unit, workload, boundary, AI-lifecycle, safeguard and validity declarations. GitHub PR89 added instrument-backed measurement accounting, and PR90 adds deterministic candidate assessment. None of these contracts claims energy superiority, official certification or general production readiness.
 
 The gate `scripts/check_production_truth.sh` fails CI when an active control document contradicts these sources, a traceability row is missing, an evidence path is invalid, or a production blocker is represented as complete without retained verification evidence.
 
@@ -37,7 +37,9 @@ The active layered language version is beta-0.7. It combines:
 - `shorthand.control_flow.v1` expression calls, recursion, lexical cleanup, structured returns and same-block label resolution,
 - `shorthand.enterprise_language.v1`, package/lock v2 and the separate core FFI ABI 1.0.0,
 - the `shorthand.c3eco.language.v1` certification-oriented declaration extension,
-- the `shorthand.c3eco.profile.v2` typed certification-preparation profile and deterministic migration manifest.
+- the `shorthand.c3eco.profile.v2` typed certification-preparation profile and deterministic migration manifest,
+- the `shorthand.c3eco.measurement_workbook.v1` instrument-backed accounting evidence contract,
+- the `shorthand.c3eco.assessment.v1` candidate eligibility, scoring, claims and regression contract.
 
 The executable subset remains beta-0.5 and covers `int`, `bool`, binary64 `float`/`double`, immutable string scalars, fixed numeric/boolean arrays, arbitrary-expression calls, recursion, typed lexical locals, structured loops/returns and safe label transfers. Beta-0.6 adds namespaced record, enum, slice, option/result schemas and explicit ownership-plan validation through `enterprise-check`; beta-0.7 adds metadata-only typed certification profiles. Neither version claims composite interpreter/LLVM execution. Package v2, SHA-256 locks, SPDX dependency output and core FFI ABI 1.0.0 are documented in `docs/enterprise_packages_stdlib_ffi.md`.
 
@@ -48,6 +50,8 @@ The active certification-preparation profile uses the supplied C3-ECO Green Soft
 The traceability matrix applies the stricter rule when the draft documents differ. Its `G1`-`G14` keys follow the v0.6 sequence. The `source` field records the v0.7 alias for each gate. Draft v0.7 inserts cost calculation where claimed at G6 and therefore renumbers its security, safeguard, repeatability, retention, claims and offset gates. PR83 maps that cost control into the canonical G5 carbon-calculation row, while preserving the v0.6 G6-G12 meanings. A cost or savings claim requires measured or transparently estimated kWh, a disclosed tariff, an explicit boundary and uncertainty; no fixed market-savings figure is a product claim.
 
 Bronze is the first certification level. Registered and Measured Candidate are readiness states only. Efficiency evidence is invalid when functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened. The framework evaluates the chosen implementation within a declared functional unit and boundary; it does not treat a programming language, model, cloud or framework as inherently green.
+
+PR90 evaluates mandatory gates before scoring, applies the complete 76-criterion A-K catalog, and may emit a level recommendation for external review. Every output remains `candidate_recommendation_only`, fixes `official_certification_granted:false` and `level_claim_permitted:false`, and leaves signed auditor lineage, certification decisions and public reports to PR91. Comparative energy claims remain blocked until PR95 provides repeated equivalent-workload evidence.
 
 ### Supplied certification source profile
 

@@ -9,15 +9,23 @@ CONSUMER_DIR="${WORK_DIR}/consumer"
 CONSUMER_BUILD_DIR="${WORK_DIR}/consumer-build"
 CURRENT_STAGE="initialization"
 
-cleanup() { rm -rf "${WORK_DIR}"; }
+cleanup() {
+  rm -rf "${WORK_DIR}"
+}
+
 on_error() {
   local status=$?
   echo "FAIL production packaging stage=${CURRENT_STAGE} line=${BASH_LINENO[0]} command=${BASH_COMMAND}" >&2
   exit "${status}"
 }
+
 trap cleanup EXIT
 trap on_error ERR
-stage() { CURRENT_STAGE="$1"; printf 'PACKAGING_STAGE %s\n' "${CURRENT_STAGE}"; }
+
+stage() {
+  CURRENT_STAGE="$1"
+  printf 'PACKAGING_STAGE %s\n' "${CURRENT_STAGE}"
+}
 
 stage configure
 cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" \
@@ -74,12 +82,45 @@ require_installed '*/shorthand-runtime.pc'
 require_installed '*/shorthand-ai-bridge.pc'
 require_installed '*/shorthand-core.pc'
 
-RUNTIME_SHARED="$(find "${INSTALL_DIR}" -type f \( -name 'libshorthand_runtime.so.1.0.0' -o -name 'libshorthand_runtime.1.0.0.dylib' -o -name 'shorthand_runtime.dll' \) -print -quit)"
-BRIDGE_SHARED="$(find "${INSTALL_DIR}" -type f \( -name 'libshorthand_ai_bridge.so.1.0.0' -o -name 'libshorthand_ai_bridge.1.0.0.dylib' -o -name 'shorthand_ai_bridge.dll' \) -print -quit)"
-CORE_SHARED="$(find "${INSTALL_DIR}" -type f \( -name 'libshorthand_core.so.1.0.0' -o -name 'libshorthand_core.1.0.0.dylib' -o -name 'shorthand_core.dll' \) -print -quit)"
-[[ -n "${RUNTIME_SHARED}" ]] || { echo "error: versioned shared runtime artifact is missing" >&2; exit 1; }
-[[ -n "${BRIDGE_SHARED}" ]] || { echo "error: versioned shared AI bridge artifact is missing" >&2; exit 1; }
-[[ -n "${CORE_SHARED}" ]] || { echo "error: versioned shared core artifact is missing" >&2; exit 1; }
+stage verify-installed-evidence-clis
+MEASURE_CLI="$(find "${INSTALL_DIR}" -type f -name shorthand_c3eco_measure -print -quit)"
+ASSESS_CLI="$(find "${INSTALL_DIR}" -type f -name shorthand_c3eco_assess -print -quit)"
+if "${MEASURE_CLI}" >"${WORK_DIR}/measure-usage.out" 2>&1; then
+  echo "error: installed measurement CLI accepted missing arguments" >&2
+  exit 1
+fi
+grep -Fq 'usage: shorthand_c3eco_measure' "${WORK_DIR}/measure-usage.out"
+if "${ASSESS_CLI}" >"${WORK_DIR}/assess-usage.out" 2>&1; then
+  echo "error: installed assessment CLI accepted missing arguments" >&2
+  exit 1
+fi
+grep -Fq 'usage: shorthand_c3eco_assess' "${WORK_DIR}/assess-usage.out"
+
+RUNTIME_SHARED="$(find "${INSTALL_DIR}" -type f \( \
+  -name 'libshorthand_runtime.so.1.0.0' -o \
+  -name 'libshorthand_runtime.1.0.0.dylib' -o \
+  -name 'shorthand_runtime.dll' \) -print -quit)"
+BRIDGE_SHARED="$(find "${INSTALL_DIR}" -type f \( \
+  -name 'libshorthand_ai_bridge.so.1.0.0' -o \
+  -name 'libshorthand_ai_bridge.1.0.0.dylib' -o \
+  -name 'shorthand_ai_bridge.dll' \) -print -quit)"
+CORE_SHARED="$(find "${INSTALL_DIR}" -type f \( \
+  -name 'libshorthand_core.so.1.0.0' -o \
+  -name 'libshorthand_core.1.0.0.dylib' -o \
+  -name 'shorthand_core.dll' \) -print -quit)"
+
+if [[ -z "${RUNTIME_SHARED}" ]]; then
+  echo "error: versioned shared runtime artifact is missing" >&2
+  exit 1
+fi
+if [[ -z "${BRIDGE_SHARED}" ]]; then
+  echo "error: versioned shared AI bridge artifact is missing" >&2
+  exit 1
+fi
+if [[ -z "${CORE_SHARED}" ]]; then
+  echo "error: versioned shared core artifact is missing" >&2
+  exit 1
+fi
 
 stage verify-soname
 if command -v readelf >/dev/null 2>&1 && [[ "${RUNTIME_SHARED}" == *.so.* ]]; then
@@ -92,19 +133,22 @@ if command -v readelf >/dev/null 2>&1 && [[ "${RUNTIME_SHARED}" == *.so.* ]]; th
 fi
 
 if command -v nm >/dev/null 2>&1 && [[ "${CORE_SHARED}" == *.so.* ]]; then
-  nm -D --defined-only "${CORE_SHARED}" | awk '{print $3}' | grep '^short_core_' | LC_ALL=C sort >"${WORK_DIR}/shared-core-symbols.txt"
+  nm -D --defined-only "${CORE_SHARED}" | awk '{print $3}' | grep '^short_core_' | LC_ALL=C sort \
+    >"${WORK_DIR}/shared-core-symbols.txt"
   diff -u "${ROOT_DIR}/abi/core_ffi_public_symbols_v1.txt" "${WORK_DIR}/shared-core-symbols.txt"
 fi
 
 stage verify-exported-symbols
 if command -v nm >/dev/null 2>&1 && [[ "${RUNTIME_SHARED}" == *.so.* ]]; then
   nm -D --defined-only "${RUNTIME_SHARED}" > "${WORK_DIR}/runtime-nm.txt"
-  awk '{print $3}' "${WORK_DIR}/runtime-nm.txt" | grep '^short_' | sort -u > "${WORK_DIR}/shared-runtime-symbols.txt" || true
+  awk '{print $3}' "${WORK_DIR}/runtime-nm.txt" | grep '^short_' | sort -u \
+    > "${WORK_DIR}/shared-runtime-symbols.txt" || true
   if ! diff -u "${ROOT_DIR}/abi/runtime_public_symbols_v1.txt" "${WORK_DIR}/shared-runtime-symbols.txt"; then
     echo "error: shared runtime public symbols differ from the frozen ABI manifest" >&2
     exit 1
   fi
-  awk '{print $3}' "${WORK_DIR}/runtime-nm.txt" | grep '^shimpl_' > "${WORK_DIR}/private-runtime-symbols.txt" || true
+  awk '{print $3}' "${WORK_DIR}/runtime-nm.txt" | grep '^shimpl_' \
+    > "${WORK_DIR}/private-runtime-symbols.txt" || true
   if [[ -s "${WORK_DIR}/private-runtime-symbols.txt" ]]; then
     echo "error: private shimpl symbols leaked from the shared runtime" >&2
     cat "${WORK_DIR}/private-runtime-symbols.txt" >&2
@@ -116,7 +160,9 @@ stage create-consumers
 mkdir -p "${CONSUMER_DIR}"
 cat > "${CONSUMER_DIR}/runtime_consumer.cpp" <<'CPP'
 #include <runtime/ShorthandRuntime.h>
+
 #include <cstring>
+
 int main() {
     if (std::strcmp(short_runtime_abi_version(), "1.0.0") != 0) return 10;
     if (!short_runtime_is_abi_compatible(1, 0)) return 11;
@@ -126,17 +172,24 @@ int main() {
     return short_runtime_tensor_count() == 1 ? 0 : 15;
 }
 CPP
+
 cat > "${CONSUMER_DIR}/bridge_consumer.cpp" <<'CPP'
 #include <runtime/AIRuntimeBridgeAdapter.h>
+
 #include <cstring>
+
 int main() {
     using namespace shorthand;
-    if (std::strcmp(runtime_bridge::bridgeAdapterContractVersion(), "shorthand.runtime.ai_runtime_execution_adapter.v1") != 0) return 20;
-    if (runtime_bridge::runtimeStatusFromInferenceStatus(ai::InferenceStatus::Success) != SHORTHAND_RUNTIME_OK) return 21;
-    if (runtime_bridge::runtimeStatusFromInferenceStatus(ai::InferenceStatus::NotExecuted) != SHORTHAND_RUNTIME_NOT_EXECUTED) return 22;
+    if (std::strcmp(runtime_bridge::bridgeAdapterContractVersion(),
+                    "shorthand.runtime.ai_runtime_execution_adapter.v1") != 0) return 20;
+    if (runtime_bridge::runtimeStatusFromInferenceStatus(ai::InferenceStatus::Success) !=
+        SHORTHAND_RUNTIME_OK) return 21;
+    if (runtime_bridge::runtimeStatusFromInferenceStatus(ai::InferenceStatus::NotExecuted) !=
+        SHORTHAND_RUNTIME_NOT_EXECUTED) return 22;
     return 0;
 }
 CPP
+
 cat > "${CONSUMER_DIR}/core_c_consumer.c" <<'C'
 #include <shorthand/abi/shorthand_core_ffi_v1.h>
 #include <string.h>
@@ -148,6 +201,7 @@ int main(void) {
     return 0;
 }
 C
+
 cat > "${CONSUMER_DIR}/core_cpp_consumer.cpp" <<'CPP'
 #include <shorthand/core/ShorthandCore.hpp>
 int main() {
@@ -155,6 +209,7 @@ int main() {
     return value.view() == "core" ? 0 : 40;
 }
 CPP
+
 cat > "${CONSUMER_DIR}/serving_consumer.cpp" <<'CPP'
 #include <serving/ServingRuntime.h>
 #include <chrono>
@@ -166,7 +221,9 @@ int main() {
     limits.worker_threads = 1;
     limits.queue_capacity = 2;
     limits.max_in_flight = 3;
-    ServingRuntime runtime(limits, [](const Request &request, const CancellationToken &) { return HandlerResult::succeeded(request.payload); });
+    ServingRuntime runtime(limits, [](const Request &request, const CancellationToken &) {
+        return HandlerResult::succeeded(request.payload);
+    });
     Request request{"package-1", "packaging", "ok", std::chrono::milliseconds(500)};
     if (!runtime.submit(std::move(request)).accepted()) return 50;
     const ResultLookup result = runtime.wait("packaging", "package-1", std::chrono::seconds(1));
@@ -181,32 +238,45 @@ project(ShortHandInstalledConsumer LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ShortHand 1 CONFIG REQUIRED)
+
 add_executable(runtime_static runtime_consumer.cpp)
 target_link_libraries(runtime_static PRIVATE ShortHand::runtime)
+
 add_executable(runtime_shared runtime_consumer.cpp)
 target_link_libraries(runtime_shared PRIVATE ShortHand::runtime_shared)
+
 add_executable(bridge_static bridge_consumer.cpp)
 target_link_libraries(bridge_static PRIVATE ShortHand::ai_bridge)
+
 add_executable(bridge_shared bridge_consumer.cpp)
 target_link_libraries(bridge_shared PRIVATE ShortHand::ai_bridge_shared)
+
 add_executable(core_c_static core_c_consumer.c)
 set_target_properties(core_c_static PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(core_c_static PRIVATE ShortHand::core)
+
 add_executable(core_c_shared core_c_consumer.c)
 set_target_properties(core_c_shared PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(core_c_shared PRIVATE ShortHand::core_shared)
+
 add_executable(core_cpp_static core_cpp_consumer.cpp)
 target_link_libraries(core_cpp_static PRIVATE ShortHand::core)
+
 add_executable(core_cpp_shared core_cpp_consumer.cpp)
 target_link_libraries(core_cpp_shared PRIVATE ShortHand::core_shared)
+
 add_executable(serving_static serving_consumer.cpp)
 target_link_libraries(serving_static PRIVATE ShortHand::serving)
 CMAKE
 
 stage configure-cmake-consumers
-cmake -S "${CONSUMER_DIR}" -B "${CONSUMER_BUILD_DIR}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${INSTALL_DIR}"
+cmake -S "${CONSUMER_DIR}" -B "${CONSUMER_BUILD_DIR}" \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="${INSTALL_DIR}"
+
 stage build-cmake-consumers
 cmake --build "${CONSUMER_BUILD_DIR}" --parallel 2
+
 stage run-cmake-consumers
 "${CONSUMER_BUILD_DIR}/runtime_static"
 "${CONSUMER_BUILD_DIR}/runtime_shared"
@@ -231,20 +301,42 @@ grep -Fq 'PASS serving worker self-test contract=shorthand.serving.runtime.v1' "
 stage verify-pkg-config-consumers
 if command -v pkg-config >/dev/null 2>&1; then
   PKGCONFIG_DIR="$(find "${INSTALL_DIR}" -type d -name pkgconfig -print -quit)"
-  [[ -n "${PKGCONFIG_DIR}" ]] || { echo "error: installed pkg-config directory is missing" >&2; exit 1; }
+  if [[ -z "${PKGCONFIG_DIR}" ]]; then
+    echo "error: installed pkg-config directory is missing" >&2
+    exit 1
+  fi
   LIB_DIR="$(dirname "${PKGCONFIG_DIR}")"
   export PKG_CONFIG_PATH="${PKGCONFIG_DIR}${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
+
   [[ "$(pkg-config --modversion shorthand-runtime)" == "1.0.0" ]]
   [[ "$(pkg-config --modversion shorthand-ai-bridge)" == "1.0.0" ]]
   [[ "$(pkg-config --modversion shorthand-core)" == "1.0.0" ]]
-  ${CXX:-c++} -std=c++17 "${CONSUMER_DIR}/runtime_consumer.cpp" $(pkg-config --cflags --libs shorthand-runtime) -o "${WORK_DIR}/runtime-pkg-config"
-  ${CXX:-c++} -std=c++17 "${CONSUMER_DIR}/bridge_consumer.cpp" $(pkg-config --cflags --libs shorthand-ai-bridge) -o "${WORK_DIR}/bridge-pkg-config"
-  ${CXX:-c++} -std=c++17 "${CONSUMER_DIR}/core_cpp_consumer.cpp" $(pkg-config --cflags --libs shorthand-core) -o "${WORK_DIR}/core-pkg-config"
-  ${CC:-cc} -std=c11 "${CONSUMER_DIR}/core_c_consumer.c" $(pkg-config --cflags --libs shorthand-core) -o "${WORK_DIR}/core-c-pkg-config"
-  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" "${WORK_DIR}/runtime-pkg-config"
-  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" "${WORK_DIR}/bridge-pkg-config"
-  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" "${WORK_DIR}/core-pkg-config"
-  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" "${WORK_DIR}/core-c-pkg-config"
+
+  ${CXX:-c++} -std=c++17 "${CONSUMER_DIR}/runtime_consumer.cpp" \
+    $(pkg-config --cflags --libs shorthand-runtime) \
+    -o "${WORK_DIR}/runtime-pkg-config"
+  ${CXX:-c++} -std=c++17 "${CONSUMER_DIR}/bridge_consumer.cpp" \
+    $(pkg-config --cflags --libs shorthand-ai-bridge) \
+    -o "${WORK_DIR}/bridge-pkg-config"
+  ${CXX:-c++} -std=c++17 "${CONSUMER_DIR}/core_cpp_consumer.cpp" \
+    $(pkg-config --cflags --libs shorthand-core) \
+    -o "${WORK_DIR}/core-pkg-config"
+  ${CC:-cc} -std=c11 "${CONSUMER_DIR}/core_c_consumer.c" \
+    $(pkg-config --cflags --libs shorthand-core) \
+    -o "${WORK_DIR}/core-c-pkg-config"
+
+  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
+    DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" \
+    "${WORK_DIR}/runtime-pkg-config"
+  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
+    DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" \
+    "${WORK_DIR}/bridge-pkg-config"
+  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
+    DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" \
+    "${WORK_DIR}/core-pkg-config"
+  LD_LIBRARY_PATH="${LIB_DIR}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
+    DYLD_LIBRARY_PATH="${LIB_DIR}${DYLD_LIBRARY_PATH:+:${DYLD_LIBRARY_PATH}}" \
+    "${WORK_DIR}/core-c-pkg-config"
 fi
 
 stage complete

@@ -25,10 +25,12 @@ c3eco_profile_contract	shorthand.c3eco.profile.v2
 c3eco_measurement_contract	shorthand.c3eco.measurement_workbook.v1
 c3eco_measurement_status	instrumented_accounting_candidate
 c3eco_assessment_contract	shorthand.c3eco.assessment.v1
-c3eco_assessment_status	certification_readiness_candidate
+c3eco_assessment_status	candidate_recommendation_only
 c3eco_normative_candidate	draft-v0.6
 c3eco_inclusion_overlay	draft-v0.7-2026-07-18
 c3eco_claim_status	candidate_evidence_only
 comparative_energy_claim	false
+official_certification_granted	false
+level_claim_permitted	false
 protected_release_exercise	pending
 mandatory_test_skip_policy	forbidden

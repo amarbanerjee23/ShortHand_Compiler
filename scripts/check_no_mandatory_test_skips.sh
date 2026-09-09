@@ -10,6 +10,8 @@ mandatory=(
   scripts/check_kubernetes_ephemeral_cluster.sh
   scripts/check_concurrent_serving_runtime.sh
   scripts/check_c3eco_certification_profile.sh
+  scripts/check_c3eco_measurement_workbook.sh
+  scripts/check_c3eco_assessment.sh
 )
 
 for rel in "${mandatory[@]}"; do
@@ -29,5 +31,7 @@ grep -Fq 'mandatory_skips":0' "${ROOT_DIR}/scripts/check_production_backend_hard
 grep -Fq 'PASS ephemeral Kubernetes production gate' "${ROOT_DIR}/scripts/check_kubernetes_ephemeral_cluster.sh"
 grep -Fq 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate' "${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh"
 grep -Fq 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate' "${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh"
+grep -Fq 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate' "${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
+grep -Fq 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate' "${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
 
 echo "PASS mandatory qualification zero-skip policy gate"

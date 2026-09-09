@@ -19,13 +19,15 @@ The 35-area production test matrix records for the GitHub PR90 candidate:
 - 3 partial areas,
 - 3 open areas.
 
-GitHub PR75 through PR89 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving, the typed C3-ECO profile and instrument-backed measurement/accounting.
+GitHub PR75 through PR89 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving, the typed C3-ECO profile and instrument-backed measurement accounting.
 
-GitHub PR90 adds TST035, `shorthand.c3eco.assessment.v1`, with deterministic G1-G14 eligibility, the complete 76-criterion A-K score catalog, score-band and level caps, materiality, AI-specific routing, evidence sufficiency, N/A redistribution, MQ/DQ and uncertainty ceilings, >10% eco-regression control and restricted claims. The assessment contract consumes PR88 profile and PR89 measured evidence but never grants certification and never establishes comparative ShortHand-versus-Python energy superiority.
+GitHub PR89 adds TST034, `shorthand.c3eco.measurement_workbook.v1`, with native instrument-backed measurement accounting, provenance, deterministic reconciliation, double-count rejection and claim-safe separation from PR90 scoring and PR95 equivalent-workload energy comparison.
 
-Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing, measured-accounting validation and deterministic certification-readiness assessment.
+GitHub PR90 adds TST035, `shorthand.c3eco.assessment.v1`, with mandatory-gate precedence, complete 76-criterion A-K scoring, evidence/uncertainty caps, controlled N/A reallocation, tier prerequisites, claim restrictions, materiality, AI applicability, regressions and deterministic candidate recommendations. The assessment gate consumes real compiler/measurement outputs and separately exercises native scoring, DQ ceilings, penalty deductions, Markdown parity and fail-closed PR95 comparative-claim deferral.
 
-Production-critical gaps remain for the retained/signed C3-ECO auditor lifecycle, generated MLIR and full production lowering, representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
+Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing, measured-accounting validation and candidate C3-ECO assessment.
+
+Production-critical gaps remain for the C3-ECO auditor lifecycle, generated MLIR and full production lowering, representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
 
 ## Production backend and hardware qualification contract
 
@@ -109,7 +111,7 @@ Every remaining implementation PR through PR96 must include all applicable layer
 28. Serving changes must preserve bounded admission, deadlines, cooperative cancellation, tenant isolation, low-cardinality telemetry and graceful drain under unit, load, sanitizer, TSan, installed-consumer and Kubernetes lifecycle evidence.
 29. Typed C3-ECO profile changes must pass beta-0.7 positive, eight-code negative, migration, native-JSON, schema, metadata and claim-safety evidence without granting certification.
 30. Measured-accounting changes must reject declared/modelled evidence, require instrument/calibration/factor/tariff provenance, prevent double counting, preserve offsets outside the base footprint and reconcile energy/carbon/cost deterministically.
-31. C3-ECO assessment changes must evaluate all G1-G14 mandatory gates before level assignment, preserve the complete 76-criterion A-K catalog, reject free points from unapproved N/A rows, cap weak evidence with MQ/DQ and uncertainty, enforce materiality, flag unexplained energy deterioration greater than 10 percent, preserve `official_certification_granted:false` and defer comparative ShortHand/Python claims to PR95.
+31. Assessment changes must validate profile/workbook structure, run G1-G14 before scoring, cover all 76 criteria, enforce evidence/N/A/materiality/tier/regression/claim controls and keep every decision explicitly non-certifying.
 
 ## CI profiles
 
@@ -117,7 +119,7 @@ Every remaining implementation PR through PR96 must include all applicable layer
 
 The mandatory DAG runs production-truth/status guards, grammar/module/semantic gates, fuzz and sanitizer/race safety, toolchain/platform qualification, installed consumers, CTest parity, reproducibility, external security and deployment qualification. Tooling runs formatter/linter and LSP/editor jobs under GCC, Clang and ASan/UBSan. The inherited `ubuntu-core` feature-plan gate preserves the mandatory pinned ONNX Runtime CPU live qualification. Normal PR jobs do not receive release OIDC or repository-write permissions.
 
-PR90 additionally requires the native C3-ECO assessment gate to run through direct governance, Make, CTest and sanitizer/build paths. A missing assessment executable, incomplete scorecard, forged upstream artifact, invalid evidence classification, failed mandatory gate or unsafe claim is a hard failure.
+PR90 additionally requires both native measured-accounting and assessment gates to run through the repository governance/build paths. A missing executable, malformed input accepted as evidence, incomplete criterion catalog or failed negative fixture is a hard failure.
 
 ### Scheduled profile
 

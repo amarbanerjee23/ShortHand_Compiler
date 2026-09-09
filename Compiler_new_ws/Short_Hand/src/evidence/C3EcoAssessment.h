@@ -7,116 +7,138 @@
 
 namespace shorthand::c3eco {
 
+struct Metadata {
+    std::string productName;
+    std::string productVersion;
+    std::string softwareClass;
+    std::string functionalUnit;
+    std::string boundary;
+    std::string workload;
+    int measurementQuality = 0;
+    int dataQuality = 0;
+    double uncertaintyPercent = 0.0;
+    double penaltyPoints = 0.0;
+    bool aiInScope = false;
+    std::string aiRole;
+    bool trainingBoundaryDeclared = false;
+    bool inferenceBoundaryDeclared = false;
+    bool tokenOrInferenceMetricDeclared = false;
+    bool aiExclusionsDeclared = false;
+    int qualityEnergyFrontierOptions = 0;
+    bool clientDeviceImpact = false;
+    bool ecoRegressionControlDefined = false;
+    bool independentReview = false;
+    bool publicReport = false;
+    bool continuousTelemetry = false;
+    bool publicEvidence = false;
+    bool highSeverityClaimRisk = false;
+    bool highScaleSaas = false;
+};
+
 struct Gate {
-    bool declared_pass = false;
-    bool effective_pass = false;
-    std::string evidence_status;
-    std::string evidence_ref;
+    std::string id;
+    bool inputPass = false;
+    bool effectivePass = false;
+    std::string evidence;
 };
 
 struct Criterion {
-    double raw_score = 0.0;
-    double effective_score = 0.0;
+    std::string id;
+    char domain = 'A';
+    int rawScore = 0;
+    int effectiveScore = 0;
+    double weight = 0.0;
+    std::string evidenceStatus;
     bool applicable = true;
-    std::string evidence_status;
-    std::string evidence_ref;
+    std::string approval;
+    std::string evidence;
 };
 
-struct Control {
-    std::string value;
-    std::string evidence_status;
-    std::string evidence_ref;
+struct MaterialityComponent {
+    std::string component;
+    double sharePercent = 0.0;
+    std::string disposition;
+    std::string evidence;
 };
 
-struct AssessmentInput {
-    std::map<std::string, Gate> gates;
-    std::map<std::string, Criterion> criteria;
-    std::map<std::string, Control> controls;
+struct MaterialityResult {
+    std::vector<MaterialityComponent> components;
+    double declaredSharePercent = 0.0;
+    double omittedSharePercent = 0.0;
+    bool individualMaterialOmission = false;
+    bool cumulativeOmissionExceeded = false;
 };
 
-struct ProfileInfo {
-    bool ai_ml = false;
-    std::string software_class;
-    double functional_unit_denominator = 0.0;
+struct Regression {
+    std::string id;
+    std::string kind;
+    double baseline = 0.0;
+    double current = 0.0;
+    bool lowerIsBetter = true;
+    std::string explanation;
+    std::string correctiveAction;
+    std::string evidence;
+    double deteriorationPercent = 0.0;
+    bool thresholdExceeded = false;
+    bool unresolved = false;
 };
 
-struct MeasurementInfo {
-    int mq = 0;
-    int dq = 0;
-    double uncertainty_percent = 0.0;
-    double facility_energy_kwh = 0.0;
-    double carbon_kgco2e = 0.0;
-    std::size_t record_count = 0U;
+struct Claim {
+    std::string id;
+    std::string type;
+    std::string text;
+    bool scopeMatches = false;
+    bool functionalUnitEquivalent = false;
+    bool boundaryEquivalent = false;
+    bool qualityEquivalent = false;
+    bool methodEquivalent = false;
+    bool legalTechnicalEvidence = false;
+    std::string evidence;
+    bool permitted = false;
+    std::vector<std::string> reasons;
 };
 
 struct DomainScore {
-    char id = '?';
-    double base_weight = 0.0;
-    double effective_weight = 0.0;
-    int applicable_count = 0;
-    int na_count = 0;
-    double score_sum = 0.0;
+    char domain = 'A';
+    double normativeWeight = 0.0;
+    double adjustedWeight = 0.0;
+    bool applicable = true;
     double percent = 0.0;
-    double weighted_points = 0.0;
+    double points = 0.0;
+    std::size_t criterionCount = 0;
 };
 
-struct Decision {
+enum class Level {
+    None = 0,
+    Candidate = 1,
+    Bronze = 2,
+    Silver = 3,
+    Gold = 4,
+    Platinum = 5,
+    Diamond = 6
+};
+
+struct AssessmentDecision {
+    double totalScore = 0.0;
+    Level scoreCeiling = Level::None;
+    Level recommendation = Level::None;
     bool eligible = false;
-    bool score_valid = false;
-    int score_band = 0;
-    int candidate_level = 0;
-    double total_score = 0.0;
-    int mq = 0;
-    int dq = 0;
-    double uncertainty = 0.0;
-    double current_energy_per_unit_j = 0.0;
-    bool baseline_present = false;
-    double baseline_energy_per_unit_j = 0.0;
-    double eco_regression_percent = 0.0;
-    bool eco_regression_triggered = false;
-    bool corrective_action_required = false;
-    std::vector<std::string> reasons;
-    std::vector<std::string> failed_gates;
-    std::map<std::string, bool> effective_gates;
+    bool unresolvedEcoRegression = false;
+    bool ecoRegressionTriggered = false;
+    bool qualityRegression = false;
+    std::vector<std::string> failedGates;
+    std::vector<std::string> evidenceCaps;
+    std::vector<std::string> decisionReasons;
 };
 
-struct ClaimDecision {
-    std::string requested;
-    std::string status;
-    std::string safe_text;
-};
+std::vector<DomainScore> scoreDomains(const std::vector<Criterion> &criteria);
+std::string levelName(Level level);
+AssessmentDecision decide(const Metadata &metadata, std::map<std::string, Gate> &gates,
+                          const std::vector<Criterion> &criteria,
+                          const std::vector<DomainScore> &domains,
+                          const MaterialityResult &materiality,
+                          const std::vector<Regression> &regressions);
+void evaluateClaims(std::vector<Claim> &claims, const Metadata &metadata,
+                    const AssessmentDecision &decision);
 
-AssessmentInput loadAssessment(const std::string& path);
-ProfileInfo validateProfile(const std::string& path);
-MeasurementInfo validateMeasurement(const std::string& path);
-const Control& control(const AssessmentInput& input, const std::string& id);
-bool controlBool(const AssessmentInput& input, const std::string& id);
-bool validIdentifierValue(const std::string& value);
-
-std::map<char, DomainScore> calculateDomains(const AssessmentInput& input, bool aiMl);
-Decision decide(const AssessmentInput& input, const ProfileInfo& profile,
-                const MeasurementInfo& measurement,
-                const std::map<char, DomainScore>& domains);
-std::vector<ClaimDecision> evaluateClaims(const AssessmentInput& input,
-                                          const ProfileInfo& profile,
-                                          const MeasurementInfo& measurement,
-                                          const Decision& decision);
-std::string levelName(int rank);
-void writeAssessmentJson(const std::string& path,
-                         const std::string& profilePath,
-                         const std::string& measurementPath,
-                         const std::string& assessmentPath,
-                         const ProfileInfo& profile,
-                         const MeasurementInfo& measurement,
-                         const AssessmentInput& input,
-                         const std::map<char, DomainScore>& domains,
-                         const Decision& decision,
-                         const std::vector<ClaimDecision>& claims);
-void writeAssessmentMarkdown(const std::string& path,
-                             const ProfileInfo& profile,
-                             const MeasurementInfo& measurement,
-                             const std::map<char, DomainScore>& domains,
-                             const Decision& decision,
-                             const std::vector<ClaimDecision>& claims);
-
-}  // namespace shorthand::c3eco
+} // namespace shorthand::c3eco

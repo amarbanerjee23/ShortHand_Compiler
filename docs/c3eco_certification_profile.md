@@ -11,7 +11,7 @@ official_certification_granted: false
 
 The typed profile links product identity, a useful-work denominator, a representative workload, a product boundary, AI lifecycle responsibility, safeguards and a validity window into one compiler-checked candidate profile. It closes the language and schema portions of C3-ECO draft controls G1, G2 and G3. It strengthens, but does not complete, safeguard control G7 and materiality control G14.
 
-This profile does not measure energy, calculate carbon or cost, assign a score, select a certification level, issue a certificate or represent external auditor approval. Those capabilities remain assigned to PR89 through PR91. A conformant profile is preparation evidence only.
+This profile does not itself measure energy, calculate carbon or cost, assign a score, select a certification level, issue a certificate or represent external auditor approval. PR89 adds measured accounting and PR90 adds candidate assessment, while external auditor approval remains assigned to PR91. A conformant profile is preparation evidence only.
 
 ## Profile syntax
 

@@ -76,7 +76,7 @@ GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
 C3ECO_MEASURE_BIN := ../build/shorthand_c3eco_measure
 C3ECO_MEASURE_SRC := evidence/MeasurementWorkbook.cpp
 C3ECO_ASSESS_BIN := ../build/shorthand_c3eco_assess
-C3ECO_ASSESS_SRC := evidence/C3EcoAssessmentIO.cpp evidence/C3EcoAssessmentScoring.cpp evidence/AssessmentEngine.cpp
+C3ECO_ASSESS_SRC := evidence/CertificationAssessment.cpp evidence/C3EcoAssessmentScoring.cpp
 SHORTHAND_RUNTIME_SRC := runtime/ShorthandRuntime.cpp
 SHORTHAND_RUNTIME_FACADE_SRC := runtime/RuntimeThreadSafeFacade.cpp
 SHORTHAND_RUNTIME_OBJ := ../build/ShorthandRuntimeImpl.o
@@ -184,7 +184,7 @@ c3eco_measurement_tool: $(C3ECO_MEASURE_SRC)
 
 c3eco_assessment_tool: $(C3ECO_ASSESS_SRC) evidence/C3EcoAssessment.h
 	@mkdir -p ../build
-	$(CXX) $(CXXFLAGS) -Ievidence -o $(C3ECO_ASSESS_BIN) $(C3ECO_ASSESS_SRC)
+	$(CXX) $(CXXFLAGS) -o $(C3ECO_ASSESS_BIN) $(C3ECO_ASSESS_SRC)
 
 test-green: green_ai_tool
 	bash ../../../tests/green_ai/test_green_ai_tool.sh
@@ -229,6 +229,7 @@ test-governance:
 	bash ../../../scripts/check_concurrent_serving_runtime.sh
 	bash ../../../scripts/check_c3eco_certification_profile.sh
 	bash ../../../scripts/check_c3eco_measurement_workbook.sh
+	bash ../../../scripts/check_c3eco_assessment.sh
 
 test-unit: green_ai_tool
 	bash ../../../tests/run_language_tests.sh unit
@@ -284,7 +285,7 @@ sanitize:
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_certification_profile.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) bash ../../../scripts/check_c3eco_measurement_workbook.sh
-	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) SHORTHAND_C3ECO_ASSESS_BIN=$(C3ECO_ASSESS_BIN) C3ECO_ASSESS_CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror -std=c++17" bash ../../../scripts/check_c3eco_assessment.sh
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" C3ECO_ASSESS_CXXFLAGS="-std=c++17 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror" SHORTHAND_BIN=$(BIN) SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) SHORTHAND_C3ECO_ASSESS_BIN=$(C3ECO_ASSESS_BIN) bash ../../../scripts/check_c3eco_assessment.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize
 
 format-check:

@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 STATUS_FILE=docs/feature_implementation_status.md
-
 required_files=(
   "${STATUS_FILE}"
   docs/compiler_test_strategy.md
@@ -14,18 +13,13 @@ required_files=(
   docs/c3eco_traceability.tsv
   docs/production_backend_hardware_qualification.md
   docs/c3eco_language_contract.md
-  docs/c3eco_certification_profile.md
   docs/c3eco_measurement_workbook.md
-  docs/c3eco_assessment.md
   schemas/c3eco_measurement_workbook_v1.schema.json
-  schemas/c3eco_assessment_v1.schema.json
   Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp
-  Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessment.h
-  Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentIO.cpp
-  Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentScoring.cpp
-  Compiler_new_ws/Short_Hand/src/evidence/AssessmentEngine.cpp
-  tests/c3eco/assessment/test_c3eco_assessment_scoring.cpp
   scripts/check_c3eco_measurement_workbook.sh
+  docs/c3eco_certification_assessment.md
+  schemas/c3eco_assessment_v1.schema.json
+  Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp
   scripts/check_c3eco_assessment.sh
   docs/execution_semantics_beta_0_3.md
   docs/execution_semantics_beta_0_4.md
@@ -33,6 +27,7 @@ required_files=(
   docs/functions_control_error_semantics.md
   docs/enterprise_packages_stdlib_ffi.md
   docs/concurrent_serving_runtime.md
+  docs/c3eco_certification_profile.md
   docs/fuzz_sanitizer_race_hardening.md
   docs/signed_release_publication.md
   docs/external_security_policy.md
@@ -44,6 +39,8 @@ required_files=(
   tests/conformance/functions_control_matrix_beta_0_5.tsv
   tests/conformance/enterprise_matrix_beta_0_6.tsv
   tests/conformance/c3eco_profile_matrix_beta_0_7.tsv
+  tests/tooling/formatter_messy.short
+  tests/tooling/formatter_expected.short
   tests/integration/test_production_backend_hardware_qualification.sh
   tests/integration/test_compiled_hook_onnxruntime_success.sh
   scripts/check_module_resolution.sh
@@ -74,8 +71,19 @@ required_files=(
   scripts/check_c3eco_certification_profile.sh
   tests/governance/test_production_truth_negative.sh
   Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+  Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.h
   Compiler_new_ws/Short_Hand/src/serving/ServingRuntime.cpp
+  Compiler_new_ws/Short_Hand/src/serving/ServingWorkerMain.cpp
+  tests/runtime/test_serving_runtime.cpp
+  tests/runtime/serving_runtime_stress.cpp
+  Compiler_new_ws/Short_Hand/src/tooling/SourceTools.h
+  Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
+  Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
   Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
+  Compiler_new_ws/Short_Hand/src/tooling/Makefile
+  editors/vscode/package.json
+  editors/vscode/language-configuration.json
+  editors/vscode/syntaxes/shorthand.tmLanguage.json
   tests/deployment/test_container_kubernetes_hardening_negative.sh
   deploy/k8s/production.yaml
   security/third_party_inventory.tsv
@@ -91,50 +99,65 @@ done
 required_status_terms=(
   "Implemented" "Partial" "Open" "Production blockers"
   "Real ONNX Runtime CPU backend execution"
+  "Compiled-code metadata/runtime lowering"
   "Full backend compatibility"
-  "Cross-mode semantic equivalence"
-  "Full sanitizer coverage"
+  "Base grammar and module extension matrices"
+  "Source-aware diagnostics" "Automated SBOM"
+  "Runtime observability implementation"
+  "Module/import/package syntax and AST scaffold"
+  "Deterministic module resolver and multi-file codegen"
+  "Cross-mode semantic equivalence" "Full sanitizer coverage"
   "Continuous fuzzing" "Concurrency and race detection"
   "Cross-platform reproducibility"
   "Measured ShortHand versus Python energy evidence"
   "Zero-skip production RC gate" "CPU/GPU/TPU/NPU"
-  "Signed releases" "Protected publication"
+  "MLIR dialect scaffold"
+  "Module/import/package model" "Signed releases" "Protected publication"
   "External vulnerability gate" "Container and Kubernetes hardening"
   "Formatter and linter" "Syntax highlighting and LSP"
   "Production type and memory model"
   "Functions, structured control flow and deterministic errors"
+  "Enterprise schemas and ownership plans"
+  "Offline packages, core library and safe FFI"
   "Concurrent serving and operational runtime"
   "Typed C3-ECO certification profile"
   "Instrumented C3-ECO measurement/accounting"
-  "C3-ECO assessment, scoring and controlled claims"
+  "C3-ECO eligibility, scoring and claims"
 )
 for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
+# Active PR90 state must be present and claim-safe.
 for anchor in \
   'feature_status_version: 2026-09-08-pr90' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
   'current_github_pr: 90' \
-  'current_roadmap_scope: c3eco_eligibility_scoring_claims_eco_regression' \
+  'current_roadmap_scope: eligibility_scoring_claims_eco_regression' \
   '29 implemented, 3 partial and 3 open' \
-  'GitHub PR90 now implements the `shorthand.c3eco.assessment.v1` candidate' \
-  'C3-ECO assessment, scoring and controlled claims | Implemented for `shorthand.c3eco.assessment.v1` candidate' \
+  'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \
+  'Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate' \
+  'C3-ECO eligibility, scoring and claims | Implemented for `shorthand.c3eco.assessment.v1` candidate' \
+  'c3eco_measurement_contract: shorthand.c3eco.measurement_workbook.v1' \
+  'measurement_status: measured_instrumented' \
   'c3eco_assessment_contract: shorthand.c3eco.assessment.v1' \
-  'assessment_status: certification_readiness_candidate' \
+  'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
-  'production_claim: false'; do
+  'level_claim_permitted: false'; do
   grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR90 active anchor: ${anchor}" >&2; exit 1; }
 done
 
+# Stable historical anchors remain mandatory so a new PR cannot erase previously
+# qualified compiler/release evidence from the feature tracker.
 for anchor in \
   'feature_status_version: 2026-09-02-pr89' \
   'current_github_pr: 89' \
   'current_roadmap_scope: measurement_carbon_accounting_cost_workbook' \
   '28 implemented, 3 partial and 3 open' \
+  'GitHub PR89 now implements `shorthand.c3eco.measurement_workbook.v1`' \
   'feature_status_version: 2026-09-01-pr88' \
   'current_github_pr: 88' \
   'current_roadmap_scope: typed_c3eco_certification_profile' \
@@ -142,7 +165,16 @@ for anchor in \
   'GitHub PR85 implemented beta-0.5 functions/control flow' \
   'GitHub PR86 implemented the bounded beta-0.6 enterprise schema' \
   'GitHub PR87 implemented the process-scoped concurrent serving and operational runtime' \
-  'GitHub PR88 now implements the beta-0.7 typed C3-ECO certification-preparation profile'; do
+  'GitHub PR88 now implements the beta-0.7 typed C3-ECO certification-preparation profile' \
+  'Cross-platform portability | Implemented for PR74 tiers' \
+  'Cross-platform reproducibility | Implemented' \
+  'Signed releases | Partial' \
+  'External vulnerability gate | Implemented' \
+  'Container and Kubernetes hardening | Implemented' \
+  'Formatter and linter | Implemented' \
+  'Syntax highlighting and LSP | Implemented for `shorthand.tooling.lsp.v1`' \
+  'Real ONNX Runtime CPU backend execution | Implemented for `linux-x64-cpu-v1`' \
+  'Production truth and C3-ECO traceability | Implemented for `shorthand.production.truth.v1`'; do
   grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing historical audit anchor: ${anchor}" >&2; exit 1; }
 done
 
@@ -154,42 +186,63 @@ grep -Fq 'control_flow_contract: shorthand.control_flow.v1' docs/functions_contr
 grep -Fq 'enterprise_contract: shorthand.enterprise_language.v1' docs/enterprise_packages_stdlib_ffi.md
 grep -Fq 'serving_runtime_contract: shorthand.serving.runtime.v1' docs/concurrent_serving_runtime.md
 grep -Fq 'c3eco_profile_contract: shorthand.c3eco.profile.v2' docs/c3eco_certification_profile.md
-grep -Fq 'shorthand.c3eco.measurement_workbook.v1' docs/c3eco_measurement_workbook.md
+grep -Fq 'contract: `shorthand.c3eco.measurement_workbook.v1`' docs/c3eco_measurement_workbook.md
+grep -Fq 'official_certification_granted: false' docs/c3eco_measurement_workbook.md
+grep -Fq 'PR95 owns equivalent-workload ShortHand/Python performance and energy comparison' docs/c3eco_measurement_workbook.md
+grep -Fq 'shorthand.c3eco.measurement_workbook.v1' schemas/c3eco_measurement_workbook_v1.schema.json
 grep -Fq 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate' scripts/check_c3eco_measurement_workbook.sh
-grep -Fq 'shorthand.c3eco.assessment.v1' docs/c3eco_assessment.md
-grep -Fq 'Assessment is not certification' docs/c3eco_assessment.md
+grep -Fq 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1' docs/c3eco_certification_assessment.md
+grep -Fq 'candidate recommendation' docs/c3eco_certification_assessment.md
 grep -Fq 'shorthand.c3eco.assessment.v1' schemas/c3eco_assessment_v1.schema.json
-grep -Fq 'complete 76-criterion A-K catalog' Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentIO.cpp
-grep -Fq 'deferred_pr95' Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentScoring.cpp
-grep -Fq 'PASS: PR90 C3-ECO eligibility, A-K scoring, evidence caps, claims and eco-regression gate' scripts/check_c3eco_assessment.sh
-grep -Fq 'PASS: PR90 C3-ECO scoring unit' tests/c3eco/assessment/test_c3eco_assessment_scoring.cpp
-grep -Fq 'backend_hardware_qualification_version: shorthand.backend_hardware_qualification.v1' docs/production_backend_hardware_qualification.md
-grep -Fq 'production_scope: linux-x64-cpu-v1' docs/production_backend_hardware_qualification.md
-grep -Fq 'backend_device_not_production_qualified' Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+grep -Fq 'official_certification_granted' schemas/c3eco_assessment_v1.schema.json
+grep -Fq 'candidate_recommendation_only' Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp
+grep -Fq 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate' scripts/check_c3eco_assessment.sh
+grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
+grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
+grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
+grep -Fq 'external_security_policy_version: shorthand.security.external.v1' docs/external_security_policy.md
+grep -Fq 'container_kubernetes_contract_version: shorthand.deployment.kubernetes.v1' docs/container_kubernetes_hardening.md
 grep -Fq 'formatter_linter_contract_version: shorthand.tooling.format_lint.v1' docs/formatter_linter.md
 grep -Fq 'lsp_editor_contract_version: shorthand.tooling.lsp.v1' docs/syntax_highlighting_lsp.md
+grep -Fq 'backend_hardware_qualification_version: shorthand.backend_hardware_qualification.v1' docs/production_backend_hardware_qualification.md
+grep -Fq 'production_scope: linux-x64-cpu-v1' docs/production_backend_hardware_qualification.md
+grep -Fq 'shorthand.backend_hardware_qualification.v1' Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+grep -Fq 'backend_device_not_production_qualified' Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h
+grep -Fq 'enforceProductionBackendQualification(' Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp
+grep -Fq 'shorthand.lint.v1' Compiler_new_ws/Short_Hand/src/tooling/SourceTools.cpp
+grep -Fq 'fix mode requires --output' Compiler_new_ws/Short_Hand/src/tooling/SourceToolMain.cpp
+grep -Fq 'constexpr std::size_t kMaxMessageBytes = 1024 * 1024' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
 grep -Fq 'SHLSP900' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
-grep -Fq 'add_executable(shorthand_c3eco_assess' CMakeLists.txt
+grep -Fq 'shorthand_lsp' CMakeLists.txt
 
-for gate in \
-  'PASS CI status hygiene guard|scripts/check_ci_status_hygiene.sh' \
-  'PASS signed release and protected publication contract gate|scripts/check_signed_release_contract.sh' \
-  'PASS external vulnerability SAST dependency and license policy gate|scripts/check_external_security_policy.sh' \
-  'PASS container Kubernetes production hardening contract|scripts/check_container_kubernetes_hardening.sh' \
-  'PASS hardened container runtime|scripts/check_container_runtime.sh' \
-  'PASS ephemeral Kubernetes production gate|scripts/check_kubernetes_ephemeral_cluster.sh' \
-  'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate|scripts/check_formatter_linter.sh' \
-  'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate|scripts/check_lsp_editor.sh' \
-  'PASS production backend and hardware qualification gate|scripts/check_production_backend_hardware_qualification.sh' \
-  'PASS production type and memory model gate|scripts/check_production_type_memory_model.sh' \
-  'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate|scripts/check_functions_control_error_semantics.sh' \
-  'PASS enterprise packages standard library and safe FFI gate|scripts/check_enterprise_packages_stdlib_ffi.sh' \
-  'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate|scripts/check_concurrent_serving_runtime.sh' \
-  'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate|scripts/check_c3eco_certification_profile.sh'; do
-  text="${gate%%|*}"; file="${gate#*|}"
-  grep -Fq "${text}" "${file}" || { echo "error: inherited gate anchor missing: ${file}" >&2; exit 1; }
-done
+# CI status hygiene and all prior production guards remain executable evidence.
+grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
+grep -Fq 'PASS signed release and protected publication contract gate' scripts/check_signed_release_contract.sh
+grep -Fq 'PASS external vulnerability SAST dependency and license policy gate' scripts/check_external_security_policy.sh
+grep -Fq 'PASS container Kubernetes production hardening contract' scripts/check_container_kubernetes_hardening.sh
+grep -Fq 'PASS hardened container runtime' scripts/check_container_runtime.sh
+grep -Fq 'PASS ephemeral Kubernetes production gate' scripts/check_kubernetes_ephemeral_cluster.sh
+grep -Fq 'PASS native Linux arm64 production container qualification' scripts/check_installed_sdk_lifecycle.sh
+grep -Fq 'PASS formatter linter deterministic idempotent parse-preserving machine-diagnostic safe-fix gate' scripts/check_formatter_linter.sh
+grep -Fq 'PASS syntax highlighting LSP protocol compiler-diagnostics navigation cancellation UTF16 bounded-framing gate' scripts/check_lsp_editor.sh
+grep -Fq 'PASS production backend and hardware qualification gate' scripts/check_production_backend_hardware_qualification.sh
+grep -Fq 'PASS verified ONNX Runtime CPU qualification SDK acquisition' scripts/install_ci_onnxruntime_cpu.sh
+grep -Fq 'PASS production type and memory model gate' scripts/check_production_type_memory_model.sh
+grep -Fq 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate' scripts/check_functions_control_error_semantics.sh
+grep -Fq 'PASS enterprise packages standard library and safe FFI gate' scripts/check_enterprise_packages_stdlib_ffi.sh
+grep -Fq 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate' scripts/check_concurrent_serving_runtime.sh
+grep -Fq 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate' scripts/check_c3eco_certification_profile.sh
 
+grep -Fq 'GCC formatter and linter gate' .github/workflows/tooling.yml
+grep -Fq 'Clang formatter and linter gate' .github/workflows/tooling.yml
+grep -Fq 'ASan UBSan formatter and linter gate' .github/workflows/tooling.yml
+grep -Fq 'GCC LSP editor protocol gate' .github/workflows/tooling.yml
+grep -Fq 'Clang LSP editor protocol gate' .github/workflows/tooling.yml
+grep -Fq 'ASan UBSan LSP editor protocol gate' .github/workflows/tooling.yml
+
+# TST019-TST022 plus PR89 measurement and PR90 assessment evidence are executable contracts. Run
+# deterministic portions on every invocation. Live device/SDK evidence remains
+# mandatory on the inherited Linux x64 ubuntu-core CI lane and is never skipped.
 bash scripts/check_container_kubernetes_hardening.sh
 bash tests/deployment/test_container_kubernetes_hardening_negative.sh
 bash scripts/check_formatter_linter.sh
@@ -221,17 +274,35 @@ unsupported_claim_patterns=(
   "ShortHand is fully production-ready"
   "all production blockers are complete"
   "ShortHand uses less energy than Python"
-  "C3-ECO Certified"
-  "official_certification_granted: true"
+  "fuzzing proves the compiler has no bugs"
+  "ThreadSanitizer proves the runtime has no races"
+  "signed release blocker is complete"
+  "all dependencies are vulnerability-free"
+  "all Kubernetes workloads are production qualified"
+  "formatter proves semantic equivalence for all future grammar"
+  "LSP supports all IDE features"
+  "editor tooling proves backend execution"
   "GPU production support is implemented"
   "TPU production support is implemented"
   "NPU production support is implemented"
 )
 for pattern in "${unsupported_claim_patterns[@]}"; do
-  if grep -Fiq "${pattern}" "${STATUS_FILE}"; then
-    echo "error: unsupported production/certification claim in feature status: ${pattern}" >&2
+  if grep -qi "${pattern}" "${STATUS_FILE}"; then
+    echo "error: status file contains unsupported readiness/safety/signing/security/deployment/tooling/backend claim: ${pattern}" >&2
     exit 1
   fi
 done
 
-echo "Feature plan status check passed. GitHub PR90 adds deterministic C3-ECO eligibility, scoring, evidence caps, controlled claims and eco-regression while preserving all inherited zero-skip qualification gates; PR91-PR96 and the protected release exercise remain fail-closed."
+if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
+  if grep -Eq '\| (Open|Partial)(/[^|]+)? \|' "${STATUS_FILE}"; then
+    echo "error: production-ready check failed because open or partial items remain" >&2
+    exit 1
+  fi
+fi
+
+echo "Feature plan status check passed. GitHub PR90 adds deterministic eligibility, scoring, claim and eco-regression assessment while preserving candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; PR91-PR96 and the protected release exercise remain fail-closed."
+
+grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
+grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md
+grep -Fq 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate' scripts/check_c3eco_language_blocks.sh
+grep -Fq 'PASS mandatory qualification zero-skip policy gate' scripts/check_no_mandatory_test_skips.sh

@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-09-01-pr88
+enterprise_release_scorecard_version: 2026-09-08-pr90
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -31,7 +31,7 @@ This scorecard summarizes active release controls. The machine-readable authorit
 | SBOM and provenance generation | Implemented | SPDX 2.3 source/artifact bundles, package dependency output and candidate provenance. |
 | Protected signed publication | Partial | Source contract exists; real protected tag exercise and verified attestations remain. |
 | Process-scoped serving and observability | Implemented for `shorthand.serving.runtime.v1` | Bounded admission, deadlines, cancellation, tenant isolation, health, low-cardinality metrics and graceful drain; public ingress/authentication/TLS are not claimed. |
-| C3-ECO readiness | Partial | Candidate language/evidence, full traceability and the typed preparation profile exist; PR89-PR91 close measurement, scoring and auditor lifecycle. |
+| C3-ECO readiness | Partial | Typed profile, instrument-backed accounting and deterministic candidate assessment exist; PR91 still owns signed auditor lineage, retention, recertification and public reporting. |
 | MLIR production lowering | Partial | Hand-authored foundation exists; PR92-PR93 add generated dialect and full lowering. |
 | Measured performance and energy | Open | PR95 requires equivalent work, repeated trials, raw data, provenance and uncertainty. |
 | Final production RC aggregate | Open | PR96 requires zero mandatory skips, enterprise pilot, upgrade/rollback/DR and retained evidence. |
@@ -41,3 +41,5 @@ This scorecard summarizes active release controls. The machine-readable authorit
 ER4 requires every production blocker in both matrices to be closed, PR96 to pass on its final head in `ci / ubuntu (push)` and `ci / ubuntu (pull_request)`, and TST017 to be closed by a verified protected release. A high C3-ECO score cannot override a failed critical gate. No efficiency improvement counts if required functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened.
 
 The retained release bundle must include exact commit/run identity, toolchains, build/test/sanitizer results, backend/workload evidence, measurement and uncertainty records, security results, SBOM/provenance/signatures, deployment/pilot/rollback evidence, known limitations and approved claim wording.
+
+Historical scorecard marker: enterprise_release_scorecard_version: 2026-09-01-pr88.

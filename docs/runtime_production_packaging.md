@@ -15,7 +15,7 @@ production_claim_boundary: packaging_gate_is_not_full_production_readiness
 
 ## Scope
 
-PR61 introduced the frozen runtime and bridge packages, PR86 added the core FFI package, and PR87 adds the bounded serving scheduler and operational worker.
+PR61 introduced the frozen runtime and bridge packages, PR86 added the core FFI package, PR87 added the bounded serving scheduler and operational worker, and PR89-PR90 add installed native C3-ECO measurement and candidate-assessment tools.
 
 The production CMake build installs:
 
@@ -23,9 +23,10 @@ The production CMake build installs:
 2. `libshorthand_ai_bridge` as static and shared libraries.
 3. `libshorthand_core` as static and shared libraries with separate FFI ABI 1.0.0.
 4. `libshorthand_serving` as a static C++17 library and `shorthand_serving_worker` as an installed executable.
-5. runtime, bridge, frozen runtime ABI, core C ABI, core C++ wrapper and serving headers.
-6. `ShortHandConfig.cmake`, `ShortHandConfigVersion.cmake`, and exported `ShortHandTargets.cmake` metadata.
-7. runtime, AI bridge and core pkg-config metadata.
+5. `shorthand_c3eco_measure` and `shorthand_c3eco_assess` as installed native evidence executables.
+6. runtime, bridge, frozen runtime ABI, core C ABI, core C++ wrapper and serving headers.
+7. `ShortHandConfig.cmake`, `ShortHandConfigVersion.cmake`, and exported `ShortHandTargets.cmake` metadata.
+8. runtime, AI bridge and core pkg-config metadata.
 
 ## Installed CMake targets
 
@@ -65,7 +66,8 @@ The full artifact remains versioned as `1.0.0`. Platform-specific CMake naming i
 7. bridge adapter contract version and status mapping,
 8. core C and C++ static/shared consumers plus exact core exported symbols,
 9. the installed `ShortHand::serving` consumer and worker self-test,
-10. ELF SONAME values when `readelf` is available.
+10. installed native measurement and assessment executables,
+11. ELF SONAME values when `readelf` is available.
 
 The gate uses only the installation prefix for downstream compilation. Repository include paths and build-tree library paths are not allowed in the consumer project.
 

@@ -354,12 +354,10 @@ add_executable(shorthand_c3eco_measure
 target_compile_features(shorthand_c3eco_measure PRIVATE cxx_std_17)
 
 add_executable(shorthand_c3eco_assess
-  ${SRC_DIR}/evidence/C3EcoAssessmentIO.cpp
+  ${SRC_DIR}/evidence/CertificationAssessment.cpp
   ${SRC_DIR}/evidence/C3EcoAssessmentScoring.cpp
-  ${SRC_DIR}/evidence/AssessmentEngine.cpp
 )
 target_compile_features(shorthand_c3eco_assess PRIVATE cxx_std_17)
-target_include_directories(shorthand_c3eco_assess PRIVATE ${SRC_DIR}/evidence)
 
 if(DEFINED ENV{ONNXRUNTIME_ROOT})
   message(STATUS "ONNX Runtime root: $ENV{ONNXRUNTIME_ROOT}")
@@ -555,10 +553,10 @@ if(SHORTHAND_BUILD_TESTING)
   )
 
   add_test(
-    NAME c3eco_assessment
+    NAME c3eco_certification_assessment
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_assessment.sh
   )
-  set_tests_properties(c3eco_assessment PROPERTIES
+  set_tests_properties(c3eco_certification_assessment PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>;SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>;SHORTHAND_C3ECO_ASSESS_BIN=$<TARGET_FILE:shorthand_c3eco_assess>"
   )
