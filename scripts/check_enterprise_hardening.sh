@@ -186,6 +186,15 @@ check_contains docs/c3eco_certification_profile.md 'c3eco_profile_contract: shor
 check_contains CMakeLists.txt 'NAME c3eco_certification_profile'
 check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-c3eco-profile'
 check_contains scripts/check_c3eco_certification_profile.sh 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate'
+check_contains docs/c3eco_measurement_workbook.md 'contract: `shorthand.c3eco.measurement_workbook.v1`'
+check_contains Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp 'shorthand.c3eco.measurement_workbook.v1'
+check_contains scripts/check_c3eco_measurement_workbook.sh 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
+check_contains docs/c3eco_certification_assessment.md 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1'
+check_contains Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp 'shorthand.c3eco.assessment.v1'
+check_contains schemas/c3eco_assessment_v1.schema.json 'candidate_recommendation_only'
+check_contains CMakeLists.txt 'NAME c3eco_certification_assessment'
+check_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-c3eco-assessment'
+check_contains scripts/check_c3eco_assessment.sh 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate'
 
 if bash scripts/check_concurrent_serving_runtime.sh >/tmp/shorthand_concurrent_serving.out 2>&1; then
   log "PASS concurrent serving and operational runtime gate completed"

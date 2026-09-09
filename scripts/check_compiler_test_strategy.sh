@@ -20,6 +20,10 @@ PROFILE_DOC="${ROOT_DIR}/docs/c3eco_certification_profile.md"
 MEASUREMENT_DOC="${ROOT_DIR}/docs/c3eco_measurement_workbook.md"
 MEASUREMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_measurement_workbook_v1.schema.json"
 MEASUREMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
+ASSESSMENT_DOC="${ROOT_DIR}/docs/c3eco_certification_assessment.md"
+ASSESSMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_assessment_v1.schema.json"
+ASSESSMENT_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp"
+ASSESSMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
@@ -27,7 +31,7 @@ TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
+for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${TOOLING_CI}" "${RELEASE_CI}" "${SECURITY_CI}" "${DEPLOY_DOC}" "${TOOLING_DOC}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_GATE}" "${ASSESSMENT_DOC}" "${ASSESSMENT_SCHEMA}" "${ASSESSMENT_TOOL}" "${ASSESSMENT_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
   "${ROOT_DIR}/scripts/check_semantic_differential.sh" \
   "${ROOT_DIR}/scripts/check_fuzz_sanitizers.sh" \
   "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" \
@@ -82,24 +86,24 @@ row_count="$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' 
 implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END { print count+0 }' "${MATRIX}")"
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
-[[ "${row_count}" == 34 ]] || { echo "error: expected 34 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 28 ]] || { echo "error: expected 28 implemented rows in the PR89 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR89 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR89 candidate" >&2; exit 1; }
+[[ "${row_count}" == 35 ]] || { echo "error: expected 35 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
+[[ "${implemented_count}" == 29 ]] || { echo "error: expected 29 implemented rows in the PR90 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR90 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR90 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
 duplicate_ids="$(tail -n +2 "${MATRIX}" | cut -f1 | sort | uniq -d)"
 [[ -z "${duplicate_ids}" ]] || { echo "error: duplicate compiler test matrix IDs: ${duplicate_ids}" >&2; exit 1; }
-for number in $(seq 1 34); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 35); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 for pr in $(seq 68 80); do require_contains "${PLAN}" "PR${pr} -"; done
 require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-02-pr89' \
+  'compiler_test_strategy_version: 2026-09-08-pr90' \
   'production_claim: false' \
-  '28 implemented areas' \
+  '29 implemented areas' \
   '3 partial areas' \
   '3 open areas' \
   'Required test layers for every implementation PR' \
@@ -112,6 +116,7 @@ for anchor in \
   'An unavailable compiler oracle in editor tooling must fail visibly' \
   'Backend SDK installation or hardware detection is not backend qualification.' \
   'Measured-accounting changes must reject declared/modelled evidence' \
+  'Assessment changes must validate profile/workbook structure' \
   'CPU/GPU/TPU/NPU'; do
   require_contains "${DOC}" "${anchor}"
 done
@@ -125,8 +130,8 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-02-pr89'
-require_contains "${STATUS}" '28 implemented, 3 partial and 3 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-08-pr90'
+require_contains "${STATUS}" '29 implemented, 3 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
@@ -152,8 +157,9 @@ require_contains "${MATRIX}" $'TST031\tenterprise language packages core library
 require_contains "${MATRIX}" $'TST032\tconcurrent serving and operational runtime\timplemented'
 require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timplemented'
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
+require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
 
-require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\tpartial\tFirst-class C3-ECO grammar AST semantics evidence, typed profile v2 and SHD5101-SHD5208 claim-safety gates'
+require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\tpartial\tFirst-class C3-ECO grammar AST semantics evidence, typed profile v2 and SHD5101-SHD5208 claim-safety gates; PR89 instrumented measurement workbook; PR90 non-certifying eligibility, scoring, claim and eco-regression controls'
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
 require_contains "${C3ECO_DOC}" 'official_certification_granted: false'
 require_contains "${ROOT_DIR}/scripts/check_c3eco_language_blocks.sh" 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'
@@ -169,6 +175,15 @@ require_contains "${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh" 'PAS
 require_contains "${MEASUREMENT_DOC}" 'shorthand.c3eco.measurement_workbook.v1'
 require_contains "${MEASUREMENT_DOC}" 'PR95 owns equivalent-workload ShortHand/Python performance and energy comparison'
 require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
+require_contains "${ASSESSMENT_DOC}" 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1'
+require_contains "${ASSESSMENT_DOC}" 'candidate recommendation'
+require_contains "${ASSESSMENT_SCHEMA}" 'shorthand.c3eco.assessment.v1'
+require_contains "${ASSESSMENT_SCHEMA}" 'official_certification_granted'
+require_contains "${ASSESSMENT_SCHEMA}" 'comparative_energy_claim'
+require_contains "${ASSESSMENT_TOOL}" 'candidate_recommendation_only'
+require_contains "${ASSESSMENT_TOOL}" 'official_certification_granted'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentScoring.cpp" 'candidate_claim_text_is_not_claim_safe'
+require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate'
 require_contains "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" 'SERVING_MEMORY_SANITIZER contract=shorthand.serving.runtime.v1'
 require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'SERVING_TSAN contract=shorthand.serving.runtime.v1'
 bash "${ROOT_DIR}/scripts/check_production_truth.sh"

@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-01-pr88
+ci_pipeline_architecture_version: 2026-09-08-pr90
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -40,6 +40,7 @@ Runs first and fails quickly.
 - beta-0.5 call, scope, return and same-block label conformance,
 - beta-0.6 enterprise schema, package supply-chain, core ABI and installed-consumer conformance,
 - beta-0.7 typed C3-ECO profile, migration, native-JSON and claim-safety conformance,
+- instrument-backed measurement and deterministic C3-ECO candidate assessment,
 - AST/source ranges,
 - diagnostics codes,
 - module manifest/graph/lockfile determinism,
@@ -145,6 +146,10 @@ GitHub PR87 adds `scripts/check_concurrent_serving_runtime.sh` directly to `ubun
 
 GitHub PR88 adds `scripts/check_c3eco_certification_profile.sh` directly to `ubuntu-core`. Native literal types, forward-linked declarations, profile domains/ranges, validity, materiality, eight stable diagnostics, deterministic migration, JSON schemas, LLVM metadata and claim safety execute as one beta-0.7 contract. A passing profile remains preparation evidence and cannot grant certification.
 
+GitHub PR89 adds `scripts/check_c3eco_measurement_workbook.sh` directly to `ubuntu-core`, Make, CTest, sanitizer and installed-package paths. Only instrument-backed sources can enter measured evidence; allocation, PUE, carbon, tariff, uncertainty, offsets and totals are reconciled deterministically.
+
+GitHub PR90 adds `scripts/check_c3eco_assessment.sh` to those same mandatory paths. The gate structurally validates upstream evidence, evaluates G1-G14 before the complete 76-criterion A-K score, and tests tier boundaries, N/A reallocation, evidence caps, materiality, claims, AI applicability, quality/eco regressions and deterministic output. A passing result is still only a candidate recommendation.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -198,11 +203,13 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR86: enterprise ABI schemas/ownership plans, cryptographic offline packages, core library and safe FFI under beta-0.6.
 - PR87: concurrent serving and operational runtime.
 - PR88: typed C3-ECO profile and deterministic migration review.
-- PR89-PR91: measurement, scoring and auditor evidence.
+- PR89: instrument-backed measurement, carbon and cost accounting.
+- PR90: eligibility, scoring, claims and eco-regression candidate assessment.
+- PR91: signed auditor evidence, retention, surveillance and reporting.
 - PR92-PR94: generated MLIR, lowering and representative AI qualification.
 - PR95: performance and measured-energy qualification.
 - PR96: enterprise pilot and zero-skip production RC aggregation.
 
 Every remaining implementation PR adds its applicable mandatory jobs as executable contracts become available. Release publication remains isolated from pull-request permissions and closes only with a verified protected tag exercise.
 
-Historical architecture marker: ci_pipeline_architecture_version: 2026-08-09-v1. Historical roadmap marker: PR86: performance, energy and zero-skip production RC aggregation.
+Historical architecture markers: ci_pipeline_architecture_version: 2026-09-01-pr88 and ci_pipeline_architecture_version: 2026-08-09-v1. Historical roadmap marker: PR86: performance, energy and zero-skip production RC aggregation.

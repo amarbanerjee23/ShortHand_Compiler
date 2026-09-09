@@ -26,6 +26,10 @@ MEASUREMENT_CONTRACT="${ROOT_DIR}/docs/c3eco_measurement_workbook.md"
 MEASUREMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_measurement_workbook_v1.schema.json"
 MEASUREMENT_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp"
 MEASUREMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
+ASSESSMENT_CONTRACT="${ROOT_DIR}/docs/c3eco_certification_assessment.md"
+ASSESSMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_assessment_v1.schema.json"
+ASSESSMENT_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp"
+ASSESSMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
 CONTROL_FLOW_CONTRACT="${ROOT_DIR}/docs/functions_control_error_semantics.md"
 CONTROL_FLOW_MATRIX="${ROOT_DIR}/tests/conformance/functions_control_matrix_beta_0_5.tsv"
 CONTROL_FLOW_GATE="${ROOT_DIR}/scripts/check_functions_control_error_semantics.sh"
@@ -50,6 +54,7 @@ for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATE
   "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" \
   "${C3ECO_CONTRACT}" "${PROFILE_CONTRACT}" "${PROFILE_MATRIX}" "${PROFILE_GATE}" \
   "${MEASUREMENT_CONTRACT}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_TOOL}" "${MEASUREMENT_GATE}" \
+  "${ASSESSMENT_CONTRACT}" "${ASSESSMENT_SCHEMA}" "${ASSESSMENT_TOOL}" "${ASSESSMENT_GATE}" \
   "${CONTROL_FLOW_CONTRACT}" "${CONTROL_FLOW_MATRIX}" "${CONTROL_FLOW_GATE}" \
   "${ENTERPRISE_CONTRACT}" "${ENTERPRISE_MATRIX}" "${ENTERPRISE_GATE}" \
   "${SERVING_CONTRACT}" "${SERVING_GATE}" "${README}"; do
@@ -67,18 +72,18 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-02'
+  'as_of_date=2026-09-08'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=88'
-  'current_github_pr=89'
+  'last_merged_github_pr=89'
+  'current_github_pr=90'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=8'
-  'remaining_implementation_prs_after_current=7'
-  'coverage_matrix_status=implemented=28,partial=3,open=3,total=34'
+  'remaining_implementation_prs_including_current=7'
+  'remaining_implementation_prs_after_current=6'
+  'coverage_matrix_status=implemented=29,partial=3,open=3,total=35'
   'type_system_contract=shorthand.type_memory.v1'
   'control_flow_contract=shorthand.control_flow.v1'
   'enterprise_language_contract=shorthand.enterprise_language.v1'
@@ -91,10 +96,14 @@ expected_truth=(
   'c3eco_profile_contract=shorthand.c3eco.profile.v2'
   'c3eco_measurement_contract=shorthand.c3eco.measurement_workbook.v1'
   'c3eco_measurement_status=instrumented_accounting_candidate'
+  'c3eco_assessment_contract=shorthand.c3eco.assessment.v1'
+  'c3eco_assessment_status=candidate_recommendation_only'
   'c3eco_normative_candidate=draft-v0.6'
   'c3eco_inclusion_overlay=draft-v0.7-2026-07-18'
   'c3eco_claim_status=candidate_evidence_only'
   'comparative_energy_claim=false'
+  'official_certification_granted=false'
+  'level_claim_permitted=false'
   'protected_release_exercise=pending'
   'mandatory_test_skip_policy=forbidden'
 )
@@ -169,6 +178,12 @@ for id in G4 G5; do
   [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR89 requires ${id} implemented and non-blocking" >&2; exit 1; }
 done
 
+for id in G7 G13 G14 A G J; do
+  status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
+  blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
+  [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR90 requires ${id} implemented and non-blocking" >&2; exit 1; }
+done
+
 # Preserve the full inherited production-truth documentation contract.
 for anchor in \
   'production_truth_contract: shorthand.production.truth.v1' \
@@ -191,40 +206,44 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-02-pr89' \
-  'LAST_MERGED_GITHUB_PR: 88' \
-  'CURRENT_GITHUB_PR: 89' \
+  'production_readiness_plan_version: 2026-09-08-pr90' \
+  'LAST_MERGED_GITHUB_PR: 89' \
+  'CURRENT_GITHUB_PR: 90' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr89_through_pr96: 8' \
-  'remaining_planned_implementation_prs_after_pr89: 7' \
-  'PR90 - Eligibility, scoring, claims and eco-regression'; do
+  'remaining_planned_implementation_prs_pr90_through_pr96: 7' \
+  'remaining_planned_implementation_prs_after_pr90: 6' \
+  'PR91 - Auditor bundle, retention, surveillance and reporting'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-02-pr89' \
-  'current_github_pr: 89' \
-  'current_roadmap_scope: measurement_carbon_accounting_cost_workbook' \
-  '28 implemented, 3 partial and 3 open' \
-  'comparative_energy_claim: false'; do
+  'feature_status_version: 2026-09-08-pr90' \
+  'current_github_pr: 90' \
+  'current_roadmap_scope: eligibility_scoring_claims_eco_regression' \
+  '29 implemented, 3 partial and 3 open' \
+  'assessment_decision_kind: candidate_recommendation_only' \
+  'comparative_energy_claim: false' \
+  'official_certification_granted: false' \
+  'level_claim_permitted: false'; do
   require_contains "${STATUS}" "${anchor}"
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-02-pr89' \
-  '34-area production test matrix' \
-  '28 implemented areas' \
+  'compiler_test_strategy_version: 2026-09-08-pr90' \
+  '35-area production test matrix' \
+  '29 implemented areas' \
   '3 partial areas' \
   '3 open areas' \
-  'Measured-accounting changes must reject declared/modelled evidence'; do
+  'Measured-accounting changes must reject declared/modelled evidence' \
+  'Assessment changes must validate profile/workbook structure'; do
   require_contains "${STRATEGY}" "${anchor}"
 done
 
-[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 34 ]] || { echo "error: expected 34 compiler test coverage rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 28 ]] || { echo "error: expected 28 implemented compiler test rows" >&2; exit 1; }
+[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 35 ]] || { echo "error: expected 35 compiler test coverage rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 29 ]] || { echo "error: expected 29 implemented compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 partial compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 open compiler test rows" >&2; exit 1; }
-for number in $(seq 1 34); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 35); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
@@ -232,6 +251,7 @@ require_contains "${MATRIX}" $'TST031\tenterprise language packages core library
 require_contains "${MATRIX}" $'TST032\tconcurrent serving and operational runtime\timplemented'
 require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timplemented'
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
+require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
 require_contains "${MATRIX}" $'TST026\tmeasured energy comparison with Python\topen'
 
 # PR89 measurement/accounting contract is additive to all inherited checks.
@@ -244,6 +264,22 @@ require_contains "${MEASUREMENT_SCHEMA}" 'official_certification_granted'
 require_contains "${MEASUREMENT_TOOL}" 'double counting detected'
 require_contains "${MEASUREMENT_TOOL}" 'base_footprint_not_reduced_by_offsets'
 require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
+
+# PR90 assessment is additive and remains a candidate recommendation only.
+require_contains "${ASSESSMENT_CONTRACT}" 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1'
+require_contains "${ASSESSMENT_CONTRACT}" 'Exactly the 76 catalog criteria'
+require_contains "${ASSESSMENT_CONTRACT}" 'official_certification_granted:false'
+require_contains "${ASSESSMENT_CONTRACT}" 'PR95 owns repeated equivalent-workload ShortHand-versus-Python evidence'
+require_contains "${ASSESSMENT_SCHEMA}" 'shorthand.c3eco.assessment.v1'
+require_contains "${ASSESSMENT_SCHEMA}" 'candidate_recommendation_only'
+require_contains "${ASSESSMENT_SCHEMA}" 'official_certification_granted'
+require_contains "${ASSESSMENT_SCHEMA}" 'comparative_energy_claim'
+require_contains "${ASSESSMENT_TOOL}" 'exactly the 76 normative C3-ECO criteria'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentScoring.cpp" 'candidate_claim_text_is_not_claim_safe'
+require_contains "${ASSESSMENT_TOOL}" '\"comparative_energy_claim\":false'
+require_contains "${ASSESSMENT_TOOL}" 'candidate_recommendation_only'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentScoring.cpp" 'unresolved_eco_regression_caps_recommendation_at_bronze'
+require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate'
 
 # Inherited language/release/security/observability evidence remains mandatory.
 for anchor in \
@@ -259,32 +295,32 @@ for anchor in \
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-09-01-pr88' \
+  'known_limitations_version: 2026-09-08-pr90' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-09-01-pr88' \
+  'release_level_status_version: 2026-09-08-pr90' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: 96'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-09-01-pr88' \
+  'public_release_readiness_version: 2026-09-08-pr90' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-09-01-pr88' \
+  'enterprise_release_scorecard_version: 2026-09-08-pr90' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-01-pr88'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-08-pr90'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -313,6 +349,9 @@ require_contains "${OBJECTIVES}" 'Functions, lexical scopes, structured control 
 require_contains "${OBJECTIVES}" 'Enterprise composite/ownership schemas, cryptographic offline packages, core library and safe FFI: PR86.'
 require_contains "${OBJECTIVES}" 'Concurrent serving and operational runtime: PR87.'
 require_contains "${OBJECTIVES}" 'Typed C3-ECO profile and deterministic migration: PR88.'
+require_contains "${OBJECTIVES}" 'Instrument-backed C3-ECO measurement and accounting: PR89.'
+require_contains "${OBJECTIVES}" 'C3-ECO eligibility, scoring, claims and eco-regression assessment: PR90.'
+require_contains "${OBJECTIVES}" 'Signed auditor bundle, retention, surveillance and reporting: PR91.'
 require_contains "${OBJECTIVES}" 'Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.'
 require_contains "${ENTERPRISE_STRATEGY}" 'Current maturity: controlled enterprise beta (ER3), not an enterprise release candidate.'
 require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_superseded'
@@ -320,10 +359,14 @@ require_contains "${HISTORICAL_BETA_REQUIREMENTS}" 'document_status: historical_
 require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_superseded'
 
 bash "${MEASUREMENT_GATE}"
+bash "${ASSESSMENT_GATE}"
 
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-printf 'PRODUCTION_TRUTH current_pr=89 remaining=8 maturity=controlled_beta production_claim=false\n'
+[[ "${implemented}" == 13 ]] || { echo "error: expected 13 implemented C3-ECO traceability rows" >&2; exit 1; }
+[[ "${partial}" == 12 ]] || { echo "error: expected 12 partial C3-ECO traceability rows" >&2; exit 1; }
+[[ "${open}" == 2 ]] || { echo "error: expected 2 open C3-ECO traceability rows" >&2; exit 1; }
+printf 'PRODUCTION_TRUTH current_pr=90 remaining=7 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 printf 'PASS production truth and C3-ECO traceability gate\n'

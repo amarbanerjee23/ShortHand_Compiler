@@ -2,7 +2,7 @@
 
 ShortHand is a C++/LLVM-first controlled-beta programming language. It combines an interpreter, LLVM IR/bitcode/native code generation, first-class Green AI candidate-evidence constructs, and a C++ AI runtime abstraction for model/tensor/inference workloads.
 
-Current maturity: `controlled_beta`. Production claim: `false`. Active language: beta-0.7, with the beta-0.5 `shorthand.control_flow.v1` executable subset plus `shorthand.enterprise_language.v1`, offline package/lock v2, core FFI ABI 1.0.0, the process-scoped `shorthand.serving.runtime.v1` contract and the typed `shorthand.c3eco.profile.v2` preparation profile. The only qualified backend scope is `linux-x64-cpu-v1` with live ONNX Runtime CPU numerical execution. Public ingress, authentication, TLS, certification and measured energy claims are not claimed. See `docs/production_truth.tsv` for the machine-readable authority.
+Current maturity: `controlled_beta`. Production claim: `false`. Active language: beta-0.7, with the beta-0.5 `shorthand.control_flow.v1` executable subset plus `shorthand.enterprise_language.v1`, offline package/lock v2, core FFI ABI 1.0.0, the process-scoped `shorthand.serving.runtime.v1` contract, the typed `shorthand.c3eco.profile.v2` preparation profile, instrument-backed `shorthand.c3eco.measurement_workbook.v1`, and candidate-only `shorthand.c3eco.assessment.v1`. The only qualified backend scope is `linux-x64-cpu-v1` with live ONNX Runtime CPU numerical execution. Public ingress, authentication, TLS, certification and comparative energy claims are not claimed. See `docs/production_truth.tsv` for the machine-readable authority.
 
 The implementation goal is to keep the language syntax simple for end users while allowing advanced C/C++ AI libraries such as ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, and OpenBLAS to be integrated behind a stable compiler/runtime abstraction.
 
@@ -218,6 +218,21 @@ Reports are evidence artifacts only. They include the disclaimer:
 Evidence report only; this tool does not grant certification.
 ```
 
+Build the native C3-ECO measurement and assessment tools:
+
+```bash
+make -C Compiler_new_ws/Short_Hand/src c3eco_measurement_tool c3eco_assessment_tool
+```
+
+Create an instrument-backed measurement workbook and evaluate a complete candidate directory:
+
+```bash
+Compiler_new_ws/Short_Hand/build/shorthand_c3eco_measure input.tsv output.csv measurement.json
+Compiler_new_ws/Short_Hand/build/shorthand_c3eco_assess candidate assessment.json assessment.md
+```
+
+The assessment output is a deterministic recommendation for external review. It never grants certification, permits a certification-level claim, or establishes comparative energy superiority.
+
 ## Evidence and claims policy
 
 ShortHand evidence reporting follows an evidence-only policy:
@@ -269,6 +284,8 @@ The AI abstraction example is allowed to use fallback diagnostics for local expe
 - `docs/semantics.md` — operational semantics and safety policy.
 - `docs/compiler_pipeline.md` — compiler phases and runtime integration.
 - `docs/green_ai_certification.md` — Green AI evidence workflow.
+- `docs/c3eco_measurement_workbook.md`: instrument-backed energy, carbon, uncertainty, and cost accounting.
+- `docs/c3eco_certification_assessment.md`: candidate eligibility, scoring, claims, and eco-regression controls.
 - `docs/reproducibility.md` — clean-checkout reproduction commands.
 - `docs/evaluation_plan.md` — benchmark and measurement plan.
 - `docs/known_limitations.md` — current limitations and non-overclaims.

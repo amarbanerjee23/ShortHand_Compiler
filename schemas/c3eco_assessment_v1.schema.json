@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.invalid/schemas/c3eco_assessment_v1.schema.json",
+  "title": "ShortHand C3-ECO candidate assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "decision_kind",
+    "official_certification_granted",
+    "production_claim",
+    "comparative_energy_claim",
+    "product",
+    "evidence_contracts",
+    "assessment_controls",
+    "eligibility",
+    "scoring",
+    "materiality",
+    "ai_route",
+    "claims",
+    "eco_regression",
+    "surveillance",
+    "claim_safe_text",
+    "disclaimer"
+  ],
+  "properties": {
+    "schema": { "const": "shorthand.c3eco.assessment.v1" },
+    "decision_kind": { "const": "candidate_recommendation_only" },
+    "official_certification_granted": { "const": false },
+    "production_claim": { "const": false },
+    "comparative_energy_claim": { "const": false },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "software_class", "functional_unit", "boundary", "workload"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "software_class": { "type": "string", "pattern": "^(S([1-9]|1[0-2])|S6_AI_GENAI|S9_DEVELOPER_TOOLS_CI_CD|S12_INFRASTRUCTURE_PLATFORM)$" },
+        "functional_unit": { "type": "string", "minLength": 1 },
+        "boundary": { "type": "string", "minLength": 1 },
+        "workload": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence_contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "measurement"],
+      "properties": {
+        "profile": { "const": "shorthand.c3eco.profile.v2" },
+        "measurement": { "const": "shorthand.c3eco.measurement_workbook.v1" }
+      }
+    },
+    "assessment_controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measurement_quality",
+        "data_quality",
+        "penalty_points",
+        "uncertainty_percent",
+        "client_device_impact",
+        "eco_regression_control_defined",
+        "independent_review",
+        "public_report",
+        "continuous_telemetry",
+        "public_evidence",
+        "high_severity_claim_risk",
+        "high_scale_saas"
+      ],
+      "properties": {
+        "measurement_quality": { "enum": ["MQ1", "MQ2", "MQ3", "MQ4"] },
+        "data_quality": { "enum": ["DQ1", "DQ2", "DQ3", "DQ4"] },
+        "penalty_points": { "type": "number", "minimum": 0, "maximum": 100 },
+        "uncertainty_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "client_device_impact": { "type": "boolean" },
+        "eco_regression_control_defined": { "type": "boolean" },
+        "independent_review": { "type": "boolean" },
+        "public_report": { "type": "boolean" },
+        "continuous_telemetry": { "type": "boolean" },
+        "public_evidence": { "type": "boolean" },
+        "high_severity_claim_risk": { "type": "boolean" },
+        "high_scale_saas": { "type": "boolean" }
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "all_mandatory_gates_passed", "failed_gates", "gates"],
+      "properties": {
+        "status": { "enum": ["eligible_for_external_review", "not_eligible"] },
+        "all_mandatory_gates_passed": { "type": "boolean" },
+        "failed_gates": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^G([1-9]|1[0-4])$" }
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 14,
+          "maxItems": 14,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "input_status", "effective_status", "evidence_ref"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^G([1-9]|1[0-4])$" },
+              "input_status": { "enum": ["pass", "fail"] },
+              "effective_status": { "enum": ["pass", "fail"] },
+              "evidence_ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "normative_weights_sum",
+        "reallocated_weights_sum",
+        "total_score",
+        "score_ceiling_level",
+        "recommended_level_for_external_review",
+        "level_claim_permitted",
+        "domains",
+        "criteria",
+        "evidence_caps_applied",
+        "decision_reasons"
+      ],
+      "properties": {
+        "normative_weights_sum": { "const": 100 },
+        "reallocated_weights_sum": { "const": 100 },
+        "total_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "score_ceiling_level": { "$ref": "#/$defs/level" },
+        "recommended_level_for_external_review": { "$ref": "#/$defs/level" },
+        "level_claim_permitted": { "const": false },
+        "domains": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "domain",
+              "applicable",
+              "normative_weight",
+              "adjusted_weight",
+              "domain_percent",
+              "weighted_points",
+              "applicable_criteria"
+            ],
+            "properties": {
+              "domain": { "type": "string", "pattern": "^[A-K]$" },
+              "applicable": { "type": "boolean" },
+              "normative_weight": { "type": "number", "minimum": 0 },
+              "adjusted_weight": { "type": "number", "minimum": 0 },
+              "domain_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+              "weighted_points": { "type": "number", "minimum": 0, "maximum": 100 },
+              "applicable_criteria": { "type": "integer", "minimum": 0, "maximum": 10 }
+            }
+          }
+        },
+        "criteria": {
+          "type": "array",
+          "minItems": 76,
+          "maxItems": 76,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "domain",
+              "raw_score",
+              "effective_score",
+              "criterion_weight",
+              "evidence_status",
+              "applicable",
+              "auditor_approval_ref",
+              "evidence_ref"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^(A[1-8]|B[1-8]|C[1-8]|D[1-8]|E[1-6]|F[1-7]|G(10|[1-9])|H[1-5]|I[1-5]|J[1-4]|K[1-7])$"
+              },
+              "domain": { "type": "string", "pattern": "^[A-K]$" },
+              "raw_score": { "type": "integer", "minimum": 0, "maximum": 5 },
+              "effective_score": { "type": "integer", "minimum": 0, "maximum": 5 },
+              "criterion_weight": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1000000
+              },
+              "evidence_status": { "enum": ["sufficient", "insufficient", "not_applicable"] },
+              "applicable": { "type": "boolean" },
+              "auditor_approval_ref": { "type": ["string", "null"] },
+              "evidence_ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "evidence_caps_applied": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(A[1-8]|B[1-8]|C[1-8]|D[1-8]|E[1-6]|F[1-7]|G(10|[1-9])|H[1-5]|I[1-5]|J[1-4]|K[1-7])$"
+          }
+        },
+        "decision_reasons": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "materiality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "individual_threshold_percent",
+        "cumulative_omission_limit_percent",
+        "declared_share_percent",
+        "omitted_share_percent",
+        "individual_material_omission",
+        "cumulative_omission_exceeded",
+        "components"
+      ],
+      "properties": {
+        "individual_threshold_percent": { "const": 1 },
+        "cumulative_omission_limit_percent": { "const": 5 },
+        "declared_share_percent": { "const": 100 },
+        "omitted_share_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "individual_material_omission": { "type": "boolean" },
+        "cumulative_omission_exceeded": { "type": "boolean" },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["component", "share_percent", "disposition", "evidence_ref"],
+            "properties": {
+              "component": { "type": "string", "minLength": 1 },
+              "share_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+              "disposition": { "enum": ["included", "conservative_estimate", "omitted"] },
+              "evidence_ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "ai_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ai_in_scope",
+        "role",
+        "training_boundary_declared",
+        "inference_boundary_declared",
+        "token_or_inference_metric_declared",
+        "exclusions_declared",
+        "quality_energy_frontier_options"
+      ],
+      "properties": {
+        "ai_in_scope": { "type": "boolean" },
+        "role": {
+          "enum": ["model_provider", "application_deployer", "integrator", "auditor", "not_applicable"]
+        },
+        "training_boundary_declared": { "type": "boolean" },
+        "inference_boundary_declared": { "type": "boolean" },
+        "token_or_inference_metric_declared": { "type": "boolean" },
+        "exclusions_declared": { "type": "boolean" },
+        "quality_energy_frontier_options": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "text", "decision", "reasons", "evidence_ref"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": {
+            "enum": [
+              "candidate_assessment",
+              "certified",
+              "level",
+              "comparative",
+              "green_ai",
+              "zero",
+              "best",
+              "climate_positive",
+              "net_positive",
+              "offsets_only"
+            ]
+          },
+          "text": { "type": "string", "minLength": 1 },
+          "decision": { "enum": ["permitted", "blocked"] },
+          "reasons": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "evidence_ref": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "eco_regression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["threshold_percent", "triggered", "unresolved", "corrective_action_required", "metrics"],
+      "properties": {
+        "threshold_percent": { "const": 10 },
+        "triggered": { "type": "boolean" },
+        "unresolved": { "type": "boolean" },
+        "corrective_action_required": { "type": "boolean" },
+        "metrics": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "kind",
+              "baseline_value",
+              "current_value",
+              "lower_is_better",
+              "deterioration_percent",
+              "threshold_exceeded",
+              "unresolved",
+              "explanation",
+              "corrective_action_ref",
+              "evidence_ref"
+            ],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "kind": { "enum": ["eco", "quality"] },
+              "baseline_value": { "type": "number", "exclusiveMinimum": 0 },
+              "current_value": { "type": "number", "minimum": 0 },
+              "lower_is_better": { "type": "boolean" },
+              "deterioration_percent": { "type": "number" },
+              "threshold_exceeded": { "type": "boolean" },
+              "unresolved": { "type": "boolean" },
+              "explanation": { "type": ["string", "null"] },
+              "corrective_action_ref": { "type": ["string", "null"] },
+              "evidence_ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "surveillance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cadence_months", "recertification_review_required", "major_change_triggers"],
+      "properties": {
+        "cadence_months": { "enum": [6, 12] },
+        "recertification_review_required": { "type": "boolean" },
+        "major_change_triggers": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["architecture", "model", "runtime", "database", "cloud_region", "provider", "hardware", "traffic"]
+          }
+        }
+      }
+    },
+    "claim_safe_text": { "type": "string", "minLength": 1 },
+    "disclaimer": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "level": {
+      "enum": ["none", "candidate", "bronze", "silver", "gold", "platinum", "diamond"]
+    }
+  }
+}

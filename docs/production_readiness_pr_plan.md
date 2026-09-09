@@ -1,11 +1,11 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-09-02-pr89
+production_readiness_plan_version: 2026-09-08-pr90
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 88
-CURRENT_GITHUB_PR: 89
+LAST_MERGED_GITHUB_PR: 89
+CURRENT_GITHUB_PR: 90
 LAST_PLANNED_GITHUB_PR: 96
-CURRENT_IMPLEMENTATION_SCOPE: measurement_carbon_accounting_cost_workbook
+CURRENT_IMPLEMENTATION_SCOPE: eligibility_scoring_claims_eco_regression
 BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
@@ -17,38 +17,38 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR88 is merged. It established the beta-0.7 typed C3-ECO certification-preparation profile while preserving the beta-0.6 enterprise language/package/FFI and PR87 bounded serving runtime. PR89 adds instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance. It does not perform certification scoring or comparative ShortHand-versus-Python energy qualification.
+GitHub PR89 is merged. It established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 adds deterministic eligibility, scoring, claims and eco-regression assessment. It emits candidate recommendations only and does not perform independent certification or comparative ShortHand-versus-Python energy qualification.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The corrected enterprise plan remains GitHub-native PR83 through PR96 and now has eight implementation PRs remaining including PR89.
+The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The corrected enterprise plan remains GitHub-native PR83 through PR96 and now has seven implementation PRs remaining including PR90.
 
-## PR89 completion contract
+## PR90 completion contract
 
-PR89 - Measurement, carbon accounting and cost workbook is IN PROGRESS.
+PR90 - Eligibility, scoring, claims and eco-regression is IN PROGRESS.
 
 Implementation requirements:
 
-1. Establish `shorthand.c3eco.measurement_workbook.v1` as an immutable measured-accounting evidence contract.
-2. Accept only instrument-backed measurement sources: physical meter, RAPL, accelerator counter or cloud meter.
-3. Reject modelled, declared-budget-only and unavailable telemetry from the measured evidence path.
-4. Require instrument identity, calibration identity/date, measurement timestamp and raw energy in Joules.
-5. Require bounded allocation fractions and reject cumulative shared-reading allocation above 1.0 to prevent double counting.
-6. Apply bounded PUE to allocated IT energy and retain both IT and facility-energy quantities.
-7. Require carbon-factor value, source and date, and reject factors that post-date the measurement.
-8. Require tariff value, three-letter currency and tariff provenance without conflating currencies.
-9. Carry explicit MQ, DQ and bounded uncertainty through record and aggregate outputs.
-10. Emit deterministic CSV and JSON workbooks independent of input row ordering.
-11. Reconcile Joules, kWh, kgCO2e and cost using explicit equations with deterministic totals.
-12. Preserve offsets and avoided impact outside the base-footprint reduction path.
-13. Preserve `official_certification_granted:false`; measured accounting evidence does not grant certification.
-14. Keep scoring, levels and permitted claims assigned to PR90.
-15. Keep repeated equivalent-workload ShortHand-versus-Python energy comparison assigned to PR95.
-16. Add schema, documentation, positive, negative, determinism, provenance and double-count tests.
-17. Register the measurement gate in direct CI/governance, Make and CTest/build parity without weakening inherited gates.
-18. Preserve all compiler, sanitizer/race, portability, security, deployment, tooling, backend, package, serving and C3-ECO qualification gates.
-19. Final PR head must have `ci / ubuntu (push)` successful.
-20. Final PR head must have `ci / ubuntu (pull_request)` successful.
+1. Establish `shorthand.c3eco.assessment.v1` as an immutable candidate-assessment contract.
+2. Structurally validate the complete PR88 profile and PR89 measurement workbook before consuming either input.
+3. Evaluate canonical mandatory gates G1-G14 before any score or level recommendation.
+4. Implement the complete 76-criterion A-K catalog with canonical domain weights and deterministic ordering.
+5. Cap criteria with insufficient evidence at score 1 and apply bounded MQ/DQ/uncertainty rules.
+6. Enforce auditor-approved N/A controls, proportional weight reallocation and all-or-nothing domain rules.
+7. Keep A, B and K applicable; keep G applicable for AI systems and H applicable when client-device impact exists.
+8. Enforce individual and cumulative materiality omissions and require exactly 100 percent declared component share.
+9. Implement cumulative Candidate through Diamond thresholds and every domain, MQ, uncertainty, review and telemetry prerequisite.
+10. Treat Candidate as a readiness state, not a certification level, and keep Bronze as the first certifiable recommendation.
+11. Reject unsafe or unsupported neutrality, savings and superiority claims; always block offset-only and official-certification claims.
+12. Keep `official_certification_granted:false`, `level_claim_permitted:false` and `comparative_energy_claim:false` in every output.
+13. Enforce quality-regression rejection and unresolved eco-regression controls, including the greater-than-10-percent Bronze cap.
+14. Encode AI role/applicability boundaries and require disclosure for model/runtime/provider factors.
+15. Emit risk-based surveillance intervals and recertification triggers without claiming that surveillance has occurred.
+16. Emit deterministic schema-valid JSON independent of criterion and measurement-record input ordering.
+17. Add exact-boundary, gate-precedence, evidence-cap, N/A, materiality, claims, regression, AI and malformed-input tests.
+18. Register the assessment gate in direct CI/governance, Make, CTest, sanitizer and installed-package paths without weakening inherited gates.
+19. Preserve all compiler, sanitizer/race, portability, security, deployment, tooling, backend, package, serving and C3-ECO qualification gates.
+20. Final PR head must have both `ci / ubuntu (push)` and `ci / ubuntu (pull_request)` successful.
 
 ## Mandatory rule for every remaining PR
 
@@ -58,7 +58,7 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification, PR79 formatter/linter qualification, PR80 LSP/editor qualification, PR81 live versioned backend qualification and PR82 first-class C3-ECO language plus zero-skip qualification. PR83 adds production truth and certification traceability. PR84-PR88 add the production type/memory model, control flow, enterprise packages/FFI, serving runtime and typed certification profile. Release publication remains separated from PR CI so OIDC and repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification, PR79 formatter/linter qualification, PR80 LSP/editor qualification, PR81 live versioned backend qualification and PR82 first-class C3-ECO language plus zero-skip qualification. PR83 adds production truth and certification traceability. PR84-PR89 add the production type/memory model, control flow, enterprise packages/FFI, serving runtime, typed certification profile and instrumented measurement. Release publication remains separated from PR CI so OIDC and repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -84,8 +84,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR86 - Enterprise packages, standard library and FFI | MERGED | Versioned composite/ownership ABI-schema prerequisite, cryptographic offline dependencies, namespaces, core libraries and safe C/C++ interop. Composite execution remains assigned to production lowering. | Language-surface, package supply-chain and installed-consumer gates. | Type/lifetime, tamper, reproducibility, ABI, license, SBOM and portability tests. |
 | PR87 - Concurrent serving and operational runtime | MERGED | Versioned process-scoped cancellation, deadlines, backpressure, bounded concurrency, health, metrics, quotas and isolation. | Runtime load/fault/soak qualification plus installed worker lifecycle and Kubernetes drain probes. | TSan, sanitizer, saturation, timeout, restart, graceful-shutdown and Kubernetes tests. |
 | PR88 - Typed C3-ECO certification profile | MERGED | Typed identities, units, functional links, boundary/materiality, AI roles, validity and migration. | Certification-profile conformance gate. | G1-G3/G7/G14 positive, negative, migration and claim-safety evidence. |
-| PR89 - Measurement, carbon accounting and cost workbook | IN PROGRESS | Instrument-backed measurement, allocation, PUE, component accounting, MQ/DQ, uncertainty and tariff/carbon-factor provenance. | Deterministic fail-closed measurement/workbook gate. | Calibration, missing/modelled instrument, bounds, factor provenance, double-counting, deterministic reconciliation and claim-safety tests. |
-| PR90 - Eligibility, scoring, claims and eco-regression | PLANNED | G1-G14 algorithm, A-K scoring, level caps, materiality decisions, AI routes, permitted claims and surveillance thresholds. | Golden scoring and claim-control gate. | Tier boundaries, critical-gate precedence, restricted claims and regression tests. |
+| PR89 - Measurement, carbon accounting and cost workbook | MERGED | Instrument-backed measurement, allocation, PUE, component accounting, MQ/DQ, uncertainty and tariff/carbon-factor provenance. | Deterministic fail-closed measurement/workbook gate. | Calibration, missing/modelled instrument, bounds, factor provenance, double-counting, deterministic reconciliation and claim-safety tests. |
+| PR90 - Eligibility, scoring, claims and eco-regression | IN PROGRESS | G1-G14 precedence, complete 76-criterion A-K scoring, evidence/uncertainty caps, N/A/materiality decisions, AI routes, controlled claims, regression actions and surveillance thresholds. | Deterministic assessment and claim-control gate across CI, Make, CTest, sanitizers and installed packaging. | Exact tier boundaries, gate precedence, evidence caps, N/A reallocation, materiality, restricted claims, regression, AI, malformed-input and determinism tests. |
 | PR91 - Auditor bundle, retention, surveillance and reporting | PLANNED | Signed lineage, canonical schemas, redaction, replay, retention, expiry, recertification and public reports. | Auditor-bundle verification dependency. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
 | PR92 - Generated ShortHand MLIR dialect | PLANNED | TableGen-generated operations, types, attributes, verifiers, installation and downstream use. | MLIR build/lit gate. | FileCheck, verifiers, roundtrip, installed consumer and freshness tests. |
 | PR93 - SemanticIR to MLIR and LLVM lowering | PLANNED | Full semantic lowering, canonicalization, verification, composite execution integration and runtime handoff. | MLIR differential lowering gate. | Invalid ops/shapes, execution equivalence and optimization preservation. |
@@ -95,8 +95,8 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Why this remaining order is dependency-correct
 
-1. PR89 creates trustworthy measured quantities before any score can consume them.
-2. PR90 can then calculate eligibility, scores and permitted claims from typed profiles plus measured evidence.
+1. PR89 created trustworthy measured quantities before any score consumes them.
+2. PR90 calculates candidate eligibility, scores and controlled recommendation text from typed profiles plus measured evidence.
 3. PR91 packages those decisions into signed, retained and replayable auditor evidence.
 4. PR92 defines the generated MLIR dialect before PR93 attempts production lowering into it.
 5. PR93 closes the compiler execution path needed for representative production AI workloads.
@@ -106,21 +106,28 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr89_through_pr96: 8
-remaining_planned_implementation_prs_after_pr89: 7
+remaining_planned_implementation_prs_pr90_through_pr96: 7
+remaining_planned_implementation_prs_after_pr90: 6
 
-Next recommended PR after PR89 is merged:
+Next recommended PR after PR90 is merged:
 
-PR90 - Eligibility, scoring, claims and eco-regression.
+PR91 - Auditor bundle, retention, surveillance and reporting.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the eight remaining implementation PRs.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the seven remaining implementation PRs.
 
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
 
+- production_readiness_plan_version: 2026-09-02-pr89
+- LAST_MERGED_GITHUB_PR: 88
+- CURRENT_GITHUB_PR: 89
+- CURRENT_IMPLEMENTATION_SCOPE: measurement_carbon_accounting_cost_workbook
+- remaining_planned_implementation_prs_pr89_through_pr96: 8
+- remaining_planned_implementation_prs_after_pr89: 7
+- PR89 - Measurement, carbon accounting and cost workbook is IN PROGRESS.
 - production_readiness_plan_version: 2026-09-01-pr88
 - LAST_MERGED_GITHUB_PR: 87
 - CURRENT_GITHUB_PR: 88

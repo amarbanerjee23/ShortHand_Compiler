@@ -299,7 +299,7 @@ void writeJson(const std::string& path, const std::vector<Derived>& rows) {
     }
     out << "\n  ],\n"
         << "  \"claim_safe_text\":\"Measured accounting evidence only. This workbook does not grant C3-ECO certification and does not establish comparative energy superiority.\",\n"
-        << "  \"next_qualification\":\"PR90 scoring and claims remain separate; comparative ShortHand/Python energy qualification remains PR95.\"\n}\n";
+        << "  \"next_qualification\":\"Candidate scoring is available through shorthand.c3eco.assessment.v1; comparative ShortHand/Python energy qualification remains PR95.\"\n}\n";
 }
 }
 

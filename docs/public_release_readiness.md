@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-01-pr88
+public_release_readiness_version: 2026-09-08-pr90
 current_maturity: controlled_beta
 production_claim: false
 release_candidate_target: PR96
 
-A PR88 candidate requires all mandatory commands to pass from a clean checkout:
+A PR90 candidate requires all mandatory commands to pass from a clean checkout:
 
 ```bash
 bash setup_build_infra.sh
@@ -18,6 +18,8 @@ bash scripts/check_functions_control_error_semantics.sh
 bash scripts/check_enterprise_packages_stdlib_ffi.sh
 bash scripts/check_concurrent_serving_runtime.sh
 bash scripts/check_c3eco_certification_profile.sh
+bash scripts/check_c3eco_measurement_workbook.sh
+bash scripts/check_c3eco_assessment.sh
 bash scripts/check_semantic_differential.sh
 bash scripts/smoke_test.sh
 make -C Compiler_new_ws/Short_Hand/src test
@@ -28,6 +30,8 @@ ctest --test-dir build --output-on-failure
 ```
 
 This command set qualifies the current PR candidate only. Public enterprise release requires the PR96 zero-skip aggregate, every production blocker closed, both stable CI contexts green on the final head, and the protected release exercise completed.
+
+Historical readiness marker: public_release_readiness_version: 2026-09-01-pr88.
 
 ## Mandatory Declared-Scope Checks
 

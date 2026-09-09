@@ -5,6 +5,7 @@ test-green
 test-c3eco
 test-c3eco-profile
 test-c3eco-measurement
+test-c3eco-assessment
 test-compiler
 test-negative
 test-diagnostics

@@ -7,6 +7,10 @@ LSP_DOC="${ROOT_DIR}/docs/syntax_highlighting_lsp.md"
 BACKEND_DOC="${ROOT_DIR}/docs/production_backend_hardware_qualification.md"
 C3ECO_DOC="${ROOT_DIR}/docs/c3eco_language_contract.md"
 PROFILE_DOC="${ROOT_DIR}/docs/c3eco_certification_profile.md"
+MEASUREMENT_DOC="${ROOT_DIR}/docs/c3eco_measurement_workbook.md"
+MEASUREMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
+ASSESSMENT_DOC="${ROOT_DIR}/docs/c3eco_certification_assessment.md"
+ASSESSMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
@@ -14,7 +18,7 @@ TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
 require_file() { [[ -s "$1" ]] || { echo "error: missing required file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
+for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_GATE}" "${ASSESSMENT_DOC}" "${ASSESSMENT_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
@@ -52,17 +56,17 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-01-pr88' \
+  'production_readiness_plan_version: 2026-09-08-pr90' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 87' \
-  'CURRENT_GITHUB_PR: 88' \
+  'LAST_MERGED_GITHUB_PR: 89' \
+  'CURRENT_GITHUB_PR: 90' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'CURRENT_IMPLEMENTATION_SCOPE: typed_c3eco_certification_profile' \
+  'CURRENT_IMPLEMENTATION_SCOPE: eligibility_scoring_claims_eco_regression' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'PR88 - Typed C3-ECO certification profile is IN PROGRESS.' \
-  'remaining_planned_implementation_prs_pr88_through_pr96: 9' \
-  'remaining_planned_implementation_prs_after_pr88: 8' \
+  'PR90 - Eligibility, scoring, claims and eco-regression is IN PROGRESS.' \
+  'remaining_planned_implementation_prs_pr90_through_pr96: 7' \
+  'remaining_planned_implementation_prs_after_pr90: 6' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -90,10 +94,12 @@ require_contains "${PLAN}" '| PR84 - Production type system and memory model | M
 require_contains "${PLAN}" '| PR85 - Functions, structured control flow and error semantics | MERGED'
 require_contains "${PLAN}" '| PR86 - Enterprise packages, standard library and FFI | MERGED'
 require_contains "${PLAN}" '| PR87 - Concurrent serving and operational runtime | MERGED'
-require_contains "${PLAN}" '| PR88 - Typed C3-ECO certification profile | IN PROGRESS'
+require_contains "${PLAN}" '| PR88 - Typed C3-ECO certification profile | MERGED'
+require_contains "${PLAN}" '| PR89 - Measurement, carbon accounting and cost workbook | MERGED'
+require_contains "${PLAN}" '| PR90 - Eligibility, scoring, claims and eco-regression | IN PROGRESS'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-01-pr88' \
+  'ci_pipeline_architecture_version: 2026-09-08-pr90' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \
@@ -108,6 +114,8 @@ for anchor in \
   'PR86: enterprise ABI schemas/ownership plans, cryptographic offline packages, core library and safe FFI under beta-0.6.' \
   'PR87: concurrent serving and operational runtime.' \
   'PR88: typed C3-ECO profile and deterministic migration review.' \
+  'PR89: instrument-backed measurement, carbon and cost accounting.' \
+  'PR90: eligibility, scoring, claims and eco-regression candidate assessment.' \
   'PR96: enterprise pilot and zero-skip production RC aggregation.'; do
   require_contains "${PIPELINE}" "${anchor}"
 done
@@ -145,6 +153,10 @@ require_contains "${ROOT_DIR}/docs/concurrent_serving_runtime.md" 'serving_runti
 require_contains "${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh" 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
 require_contains "${PROFILE_DOC}" 'c3eco_profile_contract: shorthand.c3eco.profile.v2'
 require_contains "${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh" 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate'
+require_contains "${MEASUREMENT_DOC}" 'shorthand.c3eco.measurement_workbook.v1'
+require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
+require_contains "${ASSESSMENT_DOC}" 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1'
+require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate'
 require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases'
 
 # Historical milestones remain auditable without being mistaken for active state.

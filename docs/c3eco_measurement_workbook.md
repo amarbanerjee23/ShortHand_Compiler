@@ -56,4 +56,4 @@ The emitted JSON always contains:
 - tariff provenance
 - explicit uncertainty
 
-PR90 owns eligibility/scoring/claims. PR95 owns equivalent-workload ShortHand/Python performance and energy comparison. A PR89 workbook alone cannot support a statement that ShortHand consumes less energy than Python.
+`shorthand.c3eco.assessment.v1` consumes this workbook for PR90 eligibility/scoring/claim controls. PR95 owns equivalent-workload ShortHand/Python performance and energy comparison. A PR89 workbook or PR90 candidate recommendation alone cannot support a statement that ShortHand consumes less energy than Python.

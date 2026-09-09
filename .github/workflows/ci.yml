@@ -116,6 +116,11 @@ jobs:
       - name: Typed C3-ECO certification profile beta-0.7
         run: CXX=g++ bash scripts/check_c3eco_certification_profile.sh
 
+      - name: C3-ECO measurement and candidate assessment
+        run: |
+          CXX=g++ bash scripts/check_c3eco_measurement_workbook.sh
+          CXX=g++ bash scripts/check_c3eco_assessment.sh
+
       - name: Semantic differential execution
         run: bash scripts/check_semantic_differential.sh
 
