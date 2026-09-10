@@ -22,8 +22,12 @@ jobs:
 
       - name: Install required dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y \
             libssl-dev openssl python3 jq build-essential \
             make \
             g++ \
@@ -215,8 +219,12 @@ jobs:
 
       - name: Install matrix build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
 
       - name: Record matrix toolchain
         run: |
@@ -254,8 +262,12 @@ jobs:
 
       - name: Install Linux arm64 dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
       - name: Record Linux arm64 environment
         run: |
@@ -440,8 +452,12 @@ jobs:
 
       - name: Install CTest parity dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build jq
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build jq
 
       - name: Verify CTest parity manifest
         run: |
@@ -462,8 +478,12 @@ jobs:
 
       - name: Install reproducibility dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
       - name: Independent clean-build reproducibility
         run: bash scripts/check_reproducible_builds.sh
@@ -489,8 +509,12 @@ jobs:
 
       - name: Install security build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
 
       - name: Security policy and negative matrix
         run: bash scripts/check_external_security_policy.sh

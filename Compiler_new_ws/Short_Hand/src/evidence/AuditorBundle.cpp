@@ -1,3 +1,12 @@
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
 #include "C3EcoEvidenceIO.h"
 #include "../module/Sha256.h"
 #include <openssl/evp.h>
@@ -152,7 +161,20 @@ bool below(const fs::path &path, const fs::path &parent) {
             return false;
     return true;
 }
+void noReparsePoint(const fs::path &p) {
+#ifdef _WIN32
+    // Check the native entry itself, including directory junctions. C++ library
+    // symlink classification differs across Windows toolchains.
+    const DWORD attributes = GetFileAttributesW(p.c_str());
+    require(attributes != INVALID_FILE_ATTRIBUTES, "cannot inspect artifact attributes");
+    require((attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0,
+            "symlink artifact or reparse point is forbidden");
+#else
+    (void)p;
+#endif
+}
 void regular(const fs::path &p) {
+    noReparsePoint(p);
     require(fs::is_regular_file(fs::symlink_status(p)),
             "artifact must be a regular non-symlink file: " + p.filename().string());
     require(fs::hard_link_count(p) == 1, "hard-linked artifact is forbidden");
@@ -211,12 +233,14 @@ class Stage {
 };
 using Files = std::map<std::string, std::string>;
 Files files(const fs::path &root) {
+    noReparsePoint(root);
     require(fs::is_directory(fs::symlink_status(root)),
             "bundle root must be a non-symlink directory");
     Files out;
     std::set<std::string> folded;
     std::size_t total = 0;
     for (const auto &entry : fs::recursive_directory_iterator(root)) {
+        noReparsePoint(entry.path());
         const auto status = entry.symlink_status();
         require(!fs::is_symlink(status), "symlink artifact is forbidden");
         const std::string name = entry.path().lexically_relative(root).generic_string();

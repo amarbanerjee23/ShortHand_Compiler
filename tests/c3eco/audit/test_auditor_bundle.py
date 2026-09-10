@@ -211,7 +211,24 @@ run(TOOL, 'verify', case, PUBLIC, AS_OF, code=2, diagnostic='unresolved evidence
 
 # Unsafe filesystem representations fail, even before content can be replayed.
 case = clone()
-(case / 'linked').symlink_to(PUBLIC)
+link = case / 'linked'
+if os.name == 'nt':
+    # Qualify an actual NTFS reparse point. MSYS-compatible Python builds can
+    # emulate os.symlink, which would test a plain file instead of a link.
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    create_link = kernel.CreateSymbolicLinkW
+    create_link.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD]
+    create_link.restype = ctypes.c_ubyte
+    assert create_link(str(link), str(PUBLIC), 2), ctypes.get_last_error()
+    attributes = kernel.GetFileAttributesW
+    attributes.argtypes = [wintypes.LPCWSTR]
+    attributes.restype = wintypes.DWORD
+    assert attributes(str(link)) != 0xffffffff and attributes(str(link)) & 0x400
+else:
+    link.symlink_to(PUBLIC)
+    assert link.is_symlink()
 run(TOOL, 'verify', case, PUBLIC, AS_OF, code=2, diagnostic='symlink artifact')
 case = clone()
 os.link(case / 'candidate/evidence/storage.json', case / 'hardlink')

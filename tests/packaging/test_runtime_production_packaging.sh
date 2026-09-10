@@ -39,7 +39,7 @@ cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \
   shorthand_serving shorthand_serving_worker shorthand_lsp \
-  shorthand_c3eco_measure shorthand_c3eco_assess \
+  shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit \
   shorthand_prometheus_adapter shorthand_otlp_exporter
 
 stage install-artifacts
@@ -73,6 +73,9 @@ require_installed '*/bin/shorthand_lsp'
 require_installed '*/bin/shorthand_serving_worker'
 require_installed '*/bin/shorthand_c3eco_measure'
 require_installed '*/bin/shorthand_c3eco_assess'
+require_installed '*/bin/shorthand_c3eco_audit'
+require_installed '*/share/shorthand/schemas/c3eco/auditor_bundle_v1.schema.json'
+require_installed '*/share/shorthand/docs/c3eco_auditor_bundle.md'
 require_installed '*/bin/shorthand_prometheus_adapter'
 require_installed '*/bin/shorthand_otlp_exporter'
 require_installed '*/ShortHandConfig.cmake'
@@ -85,6 +88,7 @@ require_installed '*/shorthand-core.pc'
 stage verify-installed-evidence-clis
 MEASURE_CLI="$(find "${INSTALL_DIR}" -type f -name shorthand_c3eco_measure -print -quit)"
 ASSESS_CLI="$(find "${INSTALL_DIR}" -type f -name shorthand_c3eco_assess -print -quit)"
+AUDIT_CLI="$(find "${INSTALL_DIR}" -type f -name shorthand_c3eco_audit -print -quit)"
 if "${MEASURE_CLI}" >"${WORK_DIR}/measure-usage.out" 2>&1; then
   echo "error: installed measurement CLI accepted missing arguments" >&2
   exit 1
@@ -95,6 +99,11 @@ if "${ASSESS_CLI}" >"${WORK_DIR}/assess-usage.out" 2>&1; then
   exit 1
 fi
 grep -Fq 'usage: shorthand_c3eco_assess' "${WORK_DIR}/assess-usage.out"
+if "${AUDIT_CLI}" >"${WORK_DIR}/audit-usage.out" 2>&1; then
+  echo "error: installed auditor CLI accepted missing arguments" >&2
+  exit 1
+fi
+grep -Fq 'usage: shorthand_c3eco_audit' "${WORK_DIR}/audit-usage.out"
 
 RUNTIME_SHARED="$(find "${INSTALL_DIR}" -type f \( \
   -name 'libshorthand_runtime.so.1.0.0' -o \

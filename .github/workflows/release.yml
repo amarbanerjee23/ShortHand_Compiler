@@ -59,8 +59,12 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install qualified Linux x64 dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build
       - name: Build, execute and stage Linux x64
         env:
           CC: clang-18
@@ -90,8 +94,12 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install qualified Linux arm64 dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          # Only Ubuntu packages are required here. An unrelated Chrome index
+          # hash mismatch must not prevent qualification dependencies installing.
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
       - name: Build, execute and stage Linux arm64
         run: |
           set -euo pipefail
