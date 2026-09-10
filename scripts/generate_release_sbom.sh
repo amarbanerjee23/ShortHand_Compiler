@@ -62,6 +62,16 @@ cat > "${OUT_DIR}/sbom.spdx.json" <<JSON
       "copyrightText": "NOASSERTION"
     },
     {
+      "name": "LLVM/MLIR for the generated ShortHand dialect SDK",
+      "SPDXID": "SPDXRef-Package-MLIR",
+      "versionInfo": "supported-18.x-exact-installed-consumer-ABI",
+      "downloadLocation": "https://github.com/llvm/llvm-project",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0 WITH LLVM-exception",
+      "licenseDeclared": "Apache-2.0 WITH LLVM-exception",
+      "copyrightText": "NOASSERTION"
+    },
+    {
       "name": "ShortHand optional AI SDK integrations",
       "SPDXID": "SPDXRef-Package-OptionalAISDKIntegrations",
       "versionInfo": "optional-sdk-roots-not-vendored",
@@ -73,6 +83,11 @@ cat > "${OUT_DIR}/sbom.spdx.json" <<JSON
     }
   ],
   "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-ShortHandCompilerSource",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-MLIR"
+    },
     {
       "spdxElementId": "SPDXRef-Package-ShortHandCompilerSource",
       "relationshipType": "DEPENDS_ON",

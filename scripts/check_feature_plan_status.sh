@@ -133,14 +133,14 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR91 state must be present and claim-safe.
+# Active PR92 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-09-pr91' \
+  'feature_status_version: 2026-09-10-pr92' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 91' \
-  'current_roadmap_scope: auditor_bundle_retention_surveillance_reporting' \
+  'current_github_pr: 92' \
+  'current_roadmap_scope: generated_mlir_dialect' \
   '31 implemented, 2 partial and 3 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \
@@ -309,7 +309,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR91 adds signed auditor evidence, replay, retention, surveillance and redacted reporting while preserving candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; PR92-PR96 and the protected release exercise remain fail-closed."
+echo "Feature plan status check passed. GitHub PR92 adds the generated MLIR dialect, verifiers and installed SDK while preserving candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; PR93-PR96 and the protected release exercise remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

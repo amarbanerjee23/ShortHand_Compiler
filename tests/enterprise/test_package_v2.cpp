@@ -111,6 +111,81 @@ int main(int argc, char **argv) {
     expect(sbom.str().find("\"referenceLocator\":\"sha256:" + dependency_digest + "\"") != std::string::npos,
            "emit dependency manifest integrity reference");
 
+    // LLVM's redistribution exception is a single allowlisted SPDX expression,
+    // including in dependency identity checks, exact lockfiles and SPDX output.
+    const std::string llvm_license = "Apache-2.0 WITH LLVM-exception";
+    auto licensedFixture = [&](const std::string &root_license,
+                               const std::string &declared_license,
+                               const std::string &actual_license) {
+        std::string vendored = dependency_manifest;
+        vendored.replace(vendored.find("license MIT"), std::string("license MIT").size(),
+                         "license " + actual_license);
+        expect(writeFile(root / "vendor/acme.math/shorthand.package", vendored), "write licensed dependency");
+        std::string digest;
+        expect(shorthand::crypto::sha256File((root / "vendor/acme.math/shorthand.package").string(), digest),
+               "hash licensed dependency");
+        std::string manifest = root_manifest;
+        manifest.replace(manifest.find("license Apache-2.0"), std::string("license Apache-2.0").size(),
+                         "license " + root_license);
+        manifest.replace(manifest.find(dependency_digest + " MIT"), dependency_digest.size() + 4U,
+                         digest + " " + declared_license);
+        expect(writeFile(root / "shorthand.package", manifest), "write licensed root");
+    };
+    licensedFixture("Apache-2.0\t WITH  LLVM-exception", llvm_license, llvm_license);
+    ModuleResolver licensed;
+    expect(licensed.loadForEntry((root / "src/main.short").string(), code, message), "load LLVM exception");
+    expect(licensed.manifest().license_spdx == llvm_license, "canonical root license expression");
+    auto licensed_dependency = licensed.manifest().dependencies.find("acme.math");
+    expect(licensed_dependency != licensed.manifest().dependencies.end() &&
+           licensed_dependency->second.license_spdx == llvm_license, "retain full dependency license expression");
+    expect(licensed.writeLockfile(units, root_unit.module_name, code, message), "lock LLVM license expression");
+    expect(licensed.verifyLockfile(units, root_unit.module_name, code, message), "verify LLVM license expression");
+    std::ifstream lock_file(root / "shorthand.lock", std::ios::binary);
+    std::ostringstream lock_contents;
+    lock_contents << lock_file.rdbuf();
+    lock_file.close();
+    const std::string llvm_lock = lock_contents.str();
+    expect(llvm_lock.find("package acme.app 1.4.0 " + llvm_license + "\n") != std::string::npos,
+           "lock preserves complete root license");
+    expect(llvm_lock.find(" " + llvm_license + "\nentry ") != std::string::npos,
+           "lock preserves complete dependency license");
+    std::ostringstream licensed_sbom;
+    licensed.writePackageSbom("2026-08-22T00:00:00Z", licensed_sbom);
+    const std::string license_pair = "\"licenseConcluded\":\"" + llvm_license +
+        "\",\"licenseDeclared\":\"" + llvm_license + "\"";
+    const std::size_t first_license = licensed_sbom.str().find(license_pair);
+    expect(first_license != std::string::npos &&
+           licensed_sbom.str().find(license_pair, first_license + 1U) != std::string::npos,
+           "SPDX retains root and dependency LLVM exceptions");
+    licensedFixture("MIT", llvm_license, llvm_license);
+    ModuleResolver changed_license;
+    expect(changed_license.loadForEntry((root / "src/main.short").string(), code, message), "load changed root license");
+    expect(!changed_license.verifyLockfile(units, root_unit.module_name, code, message) && code == "SHD2028",
+           "reject license changed after locking");
+    licensedFixture(llvm_license, llvm_license, "MIT");
+    ModuleResolver mismatched_license;
+    expect(!mismatched_license.loadForEntry((root / "src/main.short").string(), code, message) && code == "SHD2031",
+           "reject dependency license mismatch despite valid manifest hash");
+    for (const std::string &invalid : {std::string("Apache-2.0 WITH Unknown-exception"),
+             std::string("Apache-2.0 WITH LLVM-exception OR MIT"), std::string("MIT trailing"),
+             std::string("GPL-3.0-only"), std::string("Apache-2.0 WITH"), std::string("")}) {
+        licensedFixture(invalid, "MIT", "MIT");
+        ModuleResolver invalid_root_license;
+        expect(!invalid_root_license.loadForEntry((root / "src/main.short").string(), code, message) && code == "SHD2032",
+               "reject unallowlisted root license: " + invalid);
+        licensedFixture("MIT", invalid, "MIT");
+        ModuleResolver invalid_dependency_license;
+        expect(!invalid_dependency_license.loadForEntry((root / "src/main.short").string(), code, message) &&
+               code == (invalid.empty() ? "SHD2031" : "SHD2032"), "reject unallowlisted dependency license: " + invalid);
+        licensedFixture("MIT", "MIT", invalid);
+        ModuleResolver invalid_vendored_license;
+        expect(!invalid_vendored_license.loadForEntry((root / "src/main.short").string(), code, message) && code == "SHD2031",
+               "reject unallowlisted vendored license: " + invalid);
+    }
+    expect(writeFile(root / "vendor/acme.math/shorthand.package", dependency_manifest), "restore licensed dependency");
+    expect(writeFile(root / "shorthand.package", root_manifest), "restore licensed root");
+    expect(resolver.writeLockfile(units, root_unit.module_name, code, message), "restore original lock");
+
     expect(writeFile(root / "vendor/acme.math/src/ops.short", "tampered\n"), "tamper dependency source");
     expect(!resolver.verifyLockfile(units, root_unit.module_name, code, message) && code == "SHD2028",
            "reject a dependency source changed after locking");

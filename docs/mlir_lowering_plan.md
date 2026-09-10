@@ -1,59 +1,21 @@
-# ShortHand MLIR Lowering Plan
+# ShortHand MLIR lowering plan
 
-## Goal
+mlir_contract: shorthand.mlir.v1
 
-ShortHand currently compiles through the existing AST/semantic analyzer and LLVM IR generator. The MLIR foundation introduces a typed intermediate layer for AI, tensor, inference, and GreenAI constructs without replacing the current compiler path yet.
+ShortHand source -> parser and AST -> semantic analyzer -> ShortHand semantic IR
+-> ShortHand MLIR dialect -> LLVM dialect -> LLVM IR -> bitcode/native binary.
 
-## Target pipeline
+PR92 implements the generated dialect, parser/printer, type/attribute/operation
+verifiers, `shorthand-opt`, installable SDK and mandatory executable qualification.
+See [the dialect contract](../mlir/README.md) for versioned types, units, operations,
+supported toolchain, checked builders and exact test coverage.
 
-```text
-ShortHand source
-  -> parser and AST
-  -> semantic analyzer
-  -> ShortHand semantic IR
-  -> ShortHand MLIR dialect
-  -> LLVM dialect
-  -> LLVM IR
-  -> bitcode/native binary
-```
+PR93 will populate the dialect from validated SemanticIR, preserve source ranges,
+normalize source aliases, lower operations through verified passes, implement
+composite execution and hand inference to the qualified runtime. Its gates must
+cover invalid shapes/ops, differential execution, optimization preservation and
+live backend equivalence. The current compiler still uses its existing LLVM path.
 
-## Initial operations
-
-The first dialect scaffold defines these operations:
-
-| Operation | Purpose | Current source equivalent |
-| --- | --- | --- |
-| `shorthand.model` | Model declaration | `AST_MODEL_DECLARATION` / `ModelOp` |
-| `shorthand.tensor` | Tensor declaration | `AST_TENSOR_DECLARATION` / `TensorOp` |
-| `shorthand.infer` | Inference request | `AST_INFER_STATEMENT` / `InferOp` |
-| `shorthand.greenai_contract` | C3-ECO evidence contract | `AST_GREENAI_CONTRACT` / `GreenAIContractOp` |
-| `shorthand.greenai_measure` | GreenAI measurement | `AST_GREENAI_MEASUREMENT` / `GreenAIMeasurementOp` |
-
-## Non-goals for this PR
-
-This PR does not:
-
-- require MLIR tools in CI,
-- replace the current LLVM IR generator,
-- lower MLIR to LLVM dialect,
-- route compiled inference into the real SDK-backed runtime path,
-- make any production readiness claim.
-
-## Validation strategy
-
-Until MLIR toolchain support is introduced, CI validates the dialect foundation using dependency-free static checks:
-
-- dialect and operation TableGen files exist,
-- all expected operations are present,
-- the example module uses all expected op names,
-- the lowering plan preserves the AST -> Semantic IR -> MLIR -> LLVM path,
-- the feature tracker records MLIR as scaffolded and incomplete.
-
-## Next implementation steps
-
-1. Add optional MLIR toolchain discovery in CMake.
-2. Generate dialect C++ headers/sources through TableGen when MLIR is available.
-3. Add parser/printer tests gated behind MLIR availability.
-4. Implement AST/SemanticIR to MLIR conversion for model/tensor/infer/GreenAI ops.
-5. Lower `shorthand.infer` to runtime hooks or backend-specific execution calls.
-6. Introduce LLVM dialect lowering once the MLIR path is stable.
+TST024 remains partial until those execution gates pass. PR94 qualifies realistic
+AI workloads; PR95 provides performance and equivalent-quality measured-energy
+evidence. No generated-dialect result alone establishes production readiness.

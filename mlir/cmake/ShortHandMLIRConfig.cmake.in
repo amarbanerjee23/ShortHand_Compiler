@@ -1,0 +1,10 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(MLIR CONFIG)
+if(NOT LLVM_PACKAGE_VERSION VERSION_EQUAL "@LLVM_PACKAGE_VERSION@")
+  set(ShortHandMLIR_FOUND FALSE)
+  set(ShortHandMLIR_NOT_FOUND_MESSAGE "ShortHandMLIR requires the build's LLVM/MLIR @LLVM_PACKAGE_VERSION@ ABI")
+  return()
+endif()
+include("${CMAKE_CURRENT_LIST_DIR}/ShortHandMLIRTargets.cmake")
+check_required_components(ShortHandMLIR)

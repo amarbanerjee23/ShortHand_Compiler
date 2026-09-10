@@ -41,6 +41,11 @@ mv "${WORK_DIR}/truth-serving-contract.tmp" "${WORK_DIR}/truth-serving-contract.
 expect_failure serving_contract "${WORK_DIR}/truth-serving-contract.tsv" "${WORK_DIR}/trace.tsv" \
   'production truth serving_runtime_contract expected shorthand.serving.runtime.v1, found shorthand.serving.runtime.v2'
 
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "mlir_lowering_status" { $2="implemented" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-mlir-lowering.tsv"
+expect_failure premature_mlir_lowering "${WORK_DIR}/truth-mlir-lowering.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth mlir_lowering_status expected pending_pr93, found implemented'
+
 awk -F '\t' '$1 != "G14" { print }' "${WORK_DIR}/trace.tsv" >"${WORK_DIR}/trace-missing-g14.tsv"
 expect_failure missing_g14 "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-missing-g14.tsv" \
   'C3-ECO traceability requires exactly one G14 row, found 0'

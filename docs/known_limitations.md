@@ -1,6 +1,6 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-09-pr91
+known_limitations_version: 2026-09-10-pr92
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
@@ -20,3 +20,5 @@ C3-ECO outputs are candidate evidence only. A conformant `shorthand.c3eco.profil
 Historical limitations marker: known_limitations_version: 2026-09-01-pr88.
 
 PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.
+
+PR92 implements the generated MLIR dialect and downstream SDK for Linux x64/LLVM 18. The compiler does not emit this dialect yet; PR93 owns complete SemanticIR/LLVM lowering and execution equivalence.

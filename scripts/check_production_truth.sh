@@ -72,18 +72,21 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-09'
+  'as_of_date=2026-09-10'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=90'
-  'current_github_pr=91'
+  'last_merged_github_pr=91'
+  'current_github_pr=92'
   'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=6'
-  'remaining_implementation_prs_after_current=5'
+  'remaining_implementation_prs_including_current=5'
+  'remaining_implementation_prs_after_current=4'
   'coverage_matrix_status=implemented=31,partial=2,open=3,total=36'
+  'mlir_dialect_contract=shorthand.mlir.v1'
+  'mlir_dialect_scope=linux-x64-llvm18'
+  'mlir_lowering_status=pending_pr93'
   'type_system_contract=shorthand.type_memory.v1'
   'control_flow_contract=shorthand.control_flow.v1'
   'enterprise_language_contract=shorthand.enterprise_language.v1'
@@ -208,20 +211,20 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-09-pr91' \
-  'LAST_MERGED_GITHUB_PR: 90' \
-  'CURRENT_GITHUB_PR: 91' \
+  'production_readiness_plan_version: 2026-09-10-pr92' \
+  'LAST_MERGED_GITHUB_PR: 91' \
+  'CURRENT_GITHUB_PR: 92' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr91_through_pr96: 6' \
-  'remaining_planned_implementation_prs_after_pr91: 5' \
+  'remaining_planned_implementation_prs_pr92_through_pr96: 5' \
+  'remaining_planned_implementation_prs_after_pr92: 4' \
   'PR91 - Auditor bundle, retention, surveillance and reporting'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-09-pr91' \
-  'current_github_pr: 91' \
-  'current_roadmap_scope: auditor_bundle_retention_surveillance_reporting' \
+  'feature_status_version: 2026-09-10-pr92' \
+  'current_github_pr: 92' \
+  'current_roadmap_scope: generated_mlir_dialect' \
   '31 implemented, 2 partial and 3 open' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
@@ -231,7 +234,7 @@ for anchor in \
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-09-pr91' \
+  'compiler_test_strategy_version: 2026-09-10-pr92' \
   '36-area production test matrix' \
   '31 implemented areas' \
   '2 partial areas' \
@@ -255,6 +258,11 @@ require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timple
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
 require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
 require_contains "${MATRIX}" $'TST026\tmeasured energy comparison with Python\topen'
+require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\tpartial\tPR92 generated dialect'
+require_contains "${ROOT_DIR}/mlir/README.md" 'mlir_contract: shorthand.mlir.v1'
+require_contains "${ROOT_DIR}/scripts/check_mlir_dialect.sh" 'PASS PR92 generated MLIR dialect lit verifiers roundtrip installed consumer and freshness gate'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'test "${{ needs.mlir.result }}" = "success"'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1'
 
 # PR89 measurement/accounting contract is additive to all inherited checks.
 require_contains "${MEASUREMENT_CONTRACT}" 'shorthand.c3eco.measurement_workbook.v1'
@@ -297,32 +305,32 @@ for anchor in \
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-09-09-pr91' \
+  'known_limitations_version: 2026-09-10-pr92' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-09-09-pr91' \
+  'release_level_status_version: 2026-09-10-pr92' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: 96'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-09-09-pr91' \
+  'public_release_readiness_version: 2026-09-10-pr92' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-09-09-pr91' \
+  'enterprise_release_scorecard_version: 2026-09-10-pr92' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-09-pr91'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-10-pr92'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -370,7 +378,7 @@ open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "
 [[ "${implemented}" == 18 ]] || { echo "error: expected 18 implemented C3-ECO traceability rows" >&2; exit 1; }
 [[ "${partial}" == 8 ]] || { echo "error: expected 8 partial C3-ECO traceability rows" >&2; exit 1; }
 [[ "${open}" == 1 ]] || { echo "error: expected 1 open C3-ECO traceability rows" >&2; exit 1; }
-printf 'PRODUCTION_TRUTH current_pr=91 remaining=6 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=92 remaining=5 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 
 # PR91 adds cryptographically verified, replayable candidate auditor evidence.

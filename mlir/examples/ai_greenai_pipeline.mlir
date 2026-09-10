@@ -1,57 +1,29 @@
-// Example-only ShortHand MLIR module.
-// This is a scaffold artifact used by static validation until MLIR build support
-// is introduced.
-
+// Parsed and verified by the registered ShortHand dialect in mandatory CI.
+// Declared activity is candidate metadata; this module does not execute a model.
 module {
   "shorthand.model"() {
-    name = "classifier",
-    format = "onnx",
-    path = "models/classifier.onnx",
-    task = "classification",
-    precision = "float",
-    input_shape = "1,4",
-    output_shape = "1,2",
-    backend_preference = "onnxruntime_cpu,fallback"
+    sym_name = "classifier",
+    signature = !shorthand.model<tensor<1x4xf32>, tensor<1x2xf32>>,
+    format = "onnx", path = "models/classifier.onnx", task = "classification",
+    quality_guardrail = "accuracy >= 0.95",
+    backend = #shorthand.backend<"onnxruntime_cpu">
   } : () -> ()
-
-  "shorthand.tensor"() {
-    name = "input",
-    element_type = "float",
-    shape = "1,4",
-    rank = 2 : i64,
-    total_elements = 4 : i64
-  } : () -> ()
-
-  "shorthand.tensor"() {
-    name = "output",
-    element_type = "float",
-    shape = "1,2",
-    rank = 2 : i64,
-    total_elements = 2 : i64
-  } : () -> ()
-
   "shorthand.greenai_contract"() {
-    name = "classifier_workload",
-    functional_unit = "1 inference",
-    success_criteria = "quality guardrail preserved",
-    boundary = "compute",
-    measurement_quality = "MQ1",
-    data_quality = "DQ1",
+    sym_name = "classifier_workload", functional_unit = "1 successful inference",
+    success_criteria = "quality and latency guardrails preserved",
+    quality_guardrail = "accuracy >= 0.95", boundary = ["compute", "memory"],
+    evidence = #shorthand.evidence<"MQ1", "DQ1", "evidence_only">,
     carbon_factor = 171.09 : f64,
-    claims_mode = "evidence_only"
+    energy_budget_j = 10.0 : f64, carbon_budget_gco2e = 0.01 : f64
   } : () -> ()
-
+  %input = "shorthand.tensor"() {
+    name = "input", value = dense<1.0> : tensor<1x4xf32>
+  } : () -> tensor<1x4xf32>
+  %output = "shorthand.infer"(%input) {
+    model = @classifier
+  } : (tensor<1x4xf32>) -> tensor<1x2xf32> loc("workload.short":12:3)
   "shorthand.greenai_measure"() {
-    workload = "classifier_workload",
-    backend = "onnxruntime_cpu",
-    inferences = 1 : i64,
-    watts = 10.0 : f64,
-    seconds = 0.1 : f64
-  } : () -> ()
-
-  "shorthand.infer"() {
-    model = "classifier",
-    input = "input",
-    output = "output"
+    workload = @classifier_workload, backend = #shorthand.backend<"onnxruntime_cpu">,
+    inferences = 1 : i64, watts = 10.0 : f64, seconds = 0.1 : f64
   } : () -> ()
 }

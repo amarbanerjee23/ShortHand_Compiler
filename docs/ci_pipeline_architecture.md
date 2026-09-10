@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-09-pr91
+ci_pipeline_architecture_version: 2026-09-10-pr92
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -215,3 +215,8 @@ Every remaining implementation PR adds its applicable mandatory jobs as executab
 Historical architecture markers: ci_pipeline_architecture_version: 2026-09-01-pr88 and ci_pipeline_architecture_version: 2026-08-09-v1. Historical roadmap marker: PR86: performance, energy and zero-skip production RC aggregation.
 
 GitHub PR91 adds `scripts/check_c3eco_auditor_bundle.sh` to direct CI, Make/CTest/sanitizer, compiler-matrix and installed SDK lifecycle gates. OpenSSL 3.x is a required auditor dependency. Independent CLI signature verification and re-signed false-assessment negatives qualify actual cryptography and replay. All mandatory inherited checks remain required.
+
+## PR92 generated MLIR qualification
+
+PR92: generated MLIR dialect, verifiers and downstream SDK.
+The required `mlir` matrix runs GCC and Clang ASan/LSan/UBSan with `detect_leaks=1`; both feed the unchanged event-specific Ubuntu aggregate. The 21-target Make/CTest parity suite and root CTest run `check_mlir_dialect.sh`. LLVM/MLIR 18 tools, lit and FileCheck are required with no availability skip. CodeQL builds `shorthand-opt`; Linux x64 release staging installs the verified standalone SDK and LLVM license. The existing compiler platform matrix stays mandatory. MLIR qualification currently covers Linux x64 only; execution lowering remains PR93.

@@ -1,105 +1,64 @@
-//===- ShortHandOps.td - ShortHand MLIR operation scaffold -*- tablegen -*-===//
-//
-// Initial operation contract for the ShortHand MLIR dialect.
-// These ops mirror the current beta AI/GreenAI language constructs and the
-// existing SemanticIR scaffold.
-//
-//===----------------------------------------------------------------------===//
-
 #ifndef SHORTHAND_OPS_TD
 #define SHORTHAND_OPS_TD
 
-include "ShortHand/IR/ShortHandDialect.td"
-include "mlir/IR/AttrTypeBase.td"
-include "mlir/IR/BuiltinAttributes.td"
-include "mlir/Interfaces/InferTypeOpInterface.td"
+include "ShortHand/IR/ShortHandTypes.td"
+include "ShortHand/IR/ShortHandAttributes.td"
+include "mlir/IR/SymbolInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
-def ShortHand_ModelOp : ShortHand_Op<"model", [NoMemoryEffect]> {
-  let summary = "Declare an AI model available to ShortHand lowering";
-  let description = [{
-    Represents a model declaration after semantic validation. Attributes carry
-    the model identity, file format, path, task, precision, expected input/output
-    shapes, and backend preference.
-  }];
-  let arguments = (ins
-    StrAttr:$name,
-    StrAttr:$format,
-    StrAttr:$path,
-    StrAttr:$task,
-    StrAttr:$precision,
-    StrAttr:$input_shape,
-    StrAttr:$output_shape,
-    OptionalAttr<StrAttr>:$backend_preference
-  );
-  let assemblyFormat = "attr-dict";
+def ShortHand_ModelOp : ShortHand_Op<"model", [Symbol]> {
+  let summary = "Declare a model with a checked input/output signature";
+  let arguments = (ins SymbolNameAttr:$sym_name, TypeAttrOf<ShortHand_ModelType>:$signature,
+    StrAttr:$format, StrAttr:$path, StrAttr:$task, StrAttr:$quality_guardrail,
+    ShortHand_BackendAttr:$backend);
+  let assemblyFormat = "$sym_name attr-dict";
+  let hasVerifier = 1;
 }
 
-def ShortHand_TensorOp : ShortHand_Op<"tensor", [NoMemoryEffect]> {
-  let summary = "Declare a named tensor and its static shape metadata";
-  let description = [{
-    Represents a tensor declaration after semantic validation. The shape remains
-    string-backed in the scaffold so it can map directly to the current AST and
-    SemanticIR fields before shaped MLIR types are introduced.
-  }];
-  let arguments = (ins
-    StrAttr:$name,
-    StrAttr:$element_type,
-    StrAttr:$shape,
-    I64Attr:$rank,
-    I64Attr:$total_elements
-  );
-  let assemblyFormat = "attr-dict";
+def ShortHand_TensorOp : ShortHand_Op<"tensor", [Pure]> {
+  let summary = "Materialize a statically shaped tensor from defined dense data";
+  let arguments = (ins StrAttr:$name, ElementsAttr:$value);
+  let results = (outs AnyRankedTensor:$result);
+  let assemblyFormat = "attr-dict `:` type($result)";
+  let hasVerifier = 1;
 }
 
-def ShortHand_InferOp : ShortHand_Op<"infer"> {
-  let summary = "Represent a model inference request";
+def ShortHand_InferOp : ShortHand_Op<"infer", [DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
+  let summary = "Infer through a model symbol with typed SSA input and output";
   let description = [{
-    Connects a model declaration to input and output tensors. Later lowering
-    will map this op to runtime hooks or backend-specific execution calls.
+    The input and output must exactly match the model signature. This operation
+    conservatively retains side effects: inference can access external model
+    data, fail, and emit telemetry. Backend selection is a policy declaration,
+    not a statement that a device or SDK has been qualified.
   }];
-  let arguments = (ins
-    StrAttr:$model,
-    StrAttr:$input,
-    StrAttr:$output
-  );
-  let assemblyFormat = "attr-dict";
+  let arguments = (ins FlatSymbolRefAttr:$model, AnyRankedTensor:$input);
+  let results = (outs AnyRankedTensor:$result);
+  let assemblyFormat = "$model `(` $input `)` attr-dict `:` functional-type($input, $result)";
+  let hasVerifier = 1;
 }
 
-def ShortHand_GreenAIContractOp : ShortHand_Op<"greenai_contract", [NoMemoryEffect]> {
-  let summary = "Declare a GreenAI/C3-ECO evidence contract";
-  let description = [{
-    Represents the evidence boundary, functional unit, success criteria,
-    measurement/data quality, carbon factor, and claim mode for a workload.
-  }];
-  let arguments = (ins
-    StrAttr:$name,
-    StrAttr:$functional_unit,
-    StrAttr:$success_criteria,
-    StrAttr:$boundary,
-    StrAttr:$measurement_quality,
-    StrAttr:$data_quality,
-    F64Attr:$carbon_factor,
-    StrAttr:$claims_mode
-  );
-  let assemblyFormat = "attr-dict";
+def ShortHand_GreenAIContractOp : ShortHand_Op<"greenai_contract", [Symbol]> {
+  let summary = "Declare a candidate evidence contract and explicit budgets";
+  let arguments = (ins SymbolNameAttr:$sym_name, StrAttr:$functional_unit,
+    StrAttr:$success_criteria, StrAttr:$quality_guardrail, StrArrayAttr:$boundary,
+    ShortHand_EvidenceAttr:$evidence, F64Attr:$carbon_factor,
+    F64Attr:$energy_budget_j, F64Attr:$carbon_budget_gco2e);
+  let assemblyFormat = "$sym_name attr-dict";
+  let hasVerifier = 1;
 }
 
-def ShortHand_GreenAIMeasureOp : ShortHand_Op<"greenai_measure", [NoMemoryEffect]> {
-  let summary = "Record GreenAI measurement metadata";
+def ShortHand_GreenAIMeasureOp : ShortHand_Op<"greenai_measure", [DeclareOpInterfaceMethods<SymbolUserOpInterface>]> {
+  let summary = "Record declared activity under a resolved candidate evidence contract";
   let description = [{
-    Represents declared or measured workload activity used by C3-ECO candidate
-    evidence generation. Later lowering can attach measured telemetry and energy
-    sources to this op.
+    Units are inferences, watts and seconds. Values are declarations, not proof
+    of an instrument reading. The measurement remains observable under generic
+    dead-code elimination and CSE. Signing, assessment and certification remain
+    separate evidence workflows.
   }];
-  let arguments = (ins
-    StrAttr:$workload,
-    StrAttr:$backend,
-    I64Attr:$inferences,
-    F64Attr:$watts,
-    F64Attr:$seconds
-  );
-  let assemblyFormat = "attr-dict";
+  let arguments = (ins FlatSymbolRefAttr:$workload, ShortHand_BackendAttr:$backend,
+    I64Attr:$inferences, F64Attr:$watts, F64Attr:$seconds);
+  let assemblyFormat = "$workload attr-dict";
+  let hasVerifier = 1;
 }
 
-#endif // SHORTHAND_OPS_TD
+#endif

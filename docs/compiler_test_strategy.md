@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-09-pr91
+compiler_test_strategy_version: 2026-09-10-pr92
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,7 +13,7 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 36-area production test matrix records for the GitHub PR91 candidate:
+The 36-area production test matrix records for the GitHub PR92 candidate:
 
 - 31 implemented areas,
 - 2 partial areas,
@@ -27,7 +27,7 @@ GitHub PR90 adds TST035, `shorthand.c3eco.assessment.v1`, with mandatory-gate pr
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing, measured-accounting validation and candidate C3-ECO assessment.
 
-Production-critical gaps remain for the C3-ECO auditor lifecycle, generated MLIR and full production lowering, representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
+Production-critical gaps remain for full production MLIR lowering, representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
 
 ## Production backend and hardware qualification contract
 
@@ -178,4 +178,6 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-08-pr90`.
+The current strategy is `2026-09-10-pr92`.
+
+PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. TST024 stays partial for PR93 execution equivalence; the 36-area totals remain unchanged.

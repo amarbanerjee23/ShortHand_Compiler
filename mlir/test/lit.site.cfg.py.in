@@ -1,0 +1,5 @@
+config.shorthand_source = "@SHORTHAND_MLIR_SOURCE_DIR@"
+config.shorthand_binary = "@CMAKE_CURRENT_BINARY_DIR@/.."
+config.filecheck = "@SHORTHAND_FILECHECK@"
+config.python = "@Python3_EXECUTABLE@"
+lit_config.load_config(config, "@CMAKE_CURRENT_SOURCE_DIR@/lit.cfg.py")

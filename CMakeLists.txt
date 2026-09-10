@@ -17,6 +17,7 @@ option(SHORTHAND_ENABLE_LLAMACPP "Enable llama.cpp backend" OFF)
 option(SHORTHAND_ENABLE_OPENBLAS "Enable OpenBLAS backend" OFF)
 option(SHORTHAND_STRICT_OPTIONAL_BACKENDS "Fail when an enabled optional backend root is missing" OFF)
 option(SHORTHAND_BUILD_TESTING "Build and register ShortHand tests" ON)
+option(SHORTHAND_BUILD_MLIR "Build the LLVM/MLIR 18 ShortHand dialect SDK" OFF)
 option(SHORTHAND_BUILD_PROMETHEUS_ADAPTER "Build the Prometheus scrape endpoint host adapter" ON)
 option(SHORTHAND_BUILD_OTLP_EXPORTER "Build the OTLP/HTTP exporter adapter" ON)
 set(ONNXRUNTIME_ROOT "" CACHE PATH "ONNX Runtime root")
@@ -495,8 +496,15 @@ install(FILES
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
 
+if(SHORTHAND_BUILD_MLIR)
+  add_subdirectory(mlir)
+endif()
+
 if(SHORTHAND_BUILD_TESTING)
   enable_testing()
+  add_test(NAME mlir_dialect
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_mlir_dialect.sh)
+  set_tests_properties(mlir_dialect PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 600)
 
   add_test(
     NAME production_truth_traceability

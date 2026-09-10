@@ -216,6 +216,10 @@ test-c3eco-auditor: short_hand c3eco_measurement_tool c3eco_auditor_tool
 test-c3eco-assessment: short_hand c3eco_measurement_tool c3eco_assessment_tool
 	SHORTHAND_BIN=$(BIN) SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) SHORTHAND_C3ECO_ASSESS_BIN=$(C3ECO_ASSESS_BIN) bash ../../../scripts/check_c3eco_assessment.sh
 
+.PHONY: test-mlir
+test-mlir:
+	bash ../../../scripts/check_mlir_dialect.sh
+
 regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
@@ -227,7 +231,7 @@ clean:
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-c3eco-measurement test-c3eco-assessment test-c3eco-auditor test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai
+test: test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-c3eco-measurement test-c3eco-assessment test-c3eco-auditor test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai test-mlir
 
 test-governance:
 	bash ../../../scripts/check_production_truth.sh

@@ -78,3 +78,5 @@ ShortHand remains `controlled_beta` with `production_claim: false` until every p
 Any change to maturity, production claims, language version, remaining PR count, backend support, C3-ECO profile, certification claim status, release status, mandatory skip policy, gate state, domain state or closure target must update both the relevant TSV source and its executable guard in the same PR.
 
 PR91 implements signed candidate evidence with assessment replay under `shorthand.c3eco.auditor_bundle.v1`. Actual protected storage and independent certification operations remain outside the compiler claim boundary.
+
+PR92 implements `shorthand.mlir.v1`, a generated dialect and installed SDK qualified on Linux x64/LLVM 18. TST024 stays partial until PR93 SemanticIR/LLVM lowering and execution equivalence. Five implementation PRs remain including PR92, four after it; TST017 separately requires the protected release exercise.
