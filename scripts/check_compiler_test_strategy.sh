@@ -87,9 +87,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 36 ]] || { echo "error: expected 36 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 31 ]] || { echo "error: expected 31 implemented rows in the PR91 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 2 ]] || { echo "error: expected 2 partial rows in the PR91 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR91 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 31 ]] || { echo "error: expected 31 implemented rows in the PR92 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 2 ]] || { echo "error: expected 2 partial rows in the PR92 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR92 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -101,7 +101,7 @@ require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-09-pr91' \
+  'compiler_test_strategy_version: 2026-09-10-pr92' \
   'production_claim: false' \
   '31 implemented areas' \
   '2 partial areas' \
@@ -130,7 +130,7 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-09-pr91'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-10-pr92'
 require_contains "${STATUS}" '31 implemented, 2 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
@@ -159,6 +159,7 @@ require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timple
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
 require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
 
+require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\tpartial\tPR92 generated dialect'
 require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\timplemented\tFirst-class C3-ECO grammar AST semantics evidence, typed profile v2 and SHD5101-SHD5208 claim-safety gates; PR89 instrumented measurement workbook; PR90 non-certifying eligibility, scoring, claim and eco-regression controls'
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
 require_contains "${C3ECO_DOC}" 'official_certification_granted: false'

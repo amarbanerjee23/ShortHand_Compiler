@@ -70,3 +70,6 @@ third_party/downloads/
 # Generated reports (examples may be committed under examples/)
 reports/generated/
 results/raw/
+
+# Generated MLIR qualification builds.
+build-mlir*/

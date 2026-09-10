@@ -1,11 +1,11 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-09-09-pr91
+production_readiness_plan_version: 2026-09-10-pr92
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 90
-CURRENT_GITHUB_PR: 91
+LAST_MERGED_GITHUB_PR: 91
+CURRENT_GITHUB_PR: 92
 LAST_PLANNED_GITHUB_PR: 96
-CURRENT_IMPLEMENTATION_SCOPE: auditor_bundle_retention_surveillance_reporting
+CURRENT_IMPLEMENTATION_SCOPE: generated_mlir_dialect
 BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
@@ -17,37 +17,26 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR89 and PR90 are merged. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. It emits candidate recommendations only and does not perform independent certification or comparative ShortHand-versus-Python energy qualification.
+GitHub PR89, PR90 and PR91 are merged. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. It emits candidate recommendations only and does not perform independent certification or comparative ShortHand-versus-Python energy qualification.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The corrected enterprise plan remains GitHub-native PR83 through PR96 and now has six implementation PRs remaining including PR91.
+The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The corrected enterprise plan remains GitHub-native PR83 through PR96 and now has five implementation PRs remaining including PR92.
 
-## PR91 completion contract
+## PR92 completion contract
 
-PR91 - Auditor bundle, retention, surveillance and reporting is IN PROGRESS.
+PR92 - Generated ShortHand MLIR dialect is IN PROGRESS.
 
-Implementation requirements:
-
-1. Establish shorthand.c3eco.auditor_bundle.v1, strict lifecycle policy and public-report schemas.
-2. Sign exact canonical artifact inventories with Ed25519 and require an external trusted public key.
-3. Bind all profile/workbook/assessment inputs, evidence references, policy and versioned rule mapping.
-4. Reuse the PR90 assessment engine for independent byte-for-byte replay; reject a validly signed false assessment.
-5. Reject unlisted, absent, altered, symlinked, hard-linked, traversing and nonportable artifact paths.
-6. Bound input sizes and publish through private staging without overwriting existing bundles.
-7. Enforce profile-bound validity, retention deadlines, legal holds, surveillance cadence and recertification triggers.
-8. Track nonconformities, due dates and resolution evidence without pretending to make an independent certification decision.
-9. Export only explicitly approved product scope and redacted public reports with separate signed inventories.
-10. Preserve historical replay while failing current verification for expired or overdue evidence.
-11. Freeze the v0.6/v0.7 gate mapping and keep estimated readiness separate from measured workbook v1.
-12. Keep certification, level, comparative-energy and production claims false.
-13. Qualify native signatures against independent OpenSSL tooling and exercise all negative boundaries.
-14. Register mandatory direct CI, Make, CTest, sanitizer, compiler-matrix and installed SDK execution.
-15. Register OpenSSL in dependency/license policy and update all active production/test/traceability records.
-16. Preserve all inherited compiler, backend, deployment, portability and zero-skip gates.
-17. Require both ci / ubuntu (push) and ci / ubuntu (pull_request) successful on the final PR head.
-
-The signed custodian records support audit preparation. Actual protected storage, long-term retention, independent auditor decisions and certification operations remain organizational responsibilities. No code result claims that those operations occurred.
+1. Generate and compile the dialect, model signature type, backend/evidence attributes and all five operation classes with LLVM/MLIR 18.
+2. Replace string-shaped inference wiring with ranked tensors, SSA input/output values and checked symbol references.
+3. Validate tensor sizes, formats/backends, finite quantities, evidence-only claims and required contract metadata.
+4. Preserve observable inference and measurement operations through generic optimization.
+5. Qualify custom/generic assembly, bytecode, source locations, diagnostics and malformed inputs with lit and FileCheck.
+6. Install a relocatable CMake package, standalone public headers, driver, license and TableGen definitions; compile and execute an independent consumer.
+7. Detect stale generated files, incremental TableGen changes and missing transitive dependencies.
+8. Require GCC and Clang ASan/LSan/UBSan lanes, Make/CTest parity, CodeQL and Linux x64 release staging.
+9. Keep TST024 partial until PR93 provides SemanticIR/LLVM lowering and execution equivalence.
+10. Preserve every inherited mandatory gate and require both ci / ubuntu (push) and ci / ubuntu (pull_request) on the final head.
 
 ## Mandatory rule for every remaining PR
 
@@ -85,8 +74,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR88 - Typed C3-ECO certification profile | MERGED | Typed identities, units, functional links, boundary/materiality, AI roles, validity and migration. | Certification-profile conformance gate. | G1-G3/G7/G14 positive, negative, migration and claim-safety evidence. |
 | PR89 - Measurement, carbon accounting and cost workbook | MERGED | Instrument-backed measurement, allocation, PUE, component accounting, MQ/DQ, uncertainty and tariff/carbon-factor provenance. | Deterministic fail-closed measurement/workbook gate. | Calibration, missing/modelled instrument, bounds, factor provenance, double-counting, deterministic reconciliation and claim-safety tests. |
 | PR90 - Eligibility, scoring, claims and eco-regression | MERGED | G1-G14 precedence, complete 76-criterion A-K scoring, evidence/uncertainty caps, N/A/materiality decisions, AI routes, controlled claims, regression actions and surveillance thresholds. | Deterministic assessment and claim-control gate across CI, Make, CTest, sanitizers and installed packaging. | Exact tier boundaries, gate precedence, evidence caps, N/A reallocation, materiality, restricted claims, regression, AI, malformed-input and determinism tests. |
-| PR91 - Auditor bundle, retention, surveillance and reporting | IN PROGRESS | Native Ed25519 signed lineage, strict schemas, redacted public envelopes, assessment replay, retention/expiry/surveillance/nonconformity checks and separate estimated readiness. | Mandatory auditor verification in direct CI, Make, CTest, sanitizers, compiler matrix and installed SDK lifecycle. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
-| PR92 - Generated ShortHand MLIR dialect | PLANNED | TableGen-generated operations, types, attributes, verifiers, installation and downstream use. | MLIR build/lit gate. | FileCheck, verifiers, roundtrip, installed consumer and freshness tests. |
+| PR91 - Auditor bundle, retention, surveillance and reporting | MERGED | Native Ed25519 signed lineage, strict schemas, redacted public envelopes, assessment replay, retention/expiry/surveillance/nonconformity checks and separate estimated readiness. | Mandatory auditor verification in direct CI, Make, CTest, sanitizers, compiler matrix and installed SDK lifecycle. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
+| PR92 - Generated ShortHand MLIR dialect | IN PROGRESS | TableGen-generated operations, types, attributes, verifiers, installation and downstream use. | MLIR build/lit gate. | FileCheck, verifiers, roundtrip, installed consumer and freshness tests. |
 | PR93 - SemanticIR to MLIR and LLVM lowering | PLANNED | Full semantic lowering, canonicalization, verification, composite execution integration and runtime handoff. | MLIR differential lowering gate. | Invalid ops/shapes, execution equivalence and optimization preservation. |
 | PR94 - Representative production AI qualification | PLANNED | Complete representative preprocessing/inference/postprocessing/serving applications, secure host boundary, realistic models/tensor shapes, batching, concurrency, timeouts and numerical quality. | Live workload/backend qualification. | Numerical, load, malformed-model, recovery and evidence tests. |
 | PR95 - Performance and measured-energy qualification | PLANNED | Calibrated workload-coupled collectors, compiler/runtime performance, repeated equivalent-quality optimized Python and native C++ baselines, material data/cloud/client/embodied/lifecycle carbon coverage and uncertainty. | Performance and eco-regression qualification. | Calibration, repeated trials, uncertainty, quality equivalence and raw traces. |
@@ -105,20 +94,28 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Current count
 
-remaining_planned_implementation_prs_pr91_through_pr96: 6
-remaining_planned_implementation_prs_after_pr91: 5
+remaining_planned_implementation_prs_pr92_through_pr96: 5
+remaining_planned_implementation_prs_after_pr92: 4
 
-Next recommended PR after PR91 is merged:
+Next recommended PR after PR92 is merged:
 
-PR92 - Generated ShortHand MLIR dialect.
+PR93 - SemanticIR to MLIR and LLVM lowering.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the six remaining implementation PRs.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the five remaining implementation PRs.
 
 ## Historical roadmap anchors
 
 The following strings are immutable audit history and are not active state:
+
+- production_readiness_plan_version: 2026-09-09-pr91
+- LAST_MERGED_GITHUB_PR: 90
+- CURRENT_GITHUB_PR: 91
+- CURRENT_IMPLEMENTATION_SCOPE: auditor_bundle_retention_surveillance_reporting
+- remaining_planned_implementation_prs_pr91_through_pr96: 6
+- remaining_planned_implementation_prs_after_pr91: 5
+- PR91 - Auditor bundle, retention, surveillance and reporting is IN PROGRESS.
 
 - production_readiness_plan_version: 2026-09-08-pr90
 - LAST_MERGED_GITHUB_PR: 89

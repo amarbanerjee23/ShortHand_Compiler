@@ -64,7 +64,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang-18 cmake ninja-build
       - name: Build, execute and stage Linux x64
         env:
           CC: clang-18
@@ -76,6 +76,8 @@ jobs:
           build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-linux-x64.out
           diff -u tests/semantic/differential/core_control.expected /tmp/release-linux-x64.out
           cmake --install build-release
+          LLVM_CONFIG=/usr/bin/llvm-config-18 bash scripts/check_mlir_dialect.sh
+          cmake --install build-mlir --prefix "$PWD/stage-release"
           mkdir -p stage-release/bin
           cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
           bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" linux-x64 "$PWD/stage-release" "$PWD/release-linux-x64"

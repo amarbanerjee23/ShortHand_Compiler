@@ -36,6 +36,7 @@ jobs:
             libfl-dev \
             llvm \
             llvm-dev \
+            libmlir-18-dev mlir-18-tools llvm-18-tools \
             clang \
             clang-format \
             jq \
@@ -457,7 +458,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build jq
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang cmake ninja-build jq
 
       - name: Verify CTest parity manifest
         run: |
@@ -514,7 +515,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-18 cmake ninja-build jq
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang-18 cmake ninja-build jq
 
       - name: Security policy and negative matrix
         run: bash scripts/check_external_security_policy.sh
@@ -545,6 +546,8 @@ jobs:
         run: |
           cmake -S . -B build-codeql -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_CONFIG=/usr/bin/llvm-config-18
           cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit
+          cmake -S mlir -B build-mlir-codeql -G Ninja -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
+          cmake --build build-mlir-codeql --parallel 2 --target shorthand-opt
 
       - name: Produce CodeQL SARIF without weakening local enforcement
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81
@@ -606,6 +609,44 @@ jobs:
             /tmp/shorthand_security_*.out
             /tmp/shorthand_security_*.err
 
+  mlir:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: gcc
+            cc: gcc
+            cxx: g++
+            sanitizers: 'OFF'
+          - id: clang-sanitizers
+            cc: clang-18
+            cxx: clang++-18
+            sanitizers: 'ON'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Install required MLIR 18 toolchain
+        run: |
+          test -s /etc/apt/sources.list.d/ubuntu.sources
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3
+      - name: Generated dialect lit verifier roundtrip install and freshness qualification
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+          LLVM_CONFIG: /usr/bin/llvm-config-18
+          SHORTHAND_MLIR_SANITIZERS: ${{ matrix.sanitizers }}
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: bash scripts/check_mlir_dialect.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mlir-${{ matrix.id }}-${{ github.run_id }}
+          path: build-mlir/Testing/Temporary/
+
   ubuntu:
     needs:
       - ubuntu-core
@@ -616,6 +657,7 @@ jobs:
       - ctest-parity
       - reproducible
       - security
+      - mlir
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -632,6 +674,7 @@ jobs:
           test "${{ needs.ctest-parity.result }}" = "success"
           test "${{ needs.reproducible.result }}" = "success"
           test "${{ needs.security.result }}" = "success"
+          test "${{ needs.mlir.result }}" = "success"
 
       - name: Publish event-specific CI status
         if: ${{ always() && !cancelled() }}

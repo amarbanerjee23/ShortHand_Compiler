@@ -15,3 +15,4 @@ openvino	external-root;qualification=PR80	optional-sdk	Apache-2.0	no	https://git
 libtorch	external-root;qualification=PR80	optional-sdk	BSD-3-Clause	no	https://github.com/pytorch/pytorch
 llama.cpp	external-root;qualification=PR80	optional-sdk	MIT	no	https://github.com/ggml-org/llama.cpp
 openssl	>=3.0;distribution-supported-3.x	linked-runtime	Apache-2.0	no	https://github.com/openssl/openssl
+mlir	18.x;installed-consumer-exact-LLVM-ABI	linked-runtime	Apache-2.0 WITH LLVM-exception	yes	https://github.com/llvm/llvm-project

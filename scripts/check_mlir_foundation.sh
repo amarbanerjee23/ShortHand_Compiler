@@ -23,6 +23,17 @@ require_contains() {
 }
 
 require_file mlir/README.md
+require_file mlir/CMakeLists.txt
+require_file mlir/lib/ShortHandDialect.cpp
+require_file mlir/include/ShortHand/IR/ShortHandTypes.td
+require_file mlir/include/ShortHand/IR/ShortHandAttributes.td
+require_file scripts/check_mlir_dialect.sh
+require_contains mlir/README.md 'mlir_contract: shorthand.mlir.v1'
+require_contains mlir/README.md 'lowering_status: pending_pr93'
+require_contains .github/workflows/ci.yml 'test "${{ needs.mlir.result }}" = "success"'
+require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-mlir:'
+require_contains tests/ctest_parity/expected_make_targets.txt 'test-mlir'
+
 require_file mlir/include/ShortHand/IR/ShortHandDialect.td
 require_file mlir/include/ShortHand/IR/ShortHandOps.td
 require_file mlir/examples/ai_greenai_pipeline.mlir
@@ -30,7 +41,7 @@ require_file docs/mlir_lowering_plan.md
 
 require_contains mlir/include/ShortHand/IR/ShortHandDialect.td 'def ShortHand_Dialect : Dialect'
 require_contains mlir/include/ShortHand/IR/ShortHandDialect.td 'let name = "shorthand"'
-require_contains mlir/include/ShortHand/IR/ShortHandDialect.td 'cppNamespace = "::shorthand::mlir"'
+require_contains mlir/include/ShortHand/IR/ShortHandDialect.td 'cppNamespace = "::shorthand::ir"'
 
 require_contains mlir/include/ShortHand/IR/ShortHandOps.td 'def ShortHand_ModelOp'
 require_contains mlir/include/ShortHand/IR/ShortHandOps.td 'def ShortHand_TensorOp'

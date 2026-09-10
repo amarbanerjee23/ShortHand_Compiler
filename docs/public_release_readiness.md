@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-09-pr91
+public_release_readiness_version: 2026-09-10-pr92
 current_maturity: controlled_beta
 production_claim: false
 release_candidate_target: PR96
 
-A PR91 candidate requires all mandatory commands to pass from a clean checkout:
+A PR92 candidate requires all mandatory commands to pass from a clean checkout:
 
 ```bash
 bash setup_build_infra.sh
@@ -23,6 +23,7 @@ bash scripts/check_c3eco_assessment.sh
 bash scripts/check_c3eco_auditor_bundle.sh
 bash scripts/check_semantic_differential.sh
 bash scripts/smoke_test.sh
+bash scripts/check_mlir_dialect.sh
 make -C Compiler_new_ws/Short_Hand/src test
 make -C Compiler_new_ws/Short_Hand/src sanitize
 cmake -S . -B build

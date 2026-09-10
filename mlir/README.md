@@ -1,33 +1,94 @@
-# ShortHand MLIR Foundation
+# ShortHand generated MLIR dialect
 
-This directory contains the first non-build MLIR foundation for ShortHand.
+mlir_contract: shorthand.mlir.v1
+qualified_dialect_scope: linux-x64-llvm18
+lowering_status: pending_pr93
+production_claim: false
 
-The current compiler still lowers executable programs through the existing AST and LLVM IR path. This MLIR foundation is intentionally introduced as a controlled scaffold so that future compiler work can move from string-oriented AI/GreenAI runtime hooks to typed operations.
+PR92 provides a TableGen-generated dialect library and `shorthand-opt` driver.
+The registered parser and verifier reject unknown ShortHand operations by default.
+The C++ namespace is `shorthand::ir`, avoiding shadowing upstream `mlir` names.
+Generated `.inc` files live only in the build tree; the `.td` files are authoritative.
+The public textual contract is version 1.0.0 and replaces the uncompiled scaffold.
+There was no released MLIR syntax or ABI to preserve from that scaffold.
 
-## Intended lowering path
+## Build and qualify
 
-```text
-ShortHand source
-  -> parser and AST
-  -> semantic analyzer
-  -> ShortHand semantic IR
-  -> ShortHand MLIR dialect
-  -> LLVM dialect
-  -> LLVM IR / bitcode / native binary
+The qualified toolchain is LLVM/MLIR 18.x on Linux x64, C++17, CMake 3.20 or newer,
+Ninja, Python 3, llvm-lit and FileCheck from the same LLVM installation. Ubuntu
+24.04 provides `llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools`.
+Missing dependencies fail the mandatory gate.
+
+```sh
+LLVM_CONFIG=/usr/bin/llvm-config-18 bash scripts/check_mlir_dialect.sh
+build-mlir/shorthand-opt mlir/examples/ai_greenai_pipeline.mlir
+cmake --install build-mlir --prefix /path/to/sdk
 ```
 
-## Dialect scope
+A standalone build uses `cmake -S mlir -B build-mlir -G Ninja
+-DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir`. The root build exposes
+`-DSHORTHAND_BUILD_MLIR=ON`; the existing runtime SDK remains independently
+buildable on its qualified platforms. Linux x64 release staging includes this
+MLIR package. MLIR is not yet qualified on the other compiler platforms.
+The installed package requires the exact LLVM/MLIR patch version it was built
+against because upstream C++ ABIs are not stable across releases.
 
-The initial dialect models the compiler-level operations that already exist in the beta language surface:
+Downstream consumers use `find_package(ShortHandMLIR 1 CONFIG REQUIRED)` and
+link `ShortHandMLIR::Dialect`. Public headers and TableGen sources are installed
+under `include/ShortHand/IR`. LLVM's license is included with the installed SDK.
+See `mlir/test/consumer` for generated operation builders, checked type and
+attribute construction, registration and parsing. Pass `llvm::StringRef` to
+attribute `getChecked` overloads, as required by the generated LLVM 18 API.
 
-- `shorthand.model`
-- `shorthand.tensor`
-- `shorthand.infer`
-- `shorthand.greenai_contract`
-- `shorthand.greenai_measure`
+## Version 1 IR contract
 
-These operations are not wired into the build yet. They define the typed contract for the next lowering phase.
+| Construct | Representation and verification |
+| --- | --- |
+| `!shorthand.model<input, output>` | Static, unencoded, non-scalar ranked tensor signatures; positive dimensions; bounded int64 element and byte counts. |
+| Tensor element types | `f32`, `f16`, `bf16`, signless `i4`, `i8`, `i32`; type support is an IR contract, not an execution claim. |
+| `#shorthand.backend<name>` | One explicit backend policy from fallback, onnxruntime_cpu, onnxruntime_cuda, onnxruntime_tensorrt, tensorrt, openvino, libtorch, llamacpp. |
+| `#shorthand.evidence<MQ, DQ, mode>` | Declared MQ0-MQ4/DQ0-DQ4 with `evidence_only` mode; these declarations do not establish evidence quality. |
+| `shorthand.model` | Model symbol, typed signature, canonical format, path, task, quality guardrail and compatible backend. |
+| `shorthand.tensor` | Defined dense tensor data and a matching ranked SSA result; no uninitialized data. |
+| `shorthand.infer` | One SSA input and output; a model symbol resolved in the nearest symbol table; exact signature agreement. |
+| `shorthand.greenai_contract` | Contract symbol, nonempty unit/criteria/guardrail, unique nonempty boundary components, evidence attribute, positive finite carbon factor and finite nonnegative budgets. |
+| `shorthand.greenai_measure` | Resolved contract, backend, positive int64 inference count, finite positive watts/seconds and finite positive computed joules. |
 
-## Claim boundary
+Canonical model formats are `onnx`, `tensorrt_engine`, `torchscript`,
+`openvino_ir`, and `gguf`. Source spelling aliases are normalized by the future
+lowering bridge. Backend/format compatibility is checked, but availability is
+an execution-time responsibility. No path is opened by verification.
 
-This is a dialect scaffold, not a production MLIR pipeline. It does not replace the current LLVM codegen path yet and does not claim production readiness.
+Carbon factor units are gCO2e/kWh; budgets use joules and gCO2e. Zero budgets are
+valid strict budgets. Boundary names are extensible declared components, not a
+claim that the certification boundary is complete. Measurements are declared
+activity, not instrument-backed workbook records. The PR88-PR91 evidence tools
+remain responsible for typed profiles, provenance, independent replay and
+candidate claim controls. No operation grants certification or authorizes a
+comparative energy claim.
+
+Model and contract symbols are retained. Inference and measurement operations
+conservatively retain side effects so DCE and CSE cannot discard or merge them.
+Dense tensor materialization is pure. Location information survives printing
+and parsing. Unknown operations are rejected by the default driver; the upstream
+expert `--allow-unregistered-dialect` option is never used in qualification.
+
+## Mandatory evidence
+
+The gate executes lit/FileCheck and expected diagnostics, positive/negative
+parser boundaries, custom/generic/bytecode/location round trips, observable-effect
+preservation, checked and unchecked C++ API verification, four standalone public
+headers, a relocated installed CMake consumer, installed TableGen regeneration,
+eight-file freshness comparison, four incremental definition mutations and
+missing-dependency rejection. CI runs GCC plus Clang ASan/LSan/UBSan with leak
+detection enabled. Make and CTest include the same gate. CodeQL compiles the
+generated dialect and driver in addition to existing compiler/evidence targets.
+
+## Remaining lowering
+
+ShortHand source -> parser and AST -> semantic analyzer -> ShortHand semantic IR
+-> ShortHand MLIR dialect -> LLVM dialect -> LLVM IR / native code.
+
+PR93 owns the SemanticIR bridge, full lowering, composite execution integration
+and runtime handoff. PR92 does not replace the existing LLVM generator, execute
+models, certify devices or establish production readiness. TST024 remains partial.

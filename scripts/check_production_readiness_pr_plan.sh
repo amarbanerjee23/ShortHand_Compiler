@@ -58,17 +58,17 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-09-pr91' \
+  'production_readiness_plan_version: 2026-09-10-pr92' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 90' \
-  'CURRENT_GITHUB_PR: 91' \
+  'LAST_MERGED_GITHUB_PR: 91' \
+  'CURRENT_GITHUB_PR: 92' \
   'LAST_PLANNED_GITHUB_PR: 96' \
-  'CURRENT_IMPLEMENTATION_SCOPE: auditor_bundle_retention_surveillance_reporting' \
+  'CURRENT_IMPLEMENTATION_SCOPE: generated_mlir_dialect' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'PR91 - Auditor bundle, retention, surveillance and reporting is IN PROGRESS.' \
-  'remaining_planned_implementation_prs_pr91_through_pr96: 6' \
-  'remaining_planned_implementation_prs_after_pr91: 5' \
+  'PR92 - Generated ShortHand MLIR dialect is IN PROGRESS.' \
+  'remaining_planned_implementation_prs_pr92_through_pr96: 5' \
+  'remaining_planned_implementation_prs_after_pr92: 4' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -99,10 +99,11 @@ require_contains "${PLAN}" '| PR87 - Concurrent serving and operational runtime 
 require_contains "${PLAN}" '| PR88 - Typed C3-ECO certification profile | MERGED'
 require_contains "${PLAN}" '| PR89 - Measurement, carbon accounting and cost workbook | MERGED'
 require_contains "${PLAN}" '| PR90 - Eligibility, scoring, claims and eco-regression | MERGED'
-require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and reporting | IN PROGRESS'
+require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and reporting | MERGED'
+require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | IN PROGRESS'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-09-pr91' \
+  'ci_pipeline_architecture_version: 2026-09-10-pr92' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \

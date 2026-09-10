@@ -91,4 +91,6 @@ grep -Fq 'PASS Trivy vulnerable dependency negative fixture' scripts/assert_triv
 grep -Fq 'PASS CodeQL C/C++ SAST policy gate' scripts/check_codeql_sarif.sh
 grep -Fq 'PASS Trivy vulnerability and repository security policy gate' scripts/check_trivy_report.sh
 
+grep -Fq 'cmake --build build-mlir-codeql --parallel 2 --target shorthand-opt' .github/workflows/ci.yml
+
 printf 'PASS external vulnerability SAST dependency and license policy gate\n'

@@ -1,0 +1,20 @@
+# RUN: %shorthand-opt %example -o %t.first
+# RUN: %shorthand-opt %t.first -o %t.second
+# RUN: diff -u %t.first %t.second
+# RUN: %shorthand-opt %example --mlir-print-op-generic -o %t.generic
+# RUN: %shorthand-opt %t.generic -o %t.from-generic
+# RUN: diff -u %t.first %t.from-generic
+# RUN: %shorthand-opt %example --emit-bytecode -o %t.bc
+# RUN: %shorthand-opt %t.bc -o %t.from-bc
+# RUN: diff -u %t.first %t.from-bc
+# RUN: %shorthand-opt %example --mlir-print-debuginfo -o %t.loc
+# RUN: %shorthand-opt %t.loc --mlir-print-debuginfo -o %t.loc2
+# RUN: diff -u %t.loc %t.loc2
+# RUN: %FileCheck %s < %t.first
+# CHECK: shorthand.model @classifier
+# CHECK-SAME: signature = !shorthand.model<tensor<1x4xf32>, tensor<1x2xf32>>
+# CHECK: shorthand.greenai_contract @classifier_workload
+# CHECK-SAME: #shorthand.evidence<"MQ1", "DQ1", "evidence_only">
+# CHECK: shorthand.tensor
+# CHECK: shorthand.infer @classifier
+# CHECK: shorthand.greenai_measure @classifier_workload

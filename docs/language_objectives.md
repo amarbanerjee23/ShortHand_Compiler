@@ -147,7 +147,8 @@ The objectives are satisfied for enterprise production usage only when:
 - Instrument-backed C3-ECO measurement and accounting: PR89.
 - C3-ECO eligibility, scoring, claims and eco-regression assessment: PR90.
 - Signed auditor bundle, retention, surveillance and reporting: PR91.
-- Generated MLIR dialect, production lowering and representative AI qualification: PR92 through PR94.
+- Generated MLIR dialect and checked downstream SDK: PR92.
+- Production lowering and representative AI qualification: PR93 through PR94.
 - Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.
 
 ## Change-control rule
