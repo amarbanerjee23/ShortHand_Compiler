@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/readiness_intake_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "product_id",
+    "functional_unit",
+    "boundary",
+    "estimates"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.readiness_intake.v1"
+    },
+    "product_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "functional_unit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "boundary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "estimates": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "component",
+          "energy_kwh",
+          "carbon_factor_gco2e_per_kwh",
+          "uncertainty_percent",
+          "method",
+          "source_ref"
+        ],
+        "properties": {
+          "component": {
+            "type": "string",
+            "minLength": 1
+          },
+          "energy_kwh": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "carbon_factor_gco2e_per_kwh": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "uncertainty_percent": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 100
+          },
+          "method": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

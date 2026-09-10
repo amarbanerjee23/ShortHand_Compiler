@@ -21,6 +21,11 @@ required_files=(
   schemas/c3eco_assessment_v1.schema.json
   Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp
   scripts/check_c3eco_assessment.sh
+  docs/c3eco_auditor_bundle.md
+  schemas/c3eco/auditor_bundle_v1.schema.json
+  Compiler_new_ws/Short_Hand/src/evidence/AuditorBundle.cpp
+  scripts/check_c3eco_auditor_bundle.sh
+  tests/c3eco/audit/test_auditor_bundle.py
   docs/execution_semantics_beta_0_3.md
   docs/execution_semantics_beta_0_4.md
   docs/production_type_memory_model.md
@@ -128,15 +133,16 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR90 state must be present and claim-safe.
+# Active PR91 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-08-pr90' \
+  'feature_status_version: 2026-09-09-pr91' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 90' \
-  'current_roadmap_scope: eligibility_scoring_claims_eco_regression' \
-  '29 implemented, 3 partial and 3 open' \
+  'current_github_pr: 91' \
+  'current_roadmap_scope: auditor_bundle_retention_surveillance_reporting' \
+  '31 implemented, 2 partial and 3 open' \
+  'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \
   'Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate' \
   'C3-ECO eligibility, scoring and claims | Implemented for `shorthand.c3eco.assessment.v1` candidate' \
@@ -147,7 +153,7 @@ for anchor in \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
   'level_claim_permitted: false'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR90 active anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR91 active anchor: ${anchor}" >&2; exit 1; }
 done
 
 # Stable historical anchors remain mandatory so a new PR cannot erase previously
@@ -197,6 +203,8 @@ grep -Fq 'shorthand.c3eco.assessment.v1' schemas/c3eco_assessment_v1.schema.json
 grep -Fq 'official_certification_granted' schemas/c3eco_assessment_v1.schema.json
 grep -Fq 'candidate_recommendation_only' Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp
 grep -Fq 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate' scripts/check_c3eco_assessment.sh
+grep -Fq 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1' docs/c3eco_auditor_bundle.md
+grep -Fq 'PASS PR91 signed auditor lineage replay retention surveillance redaction and readiness gate' scripts/check_c3eco_auditor_bundle.sh
 grep -Fq 'fuzz_safety_contract_version: shorthand.fuzz.sanitizers.v1' docs/fuzz_sanitizer_race_hardening.md
 grep -Fq 'toolchain_platform_contract_version: shorthand.portability.reproducibility.v1' docs/toolchain_platform_reproducibility.md
 grep -Fq 'signed_release_contract_version: shorthand.release.protected.v1' docs/signed_release_publication.md
@@ -257,6 +265,7 @@ bash scripts/check_concurrent_serving_runtime.sh
 bash scripts/check_c3eco_certification_profile.sh
 bash scripts/check_c3eco_measurement_workbook.sh
 bash scripts/check_c3eco_assessment.sh
+bash scripts/check_c3eco_auditor_bundle.sh
 bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
@@ -300,7 +309,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR90 adds deterministic eligibility, scoring, claim and eco-regression assessment while preserving candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; PR91-PR96 and the protected release exercise remain fail-closed."
+echo "Feature plan status check passed. GitHub PR91 adds signed auditor evidence, replay, retention, surveillance and redacted reporting while preserving candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; PR92-PR96 and the protected release exercise remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-08-pr90
+ci_pipeline_architecture_version: 2026-09-09-pr91
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -213,3 +213,5 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 Every remaining implementation PR adds its applicable mandatory jobs as executable contracts become available. Release publication remains isolated from pull-request permissions and closes only with a verified protected tag exercise.
 
 Historical architecture markers: ci_pipeline_architecture_version: 2026-09-01-pr88 and ci_pipeline_architecture_version: 2026-08-09-v1. Historical roadmap marker: PR86: performance, energy and zero-skip production RC aggregation.
+
+GitHub PR91 adds `scripts/check_c3eco_auditor_bundle.sh` to direct CI, Make/CTest/sanitizer, compiler-matrix and installed SDK lifecycle gates. OpenSSL 3.x is a required auditor dependency. Independent CLI signature verification and re-signed false-assessment negatives qualify actual cryptography and replay. All mandatory inherited checks remain required.

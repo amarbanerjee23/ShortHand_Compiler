@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.local/schemas/c3eco/auditor_bundle_v1.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "kind",
+    "bundle_id",
+    "signer_key_id",
+    "signature_algorithm",
+    "rules_id",
+    "created_on",
+    "valid_until",
+    "source_manifest_sha256",
+    "artifacts",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.auditor_bundle.v1"
+    },
+    "kind": {
+      "enum": [
+        "private",
+        "public"
+      ]
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signer_key_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signature_algorithm": {
+      "const": "Ed25519"
+    },
+    "rules_id": {
+      "const": "shorthand.c3eco.rules.v0.6+v0.7-20260718.v1"
+    },
+    "created_on": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "source_manifest_sha256": {
+      "type": "string",
+      "pattern": "^(-|[0-9a-f]{64})$"
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "bytes",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 33554432
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "official_certification_granted": {
+      "const": false
+    },
+    "level_claim_permitted": {
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "const": false
+    },
+    "production_claim": {
+      "const": false
+    }
+  }
+}

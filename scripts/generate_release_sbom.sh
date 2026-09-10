@@ -52,6 +52,16 @@ cat > "${OUT_DIR}/sbom.spdx.json" <<JSON
       ]
     },
     {
+      "name": "OpenSSL libcrypto for the native auditor tool",
+      "SPDXID": "SPDXRef-Package-OpenSSL",
+      "versionInfo": "externally-supplied-supported-3.x",
+      "downloadLocation": "https://github.com/openssl/openssl",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION"
+    },
+    {
       "name": "ShortHand optional AI SDK integrations",
       "SPDXID": "SPDXRef-Package-OptionalAISDKIntegrations",
       "versionInfo": "optional-sdk-roots-not-vendored",
@@ -63,6 +73,11 @@ cat > "${OUT_DIR}/sbom.spdx.json" <<JSON
     }
   ],
   "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-ShortHandCompilerSource",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Package-OpenSSL"
+    },
     {
       "spdxElementId": "SPDXRef-DOCUMENT",
       "relationshipType": "DESCRIBES",

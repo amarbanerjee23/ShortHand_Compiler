@@ -1,9 +1,9 @@
 # Release Level Status
 
-release_level_status_version: 2026-09-08-pr90
+release_level_status_version: 2026-09-09-pr91
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 90
+current_github_pr: 91
 final_planned_github_pr: 96
 
 ShortHand is a controlled beta with a versioned `linux-x64-cpu-v1` backend qualification scope. It is not an enterprise production release, an external certification, or a general accelerator-support claim.
@@ -30,8 +30,10 @@ ShortHand is a controlled beta with a versioned `linux-x64-cpu-v1` backend quali
 
 ## Open before enterprise production use
 
-PR91-PR96 close the C3-ECO auditor lifecycle, generated MLIR and composite execution lowering, representative workload, performance/energy and final release-candidate blockers. TST017 separately requires a real protected tag publication whose attestations verify cryptographically. Public ingress, authentication, authorization and TLS are not claimed by the process-scoped serving contract.
+PR92-PR96 close the generated MLIR and composite execution lowering, representative workload, performance/energy and final release-candidate blockers. TST017 separately requires a real protected tag publication whose attestations verify cryptographically. Public ingress, authentication, authorization and TLS are not claimed by the process-scoped serving contract.
 
 Only executed checks and retained artifacts are release evidence. Workflow source, a detected device, an installed SDK, a skipped test or a candidate evidence bundle is not proof of production readiness.
 
 Historical release marker: release_level_status_version: 2026-09-01-pr88.
+
+PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.

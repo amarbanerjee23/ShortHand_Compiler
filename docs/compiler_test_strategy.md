@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-08-pr90
+compiler_test_strategy_version: 2026-09-09-pr91
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,10 +13,10 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 35-area production test matrix records for the GitHub PR90 candidate:
+The 36-area production test matrix records for the GitHub PR91 candidate:
 
-- 29 implemented areas,
-- 3 partial areas,
+- 31 implemented areas,
+- 2 partial areas,
 - 3 open areas.
 
 GitHub PR75 through PR89 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving, the typed C3-ECO profile and instrument-backed measurement accounting.
@@ -142,6 +142,11 @@ ShortHand may claim enterprise production readiness only when:
 5. reproducible and signed artifacts are produced and cryptographically verified,
 6. measured performance and energy evidence supports any published claim,
 7. the final PR96 RC gate reports zero open production blockers.
+
+
+PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.
+
+Auditor changes must reject invalid signatures, missing evidence, validly signed false assessments, unsafe filesystem inputs, expired current reviews and private-data leakage. The native gate must run in direct CI, Make, CTest, sanitizers and installed consumers.
 
 ## Historical strategy audit anchors
 

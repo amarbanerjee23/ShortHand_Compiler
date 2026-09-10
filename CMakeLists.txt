@@ -55,6 +55,10 @@ endif()
 find_package(BISON REQUIRED)
 find_package(FLEX QUIET)
 find_package(Threads REQUIRED)
+find_package(OpenSSL 3.0 REQUIRED COMPONENTS Crypto)
+if(OPENSSL_VERSION VERSION_GREATER_EQUAL "4.0")
+  message(FATAL_ERROR "The auditor contract currently qualifies OpenSSL 3.x only")
+endif()
 find_program(LLVM_CONFIG llvm-config)
 find_program(BASH_EXECUTABLE bash REQUIRED)
 
@@ -359,6 +363,17 @@ add_executable(shorthand_c3eco_assess
 )
 target_compile_features(shorthand_c3eco_assess PRIVATE cxx_std_17)
 
+add_executable(shorthand_c3eco_audit
+  ${SRC_DIR}/evidence/AuditorBundle.cpp
+  ${SRC_DIR}/evidence/CertificationAssessment.cpp
+  ${SRC_DIR}/evidence/C3EcoAssessmentScoring.cpp
+  ${SRC_DIR}/module/Sha256.cpp
+)
+target_compile_features(shorthand_c3eco_audit PRIVATE cxx_std_17)
+target_compile_definitions(shorthand_c3eco_audit PRIVATE SHORTHAND_C3ECO_ASSESS_LIBRARY)
+target_link_libraries(shorthand_c3eco_audit PRIVATE OpenSSL::Crypto)
+
+
 if(DEFINED ENV{ONNXRUNTIME_ROOT})
   message(STATUS "ONNX Runtime root: $ENV{ONNXRUNTIME_ROOT}")
 else()
@@ -386,9 +401,17 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_assess
+install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+install(DIRECTORY schemas/c3eco/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas/c3eco
+  FILES_MATCHING PATTERN "*.schema.json"
+)
+install(FILES docs/c3eco_auditor_bundle.md
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
+)
+
 
 if(TARGET shorthand_prometheus_adapter)
   install(TARGETS shorthand_prometheus_adapter
@@ -559,6 +582,15 @@ if(SHORTHAND_BUILD_TESTING)
   set_tests_properties(c3eco_certification_assessment PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>;SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>;SHORTHAND_C3ECO_ASSESS_BIN=$<TARGET_FILE:shorthand_c3eco_assess>"
+  )
+
+  add_test(
+    NAME c3eco_auditor_bundle
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_auditor_bundle.sh
+  )
+  set_tests_properties(c3eco_auditor_bundle PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>;SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>;SHORTHAND_C3ECO_AUDIT_BIN=$<TARGET_FILE:shorthand_c3eco_audit>"
   )
 
   add_test(

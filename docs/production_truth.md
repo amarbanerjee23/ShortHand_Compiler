@@ -51,7 +51,7 @@ The traceability matrix applies the stricter rule when the draft documents diffe
 
 Bronze is the first certification level. Registered and Measured Candidate are readiness states only. Efficiency evidence is invalid when functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened. The framework evaluates the chosen implementation within a declared functional unit and boundary; it does not treat a programming language, model, cloud or framework as inherently green.
 
-PR90 evaluates mandatory gates before scoring, applies the complete 76-criterion A-K catalog, and may emit a level recommendation for external review. Every output remains `candidate_recommendation_only`, fixes `official_certification_granted:false` and `level_claim_permitted:false`, and leaves signed auditor lineage, certification decisions and public reports to PR91. Comparative energy claims remain blocked until PR95 provides repeated equivalent-workload evidence.
+PR90 evaluates mandatory gates before scoring, applies the complete 76-criterion A-K catalog, and may emit a level recommendation for external review. Every output remains `candidate_recommendation_only`, fixes `official_certification_granted:false` and `level_claim_permitted:false`, and uses PR91 for signed auditor lineage and redacted public reports; independent certification decisions remain external. Comparative energy claims remain blocked until PR95 provides repeated equivalent-workload evidence.
 
 ### Supplied certification source profile
 
@@ -76,3 +76,5 @@ ShortHand remains `controlled_beta` with `production_claim: false` until every p
 ## Change control
 
 Any change to maturity, production claims, language version, remaining PR count, backend support, C3-ECO profile, certification claim status, release status, mandatory skip policy, gate state, domain state or closure target must update both the relevant TSV source and its executable guard in the same PR.
+
+PR91 implements signed candidate evidence with assessment replay under `shorthand.c3eco.auditor_bundle.v1`. Actual protected storage and independent certification operations remain outside the compiler claim boundary.

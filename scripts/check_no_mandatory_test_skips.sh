@@ -12,6 +12,8 @@ mandatory=(
   scripts/check_c3eco_certification_profile.sh
   scripts/check_c3eco_measurement_workbook.sh
   scripts/check_c3eco_assessment.sh
+  scripts/check_c3eco_auditor_bundle.sh
+  tests/c3eco/audit/test_auditor_bundle.py
 )
 
 for rel in "${mandatory[@]}"; do
@@ -33,5 +35,7 @@ grep -Fq 'PASS concurrent serving cancellation deadline backpressure quota isola
 grep -Fq 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate' "${ROOT_DIR}/scripts/check_c3eco_certification_profile.sh"
 grep -Fq 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate' "${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
 grep -Fq 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate' "${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
+
+grep -Fq 'PASS PR91 signed auditor lineage replay retention surveillance redaction and readiness gate' "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
 
 echo "PASS mandatory qualification zero-skip policy gate"
