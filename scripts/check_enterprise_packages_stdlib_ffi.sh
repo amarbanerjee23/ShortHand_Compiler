@@ -43,6 +43,13 @@ command -v jq >/dev/null 2>&1 || {
   -o "${WORK_DIR}/package-v2-test"
 "${WORK_DIR}/package-v2-test" "${WORK_DIR}"
 
+"${CXX_BIN}" "${COMMON[@]}" -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+  "${ENTERPRISE_TESTS}/test_package_v2.cpp" \
+  "${SRC_DIR}/module/ModuleResolver.cpp" "${SRC_DIR}/module/Sha256.cpp" \
+  -o "${WORK_DIR}/package-v2-sanitized"
+ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+  "${WORK_DIR}/package-v2-sanitized" "${WORK_DIR}"
+
 "${CXX_BIN}" "${COMMON[@]}" \
   "${ENTERPRISE_TESTS}/test_core_ffi.cpp" "${SRC_DIR}/core/ShorthandCore.cpp" \
   -o "${WORK_DIR}/core-ffi-test"
@@ -199,6 +206,19 @@ jq -e '
 ' "${WORK_DIR}/package.spdx.json" >/dev/null
 "${SHORT}" "${PACKAGE}/src/main.short" run >"${WORK_DIR}/package-run.out"
 grep -Fq 'enterprise package 7' "${WORK_DIR}/package-run.out"
+
+cp "${PACKAGE}/shorthand.package" "${WORK_DIR}/before-llvm-license"
+sed 's/^license Apache-2.0$/license Apache-2.0 WITH LLVM-exception/' \
+  "${WORK_DIR}/before-llvm-license" >"${PACKAGE}/shorthand.package"
+"${SHORT}" "${PACKAGE}/src/main.short" lock >"${WORK_DIR}/llvm-license-lock.out"
+SOURCE_DATE_EPOCH=1787356800 "${SHORT}" "${PACKAGE}/src/main.short" package-sbom \
+  >"${WORK_DIR}/llvm-license.spdx.json"
+jq -e 'any(.packages[]; .name == "acme.app" and
+  .licenseDeclared == "Apache-2.0 WITH LLVM-exception" and
+  .licenseConcluded == "Apache-2.0 WITH LLVM-exception")' \
+  "${WORK_DIR}/llvm-license.spdx.json" >/dev/null
+cp "${WORK_DIR}/before-llvm-license" "${PACKAGE}/shorthand.package"
+"${SHORT}" "${PACKAGE}/src/main.short" lock >"${WORK_DIR}/restored-license-lock.out"
 
 cp "${PACKAGE}/shorthand.package" "${WORK_DIR}/root-manifest"
 sed 's/dependency acme.math 2.1.0/dependency acme.math ^2.0/' \

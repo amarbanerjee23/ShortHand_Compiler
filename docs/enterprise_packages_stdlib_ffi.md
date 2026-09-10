@@ -60,6 +60,13 @@ The deterministic `shorthand.lock.v2` contains root identity, exact dependency r
 
 `shorthand.package.v1` and `shorthand.lock.v1` remain accepted unchanged for compatibility. Their historical FNV-1a graph fingerprint is not upgraded in place and is not a cryptographic dependency claim.
 
+PR92 adds the exact `Apache-2.0 WITH LLVM-exception` license expression to match
+the redistributed MLIR dependency policy. The final license field in root and
+vendored manifests may contain this expression. Whitespace is normalized, and
+the full expression is retained in dependency identity checks, lockfiles and
+SPDX records. Unknown exceptions, arbitrary expressions and trailing tokens
+remain rejected by the exact allowlist.
+
 ## Core standard library and safe FFI
 
 The installable `ShortHand::core` and `ShortHand::core_shared` targets expose `abi/shorthand_core_ffi_v1.h`. The ABI version is 1.0.0 and its exact 15-symbol set is frozen in `abi/core_ffi_public_symbols_v1.txt`.

@@ -140,10 +140,22 @@ bool validExactVersion(const std::string &value) {
 
 bool allowedRedistributedLicense(const std::string &value) {
     static const std::set<std::string> allowed = {
-        "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "BSL-1.0", "CC0-1.0",
+        "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", "BSD-3-Clause", "BSL-1.0", "CC0-1.0",
         "ISC", "MIT", "MPL-2.0", "Unicode-3.0", "Zlib"
     };
     return allowed.count(value) != 0U;
+}
+
+// A license occupies the final field. Preserve the exact allowlisted SPDX
+// expression while normalizing record whitespace; arbitrary expressions and
+// trailing tokens still fail allowedRedistributedLicense.
+std::string licenseField(const std::vector<std::string> &parts, std::size_t begin) {
+    std::string value;
+    for (std::size_t i = begin; i < parts.size(); ++i) {
+        if (!value.empty()) value += ' ';
+        value += parts[i];
+    }
+    return value;
 }
 
 bool validSha256(const std::string &value) {
@@ -332,13 +344,14 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
             version_seen = true;
             continue;
         }
-        if (parts.size() == 2U && parts[0] == "license") {
-            if (manifest_.format != "shorthand.package.v2" || license_seen || !allowedRedistributedLicense(parts[1])) {
+        if (!parts.empty() && parts[0] == "license") {
+            const std::string license = licenseField(parts, 1U);
+            if (manifest_.format != "shorthand.package.v2" || license_seen || !allowedRedistributedLicense(license)) {
                 code = diag::ModuleLicensePolicy;
                 message = "package license is missing, duplicate, or not allowlisted at line " + std::to_string(line_number);
                 return false;
             }
-            manifest_.license_spdx = parts[1];
+            manifest_.license_spdx = license;
             license_seen = true;
             continue;
         }
@@ -376,7 +389,7 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
             continue;
         }
         if (!parts.empty() && parts[0] == "dependency") {
-            if (parts.size() != 6U || manifest_.format != "shorthand.package.v2" ||
+            if (parts.size() < 6U || manifest_.format != "shorthand.package.v2" ||
                 !validModuleName(parts[1]) || !relativeDirectoryIsSafe(fs::path(parts[3])) ||
                 !validSha256(parts[4])) {
                 code = diag::ModuleDependencyIntegrity;
@@ -388,7 +401,8 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
                 message = "dependency requires an exact semantic version at line " + std::to_string(line_number);
                 return false;
             }
-            if (!allowedRedistributedLicense(parts[5])) {
+            const std::string license = licenseField(parts, 5U);
+            if (!allowedRedistributedLicense(license)) {
                 code = diag::ModuleLicensePolicy;
                 message = "dependency license is not allowlisted at line " + std::to_string(line_number);
                 return false;
@@ -403,7 +417,7 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
             dependency.version = parts[2];
             dependency.relative_root = fs::path(parts[3]).lexically_normal().generic_string();
             dependency.manifest_sha256 = parts[4];
-            dependency.license_spdx = parts[5];
+            dependency.license_spdx = license;
             manifest_.dependencies.emplace(parts[1], std::move(dependency));
             continue;
         }
@@ -492,7 +506,7 @@ bool ModuleResolver::loadForEntry(const std::string &entry_source,
             if (parts.size() == 2U && parts[0] == "format" && dependency_format.empty()) dependency_format = parts[1];
             else if (parts.size() == 2U && parts[0] == "package" && dependency_name.empty() && validModuleName(parts[1])) dependency_name = parts[1];
             else if (parts.size() == 2U && parts[0] == "version" && dependency_version.empty() && validExactVersion(parts[1])) dependency_version = parts[1];
-            else if (parts.size() == 2U && parts[0] == "license" && dependency_license.empty() && allowedRedistributedLicense(parts[1])) dependency_license = parts[1];
+            else if (!parts.empty() && parts[0] == "license" && dependency_license.empty() && allowedRedistributedLicense(licenseField(parts, 1U))) dependency_license = licenseField(parts, 1U);
             else if (parts.size() == 3U && parts[0] == "module" && validModuleName(parts[1]) && relativePathIsSafe(fs::path(parts[2]))) {
                 if (!dependency_modules.emplace(parts[1], parts[2]).second) {
                     code = diag::ModuleAmbiguousMapping;
