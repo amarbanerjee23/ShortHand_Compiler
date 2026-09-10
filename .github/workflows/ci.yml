@@ -544,7 +544,7 @@ jobs:
           CXX: clang++-18
         run: |
           cmake -S . -B build-codeql -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_CONFIG=/usr/bin/llvm-config-18
-          cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool
+          cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit
 
       - name: Produce CodeQL SARIF without weakening local enforcement
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81

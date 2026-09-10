@@ -75,4 +75,6 @@ A separate readiness intake accepts a declared product id, functional unit, boun
 
 scripts/check_c3eco_auditor_bundle.sh uses real PR88 and PR89 producers and the common PR90 fixture. Its native end-to-end tests exercise deterministic packaging, independently verified OpenSSL signatures, wrong keys, tampering, missing/unlisted artifacts, a validly re-signed false assessment, malformed schemas, path safety, profile validity, retention boundary, legal holds, surveillance, nonconformities, recertification, redaction and separate estimated readiness. The gate is mandatory in direct CI, Make test, CTest, sanitizer, compiler-matrix and installed SDK lifecycle paths. It does not skip a missing crypto dependency or substitute fixture-only profiles for the real producers.
 
+The mandatory CodeQL build includes the measurement, assessment and auditor executables, so security analysis covers their native implementations alongside the compiler and runtime.
+
 PR92-PR96 retain responsibility for generated MLIR, production lowering, representative AI workloads, measured comparative energy and the enterprise pilot. TST017 still requires a real protected signed-release exercise. PR91 implements auditor preparation, not certification operations or production readiness.
