@@ -94,7 +94,10 @@ SHD5206	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_mat
 SHD5207	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	profile_materiality_violation
 SHD5208	greenai	error	required	tests/c3eco/profile/c3eco_profile_v2_negative_matrix.short	c3eco-report	incomplete_v2_linked_declaration
 SHD6001	lowering	error	required	catalogued	compile	lowering_invariant_failure
+SHD6002	lowering	error	required	tests/mlir_lowering/test_source_lowering.py	compile-mlir	mlir_lowering_gate
 SHD7001	runtime	error	required	tests/semantic/differential/division_by_zero.short	run	semantic_differential_gate
 SHD7002	runtime	error	required	tests/semantic/differential/array_bounds.short	run	semantic_differential_gate
 SHD7003	runtime	error	required	generated_loop_step_zero	run	semantic_differential_gate
 SHD7004	runtime	error	required	catalogued	run	runtime_invariant_failure
+SHD7030	runtime	error	required	tests/mlir_lowering/test_runtime_lowering.py	compile-mlir	mlir_runtime_gate
+SHD7031	runtime	error	required	tests/mlir_lowering/test_source_lowering.py	compile-mlir	mlir_lowering_gate

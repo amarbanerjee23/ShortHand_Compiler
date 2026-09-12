@@ -2,7 +2,7 @@
 
 mlir_contract: shorthand.mlir.v1
 qualified_dialect_scope: linux-x64-llvm18
-lowering_status: pending_pr93
+lowering_status: implemented_linux_x64_llvm18
 production_claim: false
 
 PR92 provides a TableGen-generated dialect library and `shorthand-opt` driver.
@@ -55,7 +55,7 @@ attribute `getChecked` overloads, as required by the generated LLVM 18 API.
 | `shorthand.greenai_measure` | Resolved contract, backend, positive int64 inference count, finite positive watts/seconds and finite positive computed joules. |
 
 Canonical model formats are `onnx`, `tensorrt_engine`, `torchscript`,
-`openvino_ir`, and `gguf`. Source spelling aliases are normalized by the future
+`openvino_ir`, and `gguf`. Source spelling aliases are normalized by the source
 lowering bridge. Backend/format compatibility is checked, but availability is
 an execution-time responsibility. No path is opened by verification.
 
@@ -84,11 +84,10 @@ missing-dependency rejection. CI runs GCC plus Clang ASan/LSan/UBSan with leak
 detection enabled. Make and CTest include the same gate. CodeQL compiles the
 generated dialect and driver in addition to existing compiler/evidence targets.
 
-## Remaining lowering
+## Executable lowering
 
-ShortHand source -> parser and AST -> semantic analyzer -> ShortHand semantic IR
--> ShortHand MLIR dialect -> LLVM dialect -> LLVM IR / native code.
+GitHub PR94 implements original roadmap PR93; merged GitHub PR93 is the separate gap assessment. Source/SDK SemanticIR lowers through verified ShortHand/LLVM dialects to LLVM IR. `ShortHandMLIR::Lowering` exports the public verifier, conversion and emission API. The source commands are `emit-mlir` and `compile-mlir` when built with `SHORTHAND_BUILD_MLIR=ON`.
 
-PR93 owns the SemanticIR bridge, full lowering, composite execution integration
-and runtime handoff. PR92 does not replace the existing LLVM generator, execute
-models, certify devices or establish production readiness. TST024 remains partial.
+`!shorthand.value` represents nominal scalar-payload records, enums, option/result and borrowed numeric slices. `shorthand.value`, `shorthand.project` and `shorthand.update` check exact storage, nominal identity, tags and field indices. Inference lowering supports float32 buffers and checks every frozen runtime ABI status and output count. Other tensor formats remain IR-only for inference.
+
+The mandatory gate adds source/module/composite differential execution, independent SDK and malformed-IR rejection, relocated lowering consumers, real ONNX CPU output, O0/O2 evidence retention and runtime fault cases. TST024 closes only for Linux x64/LLVM18. See the [lowering contract](../docs/mlir_lowering.md) for supported syntax, safety bounds, ownership restrictions and remaining release work. No certification or energy-superiority claim is implied.

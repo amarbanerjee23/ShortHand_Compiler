@@ -61,4 +61,28 @@ def ShortHand_GreenAIMeasureOp : ShortHand_Op<"greenai_measure", [DeclareOpInter
   let hasVerifier = 1;
 }
 
+def ShortHand_ValueOp : ShortHand_Op<"value", []> {
+  let summary = "Construct a composite with checked tag and slice length";
+  let arguments = (ins Variadic<AnyType>:$fields);
+  let results = (outs ShortHand_CompositeType:$result);
+  let assemblyFormat = "`(` $fields `)` attr-dict `:` functional-type($fields, $result)";
+  let hasVerifier = 1;
+}
+
+def ShortHand_ProjectOp : ShortHand_Op<"project", []> {
+  let summary = "Project a composite field, rejecting inactive tagged payloads";
+  let arguments = (ins ShortHand_CompositeType:$value, I64Attr:$index);
+  let results = (outs AnyType:$result);
+  let assemblyFormat = "$value `[` $index `]` attr-dict `:` functional-type($value, $result)";
+  let hasVerifier = 1;
+}
+
+def ShortHand_UpdateOp : ShortHand_Op<"update", [Pure]> {
+  let summary = "Return a record value with one exactly typed field replaced";
+  let arguments = (ins ShortHand_CompositeType:$record, AnyType:$value, I64Attr:$index);
+  let results = (outs ShortHand_CompositeType:$result);
+  let assemblyFormat = "$record `[` $index `]` `=` $value attr-dict `:` functional-type(operands, results)";
+  let hasVerifier = 1;
+}
+
 #endif

@@ -1,5 +1,10 @@
 # ShortHand MLIR lowering plan
 
+document_status: historical_superseded
+current_contract: docs/mlir_lowering.md
+
+This scaffold plan is retained as implementation history. GitHub PR94 implements the bounded Linux x64/LLVM18 source and SDK path described in [the current lowering contract](mlir_lowering.md).
+
 mlir_contract: shorthand.mlir.v1
 
 ShortHand source -> parser and AST -> semantic analyzer -> ShortHand semantic IR

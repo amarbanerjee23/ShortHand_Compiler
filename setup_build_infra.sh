@@ -48,7 +48,7 @@ rm -f /tmp/shorthand_check_flex_lib /tmp/shorthand_check_flex_lib.out /tmp/short
 # subsequent gate executes against the same live SDK instead of relying on
 # skip semantics or reinstalling it independently.
 if [[ "${CI:-}" == "true" && "${UNAME_S}/${UNAME_M}" == "Linux/x86_64" ]]; then
-  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.20.1}"
+  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.30.0}"
   if [[ ! -s "${ORT_ROOT}/include/onnxruntime_cxx_api.h" || ! -s "${ORT_ROOT}/lib/libonnxruntime.so" ]]; then
     echo "Provisioning mandatory ONNX Runtime CPU SDK at ${ORT_ROOT}."
     bash "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" "${ORT_ROOT}"

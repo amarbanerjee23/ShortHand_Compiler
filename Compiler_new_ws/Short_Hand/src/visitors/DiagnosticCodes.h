@@ -103,11 +103,14 @@ inline constexpr const char *C3EcoMaterialityViolation = "SHD5207";
 inline constexpr const char *C3EcoProfileIncomplete = "SHD5208";
 
 inline constexpr const char *LoweringUndefinedFunction = "SHD6001";
+inline constexpr const char *LoweringInvalidSemanticIR = "SHD6002";
 
 inline constexpr const char *RuntimeArithmeticDomainError = "SHD7001";
 inline constexpr const char *RuntimeArrayBounds = "SHD7002";
 inline constexpr const char *RuntimeLoopStepZero = "SHD7003";
 inline constexpr const char *RuntimeInvalidState = "SHD7004";
+inline constexpr const char *RuntimeInferenceFailure = "SHD7030";
+inline constexpr const char *RuntimeCompositeTag = "SHD7031";
 
 }  // namespace diagnostics
 }  // namespace shorthand

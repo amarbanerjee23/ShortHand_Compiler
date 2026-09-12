@@ -36,13 +36,21 @@ target_include_directories(ShortHandMLIRDialect PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_include_directories(ShortHandMLIRDialect SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
-target_link_libraries(ShortHandMLIRDialect PUBLIC MLIRIR MLIRSupport MLIRSideEffectInterfaces)
+target_link_libraries(ShortHandMLIRDialect PUBLIC MLIRIR MLIRSupport MLIRSideEffectInterfaces MLIRLLVMDialect)
 set_target_properties(ShortHandMLIRDialect PROPERTIES EXPORT_NAME Dialect POSITION_INDEPENDENT_CODE ON)
 
-add_executable(shorthand-opt tools/shorthand-opt.cpp)
-target_link_libraries(shorthand-opt PRIVATE ShortHandMLIRDialect MLIROptLib MLIRFuncDialect MLIRTransforms)
+add_library(ShortHandMLIRLowering STATIC lib/SemanticVerifier.cpp lib/SemanticLowering.cpp lib/LowerToLLVM.cpp)
+add_library(ShortHandMLIR::Lowering ALIAS ShortHandMLIRLowering)
+target_link_libraries(ShortHandMLIRLowering PUBLIC ShortHandMLIRDialect
+  MLIRLLVMDialect MLIRFuncDialect MLIRLLVMCommonConversion MLIRFuncToLLVM
+  MLIRArithToLLVM MLIRControlFlowToLLVM MLIRTransforms MLIRPass
+  MLIRTargetLLVMIRExport MLIRLLVMToLLVMIRTranslation MLIRBuiltinToLLVMIRTranslation)
+set_target_properties(ShortHandMLIRLowering PROPERTIES EXPORT_NAME Lowering POSITION_INDEPENDENT_CODE ON)
 
-install(TARGETS ShortHandMLIRDialect shorthand-opt EXPORT ShortHandMLIRTargets
+add_executable(shorthand-opt tools/shorthand-opt.cpp)
+target_link_libraries(shorthand-opt PRIVATE ShortHandMLIRLowering MLIROptLib MLIRFuncDialect MLIRTransforms)
+
+install(TARGETS ShortHandMLIRDialect ShortHandMLIRLowering shorthand-opt EXPORT ShortHandMLIRTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY include/ShortHand DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -50,6 +58,7 @@ install(DIRECTORY include/ShortHand DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/ShortHand" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FILES_MATCHING PATTERN "*.h.inc")
 install(FILES README.md LICENSE-LLVM.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/mlir)
+install(FILES ../docs/mlir_lowering.md DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs)
 install(DIRECTORY examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/mlir/examples)
 set(package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/ShortHandMLIR")
 configure_package_config_file(cmake/ShortHandMLIRConfig.cmake.in

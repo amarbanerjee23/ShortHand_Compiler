@@ -298,6 +298,19 @@ if(SHORTHAND_BUILD_OTLP_EXPORTER)
   target_link_libraries(shorthand_otlp_exporter PRIVATE shorthand_runtime)
 endif()
 
+# Preserve the frozen C ABI while enabling real inference in installed runtimes.
+if(SHORTHAND_HAS_ONNXRUNTIME)
+  find_library(SHORTHAND_ORT_LIBRARY NAMES onnxruntime PATHS "${ONNXRUNTIME_ROOT}/lib" NO_DEFAULT_PATH REQUIRED)
+  foreach(runtime_target IN ITEMS shorthand_runtime shorthand_runtime_shared)
+    target_sources(${runtime_target} PRIVATE ${SHORTHAND_AI_RUNTIME_SOURCES} ${SRC_DIR}/runtime/AIRuntimeBridgeAdapter.cpp)
+    target_compile_definitions(${runtime_target} PRIVATE SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1
+      SHORTHAND_HAS_ONNXRUNTIME=1 SHORTHAND_HAS_TENSORRT=0 SHORTHAND_HAS_OPENVINO=0
+      SHORTHAND_HAS_LIBTORCH=0 SHORTHAND_HAS_LLAMACPP=0 SHORTHAND_HAS_OPENBLAS=0 SHORTHAND_HAS_EIGEN=0)
+    target_include_directories(${runtime_target} PRIVATE "${ONNXRUNTIME_ROOT}/include")
+    target_link_libraries(${runtime_target} PUBLIC "${SHORTHAND_ORT_LIBRARY}")
+  endforeach()
+endif()
+
 add_executable(short_hand
   ${SRC_DIR}/main.cpp
   ${PARSER_SRC}
@@ -498,13 +511,16 @@ install(FILES
 
 if(SHORTHAND_BUILD_MLIR)
   add_subdirectory(mlir)
+  target_sources(short_hand PRIVATE ${SRC_DIR}/semantic_ir/SemanticIRBuilder.cpp ${SRC_DIR}/enterprise/EnterpriseValues.cpp)
+  target_link_libraries(short_hand PRIVATE ShortHandMLIRLowering)
+  target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_MLIR=1)
 endif()
 
 if(SHORTHAND_BUILD_TESTING)
   enable_testing()
   add_test(NAME mlir_dialect
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_mlir_dialect.sh)
-  set_tests_properties(mlir_dialect PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 600)
+  set_tests_properties(mlir_dialect PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} TIMEOUT 1800)
 
   add_test(
     NAME production_truth_traceability

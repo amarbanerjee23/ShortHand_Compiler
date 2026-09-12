@@ -45,7 +45,7 @@ The override is not production evidence and cannot satisfy the mandatory qualifi
 
 ## Mandatory live CPU qualification
 
-`scripts/install_ci_onnxruntime_cpu.sh` acquires the fixed ONNX Runtime `1.20.1` Linux x64 release archive and verifies its pinned SHA-256 before extraction. CI does not accept an unversioned or checksum-unverified SDK for this gate.
+`scripts/install_ci_onnxruntime_cpu.sh` acquires the fixed ONNX Runtime `1.30.0` Linux x64 release archive and verifies its pinned SHA-256 before extraction. CI does not accept an unversioned or checksum-unverified SDK for this gate.
 
 `scripts/check_production_backend_hardware_qualification.sh` then requires `ONNXRUNTIME_ROOT` and fails if it is absent. It executes the existing compiled C ABI inference fixture, requires the identity output `42`, rejects skip/fallback/not-executed evidence and verifies that the backend matrix records `onnxruntime_cpu` as `live_success`.
 
@@ -82,3 +82,5 @@ Hardware inventory still records CPU/GPU/TPU/NPU classes. Absence from the produ
 Closing TST022 for this versioned v1 contract means every backend/device pair that ShortHand currently calls production-supported has mandatory live numerical execution evidence. It does not mean GPU, TPU or NPU production support exists.
 
 Any future change that advertises a new production backend, provider, device class or platform must add live numerical execution evidence before changing this matrix. Detection alone, an installed SDK, a mocked capability or an unavailable-path proof is insufficient.
+
+PR94 updates the pinned Linux x64 SDK to 1.30.0 to include upstream CPU-info cleanup ([ONNX Runtime PR28245](https://github.com/microsoft/onnxruntime/pull/28245)). The earlier 1.20.1 SDK leaked two CPU-info allocations under the new live inference LeakSanitizer gate. The archive digest is taken from the [official 1.30.0 release](https://github.com/microsoft/onnxruntime/releases/tag/v1.30.0) and verified before extraction. Both inherited backend qualification and MLIR runtime qualification execute the updated SDK; no leak suppression is allowed.
