@@ -24,10 +24,10 @@ RUN apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=20 -o Acquire::https
     && rm -rf /var/lib/apt/lists/*
 
 COPY scripts/install_ci_onnxruntime_cpu.sh /usr/local/share/shorthand/install_ci_onnxruntime_cpu.sh
-RUN bash /usr/local/share/shorthand/install_ci_onnxruntime_cpu.sh /opt/shorthand/onnxruntime-1.20.1
+RUN bash /usr/local/share/shorthand/install_ci_onnxruntime_cpu.sh /opt/shorthand/onnxruntime-1.30.0
 
-ENV ONNXRUNTIME_ROOT=/opt/shorthand/onnxruntime-1.20.1
-ENV LD_LIBRARY_PATH=/opt/shorthand/onnxruntime-1.20.1/lib
+ENV ONNXRUNTIME_ROOT=/opt/shorthand/onnxruntime-1.30.0
+ENV LD_LIBRARY_PATH=/opt/shorthand/onnxruntime-1.30.0/lib
 
 # Match the GitHub-hosted runner UID so checked-out workspace mounts remain writable,
 # and keep the reusable qualification image unprivileged at runtime.

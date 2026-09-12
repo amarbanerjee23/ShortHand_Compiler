@@ -29,7 +29,10 @@ require_file mlir/include/ShortHand/IR/ShortHandTypes.td
 require_file mlir/include/ShortHand/IR/ShortHandAttributes.td
 require_file scripts/check_mlir_dialect.sh
 require_contains mlir/README.md 'mlir_contract: shorthand.mlir.v1'
-require_contains mlir/README.md 'lowering_status: pending_pr93'
+require_contains mlir/README.md 'lowering_status: implemented_linux_x64_llvm18'
+require_contains docs/mlir_lowering.md 'qualified_lowering_scope: linux-x64-llvm18'
+require_file scripts/check_mlir_lowering.sh
+require_file mlir/test/test_lowering.py
 require_contains .github/workflows/ci.yml 'test "${{ needs.mlir.result }}" = "success"'
 require_contains Compiler_new_ws/Short_Hand/src/Makefile 'test-mlir:'
 require_contains tests/ctest_parity/expected_make_targets.txt 'test-mlir'
