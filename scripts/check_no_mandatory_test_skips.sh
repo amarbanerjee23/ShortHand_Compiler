@@ -15,6 +15,9 @@ mandatory=(
   scripts/check_c3eco_auditor_bundle.sh
   tests/c3eco/audit/test_auditor_bundle.py
   scripts/check_mlir_dialect.sh
+  scripts/check_mlir_lowering.sh
+  tests/mlir_lowering/test_source_lowering.py
+  tests/mlir_lowering/test_runtime_lowering.py
   mlir/test/test_boundaries.py
   mlir/test/test_generation.py
   mlir/test/test_install.py

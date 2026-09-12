@@ -545,6 +545,7 @@ jobs:
           CXX: clang++-18
         run: |
           cmake -S . -B build-codeql -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_CONFIG=/usr/bin/llvm-config-18
+          cmake -S . -B build-codeql -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
           cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit
           cmake -S mlir -B build-mlir-codeql -G Ninja -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
           cmake --build build-mlir-codeql --parallel 2 --target shorthand-opt
@@ -611,7 +612,7 @@ jobs:
 
   mlir:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -631,7 +632,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3
+          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3 flex bison libfl-dev libssl-dev curl binutils
       - name: Generated dialect lit verifier roundtrip install and freshness qualification
         env:
           CC: ${{ matrix.cc }}

@@ -1,5 +1,6 @@
 #include "ShortHand/IR/ShortHandOps.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "mlir/IR/OpImplementation.h"
 #include "llvm/ADT/SmallSet.h"
@@ -121,6 +122,27 @@ LogicalResult ModelOp::verify() {
         return emitOpError("unknown model format");
     if (!compatible && backend != "fallback")
         return emitOpError("backend is incompatible with model format");
+    if (Attribute raw = (*this)->getAttr("shorthand.backend_preference")) {
+        auto preferences = dyn_cast<ArrayAttr>(raw);
+        if (!preferences || preferences.empty())
+            return emitOpError("backend preference must be a nonempty string array");
+        llvm::SmallSet<StringRef, 8> seen;
+        for (Attribute entry : preferences) {
+            auto name = dyn_cast<StringAttr>(entry);
+            if (!name || !knownBackend(name.getValue()) || !seen.insert(name.getValue()).second)
+                return emitOpError("backend preference entries must be known and unique");
+            StringRef policy = name.getValue();
+            bool match = policy == "fallback" ||
+                (format == "onnx" && (policy.starts_with("onnxruntime_") || policy == "openvino")) ||
+                (format == "tensorrt_engine" && policy == "tensorrt") ||
+                (format == "torchscript" && policy == "libtorch") ||
+                (format == "openvino_ir" && policy == "openvino") ||
+                (format == "gguf" && policy == "llamacpp");
+            if (!match) return emitOpError("backend preference is incompatible with model format");
+        }
+        if (cast<StringAttr>(preferences[0]).getValue() != backend)
+            return emitOpError("backend must equal the first backend preference");
+    }
     return success();
 }
 
@@ -198,6 +220,67 @@ LogicalResult GreenAIMeasureOp::verify() {
 LogicalResult GreenAIMeasureOp::verifySymbolUses(SymbolTableCollection &symbols) {
     if (!symbols.lookupNearestSymbolFrom<GreenAIContractOp>(*this, getWorkloadAttr()))
         return emitOpError("workload must resolve to a shorthand.greenai_contract symbol");
+    return success();
+}
+} // namespace shorthand::ir
+
+namespace shorthand::ir {
+namespace {
+SmallVector<Type> compositeStorage(CompositeType type) {
+    auto *ctx=type.getContext(); SmallVector<Type> result;
+    StringRef kind=type.getKind();
+    if(kind=="enum" || kind=="option" || kind=="result") result.push_back(IntegerType::get(ctx,32));
+    if(kind=="slice") return {LLVM::LLVMPointerType::get(ctx),IntegerType::get(ctx,64)};
+    for(Attribute field:type.getFields()) result.push_back(cast<TypeAttr>(field).getValue());
+    return result;
+}
+LogicalResult verifyComposite(CompositeType type,llvm::function_ref<InFlightDiagnostic()> error) {
+    return CompositeType::verify(error,type.getKind(),type.getName(),type.getFields(),type.getNames());
+}
+}
+LogicalResult CompositeType::verify(llvm::function_ref<InFlightDiagnostic()> error,StringRef kind,StringRef name,ArrayAttr fields,ArrayAttr names) {
+    if(name.trim().empty() || !fields || !names) return error()<<"composite requires a name, field types and field/variant names";
+    bool record=kind=="record",enumeration=kind=="enum",option=kind=="option",result=kind=="result",slice=kind=="slice";
+    if(!record&&!enumeration&&!option&&!result&&!slice) return error()<<"unknown composite kind";
+    if((record&&fields.empty()) || (enumeration&&(!fields.empty()||names.empty())) ||
+       ((option||slice)&&fields.size()!=1) || (result&&fields.size()!=2) || (!enumeration&&fields.size()!=names.size()))
+        return error()<<"composite field/variant arity is invalid";
+    if(fields.size()>256 || names.size()>256) return error()<<"composites support at most 256 fields/variants";
+    llvm::SmallSet<StringRef,8> seen;
+    for(Attribute field:fields) {
+        auto attr=mlir::dyn_cast<TypeAttr>(field);
+        if(!attr || !(attr.getValue().isSignlessInteger(32)||attr.getValue().isF64()||mlir::isa<LLVM::LLVMPointerType>(attr.getValue())))
+            return error()<<"composite payloads require int32/bool storage, float64 or immutable string pointers";
+        if(slice && !attr.getValue().isSignlessInteger(32) && !attr.getValue().isF64()) return error()<<"slice payload must be numeric";
+    }
+    for(Attribute entry:names) {
+        auto attr=mlir::dyn_cast<StringAttr>(entry);
+        if(!attr || attr.getValue().trim().empty() || !seen.insert(attr.getValue()).second) return error()<<"field/variant names must be nonempty and unique";
+    }
+    return success();
+}
+LogicalResult ValueOp::verify() {
+    auto type=getResult().getType();
+    if(failed(verifyComposite(type,[&]{return emitOpError();}))) return failure();
+    auto expected=compositeStorage(type);
+    if(getFields().getTypes()!=TypeRange(expected)) return emitOpError("composite construction requires the exact storage field types");
+    return success();
+}
+LogicalResult ProjectOp::verify() {
+    auto type=getValue().getType();
+    if(failed(verifyComposite(type,[&]{return emitOpError();}))) return failure();
+    auto fields=compositeStorage(type); int64_t index=getIndexAttr().getInt();
+    if(index<0 || static_cast<uint64_t>(index)>=fields.size() || getResult().getType()!=fields[static_cast<std::size_t>(index)])
+        return emitOpError("composite projection index/type mismatch");
+    return success();
+}
+LogicalResult UpdateOp::verify() {
+    auto type=getRecord().getType();
+    if(failed(verifyComposite(type,[&]{return emitOpError();}))) return failure();
+    auto fields=compositeStorage(type); int64_t index=getIndexAttr().getInt();
+    if(type.getKind()!="record" || index<0 || static_cast<uint64_t>(index)>=fields.size() ||
+       getValue().getType()!=fields[static_cast<std::size_t>(index)] || getResult().getType()!=type)
+        return emitOpError("record update requires an exact record identity, field index and value type");
     return success();
 }
 } // namespace shorthand::ir

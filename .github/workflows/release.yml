@@ -71,7 +71,7 @@ jobs:
           CXX: clang++-18
         run: |
           set -euo pipefail
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/usr/bin/llvm-config-18
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/usr/bin/llvm-config-18 -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
           cmake --build build-release --parallel 2
           build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-linux-x64.out
           diff -u tests/semantic/differential/core_control.expected /tmp/release-linux-x64.out

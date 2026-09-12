@@ -21,3 +21,6 @@ add_custom_target(check-shorthand-mlir
   COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/.."
   DEPENDS shorthand-opt)
+add_executable(shorthand-lowering-probe consumer/lowering.cpp)
+target_link_libraries(shorthand-lowering-probe PRIVATE ShortHandMLIRLowering)
+add_test(NAME semantic_ir_verifier COMMAND shorthand-lowering-probe verify)

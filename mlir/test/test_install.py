@@ -38,6 +38,16 @@ with tempfile.TemporaryDirectory(prefix="shorthand-mlir-install-") as tmp:
         raise AssertionError("installed consumer depends on source/build/old install paths")
     example = moved / "share/shorthand/mlir/examples/ai_greenai_pipeline.mlir"
     run(str(consumer_build / "consumer"), str(example))
+    lowering = consumer_build / "lowering_consumer"
+    run(str(lowering), "verify")
+    for level in ("O0", "O2"):
+        ir = root / f"api-{level}.ll"
+        run(str(lowering), "api", str(ir), level)
+        native = root / f"api-{level}"
+        clang = Path(mlir_dir).resolve().parents[2] / "bin/clang++"
+        run(str(clang), str(ir), f"-{level}", "-o", str(native))
+        result = subprocess.run([str(native)], check=True, capture_output=True, text=True, timeout=20)
+        if result.stdout != "42\n": raise AssertionError("installed composite call/return changed")
     driver = moved / "bin/shorthand-opt"
     text = root / "roundtrip.mlir"
     bytecode = root / "roundtrip.mlirbc"
