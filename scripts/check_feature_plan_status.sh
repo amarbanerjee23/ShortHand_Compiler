@@ -270,7 +270,7 @@ bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "x86_64" ]]; then
-  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.20.1}"
+  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.30.0}"
   if [[ ! -s "${ORT_ROOT}/include/onnxruntime_cxx_api.h" ]]; then
     bash scripts/install_ci_onnxruntime_cpu.sh "${ORT_ROOT}"
   fi

@@ -34,6 +34,8 @@ struct Verifier {
     }
     bool scalar(T t) { return t==T::Int32||t==T::Bool||t==T::Float64||t==T::String; }
     bool numeric(T t) { return t==T::Int32||t==T::Float64; }
+    bool element(sir::ElementType t) { return t>=sir::ElementType::Float32&&t<=sir::ElementType::Int32; }
+    bool backend(sir::BackendKind k) { return k>=sir::BackendKind::Fallback&&k<=sir::BackendKind::LlamaCpp; }
     bool condition(T t) { return t==T::Bool||t==T::Int32; }
     bool valueType(T t,const std::string &id) { return t==T::Composite ? composites.count(id)!=0 : scalar(t)&&id.empty(); }
     bool same(const E &a,const E &b) { return a.type==b.type&&a.composite==b.composite; }
@@ -208,10 +210,11 @@ struct Verifier {
         auto tensorShape=[&](const sir::TensorShape &s) { return s.isStatic()&&s.elementCount()>0&&s.elementCount()<=65536; };
         for(const auto &m:p.models) {
             if(!identifier(m.name)||!modelNames.insert(m.name).second||!tensorShape(m.input_shape)||!tensorShape(m.output_shape)||
-               m.precision==sir::ElementType::Unknown||m.format==sir::ModelFormat::Unknown||m.backend_preference.empty()) return fail("invalid model signature or duplicate model (maximum 65536 tensor elements)");
+               !element(m.precision)||m.format<sir::ModelFormat::Onnx||m.format>sir::ModelFormat::GGUF||m.backend_preference.empty()) return fail("invalid model signature or duplicate model (maximum 65536 tensor elements)");
+            for(auto k:m.backend_preference) if(!backend(k)) return fail("unknown model backend");
         }
         for(const auto &t:p.tensors) {
-            if(!identifier(t.name)||!tensorNames.insert(t.name).second||!tensorShape(t.shape)||t.element_type==sir::ElementType::Unknown||
+            if(!identifier(t.name)||!tensorNames.insert(t.name).second||!tensorShape(t.shape)||!element(t.element_type)||
                (!t.values.empty()&&static_cast<int64_t>(t.values.size())!=t.shape.elementCount())) return fail("invalid tensor shape/initializer or duplicate tensor (maximum 65536 elements)");
             for(double v:t.values) {
                 if(!std::isfinite(v)) return fail("non-finite tensor initializer");

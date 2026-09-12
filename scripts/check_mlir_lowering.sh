@@ -13,7 +13,7 @@ for tool in cmake ninja python3 objcopy readelf "${SHORTHAND_LLVM_CLANG}" "${SHO
   command -v "${tool}" >/dev/null || { echo "error: mandatory lowering tool missing: ${tool}" >&2; exit 1; }
 done
 if [[ -z "${ONNXRUNTIME_ROOT:-}" ]]; then
-  ONNXRUNTIME_ROOT="${BUILD_DIR}/onnxruntime-1.20.1"
+  ONNXRUNTIME_ROOT="${BUILD_DIR}/onnxruntime-1.30.0"
   bash "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" "${ONNXRUNTIME_ROOT}"
 fi
 [[ -s "${ONNXRUNTIME_ROOT}/include/onnxruntime_cxx_api.h" ]] || { echo "error: real ONNX SDK is mandatory" >&2; exit 1; }

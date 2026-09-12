@@ -71,7 +71,7 @@ Where an informative pitch conflicts with a gate or claim restriction, the v0.6 
 
 The only production-qualified backend/device scope is `linux-x64-cpu-v1`, with ONNX Runtime CPU live numerical execution. GPU, TPU and NPU discovery remains inventory evidence only. Any expansion requires its own live device-backed numerical qualification.
 
-ShortHand remains `controlled_beta` with `production_claim: false` until every production blocker in the coverage and traceability matrices closes, the final PR96 release-candidate aggregate is green, and the protected release exercise succeeds.
+ShortHand remains `controlled_beta` with `production_claim: false` until every production blocker in the coverage and traceability matrices closes, the scoped roadmap PR96 release-candidate aggregate and applicable PR97-PR102 audit closeout gates are green, and the protected release exercise succeeds.
 
 ## Change control
 
@@ -79,4 +79,4 @@ Any change to maturity, production claims, language version, remaining PR count,
 
 PR91 implements signed candidate evidence with assessment replay under `shorthand.c3eco.auditor_bundle.v1`. Actual protected storage and independent certification operations remain outside the compiler claim boundary.
 
-PR92 implements `shorthand.mlir.v1`, a generated dialect and installed SDK qualified on Linux x64/LLVM 18. TST024 stays partial until PR93 SemanticIR/LLVM lowering and execution equivalence. Five implementation PRs remain including PR92, four after it; TST017 separately requires the protected release exercise.
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.

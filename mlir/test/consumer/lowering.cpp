@@ -41,7 +41,11 @@ int mutations() {
     p=aiProgram("m.onnx"); p.tensors[0].values={1e300}; if(!reject(p)) return 10;
     p=aiProgram("m.onnx"); p.body.body[0].declaration=99; if(!reject(p)) return 11;
     p=valid; E nested=integer(1); for(unsigned i=0;i<260;++i) { E next; next.kind=E::Kind::Unary; next.opcode=1; next.operands.push_back(std::move(nested)); nested=std::move(next); } p.body.body[1].expressions={nested}; if(!reject(p)) return 12;
-    if(rejected!=11) return 13; std::cout<<"PASS installed SemanticIR mutation and bounded work checks\n"; return 0;
+    p=aiProgram("m.onnx"); p.tensors[0].values.clear(); p.tensors[0].element_type=static_cast<sir::ElementType>(99); if(!reject(p)) return 14;
+    p=aiProgram("m.onnx"); p.models[0].precision=static_cast<sir::ElementType>(-1); if(!reject(p)) return 15;
+    p=aiProgram("m.onnx"); p.models[0].format=static_cast<sir::ModelFormat>(99); if(!reject(p)) return 16;
+    p=aiProgram("m.onnx"); p.models[0].backend_preference={static_cast<sir::BackendKind>(99)}; if(!reject(p)) return 17;
+    if(rejected!=15) return 13; std::cout<<"PASS installed SemanticIR mutation and bounded work checks\n"; return 0;
 }
 int main(int argc,char **argv) {
     if(argc==2&&std::string(argv[1])=="verify") return mutations(); if(argc<4) return 64;

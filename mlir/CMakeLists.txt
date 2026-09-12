@@ -58,6 +58,7 @@ install(DIRECTORY include/ShortHand DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/ShortHand" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FILES_MATCHING PATTERN "*.h.inc")
 install(FILES README.md LICENSE-LLVM.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/mlir)
+install(FILES ../docs/mlir_lowering.md DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs)
 install(DIRECTORY examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/mlir/examples)
 set(package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/ShortHandMLIR")
 configure_package_config_file(cmake/ShortHandMLIRConfig.cmake.in

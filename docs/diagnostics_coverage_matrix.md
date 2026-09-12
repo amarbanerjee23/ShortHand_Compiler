@@ -1,6 +1,6 @@
 # Diagnostics coverage matrix
 
-diagnostics_coverage_contract_version: 1.6.0
+diagnostics_coverage_contract_version: 1.7.0
 diagnostics_coverage_status: stable_coded_stage_matrix_guarded
 diagnostic_code_prefix: SHD
 covered_stages: parser, module, semantic, ai, greenai, lowering, runtime
@@ -145,3 +145,5 @@ Each error case must fail, each warning-only case must succeed, and every catalo
 ## Boundaries
 
 The diagnostics contract does not provide IDE-style multi-error recovery, localization, Unicode display-column handling, fix-it suggestions or LSP publication. Cross-module LSP publication remains PR79. ShortHand remains controlled beta until the complete production roadmap passes.
+
+PR94 adds `SHD6002` for unavailable or invalid SemanticIR lowering, `SHD7030` for checked runtime inference failures and `SHD7031` for invalid composite tags or inactive payload access. The mandatory MLIR source/runtime gate verifies failure codes before and after optimization. Existing arithmetic, bounds and missing-return codes retain their identities.

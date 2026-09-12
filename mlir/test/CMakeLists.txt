@@ -24,3 +24,6 @@ add_custom_target(check-shorthand-mlir
 add_executable(shorthand-lowering-probe consumer/lowering.cpp)
 target_link_libraries(shorthand-lowering-probe PRIVATE ShortHandMLIRLowering)
 add_test(NAME semantic_ir_verifier COMMAND shorthand-lowering-probe verify)
+add_test(NAME mlir_lowering COMMAND "${Python3_EXECUTABLE}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/test_lowering.py" "$<TARGET_FILE:shorthand-opt>")
+set_tests_properties(mlir_lowering semantic_ir_verifier PROPERTIES TIMEOUT 120)

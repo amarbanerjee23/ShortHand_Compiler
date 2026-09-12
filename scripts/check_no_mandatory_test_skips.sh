@@ -21,6 +21,7 @@ mandatory=(
   mlir/test/test_boundaries.py
   mlir/test/test_generation.py
   mlir/test/test_install.py
+  mlir/test/test_lowering.py
 )
 
 for rel in "${mandatory[@]}"; do
