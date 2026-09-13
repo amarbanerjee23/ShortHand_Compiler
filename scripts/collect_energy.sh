@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if (( $# > 0 )); then
+  QUALIFY_BIN="${SHORTHAND_AI_QUALIFY_BIN:-shorthand_ai_qualify}"
+  command -v "${QUALIFY_BIN}" >/dev/null || { echo 'error: native shorthand_ai_qualify is required' >&2; exit 1; }
+  exec "${QUALIFY_BIN}" "$@"
+fi
 echo "energy collection probe"
 if [[ -r /sys/class/powercap/intel-rapl:0/energy_uj ]]; then
   echo "rapl_available=true path=/sys/class/powercap/intel-rapl:0/energy_uj"

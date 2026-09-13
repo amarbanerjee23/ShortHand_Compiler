@@ -24,7 +24,11 @@ cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebI
   -DMLIR_DIR="${LLVM_CMAKE%/llvm}/mlir" -DLLVM_CONFIG="${LLVM_CONFIG}" \
   -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
   -DONNXRUNTIME_ROOT="${ONNXRUNTIME_ROOT}" -DCMAKE_CXX_FLAGS="${FLAGS}" -DCMAKE_EXE_LINKER_FLAGS="${FLAGS}"
-cmake --build "${BUILD_DIR}" --parallel 2 --target short_hand shorthand_runtime
+cmake --build "${BUILD_DIR}" --parallel 2 --target short_hand shorthand_runtime shorthand_ai_qualify shorthand_c3eco_measure
+AI_ENERGY_CXXFLAGS="-std=c++17 -O1 -Wall -Wextra -Wpedantic -Werror ${FLAGS}" \
+  SHORTHAND_AI_QUALIFY_BIN="${BUILD_DIR}/shorthand_ai_qualify" \
+  SHORTHAND_C3ECO_MEASURE_BIN="${BUILD_DIR}/shorthand_c3eco_measure" \
+  SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1 bash "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh"
 python3 "${ROOT_DIR}/tests/mlir_lowering/test_source_lowering.py" "${ROOT_DIR}" "${BUILD_DIR}/short_hand" "${DIALECT_BUILD}/shorthand-opt" "${DIALECT_BUILD}/test/shorthand-lowering-probe"
 python3 "${ROOT_DIR}/tests/mlir_lowering/test_runtime_lowering.py" "${ROOT_DIR}" "${BUILD_DIR}" "${DIALECT_BUILD}/test/shorthand-lowering-probe" "${ONNXRUNTIME_ROOT}"
 echo "PASS verified SemanticIR MLIR LLVM composite execution and real runtime lowering gate"

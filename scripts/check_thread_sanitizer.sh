@@ -124,3 +124,13 @@ grep -Fq 'PASS serving runtime concurrent load and soak stress' /tmp/shorthand_t
 printf 'SERVING_TSAN contract=shorthand.serving.runtime.v1 compiler=%s\n' "${CXX}"
 printf 'TSAN contract=shorthand.runtime.tsan.v1 compiler=%s\n' "${CXX}"
 printf 'PASS mandatory ThreadSanitizer race gate\n'
+
+# The native CPU qualification CNN uses per-sample workers and ordered reduction.
+# Exercise actual parallel work, never silently run a one-thread substitute.
+"${CXX}" "${COMMON_FLAGS[@]}" "${SRC_DIR}/ai_runtime/training/TrainingQualification.cpp" \
+  "${SRC_DIR}/ai_runtime/ExecutionPlan.cpp" "${SRC_DIR}/ai_runtime/energy/EnergyMeasurement.cpp" \
+  "${SRC_DIR}/module/Sha256.cpp" "${ROOT_DIR}/tests/ai_energy/training_tsan.cpp" \
+  -pie -o "${WORK_DIR}/tsan_training"
+TSAN_OPTIONS="halt_on_error=1:history_size=7:second_deadlock_stack=1" \
+  timeout --signal=TERM --kill-after=2 120 "${WORK_DIR}/tsan_training"
+echo 'PASS mandatory CPU training ThreadSanitizer gate'

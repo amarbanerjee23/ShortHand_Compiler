@@ -546,7 +546,7 @@ jobs:
         run: |
           cmake -S . -B build-codeql -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLLVM_CONFIG=/usr/bin/llvm-config-18
           cmake -S . -B build-codeql -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
-          cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit
+          cmake --build build-codeql --parallel 2 --target short_hand shorthand_runtime green_ai_tool shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify
           cmake -S mlir -B build-mlir-codeql -G Ninja -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
           cmake --build build-mlir-codeql --parallel 2 --target shorthand-opt
 

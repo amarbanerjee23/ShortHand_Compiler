@@ -1,13 +1,13 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-09-12-pr94
+production_readiness_plan_version: 2026-09-13-pr95
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 93
-CURRENT_GITHUB_PR: 94
-CURRENT_ROADMAP_PR: 93
+LAST_MERGED_GITHUB_PR: 94
+CURRENT_GITHUB_PR: 95
+CURRENT_ROADMAP_PR: 94
 LAST_PLANNED_GITHUB_PR: unassigned
 LAST_PLANNED_ROADMAP_PR: 102
-CURRENT_IMPLEMENTATION_SCOPE: semantic_ir_mlir_llvm_lowering
+CURRENT_IMPLEMENTATION_SCOPE: cpu_energy_qualification
 BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
@@ -19,7 +19,7 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR89 through PR93 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs, not reserved GitHub numbers. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. It emits candidate recommendations only and does not perform independent certification or comparative ShortHand-versus-Python energy qualification.
+GitHub PR89 through PR94 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. Merged GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs, not reserved GitHub numbers. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. It emits candidate recommendations only and does not perform independent certification or comparative ShortHand-versus-Python energy qualification.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
@@ -27,17 +27,16 @@ The active machine-readable state is `docs/production_truth.tsv`; certification 
 
 ## Current completion contract
 
-PR93 - SemanticIR to MLIR and LLVM lowering is IN PROGRESS as GitHub PR94.
+GitHub PR95 - CPU energy qualification is IN PROGRESS; roadmap PR93 is MERGED as GitHub PR94.
 
-1. Own source semantics and locations in public SemanticIR after module and semantic validation.
-2. Independently verify the public SDK input, then lower scalar/control/function/array and bounded composite values into MLIR and LLVM.
-3. Execute record, enum, option/result and borrowed-slice values through explicit `shorthand.enterprise_language.v2`; preserve legacy schema and runtime ABI contracts.
-4. Check arithmetic, bounds, tags, missing returns, runtime statuses and output sizes before use.
-5. Preserve inference, measurement and evidence metadata before and after optimization; declarations remain candidate evidence.
-6. Require relocated SDK consumers, invalid-IR and runtime-ABI attacks, source/module differential execution and real ONNX CPU output at O0/O2.
-7. Require GCC and Clang ASan/LSan/UBSan, CodeQL, Make/CTest parity and Linux x64 LLVM18 release staging, with no mandatory skips.
-8. Update production truth and PR93 audit reconciliation. TST024 closes only within this documented scope; broader platform, workload and measurement claims stay open.
-9. Require both ci / ubuntu (push) and ci / ubuntu (pull_request) green on the final head.
+1. Preserve all language syntax, existing interpreter/MLIR/LLVM semantics and runtime ABI contracts.
+2. Extend AIRuntime with reusable FP32 CPU sessions and TorchTrainer with a deterministic native CNN qualification fixture.
+3. Collect raw RAPL or timestamped physical-meter energy without nested-domain double counting or idle subtraction; unavailable telemetry cannot select an energy winner.
+4. Evaluate CPU thread candidates against numerical, quality, SLA, memory and measurement uncertainty constraints. Record warmup, repeated trials, failures and total qualification overhead separately.
+5. Bind deployment profiles to configuration, model and external-weight hashes, hardware, compiler revision and runtime version; require a trusted report digest.
+6. Export to the unchanged C3-ECO measurement workbook and retain independent assessment/auditor controls.
+7. Separate deterministic normal CI from required controlled model/meter runs. Full real-hardware qualification remains open until calibrated traces exist.
+8. Require Make/CTest parity, native and live ONNX integration, ASan/LSan/UBSan, CPU training TSan and both ci / ubuntu (push) and ci / ubuntu (pull_request) green on the final head.
 
 ## Mandatory rule for every remaining PR
 
@@ -77,8 +76,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR90 - Eligibility, scoring, claims and eco-regression | MERGED | G1-G14 precedence, complete 76-criterion A-K scoring, evidence/uncertainty caps, N/A/materiality decisions, AI routes, controlled claims, regression actions and surveillance thresholds. | Deterministic assessment and claim-control gate across CI, Make, CTest, sanitizers and installed packaging. | Exact tier boundaries, gate precedence, evidence caps, N/A reallocation, materiality, restricted claims, regression, AI, malformed-input and determinism tests. |
 | PR91 - Auditor bundle, retention, surveillance and reporting | MERGED | Native Ed25519 signed lineage, strict schemas, redacted public envelopes, assessment replay, retention/expiry/surveillance/nonconformity checks and separate estimated readiness. | Mandatory auditor verification in direct CI, Make, CTest, sanitizers, compiler matrix and installed SDK lifecycle. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
 | PR92 - Generated ShortHand MLIR dialect | MERGED | TableGen-generated operations, types, attributes, verifiers, installation and downstream use. | MLIR build/lit gate. | FileCheck, verifiers, roundtrip, installed consumer and freshness tests. |
-| PR93 - SemanticIR to MLIR and LLVM lowering | IN PROGRESS as GitHub PR94 | Verified Linux x64 LLVM18 source/SDK lowering, bounded composite execution and checked runtime handoff. | MLIR differential lowering gate. | Invalid ops/shapes, execution equivalence and optimization preservation. |
-| PR94 - Representative production AI qualification | PLANNED | Complete representative preprocessing/inference/postprocessing/serving applications, secure host boundary, realistic models/tensor shapes, batching, concurrency, timeouts and numerical quality. | Live workload/backend qualification. | Numerical, load, malformed-model, recovery and evidence tests. |
+| PR93 - SemanticIR to MLIR and LLVM lowering | MERGED as GitHub PR94 | Verified Linux x64 LLVM18 source/SDK lowering, bounded composite execution and checked runtime handoff. | MLIR differential lowering gate. | Invalid ops/shapes, execution equivalence and optimization preservation. |
+| PR94 - Representative production AI qualification | PARTIAL prerequisite in GitHub PR95 | Complete representative preprocessing/inference/postprocessing/serving applications, secure host boundary, realistic models/tensor shapes, batching, concurrency, timeouts and numerical quality. | Live workload/backend qualification. | Numerical, load, malformed-model, recovery and evidence tests. |
 | PR95 - Performance and measured-energy qualification | PLANNED | Calibrated workload-coupled collectors, compiler/runtime performance, repeated equivalent-quality optimized Python and native C++ baselines, material data/cloud/client/embodied/lifecycle carbon coverage and uncertainty. | Performance and eco-regression qualification. | Calibration, repeated trials, uncertainty, quality equivalence and raw traces. |
 | PR96 - Enterprise pilot and production RC | PLANNED | Clean install/upgrade/rollback, deployment, security, evidence and final blocker aggregation. | Final zero-skip RC aggregate. | Pilot, soak, disaster recovery, retained evidence and release decision. |
 
@@ -114,9 +113,9 @@ remaining_planned_implementation_increments_including_current: 10
 remaining_planned_implementation_increments_after_current: 9
 audit_follow_on_increments: 6
 
-Four original roadmap increments remain including the current lowering candidate (PR93-PR96), plus six audit-derived increments (PR97-PR102). Reconcile overlap at each PR; combine only when the combined exit evidence is complete. This count excludes repository administration and independent certification decisions.
+This additional CPU energy implementation is one increment. Nine roadmap increments remain after it: PR94-PR96 and PR97-PR102. Its mechanisms overlap PR94, PR95 and PR97, but do not close their representative application, equivalent-baseline or independently calibrated hardware exit evidence. Reconcile overlap at each PR; combine only when the combined exit evidence is complete. This count excludes repository administration and independent certification decisions.
 
-Next recommended implementation after GitHub PR94 merges: roadmap PR94, representative production AI qualification (expected GitHub PR95 if no intervening PR is created).
+Next after GitHub PR95: finish roadmap PR94 representative applications and dataset quality evidence using the qualification tool. Keep the nine remaining gates until their complete exit evidence is available.
 
 ## External production blocker not counted as an implementation PR
 

@@ -19,3 +19,4 @@ test-serving
 test-llvm
 test-ai
 test-mlir
+test-ai-energy

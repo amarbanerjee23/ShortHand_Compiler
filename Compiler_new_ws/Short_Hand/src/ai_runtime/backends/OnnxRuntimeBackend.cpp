@@ -2,6 +2,8 @@
 #include "../AI_Telemetry.h"
 
 #include <exception>
+#include <cstdlib>
+#include <stdexcept>
 #include <sstream>
 #include <string>
 
@@ -38,8 +40,23 @@ void attachTelemetry(InferenceResult &result, const TelemetryRecord &record) {
 }
 
 #if SHORTHAND_HAS_ONNXRUNTIME
+// Set the SDK's full process opt-out before main/worker threads and before any
+// OrtEnv exists. ORT 1.30 otherwise creates a vendor uploader on POSIX hosts.
+// This disables only vendor telemetry, not ShortHand's local evidence records.
+const bool vendorTelemetryDisabled = [] {
+#ifdef _WIN32
+    return _putenv_s("ORT_DISABLE_TELEMETRY", "1") == 0;
+#else
+    return setenv("ORT_DISABLE_TELEMETRY", "1", 1) == 0;
+#endif
+}();
 Ort::Env &ortEnv() {
-    static Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "shorthand_onnxruntime_cpu");
+    if (!vendorTelemetryDisabled) throw std::runtime_error("onnx_vendor_telemetry_opt_out_failed");
+    static Ort::Env env = [] {
+        Ort::Env value(ORT_LOGGING_LEVEL_WARNING, "shorthand_onnxruntime_cpu");
+        value.DisableTelemetryEvents();
+        return value;
+    }();
     return env;
 }
 
@@ -217,3 +234,6 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
 }
 
 } // namespace shorthand::ai
+
+// The opt-in prepared-session path is isolated from legacy infer semantics.
+#include "OnnxPreparedSession.h"

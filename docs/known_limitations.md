@@ -1,6 +1,6 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-12-pr94
+known_limitations_version: 2026-09-13-pr95
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1

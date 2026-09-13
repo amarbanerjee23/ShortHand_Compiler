@@ -58,15 +58,15 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-12-pr94' \
+  'production_readiness_plan_version: 2026-09-13-pr95' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 93' \
-  'CURRENT_GITHUB_PR: 94' \
+  'LAST_MERGED_GITHUB_PR: 94' \
+  'CURRENT_GITHUB_PR: 95' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'CURRENT_IMPLEMENTATION_SCOPE: semantic_ir_mlir_llvm_lowering' \
+  'CURRENT_IMPLEMENTATION_SCOPE: cpu_energy_qualification' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'PR93 - SemanticIR to MLIR and LLVM lowering is IN PROGRESS as GitHub PR94.' \
+  'GitHub PR95 - CPU energy qualification is IN PROGRESS; roadmap PR93 is MERGED as GitHub PR94.' \
   'remaining_planned_implementation_increments_including_current: 10' \
   'remaining_planned_implementation_increments_after_current: 9' \
   'Mandatory rule for every remaining PR' \
@@ -103,7 +103,7 @@ require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and
 require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-12-pr94' \
+  'ci_pipeline_architecture_version: 2026-09-13-pr95' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \
