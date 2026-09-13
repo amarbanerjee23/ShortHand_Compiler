@@ -116,7 +116,7 @@ J candidateJson(const CandidateQualification &c,const J &training) {
     J trials=arr(),phases=arr();
     for (const auto &t:c.trials) trials.array.push_back(obj({{"success",flag(t.success)},{"reason",str(t.reason)},
         {"latency_ms_per_fu",num(t.latency_ms_per_fu)},{"numerical",numeric(t.numerical)},{"energy",measurementJson(t.energy)}}));
-    for (const auto &p:c.phases) phases.array.push_back(obj({{"name",str(p.first)},{"energy",measurementJson(p.second)}}));
+    for (const auto &p:c.phases) phases.array.push_back(obj({{"name",str(p.first)},{"functional_unit",str(p.first.find("preparation")!=std::string::npos?"prepared_session":"warmup_run")},{"energy",measurementJson(p.second)}}));
     return obj({{"id",str(c.candidate.id)},{"backend",str(c.candidate.backend)},{"backend_version",str(c.candidate.backend_version)},
         {"device",str(c.candidate.device)},{"threads",num(c.candidate.threads)},{"batch_size",num(c.candidate.batch_size)},
         {"precision",str(c.candidate.precision)},{"model_sha256",str(c.candidate.model_sha256)},
@@ -177,7 +177,7 @@ QualificationConfiguration readQualificationConfiguration(const std::string &pat
     p.workload=jsonString(j,"workload"); p.functional_unit=string(j,"functional_unit",c.mode=="training"?"training_sample":"successful_inference");
     p.precision=string(j,"precision","float32"); p.device_policy=string(j,"device_policy","cpu_first");
     p.batch_size=static_cast<unsigned>(integer(j,"batch_size",c.mode=="training"?8:1,1024));
-    p.warmups=static_cast<unsigned>(integer(j,"warmups",2,1000)); p.repetitions=static_cast<unsigned>(integer(j,"repetitions",5,10000));
+    p.warmups=static_cast<unsigned>(integer(j,"warmups",2,1000)); p.repetitions=static_cast<unsigned>(integer(j,"repetitions",c.mode=="training"?1:5,10000));
     p.trials=static_cast<unsigned>(integer(j,"trials",3,100)); p.maximum_memory_bytes=integer(j,"maximum_memory_bytes",p.maximum_memory_bytes,8ULL*1024*1024*1024);
     p.absolute_tolerance=number(j,"absolute_tolerance",p.absolute_tolerance); p.relative_tolerance=number(j,"relative_tolerance",p.relative_tolerance);
     p.quality_metric=string(j,"quality_metric",c.mode=="training"?"validation_accuracy":"output_agreement");
@@ -222,6 +222,7 @@ QualificationConfiguration readQualificationConfiguration(const std::string &pat
     } else {
         require(!optional(j,"model_path") && !optional(j,"model_sha256") && !optional(j,"input_shape") && !optional(j,"output_shape"),"reference_training_has_fixed_model");
         require(p.quality_metric=="validation_accuracy","training_requires_validation_accuracy");
+        require(p.repetitions==1,"training_repeats_are_counted_by_trials");
         c.training.seed=c.seed; c.training.batch_size=p.batch_size; c.training.target_accuracy=p.quality_threshold;
         if (const auto *t=optional(j,"training")) {
             keys(*t,{"epochs","samples","validation_samples","learning_rate"});
@@ -326,7 +327,7 @@ J qualifyWorkload(const QualificationConfiguration &c) {
         {"candidates",serialized},{"selected_candidate",selected},{"selection_reason",str(plan.selection_reason)},
         {"comparative_energy_claim",flag(plan.comparative_energy_claim)},{"reduction_percent",num(plan.reduction_percent)},
         {"synthetic_energy_test",flag(false)},{"official_certification",flag(false)},{"lowest_carbon_language_claim",flag(false)},
-        {"qualification_total_energy",measurementJson(total)},
+        {"qualification_total_energy",measurementJson(total)},{"qualification_total_functional_unit",str("qualification_run")},
         {"accounting_boundary",str("qualification total includes preparation, warmup, validation, search and failed attempts; overlaps candidate windows; artifact acquisition/hash validation and report export excluded; no idle subtraction or amortization claim")},
         {"peak_process_memory_bytes",num(peakMemoryBytes())},{"memory_guard",str("input/model limits and Linux process high-water check; controlled runner must also enforce an OS memory limit")},
         {"uncertainty_method",str("instrument uncertainty plus twice sample standard deviation / mean; not a confidence interval")}});

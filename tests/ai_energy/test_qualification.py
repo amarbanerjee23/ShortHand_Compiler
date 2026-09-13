@@ -60,6 +60,7 @@ for field, value, reason in [("hardware_sha256", "0" * 64, "stale_or_incompatibl
     run([tool, "execute", config, bad_path, sha(bad_path), work / "stale-result.json"], False, reason)
 for patch, reason in [({"precision": "int8"}, "invalid_workload_or_precision_contract"),
                       ({"trials": 1}, "qualification_protocol_limit"),
+                      ({"repetitions": 2}, "training_repeats_are_counted_by_trials"),
                       ({"threads": [0]}, "invalid_thread_count"),
                       ({"threads": [1.5]}, "invalid_thread_count"),
                       ({"energy_source": "synthetic_test"}, "unsupported_energy_source"),

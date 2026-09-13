@@ -450,6 +450,12 @@ install(DIRECTORY schemas/c3eco/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas/c3eco
   FILES_MATCHING PATTERN "*.schema.json"
 )
+install(FILES schemas/ai_cpu_qualification_config_v1.schema.json
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas
+)
+install(FILES docs/ai_cpu_energy_qualification.md
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
+)
 install(FILES docs/c3eco_auditor_bundle.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )

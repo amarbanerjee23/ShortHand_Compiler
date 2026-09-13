@@ -21,6 +21,7 @@ std::string stripQuotes(std::string value) {
     return value;
 }
 
+#if SHORTHAND_HAS_ONNXRUNTIME
 std::string shapeToString(const std::vector<int64_t> &shape) {
     std::ostringstream out;
     for (size_t i = 0; i < shape.size(); ++i) {
@@ -29,6 +30,7 @@ std::string shapeToString(const std::vector<int64_t> &shape) {
     }
     return out.str();
 }
+#endif
 
 void attachTelemetry(InferenceResult &result, const TelemetryRecord &record) {
     result.latency_ns = record.latency_ns;
