@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-10-pr92
+public_release_readiness_version: 2026-09-12-pr94
 current_maturity: controlled_beta
 production_claim: false
 release_candidate_target: PR96
 
-A PR92 candidate requires all mandatory commands to pass from a clean checkout:
+A GitHub PR94 candidate requires all mandatory commands to pass from a clean checkout:
 
 ```bash
 bash setup_build_infra.sh
@@ -31,7 +31,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-This command set qualifies the current PR candidate only. Public enterprise release requires the PR96 zero-skip aggregate, every production blocker closed, both stable CI contexts green on the final head, and the protected release exercise completed.
+This command set qualifies the current PR candidate only. Public enterprise release requires the roadmap PR96 zero-skip scoped aggregate and applicable PR97-PR102 audit closeout gates, every production blocker closed, both stable CI contexts green on the final head, and the protected release exercise completed.
 
 Historical readiness marker: public_release_readiness_version: 2026-09-01-pr88.
 
@@ -46,3 +46,5 @@ Experimental paths outside `linux-x64-cpu-v1` may be unavailable without expandi
 ## Claims Policy
 
 Do not make unsupported production, certification, external-publication, absolute defect-freedom, inherent-greenness, carbon-neutrality or guaranteed-savings claims. C3-ECO outputs remain candidate evidence only. Electricity-cost statements require measured kWh reduction, disclosed tariff, boundary and uncertainty. The scoped reliability wording remains: no known bugs under the full validation suite, after that suite passes.
+
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.

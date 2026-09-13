@@ -28,3 +28,5 @@ foreach(target IN LISTS SHORTHAND_MAKE_TARGETS)
     ENVIRONMENT "LC_ALL=C;TZ=UTC"
   )
 endforeach()
+
+set_tests_properties(make_test_mlir PROPERTIES TIMEOUT 1800)

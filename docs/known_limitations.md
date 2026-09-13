@@ -1,11 +1,11 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-10-pr92
+known_limitations_version: 2026-09-12-pr94
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
 
-The active beta-0.7 contract retains beta-0.5 cross-mode execution for exact scalars, fixed numeric/boolean arrays, functions, recursion, lexical locals, structured loops/returns and same-block label transfers. Beta-0.6 adds composite ABI schemas and ownership-plan validation, not composite execution. Beta-0.7 adds typed C3-ECO preparation metadata; PR89/PR90 add measurement and candidate assessment tools, not certification. Owned string arrays, by-value composite FFI, nested package dependencies and a network registry remain unavailable. Package v2 is deliberately offline, the core library is bounded to its 1.0.0 C ABI, and qualified member dispatch is not yet syntax. Production MLIR/composite lowering, representative AI workloads and measured performance/energy evidence are also open.
+The active beta-0.7 contract retains beta-0.5 cross-mode execution for exact scalars, fixed numeric/boolean arrays, functions, recursion, lexical locals, structured loops/returns and same-block label transfers. Beta-0.6 adds composite ABI schemas and ownership-plan validation, not composite execution. Beta-0.7 adds typed C3-ECO preparation metadata; PR89/PR90 add measurement and candidate assessment tools, not certification. Owned string arrays, by-value composite FFI, nested package dependencies and a network registry remain unavailable. Package v2 is deliberately offline, the core library is bounded to its 1.0.0 C ABI, and qualified member dispatch is not yet syntax. Representative AI workloads, measured performance/energy and the additional audit closeout evidence remain open.
 
 ONNX Runtime CPU is mandatory live numerical evidence for the declared `linux-x64-cpu-v1` production backend scope on the inherited Linux x64 CI lane. TensorRT, OpenVINO, LibTorch, llama.cpp, GPU, TPU and NPU paths remain experimental or inventory-only. Their absent SDKs or devices are never counted as production execution evidence.
 
@@ -21,4 +21,4 @@ Historical limitations marker: known_limitations_version: 2026-09-01-pr88.
 
 PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.
 
-PR92 implements the generated MLIR dialect and downstream SDK for Linux x64/LLVM 18. The compiler does not emit this dialect yet; PR93 owns complete SemanticIR/LLVM lowering and execution equivalence.
+PR92 implements the generated MLIR dialect and downstream SDK for Linux x64/LLVM 18. GitHub PR94 adds executable source/SDK lowering in that scope. Nested or heap-owning composites, composite FFI, escaping stack borrows and other MLIR platforms remain unsupported; see [the exact v2 surface](mlir_lowering.md).

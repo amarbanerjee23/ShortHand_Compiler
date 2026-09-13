@@ -133,15 +133,15 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR92 state must be present and claim-safe.
+# Active PR94 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-10-pr92' \
+  'feature_status_version: 2026-09-12-pr94' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 92' \
-  'current_roadmap_scope: generated_mlir_dialect' \
-  '31 implemented, 2 partial and 3 open' \
+  'current_github_pr: 94' \
+  'current_roadmap_scope: semantic_ir_mlir_llvm_lowering' \
+  '32 implemented, 1 partial and 3 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \
   'Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate' \
@@ -153,7 +153,7 @@ for anchor in \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
   'level_claim_permitted: false'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR91 active anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR94 active anchor: ${anchor}" >&2; exit 1; }
 done
 
 # Stable historical anchors remain mandatory so a new PR cannot erase previously
@@ -270,7 +270,7 @@ bash tests/governance/test_production_truth_negative.sh
 bash tests/integration/test_production_backend_hardware_qualification.sh
 
 if [[ "${CI:-}" == "true" && "$(uname -s)" == "Linux" && "$(uname -m)" == "x86_64" ]]; then
-  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.20.1}"
+  ORT_ROOT="${ONNXRUNTIME_ROOT:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-1.30.0}"
   if [[ ! -s "${ORT_ROOT}/include/onnxruntime_cxx_api.h" ]]; then
     bash scripts/install_ci_onnxruntime_cpu.sh "${ORT_ROOT}"
   fi

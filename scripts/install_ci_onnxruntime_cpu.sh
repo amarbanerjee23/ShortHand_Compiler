@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="1.20.1"
+VERSION="1.30.0"
 ARCHIVE="onnxruntime-linux-x64-${VERSION}.tgz"
 URL="https://github.com/microsoft/onnxruntime/releases/download/v${VERSION}/${ARCHIVE}"
-SHA256="67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105"
+SHA256="a5ed5a3cac51fbb2e90da632ae43d19212faaa20e76484e62bcb7c23ddb3b3fd"
 DESTINATION="${1:-${RUNNER_TEMP:-/tmp}/shorthand-onnxruntime-${VERSION}}"
 WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "${WORK_DIR}"' EXIT

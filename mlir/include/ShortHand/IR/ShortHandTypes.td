@@ -13,4 +13,13 @@ def ShortHand_ModelType : TypeDef<ShortHand_Dialect, "Model"> {
   let genVerifyDecl = 1;
 }
 
+def ShortHand_CompositeType : TypeDef<ShortHand_Dialect, "Composite"> {
+  let mnemonic = "value";
+  let summary = "Named scalar-payload record, enum, option, result or borrowed slice";
+  let parameters = (ins StringRefParameter<>:$kind, StringRefParameter<>:$name,
+                        "::mlir::ArrayAttr":$fields, "::mlir::ArrayAttr":$names);
+  let assemblyFormat = "`<` $kind `,` $name `,` $fields `,` $names `>`";
+  let genVerifyDecl = 1;
+}
+
 #endif

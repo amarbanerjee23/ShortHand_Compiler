@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-09-10-pr92
+feature_status_version: 2026-09-12-pr94
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 92
-current_roadmap_scope: generated_mlir_dialect
+current_github_pr: 94
+current_roadmap_scope: semantic_ir_mlir_llvm_lowering
 
 ## Goal
 
@@ -19,7 +19,7 @@ GitHub PR89 now implements `shorthand.c3eco.measurement_workbook.v1`: instrument
 
 GitHub PR90 now implements `shorthand.c3eco.assessment.v1`: structural profile/workbook validation, mandatory G1-G14 precedence, the complete 76-criterion A-K catalog, evidence and uncertainty caps, controlled N/A reallocation, materiality, AI applicability, tier prerequisites, claim safety, eco/quality regression decisions and surveillance schedules. Its output is a candidate recommendation only.
 
-The compiler test audit records **31 implemented, 2 partial and 3 open** areas for the PR92 candidate, 36 areas total. ShortHand remains a controlled beta because independent certification operations, production MLIR lowering, representative AI workload qualification, performance/equivalent-workload measured-energy evidence, the production RC gate and the protected-release exercise remain incomplete.
+The compiler test audit records **32 implemented, 1 partial and 3 open** areas for the GitHub PR94 candidate, 36 areas total. ShortHand remains a controlled beta because independent certification operations, representative AI workload qualification, performance/equivalent-workload measured-energy evidence, the production RC gate and the protected-release exercise remain incomplete.
 
 ## Production truth authority
 
@@ -43,7 +43,7 @@ C3-ECO outputs remain candidate evidence only. PR90 can calculate a candidate el
 | Typed C3-ECO certification profile | Implemented for `shorthand.c3eco.profile.v2` | typed identity, units, links, boundary/materiality, lifecycle, safeguard and validity checks. |
 | Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate | real measurement source allowlist, calibration, allocation, PUE, carbon, tariff, uncertainty, deterministic reconciliation and fail-closed negatives. |
 | C3-ECO eligibility, scoring and claims | Implemented for `shorthand.c3eco.assessment.v1` candidate | G1-G14 precedence, complete 76-criterion A-K scoring, evidence caps, N/A reallocation, level prerequisites, claims, regressions and surveillance. |
-| Generated MLIR and production lowering | Partial | PR92 generated dialect and SDK implemented; PR93 full lowering remains open. |
+| Generated MLIR and production lowering | Implemented for Linux x64/LLVM18 | GitHub PR94 source/SDK/composite lowering, checked runtime handoff, O0/O2 equivalence and sanitizer gates; other platforms and nested ownership remain outside scope. |
 
 ## Runtime, backend and hardware status
 
@@ -94,7 +94,7 @@ The result is an internal candidate recommendation, not an auditor decision or c
 ## Production blockers
 
 1. Independent certification operations and actual evidence-storage controls remain organizational responsibilities; PR91 implements their candidate preparation and policy checks.
-2. Production SemanticIR/LLVM lowering and composite execution (PR93).
+2. Audit-derived measurement, workload, lifecycle, independent-review and claims closeout increments (roadmap PR97-PR102).
 3. Representative production AI workload qualification (PR94).
 4. Performance and repeated equivalent-workload measured-energy qualification (PR95).
 5. Enterprise pilot and final zero-skip production RC aggregation (PR96).
@@ -154,4 +154,4 @@ These strings are historical compatibility anchors required by the repository's 
 
 Any PR that changes syntax, semantic meaning, runtime behavior, editor behavior, release/evidence output, pipeline behavior, test coverage or production claims must update this tracker and `tests/coverage/compiler_test_coverage_matrix.tsv`, while retaining historical anchors required for milestone auditability.
 
-PR92 implements `shorthand.mlir.v1`: generated types, attributes and operations with executable verifier, lit, roundtrip, sanitizer, installed-consumer and freshness gates. TST024 remains partial until PR93 lowering and execution equivalence.
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.

@@ -72,21 +72,26 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-10'
+  'as_of_date=2026-09-12'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=91'
-  'current_github_pr=92'
-  'last_planned_github_pr=96'
-  'remaining_implementation_prs_including_current=5'
-  'remaining_implementation_prs_after_current=4'
-  'coverage_matrix_status=implemented=31,partial=2,open=3,total=36'
+  'last_merged_github_pr=93'
+  'current_github_pr=94'
+  'last_planned_github_pr=unassigned'
+  'remaining_implementation_prs_including_current=10'
+  'remaining_implementation_prs_after_current=9'
+  'coverage_matrix_status=implemented=32,partial=1,open=3,total=36'
   'mlir_dialect_contract=shorthand.mlir.v1'
   'mlir_dialect_scope=linux-x64-llvm18'
-  'mlir_lowering_status=pending_pr93'
+  'mlir_lowering_status=implemented_linux_x64_llvm18'
+  'current_roadmap_pr=93'
+  'last_planned_roadmap_pr=102'
+  'audit_follow_on_increments=6'
+  'enterprise_execution_contract=shorthand.enterprise_language.v2'
+  'mlir_lowering_contract=shorthand.mlir.lowering.v1'
   'type_system_contract=shorthand.type_memory.v1'
   'control_flow_contract=shorthand.control_flow.v1'
   'enterprise_language_contract=shorthand.enterprise_language.v1'
@@ -211,21 +216,21 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-10-pr92' \
-  'LAST_MERGED_GITHUB_PR: 91' \
-  'CURRENT_GITHUB_PR: 92' \
-  'LAST_PLANNED_GITHUB_PR: 96' \
-  'remaining_planned_implementation_prs_pr92_through_pr96: 5' \
-  'remaining_planned_implementation_prs_after_pr92: 4' \
+  'production_readiness_plan_version: 2026-09-12-pr94' \
+  'LAST_MERGED_GITHUB_PR: 93' \
+  'CURRENT_GITHUB_PR: 94' \
+  'LAST_PLANNED_GITHUB_PR: unassigned' \
+  'remaining_planned_implementation_increments_including_current: 10' \
+  'remaining_planned_implementation_increments_after_current: 9' \
   'PR91 - Auditor bundle, retention, surveillance and reporting'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-10-pr92' \
-  'current_github_pr: 92' \
-  'current_roadmap_scope: generated_mlir_dialect' \
-  '31 implemented, 2 partial and 3 open' \
+  'feature_status_version: 2026-09-12-pr94' \
+  'current_github_pr: 94' \
+  'current_roadmap_scope: semantic_ir_mlir_llvm_lowering' \
+  '32 implemented, 1 partial and 3 open' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
@@ -234,10 +239,10 @@ for anchor in \
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-10-pr92' \
+  'compiler_test_strategy_version: 2026-09-12-pr94' \
   '36-area production test matrix' \
-  '31 implemented areas' \
-  '2 partial areas' \
+  '32 implemented areas' \
+  '1 partial area' \
   '3 open areas' \
   'Measured-accounting changes must reject declared/modelled evidence' \
   'Assessment changes must validate profile/workbook structure'; do
@@ -245,8 +250,8 @@ for anchor in \
 done
 
 [[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 36 ]] || { echo "error: expected 36 compiler test coverage rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 31 ]] || { echo "error: expected 31 implemented compiler test rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 2 ]] || { echo "error: expected 2 partial compiler test rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 32 ]] || { echo "error: expected 32 implemented compiler test rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 1 ]] || { echo "error: expected 1 partial compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 open compiler test rows" >&2; exit 1; }
 for number in $(seq 1 36); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
@@ -258,7 +263,7 @@ require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timple
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
 require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
 require_contains "${MATRIX}" $'TST026\tmeasured energy comparison with Python\topen'
-require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\tpartial\tPR92 generated dialect'
+require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\timplemented\tGitHub PR94 Linux x64 LLVM18'
 require_contains "${ROOT_DIR}/mlir/README.md" 'mlir_contract: shorthand.mlir.v1'
 require_contains "${ROOT_DIR}/scripts/check_mlir_dialect.sh" 'PASS PR92 generated MLIR dialect lit verifiers roundtrip installed consumer and freshness gate'
 require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'test "${{ needs.mlir.result }}" = "success"'
@@ -305,32 +310,32 @@ for anchor in \
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-09-10-pr92' \
+  'known_limitations_version: 2026-09-12-pr94' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-09-10-pr92' \
+  'release_level_status_version: 2026-09-12-pr94' \
   'current_maturity: controlled_beta' \
-  'final_planned_github_pr: 96'; do
+  'final_planned_github_pr: unassigned'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-09-10-pr92' \
+  'public_release_readiness_version: 2026-09-12-pr94' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-09-10-pr92' \
+  'enterprise_release_scorecard_version: 2026-09-12-pr94' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-10-pr92'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-12-pr94'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -378,7 +383,7 @@ open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "
 [[ "${implemented}" == 18 ]] || { echo "error: expected 18 implemented C3-ECO traceability rows" >&2; exit 1; }
 [[ "${partial}" == 8 ]] || { echo "error: expected 8 partial C3-ECO traceability rows" >&2; exit 1; }
 [[ "${open}" == 1 ]] || { echo "error: expected 1 open C3-ECO traceability rows" >&2; exit 1; }
-printf 'PRODUCTION_TRUTH current_pr=92 remaining=5 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=94 remaining=10 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 
 # PR91 adds cryptographically verified, replayable candidate auditor evidence.
@@ -400,4 +405,6 @@ for id in G6 G9 G12 I K; do
   [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR91 requires ${id} implemented and non-blocking" >&2; exit 1; }
 done
 
+require_contains "${ROOT_DIR}/docs/mlir_lowering.md" 'qualified_lowering_scope: linux-x64-llvm18'
+require_contains "${ROOT_DIR}/scripts/check_mlir_dialect.sh" 'bash "${ROOT_DIR}/scripts/check_mlir_lowering.sh"'
 printf 'PASS production truth and C3-ECO traceability gate\n'

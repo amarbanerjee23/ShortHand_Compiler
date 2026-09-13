@@ -17,3 +17,5 @@ cmake -S "${ROOT_DIR}/mlir" -B "${BUILD_DIR}" -G Ninja \
 cmake --build "${BUILD_DIR}" --parallel 2
 ctest --test-dir "${BUILD_DIR}" --output-on-failure
 echo "PASS PR92 generated MLIR dialect lit verifiers roundtrip installed consumer and freshness gate"
+
+bash "${ROOT_DIR}/scripts/check_mlir_lowering.sh"

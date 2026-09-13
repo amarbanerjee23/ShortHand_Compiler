@@ -15,7 +15,7 @@ The repository has useful foundations:
 - CI gates for setup, strict validation, smoke tests, Makefile tests, sanitizer checks, CMake build, and CTest.
 - Explicit evidence-only policy and complete G1-G14/A-K/S9/S12 traceability for C3-ECO-aligned candidate reports.
 
-It is not yet ready for general enterprise production use because composite execution lowering, public authenticated service ingress, full C3-ECO preparation, generated MLIR lowering, representative AI workload, measured performance/energy, final RC aggregate and protected publication exercise remain incomplete. The process-scoped `shorthand.serving.runtime.v1` contract is implemented without claiming a hardened public service.
+It is not yet ready for general enterprise production use because representative AI applications, public authenticated service integration, measured performance/energy, audit-derived lifecycle and independent review evidence, the final RC/GA aggregate and protected publication exercise remain incomplete. The process-scoped `shorthand.serving.runtime.v1` contract is implemented without claiming a hardened public service.
 
 ## Enterprise target
 
@@ -288,3 +288,5 @@ Required:
 ## PR policy
 
 Pull requests may improve the readiness score, but a PR must not be merged on the basis of ambition alone. Each PR must state which readiness items it satisfies and include tests. If a PR introduces public-readiness language, the language must be backed by passing gates and retained evidence.
+
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.

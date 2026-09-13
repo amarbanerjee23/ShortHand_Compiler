@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-10-pr92
+compiler_test_strategy_version: 2026-09-12-pr94
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,10 +13,10 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 36-area production test matrix records for the GitHub PR92 candidate:
+The 36-area production test matrix records for the GitHub PR94 candidate:
 
-- 31 implemented areas,
-- 2 partial areas,
+- 32 implemented areas,
+- 1 partial area,
 - 3 open areas.
 
 GitHub PR75 through PR89 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving, the typed C3-ECO profile and instrument-backed measurement accounting.
@@ -27,7 +27,7 @@ GitHub PR90 adds TST035, `shorthand.c3eco.assessment.v1`, with mandatory-gate pr
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing, measured-accounting validation and candidate C3-ECO assessment.
 
-Production-critical gaps remain for full production MLIR lowering, representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
+Production-critical gaps remain for representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
 
 ## Production backend and hardware qualification contract
 
@@ -62,7 +62,7 @@ Roadmap PR78 was implemented as GitHub PR79 through native `shorthand_tool` and 
 
 ## Required test layers for every implementation PR
 
-Every remaining implementation PR through PR96 must include all applicable layers below. A PR description must explicitly mark non-applicable layers and explain why.
+Every remaining implementation PR through roadmap PR102 must include all applicable layers below. A PR description must explicitly mark non-applicable layers and explain why.
 
 | Layer | Required evidence |
 | --- | --- |
@@ -135,13 +135,13 @@ ShortHand may move from `controlled_beta` to release candidate only when every r
 
 ShortHand may claim enterprise production readiness only when:
 
-1. all implementation completion gates through PR96 are merged,
+1. all applicable implementation completion gates through roadmap PR102 are merged,
 2. no mandatory test in the declared production support set is skipped,
 3. every production-supported backend/device/platform row has live numerical success evidence,
 4. all release platforms pass installed-consumer tests,
 5. reproducible and signed artifacts are produced and cryptographically verified,
 6. measured performance and energy evidence supports any published claim,
-7. the final PR96 RC gate reports zero open production blockers.
+7. the scoped roadmap PR96 RC and PR102 general-release gates report zero applicable open production blockers.
 
 
 PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.
@@ -178,6 +178,8 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-10-pr92`.
+The current strategy is `2026-09-12-pr94`.
 
-PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. TST024 stays partial for PR93 execution equivalence; the 36-area totals remain unchanged.
+PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The matrix now has 32 implemented, 1 partial and 3 open areas.
+
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.

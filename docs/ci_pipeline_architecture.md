@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-10-pr92
+ci_pipeline_architecture_version: 2026-09-12-pr94
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -219,4 +219,6 @@ GitHub PR91 adds `scripts/check_c3eco_auditor_bundle.sh` to direct CI, Make/CTes
 ## PR92 generated MLIR qualification
 
 PR92: generated MLIR dialect, verifiers and downstream SDK.
-The required `mlir` matrix runs GCC and Clang ASan/LSan/UBSan with `detect_leaks=1`; both feed the unchanged event-specific Ubuntu aggregate. The 21-target Make/CTest parity suite and root CTest run `check_mlir_dialect.sh`. LLVM/MLIR 18 tools, lit and FileCheck are required with no availability skip. CodeQL builds `shorthand-opt`; Linux x64 release staging installs the verified standalone SDK and LLVM license. The existing compiler platform matrix stays mandatory. MLIR qualification currently covers Linux x64 only; execution lowering remains PR93.
+The required `mlir` matrix runs GCC and Clang ASan/LSan/UBSan with `detect_leaks=1`; both feed the unchanged event-specific Ubuntu aggregate. The 21-target Make/CTest parity suite and root CTest run `check_mlir_dialect.sh`. LLVM/MLIR 18 tools, lit and FileCheck are required with no availability skip. CodeQL builds `shorthand-opt`; Linux x64 release staging installs the verified standalone SDK and LLVM license. The existing compiler platform matrix stays mandatory. MLIR qualification covers Linux x64 only. GitHub PR94 adds source/SDK lowering, O0/O2 composite and module execution, real ONNX CPU calls and runtime fault tests. The same required gate runs with leak detection enabled. CodeQL builds the source bridge and lowering; Linux x64 release staging enables the MLIR compiler commands.
+
+GitHub PR93 separately merged the enterprise gap assessment. GitHub PR94 implements roadmap PR93; future roadmap IDs and the six additional audit-derived increments are reconciled in `docs/production_readiness_pr_plan.md`.

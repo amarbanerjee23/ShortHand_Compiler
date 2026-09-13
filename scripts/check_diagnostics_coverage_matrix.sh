@@ -74,7 +74,7 @@ bash -n "${ROOT_DIR}/scripts/check_module_resolution.sh"
 bash -n "${DIFFERENTIAL}"
 
 for anchor in \
-  'diagnostics_coverage_contract_version: 1.6.0' \
+  'diagnostics_coverage_contract_version: 1.7.0' \
   'diagnostics_coverage_status: stable_coded_stage_matrix_guarded' \
   'covered_stages: parser, module, semantic, ai, greenai, lowering, runtime' \
   'warning_delivery_status: printed_without_failing_successful_compilation' \
@@ -127,8 +127,8 @@ if ! diff -u "${WORK_DIR}/header-codes.txt" "${WORK_DIR}/matrix-codes.txt"; then
   exit 1
 fi
 
-[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 99 ]] || {
-  echo "error: expected 99 stable diagnostics after the PR88 typed-profile expansion" >&2
+[[ "$(wc -l <"${WORK_DIR}/header-codes.txt")" -eq 102 ]] || {
+  echo "error: expected 102 stable diagnostics after the PR94 lowering expansion" >&2
   exit 1
 }
 
@@ -142,7 +142,7 @@ awk -F '\t' '
   $2 !~ /^(parser|module|semantic|ai|greenai|lowering|runtime)$/ { exit 13 }
   $3 !~ /^(error|warning)$/ { exit 14 }
   $4 != "required" { exit 15 }
-  END { if (NR != 100) exit 16 }
+  END { if (NR != 103) exit 16 }
 ' "${MATRIX}" || {
   echo "error: malformed diagnostics coverage matrix" >&2
   exit 1

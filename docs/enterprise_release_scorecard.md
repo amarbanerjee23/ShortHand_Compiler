@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-09-10-pr92
+enterprise_release_scorecard_version: 2026-09-12-pr94
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -22,7 +22,7 @@ This scorecard summarizes active release controls. The machine-readable authorit
 
 | Control family | Status | Evidence / remaining condition |
 | --- | --- | --- |
-| Build, grammar, diagnostics and cross-mode tests | Implemented for beta-0.5 execution, beta-0.6 enterprise schema and beta-0.7 typed profile | CI, Make, CMake/CTest, conformance, type/memory, control-flow, enterprise and typed-profile gates; composite execution remains a lowering boundary. |
+| Build, grammar, diagnostics and cross-mode tests | Implemented for beta-0.5 execution, beta-0.6 enterprise schema and beta-0.7 typed profile | CI, Make, CMake/CTest, conformance, type/memory, control-flow, enterprise and typed-profile gates; GitHub PR94 additionally qualifies the bounded v2 composite source/SDK lowering contract on Linux x64/LLVM18. |
 | Memory, UB, fuzz and concurrency safety | Implemented for current baseline | ASan/LSan/UBSan, libFuzzer and TSan include bounded serving load/fault/soak evidence. |
 | Toolchain, platform, ABI and packaging | Implemented for declared tiers | Reproducible clean builds, frozen runtime/core ABIs and installed static/shared C/C++ consumers. |
 | Security and dependency governance | Implemented for current contract | CodeQL, Trivy, dependency delta, license policy, pinned actions, expiring exceptions and package v2 SHA-256/exact-version/license gates. |
@@ -32,16 +32,18 @@ This scorecard summarizes active release controls. The machine-readable authorit
 | Protected signed publication | Partial | Source contract exists; real protected tag exercise and verified attestations remain. |
 | Process-scoped serving and observability | Implemented for `shorthand.serving.runtime.v1` | Bounded admission, deadlines, cancellation, tenant isolation, health, low-cardinality metrics and graceful drain; public ingress/authentication/TLS are not claimed. |
 | C3-ECO readiness | Partial | Typed profile, instrument-backed accounting and deterministic candidate assessment exist; PR91 implements signed auditor lineage, retention-policy checks, recertification handling and redacted reporting. Independent certification and actual storage operations remain external. |
-| MLIR production lowering | Partial | PR92 implements the generated dialect and installed SDK; PR93 full lowering remains open. |
+| MLIR production lowering | Implemented for Linux x64/LLVM18 | GitHub PR94 verifies source/SDK lowering, bounded composite execution, real runtime handoff and optimized evidence retention. |
 | Measured performance and energy | Open | PR95 requires equivalent work, repeated trials, raw data, provenance and uncertainty. |
 | Final production RC aggregate | Open | PR96 requires zero mandatory skips, enterprise pilot, upgrade/rollback/DR and retained evidence. |
 
 ## ER4 promotion rule
 
-ER4 requires every production blocker in both matrices to be closed, PR96 to pass on its final head in `ci / ubuntu (push)` and `ci / ubuntu (pull_request)`, and TST017 to be closed by a verified protected release. A high C3-ECO score cannot override a failed critical gate. No efficiency improvement counts if required functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened.
+ER4 requires every production blocker in both matrices to be closed, the scoped roadmap PR96 aggregate and applicable PR97-PR102 audit closeout gates to pass on their final heads in `ci / ubuntu (push)` and `ci / ubuntu (pull_request)`, and TST017 to be closed by a verified protected release. A high C3-ECO score cannot override a failed critical gate. No efficiency improvement counts if required functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened.
 
 The retained release bundle must include exact commit/run identity, toolchains, build/test/sanitizer results, backend/workload evidence, measurement and uncertainty records, security results, SBOM/provenance/signatures, deployment/pilot/rollback evidence, known limitations and approved claim wording.
 
 Historical scorecard marker: enterprise_release_scorecard_version: 2026-09-01-pr88.
 
-PR92 candidate auditor evidence is implemented: signatures, replay, lifecycle policy, nonconformities and public redaction. Independent certification and physical evidence-store controls remain external.
+GitHub PR94 candidate auditor evidence is implemented: signatures, replay, lifecycle policy, nonconformities and public redaction. Independent certification and physical evidence-store controls remain external.
+
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.

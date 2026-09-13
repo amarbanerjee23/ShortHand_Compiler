@@ -87,9 +87,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 36 ]] || { echo "error: expected 36 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 31 ]] || { echo "error: expected 31 implemented rows in the PR92 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 2 ]] || { echo "error: expected 2 partial rows in the PR92 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR92 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 32 ]] || { echo "error: expected 32 implemented rows in the PR94 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 1 ]] || { echo "error: expected 1 partial rows in the PR94 candidate" >&2; exit 1; }
+[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR94 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -101,10 +101,10 @@ require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-10-pr92' \
+  'compiler_test_strategy_version: 2026-09-12-pr94' \
   'production_claim: false' \
-  '31 implemented areas' \
-  '2 partial areas' \
+  '32 implemented areas' \
+  '1 partial area' \
   '3 open areas' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.' \
@@ -130,8 +130,8 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-10-pr92'
-require_contains "${STATUS}" '31 implemented, 2 partial and 3 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-12-pr94'
+require_contains "${STATUS}" '32 implemented, 1 partial and 3 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
@@ -159,7 +159,7 @@ require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timple
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
 require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
 
-require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\tpartial\tPR92 generated dialect'
+require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\timplemented\tGitHub PR94 Linux x64 LLVM18'
 require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\timplemented\tFirst-class C3-ECO grammar AST semantics evidence, typed profile v2 and SHD5101-SHD5208 claim-safety gates; PR89 instrumented measurement workbook; PR90 non-certifying eligibility, scoring, claim and eco-regression controls'
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
 require_contains "${C3ECO_DOC}" 'official_certification_granted: false'
@@ -196,7 +196,7 @@ require_contains "${BACKEND_DOC}" 'accelerator_support_status: not_production_su
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" 'backend_device_not_production_qualified'
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/ProductionBackendQualification.h" 'SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE'
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp" 'enforceProductionBackendQualification('
-require_contains "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" '67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105'
+require_contains "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" 'a5ed5a3cac51fbb2e90da632ae43d19212faaa20e76484e62bcb7c23ddb3b3fd'
 require_contains "${ROOT_DIR}/scripts/check_production_backend_hardware_qualification.sh" 'PASS production backend and hardware qualification gate'
 require_contains "${ROOT_DIR}/tests/integration/test_production_backend_hardware_qualification.sh" 'PASS production backend hardware qualification contract'
 require_contains "${ROOT_DIR}/tests/integration/test_compiled_hook_onnxruntime_success.sh" 'Output: 42'
