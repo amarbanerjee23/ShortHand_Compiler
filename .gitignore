@@ -73,3 +73,7 @@ results/raw/
 
 # Generated MLIR qualification builds.
 build-mlir*/
+
+# Native qualification test-orchestration imports.
+__pycache__/
+*.pyc

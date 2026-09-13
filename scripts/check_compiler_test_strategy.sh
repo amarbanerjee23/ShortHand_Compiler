@@ -87,9 +87,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 36 ]] || { echo "error: expected 36 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 32 ]] || { echo "error: expected 32 implemented rows in the PR94 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 1 ]] || { echo "error: expected 1 partial rows in the PR94 candidate" >&2; exit 1; }
-[[ "${open_count}" == 3 ]] || { echo "error: expected 3 open rows in the PR94 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 32 ]] || { echo "error: expected 32 implemented rows in the PR95 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR95 candidate" >&2; exit 1; }
+[[ "${open_count}" == 1 ]] || { echo "error: expected 1 open row in the PR95 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -101,11 +101,11 @@ require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-12-pr94' \
+  'compiler_test_strategy_version: 2026-09-13-pr95' \
   'production_claim: false' \
   '32 implemented areas' \
-  '1 partial area' \
-  '3 open areas' \
+  '3 partial areas' \
+  '1 open area' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.' \
   'Signing source code is not signing evidence' \
@@ -130,8 +130,8 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-12-pr94'
-require_contains "${STATUS}" '32 implemented, 1 partial and 3 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-13-pr95'
+require_contains "${STATUS}" '32 implemented, 3 partial and 1 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
@@ -244,3 +244,8 @@ require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'scripts
 require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST036\tC3-ECO signed auditor evidence lifecycle\timplemented'
 
 printf 'PASS compiler test strategy and coverage audit gate\n'
+require_contains "${MATRIX}" $'TST025\tperformance regression\tpartial'
+require_contains "${MATRIX}" $'TST026\tmeasured energy comparison with Python\tpartial'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_energy/test_qualification.py'
+require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1'
+require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'PASS mandatory CPU training ThreadSanitizer gate'

@@ -39,7 +39,7 @@ cmake --build "${BUILD_DIR}" --parallel 2 --target \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \
   shorthand_serving shorthand_serving_worker shorthand_lsp \
-  shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit \
+  shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify \
   shorthand_prometheus_adapter shorthand_otlp_exporter
 
 stage install-artifacts
@@ -74,6 +74,9 @@ require_installed '*/bin/shorthand_serving_worker'
 require_installed '*/bin/shorthand_c3eco_measure'
 require_installed '*/bin/shorthand_c3eco_assess'
 require_installed '*/bin/shorthand_c3eco_audit'
+require_installed '*/bin/shorthand_ai_qualify'
+require_installed '*/share/shorthand/schemas/ai_cpu_qualification_config_v1.schema.json'
+require_installed '*/share/shorthand/docs/ai_cpu_energy_qualification.md'
 require_installed '*/share/shorthand/schemas/c3eco/auditor_bundle_v1.schema.json'
 require_installed '*/share/shorthand/docs/c3eco_auditor_bundle.md'
 require_installed '*/bin/shorthand_prometheus_adapter'

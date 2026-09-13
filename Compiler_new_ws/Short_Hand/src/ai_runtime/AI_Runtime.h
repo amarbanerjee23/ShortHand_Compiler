@@ -16,6 +16,7 @@ public:
     AIRuntime();
     AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy);
     InferenceResult infer(const ModelSpec &model, const TensorBuffer &input);
+    std::unique_ptr<PreparedInference> prepare(const ModelSpec &,const InferenceConfiguration &,std::string &error);
     std::vector<BackendCapabilities> capabilities() const;
 
 private:

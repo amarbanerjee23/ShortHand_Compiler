@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shorthand.ai.cpu_qualification.config.v1",
+  "title": "Native CPU qualification configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "workload"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.ai.cpu_qualification.config.v1"
+    },
+    "mode": {
+      "enum": [
+        "inference",
+        "training"
+      ]
+    },
+    "workload": {
+      "type": "string",
+      "maxLength": 256,
+      "minLength": 1
+    },
+    "functional_unit": {
+      "type": "string",
+      "maxLength": 256,
+      "minLength": 1
+    },
+    "model_path": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "model_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "input_shape": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 16777216
+      }
+    },
+    "output_shape": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 16777216
+      }
+    },
+    "threads": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 256
+      }
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4294967295
+    },
+    "batch_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1024
+    },
+    "warmups": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "repetitions": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "trials": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 100
+    },
+    "maximum_memory_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8589934592
+    },
+    "absolute_tolerance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.001
+    },
+    "relative_tolerance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 0.01
+    },
+    "quality_metric": {
+      "enum": [
+        "output_agreement",
+        "top1_agreement",
+        "cosine_similarity",
+        "detector_tensor_agreement",
+        "validation_accuracy"
+      ]
+    },
+    "quality_threshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "maximum_latency_ms": {
+      "type": "number",
+      "minimum": 0
+    },
+    "maximum_uncertainty_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "exclusiveMinimum": 0
+    },
+    "require_measured_energy": {
+      "type": "boolean"
+    },
+    "guardrail_evidence_ref": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "precision": {
+      "const": "float32"
+    },
+    "device_policy": {
+      "enum": [
+        "cpu_first",
+        "cpu_only"
+      ]
+    },
+    "energy_source": {
+      "enum": [
+        "rapl",
+        "unavailable",
+        "physical_meter"
+      ]
+    },
+    "meter_csv": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "instrument": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "calibration_id": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "calibration_date": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "validation_ref": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "boundary": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "isolation": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "uncertainty_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "maximum_power_w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000
+        }
+      }
+    },
+    "external_files": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "sha256",
+          "size_bytes"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 4096
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 8589934592
+          }
+        }
+      }
+    },
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "epochs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "validation_samples": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "learning_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "exclusiveMinimum": 0
+        }
+      }
+    }
+  },
+  "$comment": "Native validation also enforces mode, hash, shape, host CPU, training and meter contracts."
+}

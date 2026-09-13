@@ -66,6 +66,17 @@ std::vector<BackendCapabilities> AIRuntime::capabilities() const {
     return registry.capabilities();
 }
 
+std::unique_ptr<PreparedInference> AIRuntime::prepare(const ModelSpec &model,
+    const InferenceConfiguration &configuration,std::string &error) {
+    const auto route=enforceProductionBackendQualification(
+        selectHardwareRoute(hardware_probe_->probe(),registry.capabilities(),model,hardware_policy_));
+    if (!route.selected) { error=route.reason; return nullptr; }
+    auto routed=model; routed.backend_preference={route.backend}; routed.allow_fallback=false;
+    auto *backend=registry.select(routed);
+    if (!backend) { error="prepared_backend_unavailable"; return nullptr; }
+    return backend->prepare(routed,configuration,error);
+}
+
 InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input) {
     const auto devices = hardware_probe_->probe();
     const auto route = enforceProductionBackendQualification(

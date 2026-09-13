@@ -387,6 +387,34 @@ target_compile_features(shorthand_c3eco_audit PRIVATE cxx_std_17)
 target_compile_definitions(shorthand_c3eco_audit PRIVATE SHORTHAND_C3ECO_ASSESS_LIBRARY)
 target_link_libraries(shorthand_c3eco_audit PRIVATE OpenSSL::Crypto)
 
+# Additive CPU qualification tool; the compiler syntax and runtime ABI are unchanged.
+add_executable(shorthand_ai_qualify
+  ${SRC_DIR}/ai_runtime/QualificationMain.cpp
+  ${SRC_DIR}/ai_runtime/Qualification.cpp
+  ${SRC_DIR}/ai_runtime/OnnxArtifact.cpp
+  ${SRC_DIR}/ai_runtime/ExecutionPlan.cpp
+  ${SRC_DIR}/ai_runtime/energy/EnergyMeasurement.cpp
+  ${SRC_DIR}/ai_runtime/energy/PowercapEnergyCollector.cpp
+  ${SRC_DIR}/ai_runtime/energy/ExternalMeterCollector.cpp
+  ${SRC_DIR}/ai_runtime/training/TrainingQualification.cpp
+  ${SHORTHAND_AI_RUNTIME_SOURCES}
+  ${SRC_DIR}/module/Sha256.cpp
+  ${SRC_DIR}/evidence/CertificationAssessment.cpp
+  ${SRC_DIR}/evidence/C3EcoAssessmentScoring.cpp
+)
+execute_process(COMMAND git rev-parse HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  OUTPUT_VARIABLE SHORTHAND_QUALIFICATION_REVISION OUTPUT_STRIP_TRAILING_WHITESPACE)
+target_compile_features(shorthand_ai_qualify PRIVATE cxx_std_17)
+target_compile_definitions(shorthand_ai_qualify PRIVATE SHORTHAND_C3ECO_ASSESS_LIBRARY
+  SHORTHAND_HAS_ONNXRUNTIME=${SHORTHAND_HAS_ONNXRUNTIME}
+  SHORTHAND_QUALIFICATION_REVISION="${SHORTHAND_QUALIFICATION_REVISION}")
+target_link_libraries(shorthand_ai_qualify PRIVATE Threads::Threads)
+if(SHORTHAND_HAS_ONNXRUNTIME)
+  target_include_directories(shorthand_ai_qualify PRIVATE ${ONNXRUNTIME_ROOT}/include)
+  target_link_directories(shorthand_ai_qualify PRIVATE ${ONNXRUNTIME_ROOT}/lib)
+  target_link_libraries(shorthand_ai_qualify PRIVATE onnxruntime)
+endif()
+
 
 if(DEFINED ENV{ONNXRUNTIME_ROOT})
   message(STATUS "ONNX Runtime root: $ENV{ONNXRUNTIME_ROOT}")
@@ -415,12 +443,18 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit
+install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 install(DIRECTORY schemas/c3eco/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas/c3eco
   FILES_MATCHING PATTERN "*.schema.json"
+)
+install(FILES schemas/ai_cpu_qualification_config_v1.schema.json
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas
+)
+install(FILES docs/ai_cpu_energy_qualification.md
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
 install(FILES docs/c3eco_auditor_bundle.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
@@ -612,6 +646,12 @@ if(SHORTHAND_BUILD_TESTING)
     NAME c3eco_auditor_bundle
     COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_auditor_bundle.sh
   )
+
+  add_test(NAME ai_cpu_energy_qualification
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_ai_energy_qualification.sh)
+  set_tests_properties(ai_cpu_energy_qualification PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    ENVIRONMENT "SHORTHAND_AI_QUALIFY_BIN=$<TARGET_FILE:shorthand_ai_qualify>;SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>;SHORTHAND_AI_ENERGY_REQUIRE_ONNX=${SHORTHAND_HAS_ONNXRUNTIME}")
   set_tests_properties(c3eco_auditor_bundle PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ENVIRONMENT "SHORTHAND_BIN=$<TARGET_FILE:short_hand>;SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>;SHORTHAND_C3ECO_AUDIT_BIN=$<TARGET_FILE:shorthand_c3eco_audit>"

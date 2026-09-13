@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-12-pr94
+compiler_test_strategy_version: 2026-09-13-pr95
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,11 +13,11 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 36-area production test matrix records for the GitHub PR94 candidate:
+The 36-area production test matrix records for the GitHub PR95 candidate:
 
 - 32 implemented areas,
-- 1 partial area,
-- 3 open areas.
+- 3 partial areas,
+- 1 open area.
 
 GitHub PR75 through PR89 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving, the typed C3-ECO profile and instrument-backed measurement accounting.
 
@@ -178,8 +178,10 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-12-pr94`.
+The current strategy is `2026-09-13-pr95`.
 
-PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The matrix now has 32 implemented, 1 partial and 3 open areas.
+PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The matrix now has 32 implemented, 3 partial and 1 open areas.
 
-GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.
+Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. TST025 and TST026 are partial; controlled calibrated measurements and equivalent Python baselines remain pending. The conservative release plan remains ten increments including this additional candidate and nine afterward (roadmap PR94-PR102). The PR93 audit remains historical evidence at its original SHA.
+
+GitHub PR95 adds `test-ai-energy`, taking Make/CTest parity to 22 suites. The native collector/planner/CNN gate, prepared real ONNX gate, external-weight and profile-integrity negatives, unchanged workbook replay and strict training TSan are mandatory. Controlled standard-model and 120M-weight runs are separate evidence; missing real telemetry cannot pass the measured qualification command. The full hardware evidence exit remains pending.
