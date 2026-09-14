@@ -21,7 +21,7 @@ while IFS=$'\t' read -r component version scope license redistributed source ext
   count=$((count + 1))
 
   case "${scope}" in
-    build-tool|optional-sdk|linked-runtime|vendored) ;;
+    build-tool|optional-sdk|linked-runtime|vendored|dataset) ;;
     *) echo "error: unsupported dependency scope ${scope} for ${component}" >&2; exit 1 ;;
   esac
   case "${redistributed}" in yes|no) ;; *) echo "error: redistributed must be yes/no for ${component}" >&2; exit 1 ;; esac
@@ -32,6 +32,12 @@ while IFS=$'\t' read -r component version scope license redistributed source ext
   if [[ "${lower}" == "latest" || "${lower}" == "unbounded" || "${version}" == *'*'* ]]; then
     echo "error: unbounded dependency version policy for ${component}: ${version}" >&2
     exit 1
+  fi
+
+  if [[ "${scope}" == dataset ]]; then
+    [[ "${component}" == uci-optdigits && "${license}" == CC-BY-4.0 && "${redistributed}" == yes ]] || { echo "error: unapproved dataset redistribution" >&2; exit 1; }
+    [[ -s "${ROOT_DIR}/tests/ai_application/data/README.md" ]] || { echo "error: dataset attribution missing" >&2; exit 1; }
+    continue
   fi
 
   if [[ "${redistributed}" == "yes" || "${scope}" == "linked-runtime" || "${scope}" == "vendored" ]]; then

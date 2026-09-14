@@ -1,6 +1,6 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-13-pr95
+known_limitations_version: 2026-09-14-pr96
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
@@ -22,3 +22,5 @@ Historical limitations marker: known_limitations_version: 2026-09-01-pr88.
 PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.
 
 PR92 implements the generated MLIR dialect and downstream SDK for Linux x64/LLVM 18. GitHub PR94 adds executable source/SDK lowering in that scope. Nested or heap-owning composites, composite FFI, escaping stack borrows and other MLIR platforms remain unsupported; see [the exact v2 surface](mlir_lowering.md).
+
+PR96 qualifies a bounded real optical-digit application and native/Python execution comparison. Broader model families, independently calibrated paired energy, performance budgets and enterprise pilot evidence remain open. See [application boundaries](ai_application_qualification.md).

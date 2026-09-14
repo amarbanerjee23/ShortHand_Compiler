@@ -133,14 +133,14 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR95 state must be present and claim-safe.
+# Active PR96 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-13-pr95' \
+  'feature_status_version: 2026-09-14-pr96' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 95' \
-  'current_roadmap_scope: cpu_energy_qualification' \
+  'current_github_pr: 96' \
+  'current_roadmap_scope: ai_applications_and_equivalent_baselines' \
   '32 implemented, 3 partial and 1 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \

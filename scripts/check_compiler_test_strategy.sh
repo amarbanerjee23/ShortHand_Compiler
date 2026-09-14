@@ -101,7 +101,7 @@ require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-13-pr95' \
+  'compiler_test_strategy_version: 2026-09-14-pr96' \
   'production_claim: false' \
   '32 implemented areas' \
   '3 partial areas' \
@@ -130,7 +130,7 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-13-pr95'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-14-pr96'
 require_contains "${STATUS}" '32 implemented, 3 partial and 1 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
@@ -249,3 +249,6 @@ require_contains "${MATRIX}" $'TST026\tmeasured energy comparison with Python\tp
 require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_energy/test_qualification.py'
 require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1'
 require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'PASS mandatory CPU training ThreadSanitizer gate'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_application.py'
+require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'tests/ai_application/test_source_application.py'
+require_contains "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" ' --require-hashes'

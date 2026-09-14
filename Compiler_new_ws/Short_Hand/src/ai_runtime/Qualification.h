@@ -14,6 +14,7 @@ struct QualificationConfiguration {
     unsigned seed=42;
 };
 QualificationConfiguration readQualificationConfiguration(const std::string &);
+std::unique_ptr<energy::EnergyCollector> qualificationCollector(const QualificationConfiguration &);
 shorthand::c3eco::Json qualifyWorkload(const QualificationConfiguration &);
 shorthand::c3eco::Json executeQualifiedProfile(const QualificationConfiguration &,const std::string &profile,const std::string &trusted_sha256);
 std::string qualificationJson(const shorthand::c3eco::Json &);

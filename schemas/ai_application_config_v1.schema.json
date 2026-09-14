@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShortHand bounded CPU application configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "classes",
+    "dataset_id",
+    "dataset_license",
+    "dataset_path",
+    "dataset_sha256",
+    "dataset_source",
+    "dataset_split",
+    "features",
+    "input_max",
+    "input_min",
+    "minimum_accuracy",
+    "offset",
+    "qualification_config",
+    "qualification_sha256",
+    "request_timeout_ms",
+    "scale",
+    "schema",
+    "threads",
+    "top_k",
+    "workers"
+  ],
+  "properties": {
+    "qualification_config": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "qualification_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "dataset_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "dataset_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "dataset_source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "dataset_license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "dataset_split": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "features": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4096
+    },
+    "classes": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 256
+    },
+    "top_k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "threads": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "workers": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16
+    },
+    "request_timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30000
+    },
+    "input_min": {
+      "type": "number",
+      "minimum": -1000000.0,
+      "maximum": 1000000.0
+    },
+    "input_max": {
+      "type": "number",
+      "minimum": -1000000.0,
+      "maximum": 1000000.0
+    },
+    "offset": {
+      "type": "number",
+      "minimum": -1000000.0,
+      "maximum": 1000000.0
+    },
+    "scale": {
+      "type": "number",
+      "minimum": -1000000.0,
+      "maximum": 1000000.0,
+      "not": {
+        "const": 0
+      }
+    },
+    "minimum_accuracy": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1
+    },
+    "schema": {
+      "const": "shorthand.ai.application.config.v1"
+    }
+  }
+}

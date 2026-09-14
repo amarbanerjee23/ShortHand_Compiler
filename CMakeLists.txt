@@ -391,6 +391,8 @@ target_link_libraries(shorthand_c3eco_audit PRIVATE OpenSSL::Crypto)
 add_executable(shorthand_ai_qualify
   ${SRC_DIR}/ai_runtime/QualificationMain.cpp
   ${SRC_DIR}/ai_runtime/Qualification.cpp
+  ${SRC_DIR}/ai_runtime/ApplicationQualification.cpp
+  ${SRC_DIR}/serving/ServingRuntime.cpp
   ${SRC_DIR}/ai_runtime/OnnxArtifact.cpp
   ${SRC_DIR}/ai_runtime/ExecutionPlan.cpp
   ${SRC_DIR}/ai_runtime/energy/EnergyMeasurement.cpp
@@ -450,10 +452,10 @@ install(DIRECTORY schemas/c3eco/
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas/c3eco
   FILES_MATCHING PATTERN "*.schema.json"
 )
-install(FILES schemas/ai_cpu_qualification_config_v1.schema.json
+install(FILES schemas/ai_cpu_qualification_config_v1.schema.json schemas/ai_application_config_v1.schema.json
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas
 )
-install(FILES docs/ai_cpu_energy_qualification.md
+install(FILES docs/ai_cpu_energy_qualification.md docs/ai_application_qualification.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
 install(FILES docs/c3eco_auditor_bundle.md

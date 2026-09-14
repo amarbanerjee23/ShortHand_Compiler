@@ -166,6 +166,7 @@ J measurementJson(const energy::EnergyMeasurement &m) {
         {"isolation",str(i.isolation)},{"uncertainty_percent",i.uncertainty_percent?num(*i.uncertainty_percent):J{}},
         {"maximum_power_w",num(i.maximum_power_w)}})}});
 }
+std::unique_ptr<energy::EnergyCollector> qualificationCollector(const QualificationConfiguration &c) { return collector(c); }
 QualificationConfiguration readQualificationConfiguration(const std::string &path) {
     const auto text=readFile(path); const auto j=parseJson(text); QualificationConfiguration c; auto &p=c.protocol;
     keys(j,{"schema","mode","workload","functional_unit","model_path","model_sha256","input_shape","output_shape","threads","seed",
