@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-13-pr95
+public_release_readiness_version: 2026-09-14-pr96
 current_maturity: controlled_beta
 production_claim: false
 release_candidate_target: PR96
 
-A GitHub PR95 candidate requires all mandatory commands to pass from a clean checkout:
+A GitHub PR96 candidate requires all mandatory commands to pass from a clean checkout:
 
 ```bash
 bash setup_build_infra.sh

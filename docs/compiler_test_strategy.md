@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-13-pr95
+compiler_test_strategy_version: 2026-09-14-pr96
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,7 +13,7 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 36-area production test matrix records for the GitHub PR95 candidate:
+The 36-area production test matrix records for the GitHub PR96 candidate:
 
 - 32 implemented areas,
 - 3 partial areas,
@@ -178,10 +178,12 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-13-pr95`.
+The current strategy is `2026-09-14-pr96`.
 
 PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The matrix now has 32 implemented, 3 partial and 1 open areas.
 
-Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. TST025 and TST026 are partial; controlled calibrated measurements and equivalent Python baselines remain pending. The conservative release plan remains ten increments including this additional candidate and nine afterward (roadmap PR94-PR102). The PR93 audit remains historical evidence at its original SHA.
+Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. TST025 and TST026 remain partial pending controlled performance budgets and calibrated physical comparisons. The revised plan consolidates seven PR batches including PR96 and six afterward, preserving every remaining roadmap exit. The PR93 audit remains historical evidence at its original SHA.
 
 GitHub PR95 adds `test-ai-energy`, taking Make/CTest parity to 22 suites. The native collector/planner/CNN gate, prepared real ONNX gate, external-weight and profile-integrity negatives, unchanged workbook replay and strict training TSan are mandatory. Controlled standard-model and 120M-weight runs are separate evidence; missing real telemetry cannot pass the measured qualification command. The full hardware evidence exit remains pending.
+
+PR96 extends the existing `test-ai-energy` suite with 1,797 real held-out images, application boundaries and serving recovery. Both MLIR lanes compare interpreter/O0/O2/native ONNX predictions. The unsanitized lane also runs the hash-pinned paired Python baseline. No inherited mandatory gate or sanitizer is skipped.

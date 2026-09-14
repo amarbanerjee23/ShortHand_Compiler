@@ -1,9 +1,9 @@
 # Release Level Status
 
-release_level_status_version: 2026-09-13-pr95
+release_level_status_version: 2026-09-14-pr96
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 95
+current_github_pr: 96
 final_planned_github_pr: unassigned
 final_planned_roadmap_pr: 102
 

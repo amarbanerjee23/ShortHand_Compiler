@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-13-pr95
+ci_pipeline_architecture_version: 2026-09-14-pr96
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -224,3 +224,5 @@ The required `mlir` matrix runs GCC and Clang ASan/LSan/UBSan with `detect_leaks
 GitHub PR93 separately merged the enterprise gap assessment. GitHub PR94 implements roadmap PR93; future roadmap IDs and the six additional audit-derived increments are reconciled in `docs/production_readiness_pr_plan.md`.
 
 GitHub PR95 adds native CPU qualification to both existing mandatory MLIR lanes, including real ONNX SDK execution and strict leak/undefined-behavior checks. `test-ai-energy` participates in Make/CTest parity; native training workers run in the existing mandatory TSan gate. CodeQL builds `shorthand_ai_qualify`. Controlled physical-meter/model qualification is separate and fail-closed, with no synthetic-energy replacement for unavailable hardware.
+
+PR96 extends both MLIR lanes with full-dataset source/LLVM/native application checks. The unsanitized GCC lane also executes `scripts/check_ai_application_baselines.sh`; Python wheels are test-only, version/hash pinned and cannot substitute for the native deployment runtime. Application correctness retains strict sanitizers in the Clang lane.

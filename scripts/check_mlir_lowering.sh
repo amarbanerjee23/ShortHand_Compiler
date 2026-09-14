@@ -31,4 +31,10 @@ AI_ENERGY_CXXFLAGS="-std=c++17 -O1 -Wall -Wextra -Wpedantic -Werror ${FLAGS}" \
   SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1 bash "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh"
 python3 "${ROOT_DIR}/tests/mlir_lowering/test_source_lowering.py" "${ROOT_DIR}" "${BUILD_DIR}/short_hand" "${DIALECT_BUILD}/shorthand-opt" "${DIALECT_BUILD}/test/shorthand-lowering-probe"
 python3 "${ROOT_DIR}/tests/mlir_lowering/test_runtime_lowering.py" "${ROOT_DIR}" "${BUILD_DIR}" "${DIALECT_BUILD}/test/shorthand-lowering-probe" "${ONNXRUNTIME_ROOT}"
+python3 "${ROOT_DIR}/tests/ai_application/test_source_application.py" "${ROOT_DIR}" "${BUILD_DIR}/short_hand" "${BUILD_DIR}/shorthand_ai_qualify"
+# The paired Python process requires an unsanitized runtime. Source/native
+# application paths above remain mandatory under ASan/LSan/UBSan in this lane.
+if [[ "${SHORTHAND_MLIR_SANITIZERS:-OFF}" == OFF ]]; then
+  bash "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" "${BUILD_DIR}/shorthand_ai_qualify" "${BUILD_DIR}/application-baselines"
+fi
 echo "PASS verified SemanticIR MLIR LLVM composite execution and real runtime lowering gate"

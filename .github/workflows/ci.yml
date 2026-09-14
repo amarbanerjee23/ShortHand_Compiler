@@ -28,7 +28,7 @@ jobs:
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
           sudo apt-get "${APT_SOURCES[@]}" install -y \
-            libssl-dev openssl python3 jq build-essential \
+            libssl-dev openssl python3 python3-venv jq build-essential \
             make \
             g++ \
             flex \
@@ -225,7 +225,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev clang-16 clang-18 g++-12 g++-14 cmake ninja-build
 
       - name: Record matrix toolchain
         run: |
@@ -268,7 +268,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
       - name: Record Linux arm64 environment
         run: |
@@ -458,7 +458,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang cmake ninja-build jq
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential make g++ flex bison libfl-dev llvm llvm-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang cmake ninja-build jq
 
       - name: Verify CTest parity manifest
         run: |
@@ -484,7 +484,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential make g++ flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
 
       - name: Independent clean-build reproducibility
         run: bash scripts/check_reproducible_builds.sh
@@ -515,7 +515,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang-18 cmake ninja-build jq
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang-18 cmake ninja-build jq
 
       - name: Security policy and negative matrix
         run: bash scripts/check_external_security_policy.sh
@@ -632,7 +632,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3 flex bison libfl-dev libssl-dev curl binutils
+          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3 python3-venv flex bison libfl-dev libssl-dev curl binutils
       - name: Generated dialect lit verifier roundtrip install and freshness qualification
         env:
           CC: ${{ matrix.cc }}
@@ -646,7 +646,10 @@ jobs:
         if: always()
         with:
           name: mlir-${{ matrix.id }}-${{ github.run_id }}
-          path: build-mlir/Testing/Temporary/
+          path: |
+            build-mlir/Testing/Temporary/
+            build-mlir-source/application-baselines/evidence/
+            build-mlir-source/application-baselines/fixture/provenance.json
 
   ubuntu:
     needs:

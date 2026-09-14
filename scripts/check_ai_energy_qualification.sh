@@ -24,6 +24,7 @@ if [[ -z "${SHORTHAND_AI_QUALIFY_BIN:-}" ]]; then
   "${CXX_BIN}" "${FLAGS[@]}" -pthread -DSHORTHAND_C3ECO_ASSESS_LIBRARY \
     "-DSHORTHAND_QUALIFICATION_REVISION=\"$(git -C "${ROOT_DIR}" rev-parse HEAD)\"" "${SDK_FLAGS[@]}" \
     "${SRC_DIR}/ai_runtime/QualificationMain.cpp" "${SRC_DIR}/ai_runtime/Qualification.cpp" "${SRC_DIR}/ai_runtime/OnnxArtifact.cpp" \
+    "${SRC_DIR}/ai_runtime/ApplicationQualification.cpp" "${SRC_DIR}/serving/ServingRuntime.cpp" \
     "${SRC_DIR}/ai_runtime/AI_Runtime.cpp" "${SRC_DIR}/ai_runtime/AI_Backend.cpp" \
     "${SRC_DIR}/ai_runtime/AI_Types.cpp" "${SRC_DIR}/ai_runtime/AI_Telemetry.cpp" \
     "${SRC_DIR}/ai_runtime/backends/"*.cpp "${ENERGY_SOURCES[@]}" \
@@ -34,6 +35,7 @@ if [[ -z "${SHORTHAND_C3ECO_MEASURE_BIN:-}" ]]; then
   "${CXX_BIN}" "${FLAGS[@]}" "${SRC_DIR}/evidence/MeasurementWorkbook.cpp" -o "${MEASURE}"
 fi
 python3 "${ROOT_DIR}/tests/ai_energy/test_qualification.py" "${ROOT_DIR}" "${TOOL}" "${WORK_DIR}" "${MEASURE}" "${SHORTHAND_AI_ENERGY_REQUIRE_ONNX:-0}"
+python3 "${ROOT_DIR}/tests/ai_application/test_application.py" "${ROOT_DIR}" "${TOOL}" "${WORK_DIR}" "${SHORTHAND_AI_ENERGY_REQUIRE_ONNX:-0}"
 echo 'PASS native CPU energy qualification, training, evidence and profile gate'
 # The SDK must opt out before creating the vendor telemetry uploader.
 grep -Fq '"ORT_DISABLE_TELEMETRY", "1"' "${SRC_DIR}/ai_runtime/backends/OnnxRuntimeBackend.cpp"

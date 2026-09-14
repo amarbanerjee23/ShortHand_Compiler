@@ -1,2 +1,3 @@
 path	ecosystem	purpose
 editors/vscode/package.json	npm	VS Code Shorthand language extension manifest
+tests/ai_application/requirements-ai-baseline-linux-x64-py312.txt	python	Hash-pinned test-only equivalent Python CPU baseline
