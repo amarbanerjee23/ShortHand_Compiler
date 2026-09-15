@@ -23,11 +23,14 @@ int main(int argc,char **argv) {
             const auto r=shorthand::ai::evaluateApplication(c,std::string(argv[1])=="application-serve"); write(argv[3],r);
             return shorthand::c3eco::jsonBoolean(r,"success")?0:2;
         }
-        if (argc==7 && std::string(argv[1])=="application-meter-window") {
-            const auto c=shorthand::ai::readApplicationConfiguration(argv[2]);
+        if ((argc==7 && std::string(argv[1])=="application-meter-window") ||
+            (argc==8 && std::string(argv[1])=="meter-window")) {
+            const bool replay=std::string(argv[1])=="meter-window";
             auto parse=[](const char *s) { std::size_t n=0; double v=std::stod(s,&n); shorthand::c3eco::require(n==std::string(s).size() && std::isfinite(v),"invalid_window_number"); return v; };
-            const double units=parse(argv[5]); shorthand::c3eco::require(units>=1 && units<=50000000 && std::floor(units)==units,"invalid_window_units");
-            write(argv[6],shorthand::ai::applicationMeterWindow(c,parse(argv[3]),parse(argv[4]),static_cast<std::uint64_t>(units))); return 0;
+            const double units=parse(argv[replay?6:5]); shorthand::c3eco::require(units>=1 && units<=50000000 && std::floor(units)==units,"invalid_window_units");
+            if (replay) write(argv[7],shorthand::ai::measurePhysicalWindow(argv[2],shorthand::ai::readQualificationInstrument(argv[3]),parse(argv[4]),parse(argv[5]),static_cast<std::uint64_t>(units)));
+            else write(argv[6],shorthand::ai::applicationMeterWindow(shorthand::ai::readApplicationConfiguration(argv[2]),parse(argv[3]),parse(argv[4]),static_cast<std::uint64_t>(units)));
+            return 0;
         }
         if (argc==2 && std::string(argv[1])=="probe") {
             shorthand::energy::PowercapEnergyCollector meter; auto start=meter.begin();
@@ -47,7 +50,7 @@ int main(int argc,char **argv) {
         if (argc==6 && std::string(argv[1])=="export-workbook") {
             shorthand::ai::exportQualificationWorkbook(argv[2],argv[3],argv[4],argv[5]); return 0;
         }
-        std::cerr<<"usage: shorthand_ai_qualify probe | qualify CONFIG REPORT | execute CONFIG REPORT TRUSTED_REPORT_SHA256 OUTPUT | export-workbook REPORT TRUSTED_REPORT_SHA256 ACCOUNTING OUTPUT.tsv | application[-serve|-describe] CONFIG REPORT | application-meter-window CONFIG START_UNIX END_UNIX UNITS REPORT\n";
+        std::cerr<<"usage: shorthand_ai_qualify probe | qualify CONFIG REPORT | execute CONFIG REPORT TRUSTED_REPORT_SHA256 OUTPUT | export-workbook REPORT TRUSTED_REPORT_SHA256 ACCOUNTING OUTPUT.tsv | application[-serve|-describe] CONFIG REPORT | application-meter-window CONFIG START_UNIX END_UNIX UNITS REPORT | meter-window TRACE INSTRUMENT_JSON START_UNIX END_UNIX UNITS REPORT\n";
         return 2;
     } catch (const std::exception &e) { std::cerr<<"qualification error: "<<e.what()<<'\n'; return 2; }
 }

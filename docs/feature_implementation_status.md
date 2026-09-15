@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-09-14-pr96
+feature_status_version: 2026-09-15-pr97
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 96
-current_roadmap_scope: ai_applications_and_equivalent_baselines
+current_github_pr: 97
+current_roadmap_scope: measurement_grade_comparisons_and_regression
 
 ## Goal
 
@@ -19,7 +19,7 @@ GitHub PR89 now implements `shorthand.c3eco.measurement_workbook.v1`: instrument
 
 GitHub PR90 now implements `shorthand.c3eco.assessment.v1`: structural profile/workbook validation, mandatory G1-G14 precedence, the complete 76-criterion A-K catalog, evidence and uncertainty caps, controlled N/A reallocation, materiality, AI applicability, tier prerequisites, claim safety, eco/quality regression decisions and surveillance schedules. Its output is a candidate recommendation only.
 
-The compiler test audit records **32 implemented, 3 partial and 1 open** areas for the GitHub PR96 candidate, 36 areas total. ShortHand remains a controlled beta because independent certification operations, representative AI workload qualification, performance/equivalent-workload measured-energy evidence, the production RC gate and the protected-release exercise remain incomplete.
+The compiler test audit records **32 implemented, 3 partial and 1 open** areas for the GitHub PR97 candidate, 36 areas total. ShortHand remains a controlled beta because independent certification operations, representative AI workload qualification, performance/equivalent-workload measured-energy evidence, the production RC gate and the protected-release exercise remain incomplete.
 
 ## Production truth authority
 
@@ -155,6 +155,8 @@ These strings are historical compatibility anchors required by the repository's 
 
 Any PR that changes syntax, semantic meaning, runtime behavior, editor behavior, release/evidence output, pipeline behavior, test coverage or production claims must update this tracker and `tests/coverage/compiler_test_coverage_matrix.tsv`, while retaining historical anchors required for milestone auditability.
 
-Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. TST025 and TST026 remain partial pending controlled performance budgets and calibrated physical comparisons. The revised plan consolidates seven PR batches including PR96 and six afterward, preserving every remaining roadmap exit. The PR93 audit remains historical evidence at its original SHA.
+Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. TST025 and TST026 remain partial pending controlled performance budgets and calibrated physical comparisons. The revised plan has six remaining delivery batches including PR97 and five afterward. PR96 is merged; calibrated physical observations remain pending. Every remaining roadmap exit is preserved. The PR93 audit remains historical evidence at its original SHA.
 
 PR96 implements `shorthand.ai.application.v1`: real UCI held-out quality, standalone ShortHand classifier execution, validated CPU batches, bounded streaming/serving and paired optimized Python execution. See [the application contract](ai_application_qualification.md). Physical comparisons and broader workload families remain pending.
+
+PR97 adds [measurement-grade comparison and regression controls](ai_comparison_measurement.md): frozen policies and raw traces, native replay, sampling/calibration/clock checks, conservative uncertainty and pinned-baseline regression assessment. TST025/TST026 remain partial until controlled hardware evidence and remaining compiler-performance coverage close.

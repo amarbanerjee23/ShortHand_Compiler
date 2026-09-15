@@ -40,6 +40,10 @@ struct EnergyMeasurement {
     std::uint64_t functional_units = 0;
     std::size_t sample_count = 0;
     double maximum_sample_gap_seconds = 0;
+    // Actual samples inside the window, excluding interpolated endpoints.
+    std::size_t source_sample_count = 0;
+    double maximum_source_gap_seconds = 0;
+    std::string trace_sha256;
     std::vector<DomainMeasurement> domains;
     // Physical meter samples (Unix seconds, watts), including interpolated window endpoints.
     std::vector<std::pair<double,double>> power_samples;

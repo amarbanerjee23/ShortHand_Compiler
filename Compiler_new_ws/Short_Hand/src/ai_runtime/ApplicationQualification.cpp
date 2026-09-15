@@ -303,10 +303,6 @@ void serveApplicationStream(const ApplicationConfiguration &c,std::istream &inpu
 
 J applicationMeterWindow(const ApplicationConfiguration &c,double start,double end,std::uint64_t units) {
     require(c.qualification.energy_source=="physical_meter","comparison_requires_physical_meter");
-    const auto &q=c.qualification; const auto imported=energy::importPhysicalMeter(q.meter_csv,units,q.instrument);
-    require(imported.available,"physical_meter_trace_unavailable:"+imported.reason);
-    auto result=energy::integrateMeterWindow(imported.power_samples,start,end,units,q.instrument);
-    require(result.claimEligible(),"physical_meter_window_not_qualified:"+result.reason);
-    return measurementJson(result);
+    return measurePhysicalWindow(c.qualification.meter_csv,c.qualification.instrument,start,end,units);
 }
 }

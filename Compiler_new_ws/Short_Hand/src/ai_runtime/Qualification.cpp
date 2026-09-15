@@ -161,12 +161,22 @@ J measurementJson(const energy::EnergyMeasurement &m) {
         {"elapsed_seconds",num(m.elapsed_seconds)},{"joules",num(m.joules)},{"average_watts",num(m.average_watts)},
         {"joules_per_fu",num(m.joules_per_fu)},{"functional_units",num(m.functional_units)},
         {"sample_count",num(m.sample_count)},{"maximum_sample_gap_seconds",num(m.maximum_sample_gap_seconds)},
+        {"source_sample_count",num(m.source_sample_count)},{"maximum_source_gap_seconds",num(m.maximum_source_gap_seconds)},
+        {"trace_sha256",str(m.trace_sha256)},
         {"domains",domains},{"power_samples",power},{"instrument",obj({{"id",str(i.id)},{"calibration_id",str(i.calibration_id)},
         {"calibration_date",str(i.calibration_date)},{"validation_ref",str(i.validation_ref)},{"boundary",str(i.boundary)},
         {"isolation",str(i.isolation)},{"uncertainty_percent",i.uncertainty_percent?num(*i.uncertainty_percent):J{}},
         {"maximum_power_w",num(i.maximum_power_w)}})}});
 }
 std::unique_ptr<energy::EnergyCollector> qualificationCollector(const QualificationConfiguration &c) { return collector(c); }
+energy::Instrument readQualificationInstrument(const std::string &path) { return instrument(parseJson(readFile(path))); }
+J measurePhysicalWindow(const std::string &trace,const energy::Instrument &i,double start,double end,std::uint64_t units) {
+    const auto imported=energy::importPhysicalMeter(trace,units,i);
+    auto result=energy::integrateMeterWindow(imported.power_samples,start,end,units,i);
+    result.trace_sha256=imported.trace_sha256;
+    require(result.claimEligible(),"physical_meter_window_not_qualified:"+result.reason);
+    return measurementJson(result);
+}
 QualificationConfiguration readQualificationConfiguration(const std::string &path) {
     const auto text=readFile(path); const auto j=parseJson(text); QualificationConfiguration c; auto &p=c.protocol;
     keys(j,{"schema","mode","workload","functional_unit","model_path","model_sha256","input_shape","output_shape","threads","seed",

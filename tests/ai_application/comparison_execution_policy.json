@@ -1,0 +1,19 @@
+{
+  "instrument_boundary": "whole_host_ac",
+  "maximum_calibration_age_days": 366,
+  "maximum_clock_skew_seconds": 0.01,
+  "maximum_energy_joules_per_image": 1000,
+  "maximum_native_ms_per_image": 100,
+  "maximum_preparation_ms": 120000,
+  "maximum_regression_percent": 5,
+  "maximum_relative_sample_gap": 0.1,
+  "maximum_sample_gap_seconds": 0.1,
+  "maximum_trial_variability_percent": 20,
+  "maximum_uncertainty_percent": 20,
+  "maximum_warmup_ms": 120000,
+  "minimum_pairs": 4,
+  "minimum_source_samples": 11,
+  "minimum_window_seconds": 1.0,
+  "mode": "execution_only",
+  "schema": "shorthand.ai.comparison.policy.v1"
+}

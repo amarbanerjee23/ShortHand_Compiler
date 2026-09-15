@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.dev/schemas/ai_comparison_policy_v1.schema.json",
+  "title": "CPU comparison engineering policy (not a certification standard)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "minimum_pairs",
+    "minimum_window_seconds",
+    "minimum_source_samples",
+    "maximum_sample_gap_seconds",
+    "maximum_relative_sample_gap",
+    "maximum_clock_skew_seconds",
+    "maximum_calibration_age_days",
+    "maximum_uncertainty_percent",
+    "maximum_native_ms_per_image",
+    "maximum_preparation_ms",
+    "maximum_warmup_ms",
+    "maximum_energy_joules_per_image",
+    "maximum_regression_percent",
+    "maximum_trial_variability_percent",
+    "schema",
+    "mode",
+    "instrument_boundary"
+  ],
+  "properties": {
+    "minimum_pairs": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 10,
+      "multipleOf": 2
+    },
+    "minimum_window_seconds": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 3600
+    },
+    "minimum_source_samples": {
+      "type": "integer",
+      "minimum": 11,
+      "maximum": 1000000
+    },
+    "maximum_sample_gap_seconds": {
+      "type": "number",
+      "minimum": 1e-06,
+      "maximum": 60
+    },
+    "maximum_relative_sample_gap": {
+      "type": "number",
+      "minimum": 1e-06,
+      "maximum": 0.1
+    },
+    "maximum_clock_skew_seconds": {
+      "type": "number",
+      "minimum": 1e-06,
+      "maximum": 0.01
+    },
+    "maximum_calibration_age_days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3650
+    },
+    "maximum_uncertainty_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50
+    },
+    "maximum_native_ms_per_image": {
+      "type": "number",
+      "minimum": 1e-09,
+      "maximum": 60000
+    },
+    "maximum_preparation_ms": {
+      "type": "number",
+      "minimum": 1e-06,
+      "maximum": 1800000
+    },
+    "maximum_warmup_ms": {
+      "type": "number",
+      "minimum": 1e-06,
+      "maximum": 1800000
+    },
+    "maximum_energy_joules_per_image": {
+      "type": "number",
+      "minimum": 1e-09,
+      "maximum": 1000000000.0
+    },
+    "maximum_regression_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "maximum_trial_variability_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50
+    },
+    "schema": {
+      "const": "shorthand.ai.comparison.policy.v1"
+    },
+    "mode": {
+      "enum": [
+        "execution_only",
+        "calibrated_energy"
+      ]
+    },
+    "instrument_boundary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

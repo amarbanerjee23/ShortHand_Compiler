@@ -58,17 +58,17 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-14-pr96' \
+  'production_readiness_plan_version: 2026-09-15-pr97' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 95' \
-  'CURRENT_GITHUB_PR: 96' \
+  'LAST_MERGED_GITHUB_PR: 96' \
+  'CURRENT_GITHUB_PR: 97' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'CURRENT_IMPLEMENTATION_SCOPE: ai_applications_and_equivalent_baselines' \
+  'CURRENT_IMPLEMENTATION_SCOPE: measurement_grade_comparisons_and_regression' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'GitHub PR96 - representative CPU applications and equivalent baselines is IN PROGRESS.' \
-  'remaining_planned_implementation_increments_including_current: 7' \
-  'remaining_planned_implementation_increments_after_current: 6' \
+  'GitHub PR97 - measurement-grade comparisons and regression controls is IN PROGRESS.' \
+  'remaining_planned_implementation_increments_including_current: 6' \
+  'remaining_planned_implementation_increments_after_current: 5' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -103,7 +103,7 @@ require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and
 require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-14-pr96' \
+  'ci_pipeline_architecture_version: 2026-09-15-pr97' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \

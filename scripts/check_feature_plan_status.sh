@@ -135,12 +135,12 @@ done
 
 # Active PR96 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-14-pr96' \
+  'feature_status_version: 2026-09-15-pr97' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 96' \
-  'current_roadmap_scope: ai_applications_and_equivalent_baselines' \
+  'current_github_pr: 97' \
+  'current_roadmap_scope: measurement_grade_comparisons_and_regression' \
   '32 implemented, 3 partial and 1 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \
