@@ -36,6 +36,7 @@ if [[ -z "${SHORTHAND_C3ECO_MEASURE_BIN:-}" ]]; then
 fi
 python3 "${ROOT_DIR}/tests/ai_energy/test_qualification.py" "${ROOT_DIR}" "${TOOL}" "${WORK_DIR}" "${MEASURE}" "${SHORTHAND_AI_ENERGY_REQUIRE_ONNX:-0}"
 python3 "${ROOT_DIR}/tests/ai_application/test_application.py" "${ROOT_DIR}" "${TOOL}" "${WORK_DIR}" "${SHORTHAND_AI_ENERGY_REQUIRE_ONNX:-0}"
+python3 "${ROOT_DIR}/tests/ai_application/test_comparison_evidence.py" "${ROOT_DIR}" "${TOOL}" "${WORK_DIR}"
 echo 'PASS native CPU energy qualification, training, evidence and profile gate'
 # The SDK must opt out before creating the vendor telemetry uploader.
 grep -Fq '"ORT_DISABLE_TELEMETRY", "1"' "${SRC_DIR}/ai_runtime/backends/OnnxRuntimeBackend.cpp"

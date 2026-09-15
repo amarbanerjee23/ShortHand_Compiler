@@ -1,10 +1,12 @@
 #include "ExternalMeterCollector.h"
+#include "../../module/Sha256.h"
 #include <cmath>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>
 #include <thread>
+#include <sstream>
 namespace shorthand::energy {
 EnergyMeasurement integratePowerSamples(const std::vector<PowerSample> &s, std::uint64_t count, const Instrument &i, EvidenceClass c) {
     if (s.size() < 2 || s.size() > 1000000) throw std::runtime_error("invalid_meter_sample_count");
@@ -23,6 +25,8 @@ EnergyMeasurement integratePowerSamples(const std::vector<PowerSample> &s, std::
         sum += (static_cast<long double>(watts) + s[n-1].second) * 0.5L * dt;
     }
     m.power_samples = s;
+    m.source_sample_count = s.size();
+    m.maximum_source_gap_seconds = m.maximum_sample_gap_seconds;
     m.joules = static_cast<double>(sum); normalize(m,count); m.available = true;
     m.reason = "imported_trace_requires_external_provenance_validation"; return m;
 }
@@ -30,7 +34,15 @@ EnergyMeasurement importPhysicalMeter(const std::string &p, std::uint64_t count,
     namespace fs = std::filesystem;
     if (fs::is_symlink(fs::symlink_status(p)) || !fs::is_regular_file(p) || fs::file_size(p) > 32U*1024U*1024U)
         throw std::runtime_error("unsafe_meter_file");
-    std::ifstream in(p); std::string line;
+    // Hash exactly the bounded bytes parsed, even when the logger is appending.
+    std::ifstream file(p,std::ios::binary); std::string bytes; char buffer[8192];
+    while (file.read(buffer,sizeof(buffer)) || file.gcount()) {
+        if (bytes.size()+static_cast<std::size_t>(file.gcount())>32U*1024U*1024U)
+            throw std::runtime_error("meter_input_limit");
+        bytes.append(buffer,static_cast<std::size_t>(file.gcount()));
+    }
+    if (file.bad()) throw std::runtime_error("meter_read_failure");
+    std::istringstream in(bytes); std::string line;
     if (!std::getline(in,line) || line != "unix_time_s,power_w") throw std::runtime_error("invalid_meter_header");
     std::vector<PowerSample> samples;
     while (std::getline(in,line)) {
@@ -44,7 +56,8 @@ EnergyMeasurement importPhysicalMeter(const std::string &p, std::uint64_t count,
         samples.emplace_back(parse(line.substr(0,pos)),parse(line.substr(pos+1)));
     }
     if (in.bad()) throw std::runtime_error("meter_read_failure");
-    return integratePowerSamples(samples,count,i,EvidenceClass::Measured);
+    auto m=integratePowerSamples(samples,count,i,EvidenceClass::Measured);
+    m.trace_sha256=shorthand::crypto::sha256(bytes); return m;
 }
 EnergyMeasurement integrateMeterWindow(const std::vector<PowerSample> &samples,double start,double end,std::uint64_t count,const Instrument &i) {
     // Validate the complete trace before clipping, including samples outside the window.
@@ -62,6 +75,12 @@ EnergyMeasurement integrateMeterWindow(const std::vector<PowerSample> &samples,d
     for (const auto &s:samples) if (s.first>start && s.first<end) clipped.push_back(s);
     clipped.push_back(interpolate(end));
     auto m=integratePowerSamples(clipped,count,i,EvidenceClass::Measured);
+    m.source_sample_count=0; m.maximum_source_gap_seconds=0;
+    for (std::size_t n=0;n<samples.size();++n) {
+        if (samples[n].first>=start && samples[n].first<=end) ++m.source_sample_count;
+        if (n && samples[n-1].first<end && samples[n].first>start)
+            m.maximum_source_gap_seconds=std::max(m.maximum_source_gap_seconds,samples[n].first-samples[n-1].first);
+    }
     m.reason="physical_meter_execution_window_interpolated_no_idle_subtraction";
     return m;
 }
@@ -84,6 +103,7 @@ EnergyMeasurement PhysicalMeterCollector::end(const EnergySample &s,std::uint64_
             trace=importPhysicalMeter(path_,count,instrument_);
         }
         m=integrateMeterWindow(trace.power_samples,s.unix_seconds,end,count,instrument_);
+        m.trace_sha256=trace.trace_sha256;
     } catch (const std::exception &e) { m.reason=e.what(); }
     return m;
 }

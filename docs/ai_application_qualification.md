@@ -1,7 +1,7 @@
 # CPU application and equivalent baseline qualification
 
 application_contract: shorthand.ai.application.v1
-current_github_pr: 96
+introduced_github_pr: 96
 application_scope: bounded_cpu_digit_classification
 controlled_hardware_evidence: pending
 production_claim: false
@@ -94,7 +94,7 @@ bash scripts/check_ai_application_baselines.sh /path/to/shorthand_ai_qualify /tm
 ```
 
 The test-only lock pins CPython 3.12/Linux x64 wheels, including ONNX Runtime
-1.30.0 and NumPy 2.3.5, by SHA-256. Three alternating runner pairs each perform
+1.30.0 and NumPy 2.3.5, by SHA-256. Four balanced alternating runner pairs each perform
 three trials, using the same model/data/configuration hashes, CPU fingerprint,
 threads, precision, batch/tail policy, normalization, top-k, quality and numeric
 limits. Both reuse sequential ONNX sessions with basic graph optimization,
@@ -114,8 +114,8 @@ ratio. Controlled performance budgets and broader families remain release gates.
 
 With `--require-energy`, the protocol must require a calibrated physical meter.
 Both runners' exact Unix execution windows are integrated by the same native
-collector; units, calibration, boundary, uncertainty and at least 11 window
-samples must agree. Missing, insufficiently sampled or unqualified energy fails.
+collector; units, calibration, boundary, uncertainty and at least 11 original window
+samples must agree. PR97 also retains sampling gaps and trace identity. Missing, insufficiently sampled or unqualified energy fails.
 Raw J/image values are retained. Sampling a very short workload is insufficient;
 operators must lengthen repetitions to suit the instrument. RAPL remains useful
 for native profiling, but RAPL-versus-physical-meter comparisons are rejected.
@@ -135,7 +135,7 @@ unsanitized GCC MLIR lane additionally runs the actual paired Python baseline.
 Test data are public, pinned and attributed; synthetic comparison-validator
 fixtures never stand in for measurements.
 
-The plan consolidates the remaining roadmap work into seven PR batches including
-PR96, six afterward. Physical measurements, performance budgets, larger workload
+The plan has six remaining batches including PR97, five afterward.
+PR97 adds [native trace replay and declared engineering policies](ai_comparison_measurement.md). Physical measurements, performance budgets, larger workload
 families, enterprise pilot, explicit CPU GA scope, lifecycle accounting, protected
 signed release operation, independent reproduction and certification remain open.

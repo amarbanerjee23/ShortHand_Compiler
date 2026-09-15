@@ -72,22 +72,22 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-14'
+  'as_of_date=2026-09-15'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=95'
-  'current_github_pr=96'
+  'last_merged_github_pr=96'
+  'current_github_pr=97'
   'last_planned_github_pr=unassigned'
-  'remaining_implementation_prs_including_current=7'
-  'remaining_implementation_prs_after_current=6'
+  'remaining_implementation_prs_including_current=6'
+  'remaining_implementation_prs_after_current=5'
   'coverage_matrix_status=implemented=32,partial=3,open=1,total=36'
   'mlir_dialect_contract=shorthand.mlir.v1'
   'mlir_dialect_scope=linux-x64-llvm18'
   'mlir_lowering_status=implemented_linux_x64_llvm18'
-  'current_roadmap_pr=94'
+  'current_roadmap_pr=95'
   'last_planned_roadmap_pr=102'
   'audit_follow_on_increments=6'
   'enterprise_execution_contract=shorthand.enterprise_language.v2'
@@ -216,20 +216,20 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-14-pr96' \
-  'LAST_MERGED_GITHUB_PR: 95' \
-  'CURRENT_GITHUB_PR: 96' \
+  'production_readiness_plan_version: 2026-09-15-pr97' \
+  'LAST_MERGED_GITHUB_PR: 96' \
+  'CURRENT_GITHUB_PR: 97' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'remaining_planned_implementation_increments_including_current: 7' \
-  'remaining_planned_implementation_increments_after_current: 6' \
+  'remaining_planned_implementation_increments_including_current: 6' \
+  'remaining_planned_implementation_increments_after_current: 5' \
   'PR91 - Auditor bundle, retention, surveillance and reporting'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-14-pr96' \
-  'current_github_pr: 96' \
-  'current_roadmap_scope: ai_applications_and_equivalent_baselines' \
+  'feature_status_version: 2026-09-15-pr97' \
+  'current_github_pr: 97' \
+  'current_roadmap_scope: measurement_grade_comparisons_and_regression' \
   '32 implemented, 3 partial and 1 open' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
@@ -239,7 +239,7 @@ for anchor in \
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-14-pr96' \
+  'compiler_test_strategy_version: 2026-09-15-pr97' \
   '36-area production test matrix' \
   '32 implemented areas' \
   '3 partial areas' \
@@ -310,32 +310,32 @@ for anchor in \
   require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
 done
 for anchor in \
-  'known_limitations_version: 2026-09-14-pr96' \
+  'known_limitations_version: 2026-09-15-pr97' \
   'current_maturity: controlled_beta' \
   'production_backend_scope: linux-x64-cpu-v1'; do
   require_contains "${LIMITATIONS}" "${anchor}"
 done
 for anchor in \
-  'release_level_status_version: 2026-09-14-pr96' \
+  'release_level_status_version: 2026-09-15-pr97' \
   'current_maturity: controlled_beta' \
   'final_planned_github_pr: unassigned'; do
   require_contains "${RELEASE_STATUS}" "${anchor}"
 done
 for anchor in \
-  'public_release_readiness_version: 2026-09-14-pr96' \
+  'public_release_readiness_version: 2026-09-15-pr97' \
   'current_maturity: controlled_beta' \
   'release_candidate_target: PR96'; do
   require_contains "${PUBLIC_READINESS}" "${anchor}"
 done
 for anchor in \
-  'enterprise_release_scorecard_version: 2026-09-14-pr96' \
+  'enterprise_release_scorecard_version: 2026-09-15-pr97' \
   'current_state: ER3-controlled-beta' \
   'target_state: ER4-enterprise-release-candidate'; do
   require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
 done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-14-pr96'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-15-pr97'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -383,7 +383,7 @@ open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "
 [[ "${implemented}" == 18 ]] || { echo "error: expected 18 implemented C3-ECO traceability rows" >&2; exit 1; }
 [[ "${partial}" == 8 ]] || { echo "error: expected 8 partial C3-ECO traceability rows" >&2; exit 1; }
 [[ "${open}" == 1 ]] || { echo "error: expected 1 open C3-ECO traceability rows" >&2; exit 1; }
-printf 'PRODUCTION_TRUTH current_pr=96 remaining=7 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=97 remaining=6 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 
 # PR91 adds cryptographically verified, replayable candidate auditor evidence.
@@ -419,8 +419,14 @@ require_contains "${ROOT_DIR}/tests/ctest_parity/expected_make_targets.txt" 'tes
 
 [[ "$(truth_value ai_application_contract)" == shorthand.ai.application.v1 ]]
 [[ "$(truth_value ai_application_status)" == implemented_bounded_cpu_digit_classification ]]
-[[ "$(truth_value ai_baseline_status)" == equivalent_execution_implemented_physical_measurements_pending ]]
+[[ "$(truth_value ai_baseline_status)" == equivalent_execution_replay_policy_implemented_physical_measurements_pending ]]
 require_contains "${ROOT_DIR}/docs/ai_application_qualification.md" 'controlled_hardware_evidence: pending'
 require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_application.py'
 require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'tests/ai_application/test_source_application.py'
 require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'scripts/check_ai_application_baselines.sh'
+
+[[ "$(truth_value ai_comparison_contract)" == shorthand.ai.application.comparison.v2 ]]
+[[ "$(truth_value ai_comparison_status)" == implemented_replay_policy_regression_physical_evidence_pending ]]
+require_contains "${ROOT_DIR}/docs/ai_comparison_measurement.md" 'controlled_hardware_evidence: pending'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_comparison_evidence.py'
+require_contains "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" 'assess_ai_application_comparison.py'

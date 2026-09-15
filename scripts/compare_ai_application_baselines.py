@@ -27,7 +27,14 @@ def load(path):
                 raise ValueError('duplicate JSON key')
             result[k] = v
         return result
-    return json.loads(pathlib.Path(path).read_text(), object_pairs_hook=pairs,
+    path = pathlib.Path(path)
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 32 * 1024 * 1024:
+        raise ValueError('unsafe or oversized evidence file')
+    with path.open('rb') as stream:
+        data = stream.read(32 * 1024 * 1024 + 1)
+    if len(data) > 32 * 1024 * 1024:
+        raise ValueError('evidence file grew beyond its bound')
+    return json.loads(data.decode('utf-8'), object_pairs_hook=pairs,
                       parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite JSON')))
 
 
@@ -36,13 +43,19 @@ def write(path, value):
 
 
 def sha(path):
-    return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with pathlib.Path(path).open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def execute(args):
     result = subprocess.run(list(map(str, args)), capture_output=True, text=True, timeout=1800,
                             env=dict(os.environ, ORT_DISABLE_TELEMETRY='1'))
-    if result.returncode or any(s in result.stderr for s in ('AddressSanitizer', 'LeakSanitizer', 'runtime error:')):
+    if result.returncode < 0 or any(s in result.stderr for s in ('AddressSanitizer', 'LeakSanitizer', 'runtime error:')):
+        raise AssertionError(f'runner crash or sanitizer finding: {result.stderr[-4000:]}')
+    if result.returncode:
         raise RuntimeError(f'runner failed ({result.returncode}): {result.stderr[-4000:]}')
 
 
@@ -146,17 +159,17 @@ def validate_pair(native, python, protocol, require_energy=False):
             raise ValueError('baseline numerical mismatch')
     energy = True
     for report in (native, python):
-        if not math.isfinite(report['accuracy']) or report['accuracy'] < report['minimum_accuracy']:
+        if not math.isfinite(report['accuracy']) or not report['minimum_accuracy'] <= report['accuracy'] <= 1:
             raise ValueError('baseline quality failure')
         if len(report['trials']) != protocol['trials'] or len(report['trials']) < 3:
             raise ValueError('baseline requires complete repeated trials')
         for trial in report['trials']:
-            if not trial['success'] or trial['completed'] != report['rows'] * protocol['repetitions'] or not math.isfinite(trial['elapsed_ms']) or trial['elapsed_ms'] <= 0 or not math.isfinite(trial['accuracy']) or trial['accuracy'] < report['minimum_accuracy']:
+            if trial['success'] is not True or type(trial['completed']) is not int or trial['completed'] != report['rows'] * protocol['repetitions'] or not math.isfinite(trial['elapsed_ms']) or trial['elapsed_ms'] <= 0 or not math.isfinite(trial['accuracy']) or not report['minimum_accuracy'] <= trial['accuracy'] <= 1:
                 raise ValueError('baseline incomplete trial')
             measured = trial.get('energy', {})
             valid = (measured.get('claim_eligible') is True and measured.get('available') is True and measured.get('evidence_class') == 'measured'
                      and measured.get('source_kind') == 'physical_meter' and measured.get('functional_units') == trial['completed']
-                     and measured.get('sample_count', 0) >= 11 and measured.get('joules_per_fu', 0) > 0
+                     and measured.get('source_sample_count', 0) >= 11 and measured.get('joules_per_fu', 0) > 0
                      and measured.get('instrument', {}).get('uncertainty_percent', 101) <= protocol.get('maximum_uncertainty_percent', 20))
             if valid:
                 valid = (all(math.isfinite(measured[k]) and measured[k] > 0 for k in ('joules', 'joules_per_fu', 'elapsed_seconds', 'average_watts'))
@@ -180,33 +193,71 @@ def main():
     parser.add_argument('--config', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, required=True)
     parser.add_argument('--require-energy', action='store_true')
+    parser.add_argument('--pairs', type=int, default=4, help='even number of alternating runner pairs, 4 to 10')
+    parser.add_argument('--policy', type=pathlib.Path, help='engineering policy frozen before execution')
     parser.add_argument('--python-worker', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.python_worker:
         worker(args.config, args.output, args.tool)
         return
-    args.output.mkdir(parents=True, exist_ok=True)
+    from assess_ai_application_comparison import validate_policy
+    if args.pairs < 4 or args.pairs > 10 or args.pairs % 2:
+        parser.error('comparison requires 4 to 10 balanced runner pairs')
+    args.output.mkdir(parents=True, exist_ok=False)
+    policy_path = args.policy or pathlib.Path(__file__).resolve().parents[1] / 'tests/ai_application' / (
+        'comparison_measurement_policy.json' if args.require_energy else 'comparison_execution_policy.json')
+    policy = load(policy_path)
+    validate_policy(policy)
+    if (policy['mode'] == 'calibrated_energy') != args.require_energy or args.pairs < policy['minimum_pairs']:
+        parser.error('execution mode and pair count must meet the declared policy')
     c = load(args.config)
     q = load(c['qualification_config'])
+    inputs = {'application-config.json': args.config, 'qualification-config.json': pathlib.Path(c['qualification_config']),
+              'policy.json': policy_path}
+    for name, path in inputs.items():
+        (args.output / name).write_bytes(path.read_bytes())
+    pinned = {name: sha(args.output / name) for name in inputs}
+    native_binary = sha(args.tool)
+    started = time.time()
     if args.require_energy and (q.get('energy_source') != 'physical_meter' or not q.get('require_measured_energy')):
         parser.error('energy comparison requires the calibrated physical-meter protocol')
     pairs, energy_values = [], {'native': [], 'python': []}
-    for index in range(3):
+    for index in range(args.pairs):
         paths = {key: args.output / f'{index}-{key}.json' for key in ('native', 'python')}
         order = ('native', 'python') if index % 2 == 0 else ('python', 'native')
         for key in order:
+            process_start = time.perf_counter()
             if key == 'native':
                 execute([args.tool, 'application', args.config, paths[key]])
             else:
                 execute([sys.executable, __file__, '--python-worker', '--tool', args.tool, '--config', args.config, '--output', paths[key]])
             report = load(paths[key])
-            if q.get('energy_source') == 'physical_meter':
-                # Integrate both runners using their exact recorded execution
-                # timestamps and the same native parser after each runner stops.
+            report['process_elapsed_ms'] = (time.perf_counter() - process_start) * 1000
+            write(paths[key], report)
+        pairs.append(dict(order=list(order), native_file=paths['native'].name, python_file=paths['python'].name))
+    raw_trace = None
+    if q.get('energy_source') == 'physical_meter':
+        source = pathlib.Path(q['meter_csv'])
+        if source.is_symlink() or not source.is_file() or source.stat().st_size > 32 * 1024 * 1024:
+            raise ValueError('unsafe physical trace')
+        with source.open('rb') as stream:
+            data = stream.read(32 * 1024 * 1024 + 1)
+        if len(data) > 32 * 1024 * 1024 or not data.endswith(b'\n'):
+            raise ValueError('incomplete or oversized physical trace snapshot')
+        (args.output / 'meter.csv').write_bytes(data)
+        write(args.output / 'instrument.json', q['instrument'])
+        raw_trace = dict(file='meter.csv', sha256=sha(args.output / 'meter.csv'),
+                         instrument_file='instrument.json', instrument_sha256=sha(args.output / 'instrument.json'))
+    # Trial windows share one immutable snapshot. Other phases stay separate.
+    for index, pair in enumerate(pairs):
+        paths = {key: args.output / pair[key + '_file'] for key in ('native', 'python')}
+        if raw_trace:
+            for key in paths:
+                report = load(paths[key])
                 for n, trial in enumerate(report['trials']):
                     measurement = args.output / f'{index}-{key}-meter-{n}.json'
-                    execute([args.tool, 'application-meter-window', args.config, trial['start_unix_seconds'],
-                             trial['end_unix_seconds'], trial['completed'], measurement])
+                    execute([args.tool, 'meter-window', args.output / 'meter.csv', args.output / 'instrument.json',
+                             trial['start_unix_seconds'], trial['end_unix_seconds'], trial['completed'], measurement])
                     trial['energy'] = load(measurement)
                 write(paths[key], report)
         a, b = (load(paths[key]) for key in ('native', 'python'))
@@ -214,13 +265,16 @@ def main():
         if energy:
             for key, report in [('native', a), ('python', b)]:
                 energy_values[key].extend(t['energy']['joules_per_fu'] for t in report['trials'])
-        pairs.append(dict(order=list(order), native_sha256=sha(paths['native']), python_sha256=sha(paths['python']),
-                          native_file=paths['native'].name, python_file=paths['python'].name, energy_comparison_valid=energy,
+        pair.update(dict(native_sha256=sha(paths['native']), python_sha256=sha(paths['python']), energy_comparison_valid=energy,
                           native_ms_per_image=[t['elapsed_ms']/t['completed'] for t in a['trials']],
                           python_ms_per_image=[t['elapsed_ms']/t['completed'] for t in b['trials']]))
+    if any(sha(path) != pinned[name] for name, path in inputs.items()) or sha(args.tool) != native_binary:
+        raise ValueError('comparison inputs changed during execution')
     native_ms = [v for p in pairs for v in p['native_ms_per_image']]
     python_ms = [v for p in pairs for v in p['python_ms_per_image']]
-    write(args.output / 'comparison.json', dict(schema='shorthand.ai.application.comparison.v1', success=True,
+    write(args.output / 'comparison.json', dict(schema='shorthand.ai.application.comparison.v2', success=True,
+          inputs=pinned, native_binary_sha256=native_binary, baseline_source_sha256=sha(__file__),
+          capture_started_unix_seconds=started, capture_finished_unix_seconds=time.time(), raw_trace=raw_trace,
           scope='native host AIRuntime application versus optimized Python ONNX; not a compiler or whole-language ranking',
           pairs=pairs, mean_native_ms_per_image=statistics.mean(native_ms), mean_python_ms_per_image=statistics.mean(python_ms),
           observed_native_over_python_latency_ratio=statistics.mean(native_ms)/statistics.mean(python_ms),

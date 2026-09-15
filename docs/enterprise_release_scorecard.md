@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-09-14-pr96
+enterprise_release_scorecard_version: 2026-09-15-pr97
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -47,3 +47,5 @@ Historical scorecard marker: enterprise_release_scorecard_version: 2026-09-01-pr
 GitHub PR96 candidate auditor evidence is implemented: signatures, replay, lifecycle policy, nonconformities and public redaction. Independent certification and physical evidence-store controls remain external.
 
 GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.
+
+PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workloads and enterprise pilot evidence remain open.

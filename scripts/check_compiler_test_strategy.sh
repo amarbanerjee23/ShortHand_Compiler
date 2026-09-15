@@ -101,7 +101,7 @@ require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-14-pr96' \
+  'compiler_test_strategy_version: 2026-09-15-pr97' \
   'production_claim: false' \
   '32 implemented areas' \
   '3 partial areas' \
@@ -130,7 +130,7 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-14-pr96'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-15-pr97'
 require_contains "${STATUS}" '32 implemented, 3 partial and 1 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
@@ -252,3 +252,8 @@ require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'PASS mandatory
 require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_application.py'
 require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'tests/ai_application/test_source_application.py'
 require_contains "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" ' --require-hashes'
+
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_comparison_evidence.py'
+require_contains "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" 'assess_ai_application_comparison.py'
+require_contains "${ROOT_DIR}/scripts/assess_ai_application_comparison.py" 'replay_measurement'
+require_contains "${ROOT_DIR}/scripts/assess_ai_application_comparison.py" 'compare_previous'

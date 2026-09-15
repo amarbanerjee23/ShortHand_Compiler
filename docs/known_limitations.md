@@ -1,6 +1,6 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-14-pr96
+known_limitations_version: 2026-09-15-pr97
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
@@ -24,3 +24,5 @@ PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference l
 PR92 implements the generated MLIR dialect and downstream SDK for Linux x64/LLVM 18. GitHub PR94 adds executable source/SDK lowering in that scope. Nested or heap-owning composites, composite FFI, escaping stack borrows and other MLIR platforms remain unsupported; see [the exact v2 surface](mlir_lowering.md).
 
 PR96 qualifies a bounded real optical-digit application and native/Python execution comparison. Broader model families, independently calibrated paired energy, performance budgets and enterprise pilot evidence remain open. See [application boundaries](ai_application_qualification.md).
+
+PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workloads and enterprise pilot evidence remain open.

@@ -45,6 +45,12 @@ int main(int argc,char **argv) {
         check(meter.joules==130 && meter.joules_per_fu==65,"trapezoid"); check(!meter.claimEligible(),"synthetic_not_claim_eligible");
         auto window=integrateMeterWindow({{1780000000,20},{1780000001,40},{1780000003,60}},1780000000.5,1780000002,1,instrument());
         check(window.joules==62.5 && window.power_samples.size()==3,"meter_window_interpolation");
+        check(window.source_sample_count==1 && window.maximum_source_gap_seconds==2,"real_samples_exclude_interpolated_endpoints");
+        auto sparse=integrateMeterWindow({{1780000000,20},{1780000010,20}},1780000001,1780000002,1,instrument());
+        check(sparse.source_sample_count==0 && sparse.sample_count==2 && sparse.maximum_source_gap_seconds==10,
+            "sparse_source_gap_survives_window_clipping");
+        auto exact=integrateMeterWindow({{1780000000,20},{1780000001,20},{1780000010,20}},1780000000,1780000001,1,instrument());
+        check(exact.source_sample_count==2 && exact.maximum_source_gap_seconds==1,"exact_source_endpoints_count_once");
         rejects([&]{integrateMeterWindow({{1780000000,20},{1780000001,40}},1780000000.5,1780000002,1,instrument());},"meter_window_not_bracketed");
         auto malformed=window; malformed.end_unix_seconds=NAN; check(!malformed.claimEligible(),"nan_end_rejected");
         malformed=window; malformed.joules_per_fu=1; check(!malformed.claimEligible(),"inconsistent_fu_rejected");
