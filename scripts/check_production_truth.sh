@@ -38,6 +38,12 @@ ENTERPRISE_MATRIX="${ROOT_DIR}/tests/conformance/enterprise_matrix_beta_0_6.tsv"
 ENTERPRISE_GATE="${ROOT_DIR}/scripts/check_enterprise_packages_stdlib_ffi.sh"
 SERVING_CONTRACT="${ROOT_DIR}/docs/concurrent_serving_runtime.md"
 SERVING_GATE="${ROOT_DIR}/scripts/check_concurrent_serving_runtime.sh"
+BENCHMARK_CONTRACT="${ROOT_DIR}/docs/ai_benchmark_families.md"
+BENCHMARK_SCHEMA="${ROOT_DIR}/schemas/ai_benchmark_suite_v1.schema.json"
+BENCHMARK_MANIFEST="${ROOT_DIR}/tests/ai_benchmark/benchmark_suite_v1.json"
+BENCHMARK_VALIDATOR="${ROOT_DIR}/scripts/validate_ai_benchmark_suite.py"
+BENCHMARK_RUNTIME="${ROOT_DIR}/tests/ai_benchmark/test_benchmark_runtime.cpp"
+BENCHMARK_TEST="${ROOT_DIR}/tests/ai_benchmark/test_benchmark_contract.py"
 README="${ROOT_DIR}/README.md"
 OBJECTIVES="${ROOT_DIR}/docs/language_objectives.md"
 ENTERPRISE_STRATEGY="${ROOT_DIR}/docs/enterprise_release_strategy.md"
@@ -57,7 +63,8 @@ for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATE
   "${ASSESSMENT_CONTRACT}" "${ASSESSMENT_SCHEMA}" "${ASSESSMENT_TOOL}" "${ASSESSMENT_GATE}" \
   "${CONTROL_FLOW_CONTRACT}" "${CONTROL_FLOW_MATRIX}" "${CONTROL_FLOW_GATE}" \
   "${ENTERPRISE_CONTRACT}" "${ENTERPRISE_MATRIX}" "${ENTERPRISE_GATE}" \
-  "${SERVING_CONTRACT}" "${SERVING_GATE}" "${README}"; do
+  "${SERVING_CONTRACT}" "${SERVING_GATE}" "${BENCHMARK_CONTRACT}" "${BENCHMARK_SCHEMA}" \
+  "${BENCHMARK_MANIFEST}" "${BENCHMARK_VALIDATOR}" "${BENCHMARK_RUNTIME}" "${BENCHMARK_TEST}" "${README}"; do
   require_file "${file}"
 done
 for file in "${OBJECTIVES}" "${ENTERPRISE_STRATEGY}" "${HISTORICAL_RELEASE_PLAN}" \
@@ -78,16 +85,16 @@ expected_truth=(
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=96'
-  'current_github_pr=97'
+  'last_merged_github_pr=97'
+  'current_github_pr=98'
   'last_planned_github_pr=unassigned'
-  'remaining_implementation_prs_including_current=6'
-  'remaining_implementation_prs_after_current=5'
+  'remaining_implementation_prs_including_current=5'
+  'remaining_implementation_prs_after_current=4'
   'coverage_matrix_status=implemented=32,partial=3,open=1,total=36'
   'mlir_dialect_contract=shorthand.mlir.v1'
   'mlir_dialect_scope=linux-x64-llvm18'
   'mlir_lowering_status=implemented_linux_x64_llvm18'
-  'current_roadmap_pr=95'
+  'current_roadmap_pr=98'
   'last_planned_roadmap_pr=102'
   'audit_follow_on_increments=6'
   'enterprise_execution_contract=shorthand.enterprise_language.v2'
@@ -116,6 +123,15 @@ expected_truth=(
   'level_claim_permitted=false'
   'protected_release_exercise=pending'
   'mandatory_test_skip_policy=forbidden'
+  'ai_qualification_contract=shorthand.ai.cpu_qualification.v1'
+  'ai_qualification_status=implemented_controlled_hardware_evidence_pending'
+  'ai_application_contract=shorthand.ai.application.v1'
+  'ai_application_status=implemented_bounded_cpu_digit_classification'
+  'ai_baseline_status=equivalent_execution_replay_policy_implemented_physical_measurements_pending'
+  'ai_comparison_contract=shorthand.ai.application.comparison.v2'
+  'ai_comparison_status=implemented_replay_policy_regression_physical_evidence_pending'
+  'ai_benchmark_contract=shorthand.ai.benchmark_suite.v1'
+  'ai_benchmark_status=bounded_cpu_family_execution_implemented_external_quality_baselines_and_physical_energy_pending'
 )
 for expected in "${expected_truth[@]}"; do
   key="${expected%%=*}"
@@ -187,14 +203,12 @@ for id in G4 G5; do
   blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
   [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR89 requires ${id} implemented and non-blocking" >&2; exit 1; }
 done
-
 for id in G7 G13 G14 A G J; do
   status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
   blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
   [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR90 requires ${id} implemented and non-blocking" >&2; exit 1; }
 done
 
-# Preserve the full inherited production-truth documentation contract.
 for anchor in \
   'production_truth_contract: shorthand.production.truth.v1' \
   'current_maturity: controlled_beta' \
@@ -216,21 +230,24 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-15-pr97' \
-  'LAST_MERGED_GITHUB_PR: 96' \
-  'CURRENT_GITHUB_PR: 97' \
+  'production_readiness_plan_version: 2026-09-15-pr98' \
+  'LAST_MERGED_GITHUB_PR: 97' \
+  'CURRENT_GITHUB_PR: 98' \
+  'CURRENT_ROADMAP_PR: 98' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'remaining_planned_implementation_increments_including_current: 6' \
-  'remaining_planned_implementation_increments_after_current: 5' \
-  'PR91 - Auditor bundle, retention, surveillance and reporting'; do
+  'remaining_planned_implementation_increments_including_current: 5' \
+  'remaining_planned_implementation_increments_after_current: 4' \
+  'PR91 - Auditor bundle, retention, surveillance and reporting' \
+  'PR98 - Realistic benchmark families | IN PROGRESS as GitHub PR98'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-15-pr97' \
-  'current_github_pr: 97' \
-  'current_roadmap_scope: measurement_grade_comparisons_and_regression' \
+  'feature_status_version: 2026-09-15-pr98' \
+  'current_github_pr: 98' \
+  'current_roadmap_scope: realistic_ai_benchmark_families' \
   '32 implemented, 3 partial and 1 open' \
+  'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
@@ -269,7 +286,6 @@ require_contains "${ROOT_DIR}/scripts/check_mlir_dialect.sh" 'PASS PR92 generate
 require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'test "${{ needs.mlir.result }}" = "success"'
 require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:strict_string_checks=1'
 
-# PR89 measurement/accounting contract is additive to all inherited checks.
 require_contains "${MEASUREMENT_CONTRACT}" 'shorthand.c3eco.measurement_workbook.v1'
 require_contains "${MEASUREMENT_CONTRACT}" '`modelled`, `declared_budget_only`'
 require_contains "${MEASUREMENT_CONTRACT}" 'cumulative allocation must not exceed 1.0'
@@ -280,7 +296,6 @@ require_contains "${MEASUREMENT_TOOL}" 'double counting detected'
 require_contains "${MEASUREMENT_TOOL}" 'base_footprint_not_reduced_by_offsets'
 require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
 
-# PR90 assessment is additive and remains a candidate recommendation only.
 require_contains "${ASSESSMENT_CONTRACT}" 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1'
 require_contains "${ASSESSMENT_CONTRACT}" 'Exactly the 76 catalog criteria'
 require_contains "${ASSESSMENT_CONTRACT}" 'official_certification_granted:false'
@@ -296,43 +311,12 @@ require_contains "${ASSESSMENT_TOOL}" 'candidate_recommendation_only'
 require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/C3EcoAssessmentScoring.cpp" 'unresolved_eco_regression_caps_recommendation_at_bronze'
 require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate'
 
-# Inherited language/release/security/observability evidence remains mandatory.
-for anchor in \
-  'Language version: beta-0.7' \
-  'Base grammar version: beta-0.2' \
-  'production_claim: false'; do
-  require_contains "${LANGUAGE_SPEC}" "${anchor}"
-done
-for anchor in \
-  'language_compatibility_contract: shorthand.language.compatibility.v1' \
-  'active_language_version: beta-0.7' \
-  'production_claim: false'; do
-  require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"
-done
-for anchor in \
-  'known_limitations_version: 2026-09-15-pr97' \
-  'current_maturity: controlled_beta' \
-  'production_backend_scope: linux-x64-cpu-v1'; do
-  require_contains "${LIMITATIONS}" "${anchor}"
-done
-for anchor in \
-  'release_level_status_version: 2026-09-15-pr97' \
-  'current_maturity: controlled_beta' \
-  'final_planned_github_pr: unassigned'; do
-  require_contains "${RELEASE_STATUS}" "${anchor}"
-done
-for anchor in \
-  'public_release_readiness_version: 2026-09-15-pr97' \
-  'current_maturity: controlled_beta' \
-  'release_candidate_target: PR96'; do
-  require_contains "${PUBLIC_READINESS}" "${anchor}"
-done
-for anchor in \
-  'enterprise_release_scorecard_version: 2026-09-15-pr97' \
-  'current_state: ER3-controlled-beta' \
-  'target_state: ER4-enterprise-release-candidate'; do
-  require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"
-done
+for anchor in 'Language version: beta-0.7' 'Base grammar version: beta-0.2' 'production_claim: false'; do require_contains "${LANGUAGE_SPEC}" "${anchor}"; done
+for anchor in 'language_compatibility_contract: shorthand.language.compatibility.v1' 'active_language_version: beta-0.7' 'production_claim: false'; do require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"; done
+for anchor in 'known_limitations_version: 2026-09-15-pr97' 'current_maturity: controlled_beta' 'production_backend_scope: linux-x64-cpu-v1'; do require_contains "${LIMITATIONS}" "${anchor}"; done
+for anchor in 'release_level_status_version: 2026-09-15-pr97' 'current_maturity: controlled_beta' 'final_planned_github_pr: unassigned'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
+for anchor in 'public_release_readiness_version: 2026-09-15-pr97' 'current_maturity: controlled_beta' 'release_candidate_target: PR96'; do require_contains "${PUBLIC_READINESS}" "${anchor}"; done
+for anchor in 'enterprise_release_scorecard_version: 2026-09-15-pr97' 'current_state: ER3-controlled-beta' 'target_state: ER4-enterprise-release-candidate'; do require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"; done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
 require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-15-pr97'
@@ -383,10 +367,9 @@ open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "
 [[ "${implemented}" == 18 ]] || { echo "error: expected 18 implemented C3-ECO traceability rows" >&2; exit 1; }
 [[ "${partial}" == 8 ]] || { echo "error: expected 8 partial C3-ECO traceability rows" >&2; exit 1; }
 [[ "${open}" == 1 ]] || { echo "error: expected 1 open C3-ECO traceability rows" >&2; exit 1; }
-printf 'PRODUCTION_TRUTH current_pr=97 remaining=6 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=98 remaining=5 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 
-# PR91 adds cryptographically verified, replayable candidate auditor evidence.
 require_contains "${ROOT_DIR}/docs/c3eco_auditor_bundle.md" 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1'
 require_contains "${ROOT_DIR}/schemas/c3eco/auditor_bundle_v1.schema.json" 'shorthand.c3eco.auditor_bundle.v1'
 require_contains "${ROOT_DIR}/schemas/c3eco/audit_policy_v1.schema.json" 'shorthand.c3eco.audit_policy.v1'
@@ -407,9 +390,7 @@ done
 
 require_contains "${ROOT_DIR}/docs/mlir_lowering.md" 'qualified_lowering_scope: linux-x64-llvm18'
 require_contains "${ROOT_DIR}/scripts/check_mlir_dialect.sh" 'bash "${ROOT_DIR}/scripts/check_mlir_lowering.sh"'
-printf 'PASS production truth and C3-ECO traceability gate\n'
 
-# PR95 is an additive qualification candidate, not a production/carbon claim.
 [[ "$(truth_value ai_qualification_contract)" == shorthand.ai.cpu_qualification.v1 ]]
 [[ "$(truth_value ai_qualification_status)" == implemented_controlled_hardware_evidence_pending ]]
 require_contains "${ROOT_DIR}/docs/ai_cpu_energy_qualification.md" 'controlled_hardware_evidence: pending'
@@ -430,3 +411,18 @@ require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'scripts/check_ai_
 require_contains "${ROOT_DIR}/docs/ai_comparison_measurement.md" 'controlled_hardware_evidence: pending'
 require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_comparison_evidence.py'
 require_contains "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" 'assess_ai_application_comparison.py'
+
+[[ "$(truth_value ai_benchmark_contract)" == shorthand.ai.benchmark_suite.v1 ]]
+[[ "$(truth_value ai_benchmark_status)" == bounded_cpu_family_execution_implemented_external_quality_baselines_and_physical_energy_pending ]]
+require_contains "${BENCHMARK_CONTRACT}" 'benchmark_family_contract: shorthand.ai.benchmark_suite.v1'
+require_contains "${BENCHMARK_CONTRACT}" 'full_standard_dataset_coverage: false'
+require_contains "${BENCHMARK_CONTRACT}" 'full_equivalent_baseline_coverage: false'
+require_contains "${BENCHMARK_CONTRACT}" 'lowest_carbon_language_claim: false'
+require_contains "${BENCHMARK_SCHEMA}" 'shorthand.ai.benchmark_suite.v1'
+require_contains "${BENCHMARK_MANIFEST}" '"calibrated_energy_coverage": false'
+require_contains "${BENCHMARK_RUNTIME}" 'INT8 internal roundtrip exceeded quantization bound'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_benchmark/test_benchmark_runtime.cpp'
+python3 "${BENCHMARK_VALIDATOR}" "${BENCHMARK_MANIFEST}" "${ROOT_DIR}"
+python3 "${BENCHMARK_TEST}" "${ROOT_DIR}"
+
+printf 'PASS production truth and C3-ECO traceability gate\n'
