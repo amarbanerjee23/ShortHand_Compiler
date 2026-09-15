@@ -6,11 +6,11 @@ current_maturity	controlled_beta
 production_claim	false
 active_language_version	beta-0.7
 base_grammar_version	beta-0.2
-last_merged_github_pr	96
-current_github_pr	97
+last_merged_github_pr	97
+current_github_pr	98
 last_planned_github_pr	unassigned
-remaining_implementation_prs_including_current	6
-remaining_implementation_prs_after_current	5
+remaining_implementation_prs_including_current	5
+remaining_implementation_prs_after_current	4
 coverage_matrix_status	implemented=32,partial=3,open=1,total=36
 type_system_contract	shorthand.type_memory.v1
 control_flow_contract	shorthand.control_flow.v1
@@ -39,7 +39,7 @@ c3eco_auditor_status	signed_candidate_evidence_with_assessment_replay
 mlir_dialect_contract	shorthand.mlir.v1
 mlir_dialect_scope	linux-x64-llvm18
 mlir_lowering_status	implemented_linux_x64_llvm18
-current_roadmap_pr	95
+current_roadmap_pr	98
 last_planned_roadmap_pr	102
 audit_follow_on_increments	6
 enterprise_execution_contract	shorthand.enterprise_language.v2
@@ -51,3 +51,5 @@ ai_application_status	implemented_bounded_cpu_digit_classification
 ai_baseline_status	equivalent_execution_replay_policy_implemented_physical_measurements_pending
 ai_comparison_contract	shorthand.ai.application.comparison.v2
 ai_comparison_status	implemented_replay_policy_regression_physical_evidence_pending
+ai_benchmark_contract	shorthand.ai.benchmark_suite.v1
+ai_benchmark_status	bounded_cpu_family_execution_implemented_external_quality_baselines_and_physical_energy_pending
