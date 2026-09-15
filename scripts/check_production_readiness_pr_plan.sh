@@ -13,6 +13,10 @@ ASSESSMENT_DOC="${ROOT_DIR}/docs/c3eco_certification_assessment.md"
 ASSESSMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
 AUDITOR_DOC="${ROOT_DIR}/docs/c3eco_auditor_bundle.md"
 AUDITOR_GATE="${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
+BENCHMARK_DOC="${ROOT_DIR}/docs/ai_benchmark_families.md"
+BENCHMARK_SCHEMA="${ROOT_DIR}/schemas/ai_benchmark_suite_v1.schema.json"
+BENCHMARK_MANIFEST="${ROOT_DIR}/tests/ai_benchmark/benchmark_suite_v1.json"
+BENCHMARK_GATE="${ROOT_DIR}/scripts/validate_ai_benchmark_suite.py"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
@@ -20,7 +24,7 @@ TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
 require_file() { [[ -s "$1" ]] || { echo "error: missing required file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_GATE}" "${ASSESSMENT_DOC}" "${ASSESSMENT_GATE}" "${AUDITOR_DOC}" "${AUDITOR_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
+for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_GATE}" "${ASSESSMENT_DOC}" "${ASSESSMENT_GATE}" "${AUDITOR_DOC}" "${AUDITOR_GATE}" "${BENCHMARK_DOC}" "${BENCHMARK_SCHEMA}" "${BENCHMARK_MANIFEST}" "${BENCHMARK_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
@@ -58,17 +62,18 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-15-pr97' \
+  'production_readiness_plan_version: 2026-09-15-pr98' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 96' \
-  'CURRENT_GITHUB_PR: 97' \
+  'LAST_MERGED_GITHUB_PR: 97' \
+  'CURRENT_GITHUB_PR: 98' \
+  'CURRENT_ROADMAP_PR: 98' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'CURRENT_IMPLEMENTATION_SCOPE: measurement_grade_comparisons_and_regression' \
+  'CURRENT_IMPLEMENTATION_SCOPE: realistic_ai_benchmark_families' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'GitHub PR97 - measurement-grade comparisons and regression controls is IN PROGRESS.' \
-  'remaining_planned_implementation_increments_including_current: 6' \
-  'remaining_planned_implementation_increments_after_current: 5' \
+  'GitHub PR98 - broader realistic AI benchmark families is IN PROGRESS.' \
+  'remaining_planned_implementation_increments_including_current: 5' \
+  'remaining_planned_implementation_increments_after_current: 4' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -101,6 +106,7 @@ require_contains "${PLAN}" '| PR89 - Measurement, carbon accounting and cost wor
 require_contains "${PLAN}" '| PR90 - Eligibility, scoring, claims and eco-regression | MERGED'
 require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and reporting | MERGED'
 require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
+require_contains "${PLAN}" '| PR98 - Realistic benchmark families | IN PROGRESS as GitHub PR98'
 
 for anchor in \
   'ci_pipeline_architecture_version: 2026-09-15-pr97' \
@@ -164,7 +170,12 @@ require_contains "${ASSESSMENT_DOC}" 'c3eco_assessment_contract: shorthand.c3eco
 require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring claims and eco-regression gate'
 require_contains "${AUDITOR_DOC}" 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1'
 require_contains "${AUDITOR_GATE}" 'PASS PR91 signed auditor lineage replay retention surveillance redaction and readiness gate'
+require_contains "${BENCHMARK_DOC}" 'benchmark_family_contract: shorthand.ai.benchmark_suite.v1'
+require_contains "${BENCHMARK_DOC}" 'lowest_carbon_language_claim: false'
+require_contains "${BENCHMARK_SCHEMA}" 'shorthand.ai.benchmark_suite.v1'
+require_contains "${BENCHMARK_MANIFEST}" '"comparative_energy_claim": false'
 require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases'
+python3 "${BENCHMARK_GATE}" "${BENCHMARK_MANIFEST}" "${ROOT_DIR}"
 
 # Historical milestones remain auditable without being mistaken for active state.
 for anchor in \

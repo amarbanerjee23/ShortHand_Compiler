@@ -1,0 +1,90 @@
+{
+  "schema": "shorthand.ai.benchmark_suite.v1",
+  "suite_id": "pr98-linux-x64-cpu-family-qualification",
+  "production_scope": "linux-x64-cpu-v1",
+  "families": [
+    {
+      "family": "classification",
+      "evidence_class": "real_held_out_dataset",
+      "quality_scope": "UCI Optdigits held-out accuracy and top-k",
+      "execution_evidence": ["tests/ai_application/test_application.py"],
+      "baseline_evidence": ["scripts/check_ai_application_baselines.sh"],
+      "baseline_status": "qualified_execution_comparison",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": true,
+      "production_claim": false
+    },
+    {
+      "family": "detection",
+      "evidence_class": "controlled_model_and_execution_fixture",
+      "quality_scope": "tensor execution agreement; no detection mAP claim",
+      "execution_evidence": ["tests/ai_energy/controlled/models.json", "tests/ai_benchmark/test_benchmark_runtime.cpp"],
+      "baseline_evidence": [],
+      "baseline_status": "equivalent_baseline_pending",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": false,
+      "production_claim": false
+    },
+    {
+      "family": "retrieval",
+      "evidence_class": "deterministic_execution_fixture",
+      "quality_scope": "batched similarity-tensor execution and deterministic prepared-session agreement",
+      "execution_evidence": ["tests/ai_benchmark/test_benchmark_runtime.cpp"],
+      "baseline_evidence": [],
+      "baseline_status": "equivalent_baseline_pending",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": false,
+      "production_claim": false
+    },
+    {
+      "family": "training",
+      "evidence_class": "native_training_correctness_fixture",
+      "quality_scope": "reference CNN loss reduction, validation accuracy and deterministic thread reduction",
+      "execution_evidence": ["tests/ai_energy/test_qualification.py", "tests/ai_energy/training_tsan.cpp"],
+      "baseline_evidence": [],
+      "baseline_status": "equivalent_baseline_pending",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": false,
+      "production_claim": false
+    },
+    {
+      "family": "quantized_inference",
+      "evidence_class": "deterministic_execution_fixture",
+      "quality_scope": "INT8/UINT8 internal QuantizeLinear/DequantizeLinear with finite FP32 host boundary and bounded error",
+      "execution_evidence": ["tests/ai_benchmark/create_family_fixtures.py", "tests/ai_benchmark/test_benchmark_runtime.cpp"],
+      "baseline_evidence": [],
+      "baseline_status": "equivalent_baseline_pending",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": false,
+      "production_claim": false
+    },
+    {
+      "family": "batched_inference",
+      "evidence_class": "real_held_out_dataset",
+      "quality_scope": "Optdigits batch-size 1/16/32 prediction equivalence and padding exclusion",
+      "execution_evidence": ["tests/ai_application/test_application.py"],
+      "baseline_evidence": ["scripts/check_ai_application_baselines.sh"],
+      "baseline_status": "qualified_execution_comparison",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": true,
+      "production_claim": false
+    },
+    {
+      "family": "concurrent_serving",
+      "evidence_class": "real_held_out_dataset",
+      "quality_scope": "bounded concurrent serving prediction equivalence, isolation, recovery and prepared-session concurrency",
+      "execution_evidence": ["tests/ai_application/test_application.py", "tests/ai_benchmark/test_benchmark_runtime.cpp"],
+      "baseline_evidence": ["scripts/check_ai_application_baselines.sh"],
+      "baseline_status": "qualified_execution_comparison",
+      "energy_status": "calibrated_physical_measurement_pending",
+      "standard_dataset_quality": true,
+      "production_claim": false
+    }
+  ],
+  "full_standard_dataset_coverage": false,
+  "full_equivalent_baseline_coverage": false,
+  "calibrated_energy_coverage": false,
+  "comparative_energy_claim": false,
+  "official_certification_granted": false,
+  "lowest_carbon_language_claim": false
+}
