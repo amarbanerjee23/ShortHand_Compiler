@@ -133,6 +133,7 @@ These strings are historical compatibility anchors required by the repository's 
 - current_github_pr: 89
 - current_roadmap_scope: measurement_carbon_accounting_cost_workbook
 - 28 implemented, 3 partial and 3 open
+- GitHub PR89 now implements `shorthand.c3eco.measurement_workbook.v1`
 - feature_status_version: 2026-09-01-pr88
 - current_github_pr: 88
 - current_roadmap_scope: typed_c3eco_certification_profile
