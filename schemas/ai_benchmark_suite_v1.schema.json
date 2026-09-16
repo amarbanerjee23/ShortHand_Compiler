@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "shorthand.ai.benchmark_suite.v1",
+  "title": "ShortHand bounded AI benchmark family evidence suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "suite_id", "production_scope", "families", "full_standard_dataset_coverage", "full_equivalent_baseline_coverage", "calibrated_energy_coverage", "comparative_energy_claim", "official_certification_granted", "lowest_carbon_language_claim"],
+  "properties": {
+    "schema": {"const": "shorthand.ai.benchmark_suite.v1"},
+    "suite_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "production_scope": {"const": "linux-x64-cpu-v1"},
+    "families": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["family", "evidence_class", "quality_scope", "execution_evidence", "baseline_evidence", "baseline_status", "energy_status", "standard_dataset_quality", "production_claim"],
+        "properties": {
+          "family": {"enum": ["classification", "detection", "retrieval", "training", "quantized_inference", "batched_inference", "concurrent_serving"]},
+          "evidence_class": {"enum": ["real_held_out_dataset", "controlled_model_and_execution_fixture", "deterministic_execution_fixture", "native_training_correctness_fixture"]},
+          "quality_scope": {"type": "string", "minLength": 1, "maxLength": 1024},
+          "execution_evidence": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "baseline_evidence": {"type": "array", "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 4096}},
+          "baseline_status": {"enum": ["qualified_execution_comparison", "equivalent_baseline_pending"]},
+          "energy_status": {"const": "calibrated_physical_measurement_pending"},
+          "standard_dataset_quality": {"type": "boolean"},
+          "production_claim": {"const": false}
+        }
+      }
+    },
+    "full_standard_dataset_coverage": {"const": false},
+    "full_equivalent_baseline_coverage": {"const": false},
+    "calibrated_energy_coverage": {"const": false},
+    "comparative_energy_claim": {"const": false},
+    "official_certification_granted": {"const": false},
+    "lowest_carbon_language_claim": {"const": false}
+  }
+}

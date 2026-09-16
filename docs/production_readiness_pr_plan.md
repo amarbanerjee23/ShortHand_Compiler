@@ -1,13 +1,13 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-09-15-pr97
+production_readiness_plan_version: 2026-09-15-pr98
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 96
-CURRENT_GITHUB_PR: 97
-CURRENT_ROADMAP_PR: 95
+LAST_MERGED_GITHUB_PR: 97
+CURRENT_GITHUB_PR: 98
+CURRENT_ROADMAP_PR: 98
 LAST_PLANNED_GITHUB_PR: unassigned
 LAST_PLANNED_ROADMAP_PR: 102
-CURRENT_IMPLEMENTATION_SCOPE: measurement_grade_comparisons_and_regression
+CURRENT_IMPLEMENTATION_SCOPE: realistic_ai_benchmark_families
 BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
@@ -19,23 +19,23 @@ Unsupported or unavailable paths must never report production success. A skipped
 
 ## Current baseline
 
-GitHub PR89 through PR96 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. Merged GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs, not reserved GitHub numbers. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. It emits candidate recommendations only and does not perform independent certification or comparative ShortHand-versus-Python energy qualification.
+GitHub PR89 through PR97 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. Merged GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. PR95-PR97 added native CPU qualification, a real held-out classification application, equivalent application baselines, trace replay and conservative regression policy. None of these grants certification or a universal energy-superiority claim.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The original roadmap retains PR83 through PR96. The merged PR93 assessment adds six follow-on increments, now tracked as roadmap PR97 through PR102. Six combined implementation batches remain including this candidate; actual future GitHub numbers are unassigned. This is a planning count, not a guarantee of general release readiness.
+The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The original roadmap retains PR83 through PR96. The merged PR93 assessment adds six follow-on increments, tracked as roadmap PR97 through PR102. Five combined implementation batches remain including this candidate. This is a planning count, not a guarantee of general release readiness.
 
 ## Current completion contract
 
-GitHub PR97 - measurement-grade comparisons and regression controls is IN PROGRESS. It builds on merged GitHub PR96 (`c875911b4396323b992e32ffedcb651ac6ac96f5`). PR96 passed both required CI contexts, 14/14 jobs each. Calibrated physical evidence remains pending.
+GitHub PR98 - broader realistic AI benchmark families is IN PROGRESS. It builds on merged GitHub PR97 (`15bdf71579a15b1b6579084952647f5cd054587a`). Calibrated physical evidence remains pending.
 
-1. Preserve all syntax, interpreter/MLIR/LLVM semantics and runtime ABI contracts.
-2. Freeze policies/configurations before balanced native/Python runs; retain all results, including unfavorable observations.
-3. Freeze one raw physical trace; retain original sampling density/gaps and byte hashes; replay trial windows through the existing native integrator.
-4. Enforce functional units, quality, clocks, calibration age, boundary, uncertainty, timing/energy budgets and pinned-baseline regression controls.
-5. Distinguish real execution-policy success from calibrated energy qualification. Synthetic validator fixtures do not close hardware evidence exits.
-6. Update installed contracts, coverage, production truth and C3-ECO traceability; preserve every existing mandatory suite and sanitizer/race/security/portability gate.
-7. Require both exact-head event-specific CI statuses before merge. See [the measurement contract](ai_comparison_measurement.md).
+1. Preserve all syntax, interpreter/MLIR/LLVM semantics, runtime ABI and the strict PR95 measured-energy qualification contract.
+2. Add a versioned seven-family benchmark evidence manifest covering classification, detection, retrieval, training, internally quantized inference, batched inference and concurrent serving.
+3. Execute representative retrieval, detection-shaped and INT8/UINT8-internal ONNX graphs in the native Linux x64 CPU runtime with FP32 host boundaries, deterministic repeats, finite outputs and bounded quantization error.
+4. Reuse real held-out Optdigits classification/batching/serving evidence and its optimized baseline; do not misrepresent deterministic detection/retrieval/training/quantization fixtures as standard-dataset quality.
+5. Preserve fail-closed SDK-off behavior and every existing sanitizer, race, security, portability, zero-skip and live-ONNX requirement.
+6. Keep equivalent baselines for uncovered families and calibrated physical energy explicitly pending; no universal energy, certification or lowest-carbon claim is allowed.
+7. Update coverage, production truth and C3-ECO traceability, and require both exact-head event-specific CI statuses before merge. See [the benchmark family contract](ai_benchmark_families.md).
 
 ## Mandatory rule for every remaining PR
 
@@ -45,7 +45,7 @@ The final head of every implementation PR must have both stable event-specific C
 
 ## Robust pipeline architecture
 
-`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification, PR79 formatter/linter qualification, PR80 LSP/editor qualification, PR81 live versioned backend qualification and PR82 first-class C3-ECO language plus zero-skip qualification. PR83 adds production truth and certification traceability. PR84-PR89 add the production type/memory model, control flow, enterprise packages/FFI, serving runtime, typed certification profile and instrumented measurement. Release publication remains separated from PR CI so OIDC and repository-write privileges are not granted to pull-request code.
+`docs/ci_pipeline_architecture.md` remains the pipeline architecture contract. GitHub PR78 retains exact-head deployment qualification, PR79 formatter/linter qualification, PR80 LSP/editor qualification, PR81 live versioned backend qualification and PR82 first-class C3-ECO language plus zero-skip qualification. PR83 adds production truth and certification traceability. PR84-PR89 add the production type/memory model, control flow, enterprise packages/FFI, serving runtime, typed certification profile and instrumented measurement. PR98 extends the existing native AI qualification gate rather than creating a parallel runtime or weaker evidence path. Release publication remains separated from PR CI so OIDC and repository-write privileges are not granted to pull-request code.
 
 ## Remaining implementation strategy
 
@@ -76,8 +76,8 @@ The final head of every implementation PR must have both stable event-specific C
 | PR91 - Auditor bundle, retention, surveillance and reporting | MERGED | Native Ed25519 signed lineage, strict schemas, redacted public envelopes, assessment replay, retention/expiry/surveillance/nonconformity checks and separate estimated readiness. | Mandatory auditor verification in direct CI, Make, CTest, sanitizers, compiler matrix and installed SDK lifecycle. | Tamper, signature, schema, lineage, replay, expiry and redaction tests. |
 | PR92 - Generated ShortHand MLIR dialect | MERGED | TableGen-generated operations, types, attributes, verifiers, installation and downstream use. | MLIR build/lit gate. | FileCheck, verifiers, roundtrip, installed consumer and freshness tests. |
 | PR93 - SemanticIR to MLIR and LLVM lowering | MERGED as GitHub PR94 | Verified Linux x64 LLVM18 source/SDK lowering, bounded composite execution and checked runtime handoff. | MLIR differential lowering gate. | Invalid ops/shapes, execution equivalence and optimization preservation. |
-| PR94 - Representative production AI qualification | BOUNDED implementation in GitHub PR96; broader families in PR98 | Complete representative preprocessing/inference/postprocessing/serving applications, secure host boundary, realistic models/tensor shapes, batching, concurrency, timeouts and numerical quality. | Live workload/backend qualification. | Numerical, load, malformed-model, recovery and evidence tests. |
-| PR95 - Performance and measured-energy qualification | Execution baseline in GitHub PR96; physical exit combined with PR97 | Calibrated workload-coupled collectors, compiler/runtime performance, repeated equivalent-quality optimized Python and native C++ baselines, material data/cloud/client/embodied/lifecycle carbon coverage and uncertainty. | Performance and eco-regression qualification. | Calibration, repeated trials, uncertainty, quality equivalence and raw traces. |
+| PR94 - Representative production AI qualification | BOUNDED implementation in GitHub PR96; broader families in GitHub PR98 candidate | Complete representative preprocessing/inference/postprocessing/serving applications, secure host boundary, realistic models/tensor shapes, batching, concurrency, timeouts and numerical quality. | Live workload/backend qualification. | Numerical, load, malformed-model, recovery and evidence tests. |
+| PR95 - Performance and measured-energy qualification | Execution baseline in GitHub PR96; policy/replay in GitHub PR97; family coverage in GitHub PR98 candidate | Calibrated workload-coupled collectors, compiler/runtime performance, repeated equivalent-quality optimized Python and native C++ baselines, material data/cloud/client/embodied/lifecycle carbon coverage and uncertainty. | Performance and eco-regression qualification. | Calibration, repeated trials, uncertainty, quality equivalence and raw traces. |
 | PR96 - Enterprise pilot and production RC | PLANNED combined with CPU scope PR99 | Clean install/upgrade/rollback, deployment, security, evidence and final blocker aggregation. | Final zero-skip RC aggregate. | Pilot, soak, disaster recovery, retained evidence and release decision. |
 
 ## Why this remaining order is dependency-correct
@@ -99,8 +99,8 @@ PR89-PR91 already implement accounting, assessment and signed auditor preparatio
 
 | Roadmap increment | Status | Additional release evidence |
 | --- | --- | --- |
-| PR97 - Measurement-grade harness | IMPLEMENTED in GitHub PR97; calibrated physical evidence pending with PR95 | Calibrated collectors attached to workload phases, raw traces, repeated trials, MQ/DQ and uncertainty; extend PR95 collectors and PR89 workbooks. |
-| PR98 - Realistic benchmark families | PLANNED | Classification, retrieval, preprocessing, quantized/batched inference and concurrent serving with equivalent optimized baselines, numerical quality and energy. |
+| PR97 - Measurement-grade harness | IMPLEMENTED in merged GitHub PR97; calibrated physical evidence pending with PR95 | Calibrated collectors attached to workload phases, raw traces, repeated trials, MQ/DQ and uncertainty; extend PR95 collectors and PR89 workbooks. |
+| PR98 - Realistic benchmark families | IN PROGRESS as GitHub PR98 | Seven-family bounded evidence contract; live CPU retrieval/detection-shaped/INT8-internal execution; real held-out classification/batching/serving quality; missing family baselines and calibrated physical energy remain explicit. |
 | PR99 - Accelerator execution or explicit CPU scope | PLANNED combined with PR96 pilot/RC | Device-backed execution and measured routing, or a versioned CPU-only GA scope with every accelerator claim excluded. |
 | PR100 - Data lifecycle and cloud carbon boundary | PLANNED | Material data/storage/network, AI lifecycle, shared-cloud allocation, factors and hardware lifetime evidence using existing accounting controls. |
 | PR101 - Independent reproduction and certification pilot | PLANNED | Independent repeated measurements and organizational evidence-retention, surveillance and draft-standard pilot review. |
@@ -108,26 +108,26 @@ PR89-PR91 already implement accounting, assessment and signed auditor preparatio
 
 ## Current count and combined delivery batches
 
-remaining_planned_implementation_increments_including_current: 6
-remaining_planned_implementation_increments_after_current: 5
+remaining_planned_implementation_increments_including_current: 5
+remaining_planned_implementation_increments_after_current: 4
 audit_follow_on_increments: 6
 
-The nine original roadmap gates (PR94-PR102) were consolidated into seven delivery batches. PR96 is merged; six batches remain including PR97. GitHub numbers and roadmap IDs are distinct. Combining implementation does not close missing evidence; every retained exit remains mandatory.
+The nine original roadmap gates (PR94-PR102) were consolidated into seven delivery batches. PR96 and PR97 are merged; five batches remain including PR98. GitHub numbers and roadmap IDs are distinct. Combining implementation does not close missing evidence; every retained exit remains mandatory.
 
 | Batch | Roadmap coverage | Completion evidence |
 | --- | --- | --- |
-| Current GitHub PR97: measurement-grade comparisons | PR95 + PR97 | Native trace snapshot/replay, original sampling checks, declared policies, uncertainty and pinned-baseline regression implemented. Calibrated repeated equivalent hardware observations remain required and unavailable in this workspace. |
-| Broader realistic AI families | PR98 | Representative CNN/detection/retrieval/training workloads, standard dataset quality, production model shapes and equivalent baselines. Extend existing PR95 controlled models and PR96 application contracts. |
+| Merged GitHub PR97: measurement-grade comparisons | PR95 + PR97 | Native trace snapshot/replay, original sampling checks, declared policies, uncertainty and pinned-baseline regression implemented. Calibrated repeated equivalent hardware observations remain required. |
+| Current GitHub PR98: broader realistic AI families | PR98 | Seven-family evidence manifest, real held-out classification/batch/serving quality, native retrieval/detection-shaped/INT8-internal execution and strict claims boundary. Remaining family baselines and calibrated physical evidence stay open. |
 | Enterprise pilot and explicit CPU scope | PR96 + PR99 | Clean install/upgrade/rollback, security, deployment/soak/DR, retained pilot evidence and versioned CPU-only RC/GA scope; every accelerator production claim excluded unless separately qualified. |
 | Lifecycle/cloud accounting | PR100 | Material data, storage, network, shared-cloud allocation, factors, embodied hardware and lifecycle evidence. |
 | Independent reproduction and certification pilot | PR101 | Independent repeats, organizational storage/retention/surveillance and draft-standard pilot review. |
 | Claims and GA decision | PR102 | All audit gaps, quality/safety, physical evidence, protected release operation and a bounded externally reviewable release decision. |
 
-Five planned delivery batches remain after this scoped increment. Its calibrated physical evidence exit remains open. This estimate is not a guarantee of enterprise or general release readiness. Counts exclude repository administration and independent certification decisions. Measurement, lifecycle and organizational evidence cannot be manufactured by combining PRs.
+Four planned delivery batches remain after this scoped increment. Its calibrated physical evidence and uncovered family baseline exits remain open. This estimate is not a guarantee of enterprise or general release readiness. Counts exclude repository administration and independent certification decisions. Measurement, lifecycle and organizational evidence cannot be manufactured by combining PRs.
 
 ## External production blocker not counted as an implementation PR
 
-TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the six remaining combined implementation batches.
+TST017 remains partial until repository administration configures the `production-release` protected environment and a real version tag executes the signed publication workflow with attestations that verify cryptographically. The workflow implementation is already merged; this operational exercise is not counted as one of the five remaining combined implementation batches.
 
 ## Historical roadmap anchors
 

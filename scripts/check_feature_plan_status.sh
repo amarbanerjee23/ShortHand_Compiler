@@ -14,6 +14,13 @@ required_files=(
   docs/production_backend_hardware_qualification.md
   docs/c3eco_language_contract.md
   docs/c3eco_measurement_workbook.md
+  docs/ai_benchmark_families.md
+  schemas/ai_benchmark_suite_v1.schema.json
+  tests/ai_benchmark/benchmark_suite_v1.json
+  tests/ai_benchmark/create_family_fixtures.py
+  tests/ai_benchmark/test_benchmark_runtime.cpp
+  tests/ai_benchmark/test_benchmark_contract.py
+  scripts/validate_ai_benchmark_suite.py
   schemas/c3eco_measurement_workbook_v1.schema.json
   Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp
   scripts/check_c3eco_measurement_workbook.sh
@@ -104,6 +111,7 @@ done
 required_status_terms=(
   "Implemented" "Partial" "Open" "Production blockers"
   "Real ONNX Runtime CPU backend execution"
+  "Realistic AI benchmark families"
   "Compiled-code metadata/runtime lowering"
   "Full backend compatibility"
   "Base grammar and module extension matrices"
@@ -133,17 +141,18 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR96 state must be present and claim-safe.
+# Active PR98 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-15-pr97' \
+  'feature_status_version: 2026-09-15-pr98' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 97' \
-  'current_roadmap_scope: measurement_grade_comparisons_and_regression' \
+  'current_github_pr: 98' \
+  'current_roadmap_scope: realistic_ai_benchmark_families' \
   '32 implemented, 3 partial and 1 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
-  'GitHub PR90 now implements `shorthand.c3eco.assessment.v1`' \
+  'GitHub PR90 implements `shorthand.c3eco.assessment.v1`' \
+  'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
   'Instrumented C3-ECO measurement/accounting | Implemented for `shorthand.c3eco.measurement_workbook.v1` candidate' \
   'C3-ECO eligibility, scoring and claims | Implemented for `shorthand.c3eco.assessment.v1` candidate' \
   'c3eco_measurement_contract: shorthand.c3eco.measurement_workbook.v1' \
@@ -153,7 +162,7 @@ for anchor in \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
   'level_claim_permitted: false'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR95 active anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR98 active anchor: ${anchor}" >&2; exit 1; }
 done
 
 # Stable historical anchors remain mandatory so a new PR cannot erase previously
@@ -222,6 +231,10 @@ grep -Fq 'fix mode requires --output' Compiler_new_ws/Short_Hand/src/tooling/Sou
 grep -Fq 'constexpr std::size_t kMaxMessageBytes = 1024 * 1024' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
 grep -Fq 'SHLSP900' Compiler_new_ws/Short_Hand/src/tooling/LanguageServerMain.cpp
 grep -Fq 'shorthand_lsp' CMakeLists.txt
+grep -Fq 'benchmark_family_contract: shorthand.ai.benchmark_suite.v1' docs/ai_benchmark_families.md
+grep -Fq 'lowest_carbon_language_claim: false' docs/ai_benchmark_families.md
+grep -Fq 'shorthand.ai.benchmark_suite.v1' schemas/ai_benchmark_suite_v1.schema.json
+python3 scripts/validate_ai_benchmark_suite.py tests/ai_benchmark/benchmark_suite_v1.json "${ROOT_DIR}"
 
 # CI status hygiene and all prior production guards remain executable evidence.
 grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
@@ -309,7 +322,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR92 adds the generated MLIR dialect, verifiers and installed SDK while preserving candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; PR93-PR96 and the protected release exercise remain fail-closed."
+echo "Feature plan status check passed. GitHub PR98 adds bounded seven-family AI runtime evidence and claim-safe benchmark contracts while preserving Linux x64 CPU production scope, candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; calibrated physical evidence and PR99-PR102 remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

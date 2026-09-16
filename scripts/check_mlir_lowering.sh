@@ -17,6 +17,8 @@ if [[ -z "${ONNXRUNTIME_ROOT:-}" ]]; then
   bash "${ROOT_DIR}/scripts/install_ci_onnxruntime_cpu.sh" "${ONNXRUNTIME_ROOT}"
 fi
 [[ -s "${ONNXRUNTIME_ROOT}/include/onnxruntime_cxx_api.h" ]] || { echo "error: real ONNX SDK is mandatory" >&2; exit 1; }
+# Child qualification scripts compile live probes against this same verified SDK.
+export ONNXRUNTIME_ROOT
 FLAGS=""
 if [[ "${SHORTHAND_MLIR_SANITIZERS:-OFF}" == ON ]]; then FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer"; fi
 cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
