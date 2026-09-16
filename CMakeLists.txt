@@ -371,6 +371,11 @@ add_executable(shorthand_c3eco_measure
 )
 target_compile_features(shorthand_c3eco_measure PRIVATE cxx_std_17)
 
+add_executable(shorthand_c3eco_lifecycle_boundary
+  ${SRC_DIR}/evidence/LifecycleCloudBoundary.cpp
+)
+target_compile_features(shorthand_c3eco_lifecycle_boundary PRIVATE cxx_std_17)
+
 add_executable(shorthand_c3eco_assess
   ${SRC_DIR}/evidence/CertificationAssessment.cpp
   ${SRC_DIR}/evidence/C3EcoAssessmentScoring.cpp
@@ -445,7 +450,7 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify
+install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_lifecycle_boundary shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 install(DIRECTORY schemas/c3eco/
@@ -633,6 +638,14 @@ if(SHORTHAND_BUILD_TESTING)
   set_tests_properties(c3eco_measurement_workbook PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     ENVIRONMENT "SHORTHAND_C3ECO_MEASURE_BIN=$<TARGET_FILE:shorthand_c3eco_measure>"
+  )
+
+  add_test(
+    NAME c3eco_lifecycle_cloud_boundary
+    COMMAND ${BASH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_c3eco_lifecycle_cloud_boundary.sh
+  )
+  set_tests_properties(c3eco_lifecycle_cloud_boundary PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
   add_test(

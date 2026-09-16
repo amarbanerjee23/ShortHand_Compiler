@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-16-pr99
+ci_pipeline_architecture_version: 2026-09-16-pr100
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -212,6 +212,7 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR95: performance and measured-energy qualification.
 - PR96: enterprise pilot and zero-skip production RC aggregation.
 - PR99: explicit CPU-scope enterprise pilot and fail-closed release-candidate blocker aggregation.
+- PR100: lifecycle/cloud carbon-boundary validation with shared allocation and hardware-lifetime evidence.
 
 Every remaining implementation PR adds its applicable mandatory jobs as executable contracts become available. Release publication remains isolated from pull-request permissions and closes only with a verified protected tag exercise.
 
@@ -230,6 +231,6 @@ GitHub PR95 adds native CPU qualification to both existing mandatory MLIR lanes,
 
 PR96 extends both MLIR lanes with full-dataset source/LLVM/native application checks. The unsanitized GCC lane also executes `scripts/check_ai_application_baselines.sh`; Python wheels are test-only, version/hash pinned and cannot substitute for the native deployment runtime. Application correctness retains strict sanitizers in the Clang lane.
 
-PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 implements the enterprise pilot/RC aggregate while preserving the explicit CPU-only scope and retained blockers. The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workload baselines and enterprise GA evidence remain open.
+PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 implements the enterprise pilot/RC aggregate while preserving the explicit CPU-only scope and retained blockers. PR100 adds a native lifecycle/cloud boundary gate in the same CI, Make and CTest paths; missing material phases, provenance, allocation discipline or hardware lifetime evidence fail closed. Calibrated physical observations, broader workload baselines and enterprise GA evidence remain open.
 
 Historical pipeline marker: ci_pipeline_architecture_version: 2026-09-15-pr97.

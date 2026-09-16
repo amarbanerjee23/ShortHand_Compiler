@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-09-16-pr99
+feature_status_version: 2026-09-16-pr100
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 99
-current_roadmap_scope: enterprise_cpu_scope_pilot_rc
+current_github_pr: 100
+current_roadmap_scope: lifecycle_cloud_carbon_boundary
 
 ## Goal
 
@@ -19,7 +19,7 @@ GitHub PR89 implements `shorthand.c3eco.measurement_workbook.v1`: instrument-bac
 
 GitHub PR90 implements `shorthand.c3eco.assessment.v1`: structural profile/workbook validation, mandatory G1-G14 precedence, the complete 76-criterion A-K catalog, evidence and uncertainty caps, controlled N/A reallocation, materiality, AI applicability, tier prerequisites, claim safety, eco/quality regression decisions and surveillance schedules. Its output is a candidate recommendation only.
 
-The compiler test audit records **33 implemented, 3 partial and 0 open** areas for the GitHub PR99 candidate, 36 areas total. TST027 is now an implemented fail-closed aggregate that reports the remaining blockers; ShortHand remains a controlled beta because calibrated physical comparison evidence, complete standard-dataset/equivalent-baseline coverage across AI families, independent certification operations, lifecycle/cloud accounting and the protected-release exercise remain incomplete.
+The compiler test audit records **34 implemented, 3 partial and 0 open** areas for the GitHub PR100 candidate, 37 areas total. TST027 is an implemented fail-closed aggregate and PR100 adds declared lifecycle/cloud/hardware-boundary evidence; ShortHand remains a controlled beta because calibrated physical comparison evidence, complete standard-dataset/equivalent-baseline coverage across AI families, independent certification operations and the protected-release exercise remain incomplete.
 
 ## Production truth authority
 
@@ -166,3 +166,5 @@ PR97 adds [measurement-grade comparison and regression controls](ai_comparison_m
 PR98 adds [realistic AI benchmark family qualification](ai_benchmark_families.md) and `shorthand.ai.benchmark_suite.v1`: seven explicit families, real held-out application quality where available, native CPU retrieval/detection-shaped/INT8-internal/batched/concurrent execution, claims-safe evidence classes and explicit pending baseline/physical-measurement fields. It does not broaden the production hardware scope or make a lowest-carbon claim.
 
 PR99 adds [the enterprise pilot and release-candidate contract](enterprise_pilot_release_candidate.md) and `shorthand.enterprise.pilot_rc.v1`: isolated install/reinstall/uninstall, transactional rollback, serving soak, inherited deployment/DR evidence and a deterministic compiler/C3-ECO blocker report. It closes the implementation gap for TST027 without claiming release eligibility, accelerator support, certification or energy superiority.
+
+PR100 adds [the lifecycle/cloud carbon boundary contract](c3eco_lifecycle_cloud_boundary.md) and `shorthand.c3eco.lifecycle_cloud_boundary.v1`: deterministic material data, storage, network, model, cloud and hardware-lifetime boundary validation with shared-resource allocation protection. It is candidate evidence only and does not change certification, comparative-energy or production claims.

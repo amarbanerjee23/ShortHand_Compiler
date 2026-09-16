@@ -1,13 +1,13 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-09-16-pr99
+production_readiness_plan_version: 2026-09-16-pr100
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 98
-CURRENT_GITHUB_PR: 99
-CURRENT_ROADMAP_PR: 99
+LAST_MERGED_GITHUB_PR: 99
+CURRENT_GITHUB_PR: 100
+CURRENT_ROADMAP_PR: 100
 LAST_PLANNED_GITHUB_PR: unassigned
 LAST_PLANNED_ROADMAP_PR: 102
-CURRENT_IMPLEMENTATION_SCOPE: enterprise_cpu_scope_pilot_rc
+CURRENT_IMPLEMENTATION_SCOPE: lifecycle_cloud_carbon_boundary
 BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
@@ -27,14 +27,13 @@ The active machine-readable state is `docs/production_truth.tsv`; certification 
 
 ## Current completion contract
 
-GitHub PR99 - enterprise pilot and explicit CPU scope is IN PROGRESS on top of merged GitHub PR98. It implements `shorthand.enterprise.pilot_rc.v1`, verifies install/upgrade/rollback and deployment/soak/DR evidence, and reports retained blockers without broadening production support. Calibrated physical evidence remains pending.
+GitHub PR100 - lifecycle/cloud carbon boundary is IN PROGRESS on top of merged GitHub PR99. It implements `shorthand.c3eco.lifecycle_cloud_boundary.v1`, requires attributable data, storage, network, model, cloud and hardware-lifetime records, and keeps all certification, comparative-energy and production claims false.
 
 1. Preserve all syntax, interpreter/MLIR/LLVM semantics, runtime ABI and the strict PR95 measured-energy qualification contract.
-2. Add a versioned seven-family benchmark evidence manifest covering classification, detection, retrieval, training, internally quantized inference, batched inference and concurrent serving.
-3. Execute representative retrieval, detection-shaped and INT8/UINT8-internal ONNX graphs in the native Linux x64 CPU runtime with FP32 host boundaries, deterministic repeats, finite outputs and bounded quantization error.
-4. Reuse real held-out Optdigits classification/batching/serving evidence and its optimized baseline; do not misrepresent deterministic detection/retrieval/training/quantization fixtures as standard-dataset quality.
-5. Preserve fail-closed SDK-off behavior and every existing sanitizer, race, security, portability, zero-skip and live-ONNX requirement.
-6. Keep equivalent baselines for uncovered families and calibrated physical energy explicitly pending; no universal energy, certification or lowest-carbon claim is allowed.
+2. Require dated factor and PR89 measured-workbook provenance, shared allocation caps, data/storage/network activity and bounded embodied-hardware allocation for every declared lifecycle boundary.
+3. Preserve fail-closed behavior for missing phases/provenance, over-allocation and invalid hardware lifetime.
+4. Preserve every existing sanitizer, race, security, portability, zero-skip and live-ONNX requirement.
+5. Keep independent authenticity, calibrated physical observations, equivalent baselines and certification explicitly pending; no universal energy, certification or lowest-carbon claim is allowed.
 7. Update coverage, production truth and C3-ECO traceability, and require both exact-head event-specific CI statuses before merge. See [the benchmark family contract](ai_benchmark_families.md).
 
 ## Mandatory rule for every remaining PR
@@ -101,15 +100,15 @@ PR89-PR91 already implement accounting, assessment and signed auditor preparatio
 | --- | --- | --- |
 | PR97 - Measurement-grade harness | IMPLEMENTED in merged GitHub PR97; calibrated physical evidence pending with PR95 | Calibrated collectors attached to workload phases, raw traces, repeated trials, MQ/DQ and uncertainty; extend PR95 collectors and PR89 workbooks. |
 | PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98 | Seven-family bounded evidence contract; live CPU retrieval/detection-shaped/INT8-internal execution; real held-out classification/batching/serving quality; missing family baselines and calibrated physical energy remain explicit. |
-| PR99 - Accelerator execution or explicit CPU scope | IN PROGRESS as GitHub PR99, combined with PR96 pilot/RC | Versioned CPU-only pilot/RC scope, fail-closed install/upgrade/rollback, deployment/soak/DR aggregation and retained blocker report; every accelerator production claim excluded. |
-| PR100 - Data lifecycle and cloud carbon boundary | PLANNED | Material data/storage/network, AI lifecycle, shared-cloud allocation, factors and hardware lifetime evidence using existing accounting controls. |
+| PR99 - Accelerator execution or explicit CPU scope | MERGED as GitHub PR99, combined with PR96 pilot/RC | Versioned CPU-only pilot/RC scope, fail-closed install/upgrade/rollback, deployment/soak/DR aggregation and retained blocker report; every accelerator production claim excluded. |
+| PR100 - Data lifecycle and cloud carbon boundary | IN PROGRESS as GitHub PR100 | Material data/storage/network, AI lifecycle, shared-cloud allocation, factors and hardware lifetime evidence using existing accounting controls. |
 | PR101 - Independent reproduction and certification pilot | PLANNED | Independent repeated measurements and organizational evidence-retention, surveillance and draft-standard pilot review. |
 | PR102 - Claims and general-release closeout | PLANNED | Review every audit gap, bounded claims, quality/safety controls, operational evidence and final GA decision. |
 
 ## Current count and combined delivery batches
 
-remaining_planned_implementation_increments_including_current: 4
-remaining_planned_implementation_increments_after_current: 3
+remaining_planned_implementation_increments_including_current: 3
+remaining_planned_implementation_increments_after_current: 2
 audit_follow_on_increments: 6
 
 The nine original roadmap gates (PR94-PR102) were consolidated into seven delivery batches. PR96 through PR98 are merged; four batches remain including PR99. GitHub numbers and roadmap IDs are distinct. Combining implementation does not close missing evidence; every retained exit remains mandatory.

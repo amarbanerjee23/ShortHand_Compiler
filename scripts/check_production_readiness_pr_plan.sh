@@ -70,18 +70,18 @@ for file in "${PILOT_RC_DOC}" "${PILOT_RC_SCOPE}" "${PILOT_RC_SCHEMA}" "${PILOT_
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-16-pr99' \
+  'production_readiness_plan_version: 2026-09-16-pr100' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 98' \
-  'CURRENT_GITHUB_PR: 99' \
-  'CURRENT_ROADMAP_PR: 99' \
+  'LAST_MERGED_GITHUB_PR: 99' \
+  'CURRENT_GITHUB_PR: 100' \
+  'CURRENT_ROADMAP_PR: 100' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'CURRENT_IMPLEMENTATION_SCOPE: enterprise_cpu_scope_pilot_rc' \
+  'CURRENT_IMPLEMENTATION_SCOPE: lifecycle_cloud_carbon_boundary' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'GitHub PR99 - enterprise pilot and explicit CPU scope is IN PROGRESS' \
-  'remaining_planned_implementation_increments_including_current: 4' \
-  'remaining_planned_implementation_increments_after_current: 3' \
+  'GitHub PR100 - lifecycle/cloud carbon boundary is IN PROGRESS' \
+  'remaining_planned_implementation_increments_including_current: 3' \
+  'remaining_planned_implementation_increments_after_current: 2' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -115,10 +115,10 @@ require_contains "${PLAN}" '| PR90 - Eligibility, scoring, claims and eco-regres
 require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and reporting | MERGED'
 require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
 require_contains "${PLAN}" '| PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98'
-require_contains "${PLAN}" '| PR99 - Accelerator execution or explicit CPU scope | IN PROGRESS as GitHub PR99'
+require_contains "${PLAN}" '| PR100 - Data lifecycle and cloud carbon boundary | IN PROGRESS as GitHub PR100'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-16-pr99' \
+  'ci_pipeline_architecture_version: 2026-09-16-pr100' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \

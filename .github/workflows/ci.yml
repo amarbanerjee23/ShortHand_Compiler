@@ -124,6 +124,7 @@ jobs:
       - name: C3-ECO measurement and candidate assessment
         run: |
           CXX=g++ bash scripts/check_c3eco_measurement_workbook.sh
+          CXX=g++ bash scripts/check_c3eco_lifecycle_cloud_boundary.sh
           CXX=g++ bash scripts/check_c3eco_assessment.sh
           CXX=g++ bash scripts/check_c3eco_auditor_bundle.sh
 
