@@ -126,12 +126,16 @@ rollback_probe() {
 
 if [[ "${EXECUTION_MODE}" == "executed" ]]; then
   [[ -d "${BUILD_DIR}" ]] || fail "CMake build directory does not exist: ${BUILD_DIR}"
-  [[ -s "${BUILD_DIR}/install_manifest.txt" ]] || fail "CMake install manifest is missing: ${BUILD_DIR}/install_manifest.txt"
+  # Configuration generates install rules; the first successful installation
+  # generates install_manifest.txt. Requiring the latter here rejects clean CI
+  # builds before the lifecycle installer can run.
+  [[ -s "${BUILD_DIR}/cmake_install.cmake" ]] || fail "CMake install rules are missing: ${BUILD_DIR}/cmake_install.cmake"
   [[ -x "${BUILD_DIR}/short_hand" ]] || fail "built compiler is missing: ${BUILD_DIR}/short_hand"
   mkdir -p "${PREFIX}"
   lifecycle_root="$(mktemp -d /tmp/shorthand-pr99-lifecycle.XXXXXX)"
   trap 'rm -rf "${lifecycle_root}"' EXIT
   bash "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" "${BUILD_DIR}" "${PREFIX}" "${lifecycle_root}/consumer"
+  [[ -s "${BUILD_DIR}/install_manifest.txt" ]] || fail "CMake install manifest is missing after lifecycle: ${BUILD_DIR}/install_manifest.txt"
   lifecycle_install=true
   lifecycle_upgrade=true
   lifecycle_uninstall=true
