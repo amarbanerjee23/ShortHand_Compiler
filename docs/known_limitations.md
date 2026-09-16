@@ -1,11 +1,11 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-15-pr97
+known_limitations_version: 2026-09-16-pr99
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
 
-The active beta-0.7 contract retains beta-0.5 cross-mode execution for exact scalars, fixed numeric/boolean arrays, functions, recursion, lexical locals, structured loops/returns and same-block label transfers. Beta-0.6 adds composite ABI schemas and ownership-plan validation, not composite execution. Beta-0.7 adds typed C3-ECO preparation metadata; PR89/PR90 add measurement and candidate assessment tools, not certification. Owned string arrays, by-value composite FFI, nested package dependencies and a network registry remain unavailable. Package v2 is deliberately offline, the core library is bounded to its 1.0.0 C ABI, and qualified member dispatch is not yet syntax. Representative AI workloads, measured performance/energy and the additional audit closeout evidence remain open.
+The active beta-0.7 contract retains beta-0.5 cross-mode execution for exact scalars, fixed numeric/boolean arrays, functions, recursion, lexical locals, structured loops/returns and same-block label transfers. Beta-0.6 adds composite ABI schemas and ownership-plan validation, not composite execution. Beta-0.7 adds typed C3-ECO preparation metadata; PR89/PR90 add measurement and candidate assessment tools, not certification. Owned string arrays, by-value composite FFI, nested package dependencies and a network registry remain unavailable. Package v2 is deliberately offline, the core library is bounded to its 1.0.0 C ABI, and qualified member dispatch is not yet syntax. Representative AI quality baselines, measured performance/energy and the additional audit closeout evidence remain open. PR99 adds an executable pilot/RC aggregate, but its decision remains blocked by retained evidence.
 
 ONNX Runtime CPU is mandatory live numerical evidence for the declared `linux-x64-cpu-v1` production backend scope on the inherited Linux x64 CI lane. TensorRT, OpenVINO, LibTorch, llama.cpp, GPU, TPU and NPU paths remain experimental or inventory-only. Their absent SDKs or devices are never counted as production execution evidence.
 
@@ -25,4 +25,6 @@ PR92 implements the generated MLIR dialect and downstream SDK for Linux x64/LLVM
 
 PR96 qualifies a bounded real optical-digit application and native/Python execution comparison. Broader model families, independently calibrated paired energy, performance budgets and enterprise pilot evidence remain open. See [application boundaries](ai_application_qualification.md).
 
-PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workloads and enterprise pilot evidence remain open.
+PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 adds [the enterprise pilot and release-candidate contract](enterprise_pilot_release_candidate.md), including isolated SDK lifecycle, rollback and blocker aggregation. The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workload baselines and protected release evidence remain open.
+
+Historical limitations marker: known_limitations_version: 2026-09-15-pr97.

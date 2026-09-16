@@ -169,13 +169,21 @@ jobs:
         run: make -C Compiler_new_ws/Short_Hand/src sanitize
 
       - name: Configure CMake
-        run: cmake -S . -B build -G Ninja
+        run: cmake -S . -B build -G Ninja -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/shorthand-pr99-stage"
 
       - name: Build with CMake
         run: cmake --build build
 
       - name: Run CTest
         run: ctest --test-dir build --output-on-failure
+
+      - name: Enterprise CPU-scope production RC lifecycle and blocker aggregate
+        env:
+          CI: 'true'
+          SHORTHAND_PRODUCTION_RC_REPORT: /tmp/shorthand_production_rc.json
+        run: |
+          bash tests/enterprise/test_production_rc_contract.sh
+          bash scripts/check_production_rc.sh build "$RUNNER_TEMP/shorthand-pr99-stage"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
@@ -189,6 +197,8 @@ jobs:
             /tmp/shorthand_semantic_differential.json
             /tmp/shorthand_fuzz_artifacts/
             /tmp/shorthand_c3eco_bundle/
+            /tmp/shorthand_production_rc*.json
+            /tmp/shorthand_production_rc_*.out
             Compiler_new_ws/Short_Hand/build/
             build/
 

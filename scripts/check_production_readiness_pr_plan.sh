@@ -17,6 +17,11 @@ BENCHMARK_DOC="${ROOT_DIR}/docs/ai_benchmark_families.md"
 BENCHMARK_SCHEMA="${ROOT_DIR}/schemas/ai_benchmark_suite_v1.schema.json"
 BENCHMARK_MANIFEST="${ROOT_DIR}/tests/ai_benchmark/benchmark_suite_v1.json"
 BENCHMARK_GATE="${ROOT_DIR}/scripts/validate_ai_benchmark_suite.py"
+PILOT_RC_DOC="${ROOT_DIR}/docs/enterprise_pilot_release_candidate.md"
+PILOT_RC_SCOPE="${ROOT_DIR}/docs/production_rc_scope.tsv"
+PILOT_RC_SCHEMA="${ROOT_DIR}/schemas/enterprise_pilot_rc_v1.schema.json"
+PILOT_RC_GATE="${ROOT_DIR}/scripts/check_production_rc.sh"
+PILOT_RC_TEST="${ROOT_DIR}/tests/enterprise/test_production_rc_contract.sh"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
@@ -60,20 +65,23 @@ for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}"
   "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"; do
   require_file "${file}"
 done
+for file in "${PILOT_RC_DOC}" "${PILOT_RC_SCOPE}" "${PILOT_RC_SCHEMA}" "${PILOT_RC_GATE}" "${PILOT_RC_TEST}"; do
+  require_file "${file}"
+done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-15-pr98' \
+  'production_readiness_plan_version: 2026-09-16-pr99' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 97' \
-  'CURRENT_GITHUB_PR: 98' \
-  'CURRENT_ROADMAP_PR: 98' \
+  'LAST_MERGED_GITHUB_PR: 98' \
+  'CURRENT_GITHUB_PR: 99' \
+  'CURRENT_ROADMAP_PR: 99' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'CURRENT_IMPLEMENTATION_SCOPE: realistic_ai_benchmark_families' \
+  'CURRENT_IMPLEMENTATION_SCOPE: enterprise_cpu_scope_pilot_rc' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'GitHub PR98 - broader realistic AI benchmark families is IN PROGRESS.' \
-  'remaining_planned_implementation_increments_including_current: 5' \
-  'remaining_planned_implementation_increments_after_current: 4' \
+  'GitHub PR99 - enterprise pilot and explicit CPU scope is IN PROGRESS' \
+  'remaining_planned_implementation_increments_including_current: 4' \
+  'remaining_planned_implementation_increments_after_current: 3' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -106,10 +114,11 @@ require_contains "${PLAN}" '| PR89 - Measurement, carbon accounting and cost wor
 require_contains "${PLAN}" '| PR90 - Eligibility, scoring, claims and eco-regression | MERGED'
 require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and reporting | MERGED'
 require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
-require_contains "${PLAN}" '| PR98 - Realistic benchmark families | IN PROGRESS as GitHub PR98'
+require_contains "${PLAN}" '| PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98'
+require_contains "${PLAN}" '| PR99 - Accelerator execution or explicit CPU scope | IN PROGRESS as GitHub PR99'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-15-pr97' \
+  'ci_pipeline_architecture_version: 2026-09-16-pr99' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \
@@ -127,7 +136,8 @@ for anchor in \
   'PR89: instrument-backed measurement, carbon and cost accounting.' \
   'PR90: eligibility, scoring, claims and eco-regression candidate assessment.' \
   'PR91: signed auditor evidence, retention, surveillance and reporting.' \
-  'PR96: enterprise pilot and zero-skip production RC aggregation.'; do
+  'PR96: enterprise pilot and zero-skip production RC aggregation.' \
+  'PR99: explicit CPU-scope enterprise pilot and fail-closed release-candidate blocker aggregation.'; do
   require_contains "${PIPELINE}" "${anchor}"
 done
 
@@ -176,6 +186,8 @@ require_contains "${BENCHMARK_SCHEMA}" 'shorthand.ai.benchmark_suite.v1'
 require_contains "${BENCHMARK_MANIFEST}" '"comparative_energy_claim": false'
 require_contains "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh" 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases'
 python3 "${BENCHMARK_GATE}" "${BENCHMARK_MANIFEST}" "${ROOT_DIR}"
+bash "${PILOT_RC_GATE}" --contract
+bash "${PILOT_RC_TEST}"
 
 # Historical milestones remain auditable without being mistaken for active state.
 for anchor in \
@@ -217,6 +229,11 @@ done
 
 require_contains "${C3ECO_DOC}" 'c3eco_language_contract_version: shorthand.c3eco.language.v1'
 require_contains "${ROOT_DIR}/scripts/check_c3eco_language_blocks.sh" 'PASS C3-ECO first-class language blocks grammar AST semantics evidence and claim-safety gate'
+require_contains "${PILOT_RC_DOC}" 'enterprise_pilot_rc_contract: shorthand.enterprise.pilot_rc.v1'
+require_contains "${PILOT_RC_SCOPE}" $'production_scope\tlinux-x64-cpu-v1'
+require_contains "${PILOT_RC_SCHEMA}" 'shorthand.enterprise.pilot_rc.v1'
+require_contains "${PILOT_RC_GATE}" 'PASS production RC'
+require_contains "${PILOT_RC_TEST}" 'PASS PR99 production RC contract'
 
 bash "${ROOT_DIR}/scripts/check_production_truth.sh"
 bash "${ROOT_DIR}/tests/governance/test_production_truth_negative.sh"

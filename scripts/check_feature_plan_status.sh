@@ -17,6 +17,11 @@ required_files=(
   docs/ai_benchmark_families.md
   schemas/ai_benchmark_suite_v1.schema.json
   tests/ai_benchmark/benchmark_suite_v1.json
+  docs/enterprise_pilot_release_candidate.md
+  docs/production_rc_scope.tsv
+  schemas/enterprise_pilot_rc_v1.schema.json
+  scripts/check_production_rc.sh
+  tests/enterprise/test_production_rc_contract.sh
   tests/ai_benchmark/create_family_fixtures.py
   tests/ai_benchmark/test_benchmark_runtime.cpp
   tests/ai_benchmark/test_benchmark_contract.py
@@ -136,20 +141,22 @@ required_status_terms=(
   "Typed C3-ECO certification profile"
   "Instrumented C3-ECO measurement/accounting"
   "C3-ECO eligibility, scoring and claims"
+  "Enterprise pilot and explicit CPU-scope RC"
+  "Zero-skip production RC gate"
 )
 for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR98 state must be present and claim-safe.
+# Active PR99 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-15-pr98' \
+  'feature_status_version: 2026-09-16-pr99' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 98' \
-  'current_roadmap_scope: realistic_ai_benchmark_families' \
-  '32 implemented, 3 partial and 1 open' \
+  'current_github_pr: 99' \
+  'current_roadmap_scope: enterprise_cpu_scope_pilot_rc' \
+  '33 implemented, 3 partial and 0 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 implements `shorthand.c3eco.assessment.v1`' \
   'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
@@ -162,7 +169,7 @@ for anchor in \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
   'level_claim_permitted: false'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR98 active anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR99 active anchor: ${anchor}" >&2; exit 1; }
 done
 
 # Stable historical anchors remain mandatory so a new PR cannot erase previously
@@ -235,6 +242,8 @@ grep -Fq 'benchmark_family_contract: shorthand.ai.benchmark_suite.v1' docs/ai_be
 grep -Fq 'lowest_carbon_language_claim: false' docs/ai_benchmark_families.md
 grep -Fq 'shorthand.ai.benchmark_suite.v1' schemas/ai_benchmark_suite_v1.schema.json
 python3 scripts/validate_ai_benchmark_suite.py tests/ai_benchmark/benchmark_suite_v1.json "${ROOT_DIR}"
+bash scripts/check_production_rc.sh --contract
+bash tests/enterprise/test_production_rc_contract.sh
 
 # CI status hygiene and all prior production guards remain executable evidence.
 grep -Fq 'PASS CI status hygiene guard' scripts/check_ci_status_hygiene.sh
@@ -322,7 +331,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR98 adds bounded seven-family AI runtime evidence and claim-safe benchmark contracts while preserving Linux x64 CPU production scope, candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; calibrated physical evidence and PR99-PR102 remain fail-closed."
+echo "Feature plan status check passed. GitHub PR99 adds the fail-closed enterprise pilot/RC aggregate and explicit Linux x64 CPU scope while preserving bounded PR98 family evidence, candidate-only C3-ECO boundaries, beta-0.7 compatibility, prior audit anchors and zero-skip qualification gates; retained physical/lifecycle/protected-release evidence and PR100-PR102 remain fail-closed."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

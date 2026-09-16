@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-15-pr97
+compiler_test_strategy_version: 2026-09-16-pr99
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,11 +13,11 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 36-area production test matrix records for the GitHub PR97 candidate:
+The 36-area production test matrix records for the GitHub PR99 candidate:
 
-- 32 implemented areas,
+- 33 implemented areas,
 - 3 partial areas,
-- 1 open area.
+- 0 open areas.
 
 GitHub PR75 through PR89 established portability/reproducibility, signed-release architecture, external security, container/Kubernetes qualification, formatter/linter, LSP/editor tooling, live ONNX Runtime CPU qualification, first-class C3-ECO declarations, production truth, production type/memory, functions/control flow, enterprise packages/FFI, bounded concurrent serving, the typed C3-ECO profile and instrument-backed measurement accounting.
 
@@ -27,7 +27,7 @@ GitHub PR90 adds TST035, `shorthand.c3eco.assessment.v1`, with mandatory-gate pr
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing, measured-accounting validation and candidate C3-ECO assessment.
 
-Production-critical gaps remain for representative AI workloads, measured performance/equivalent-workload energy and the final release-candidate gate. TST017 also still requires a real protected signed-tag exercise.
+Production-critical gaps remain for measured performance/equivalent-workload energy, complete AI-family quality baselines, lifecycle/cloud and independent review evidence. PR99 implements the final release-candidate gate as a fail-closed blocker aggregate; TST017 still requires a real protected signed-tag exercise.
 
 ## Production backend and hardware qualification contract
 
@@ -112,6 +112,7 @@ Every remaining implementation PR through roadmap PR102 must include all applica
 29. Typed C3-ECO profile changes must pass beta-0.7 positive, eight-code negative, migration, native-JSON, schema, metadata and claim-safety evidence without granting certification.
 30. Measured-accounting changes must reject declared/modelled evidence, require instrument/calibration/factor/tariff provenance, prevent double counting, preserve offsets outside the base footprint and reconcile energy/carbon/cost deterministically.
 31. Assessment changes must validate profile/workbook structure, run G1-G14 before scoring, cover all 76 criteria, enforce evidence/N/A/materiality/tier/regression/claim controls and keep every decision explicitly non-certifying.
+32. Enterprise pilot/release-candidate changes must execute isolated install/reinstall/uninstall, transactional rollback, serving soak, deployment/DR evidence and a deterministic compiler/C3-ECO blocker report. A blocked aggregate is valid evidence; it must never be relabelled as release eligibility.
 
 ## CI profiles
 
@@ -127,7 +128,7 @@ Extended fuzzing/race stress and external security rescans are additive evidence
 
 ### Release-candidate profile
 
-A release candidate requires every declared platform/toolchain, signed artifacts, checksums, SPDX SBOM, provenance, independent reproducibility evidence, installed consumers, deployment/security/C3-ECO/MLIR qualification, performance/energy evidence and zero mandatory skips.
+A release candidate requires every declared platform/toolchain, signed artifacts, checksums, SPDX SBOM, provenance, independent reproducibility evidence, installed consumers, deployment/security/C3-ECO/MLIR qualification, performance/energy evidence and zero mandatory skips. PR99's `shorthand.enterprise.pilot_rc.v1` aggregate reports whether these controls ran and lists retained blockers; it does not turn the controlled-beta decision into a GA claim.
 
 ## Production test exit criteria
 
@@ -178,9 +179,9 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-15-pr97`.
+The current strategy is `2026-09-16-pr99`.
 
-PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The matrix now has 32 implemented, 3 partial and 1 open areas.
+PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The matrix now has 33 implemented, 3 partial and 0 open areas. PR99 implements TST027 as a fail-closed pilot/RC aggregate; its report remains blocked while retained evidence rows are partial or open.
 
 Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. TST025 and TST026 remain partial pending controlled performance budgets and calibrated physical comparisons. The revised plan has six remaining delivery batches including PR97 and five afterward. PR96 is merged; calibrated physical observations remain pending. Every remaining roadmap exit is preserved. The PR93 audit remains historical evidence at its original SHA.
 
@@ -188,4 +189,6 @@ GitHub PR95 adds `test-ai-energy`, taking Make/CTest parity to 22 suites. The na
 
 PR96 extends the existing `test-ai-energy` suite with 1,797 real held-out images, application boundaries and serving recovery. Both MLIR lanes compare interpreter/O0/O2/native ONNX predictions. The unsanitized lane also runs the hash-pinned paired Python baseline. No inherited mandatory gate or sanitizer is skipped.
 
-PR97 adds [measurement-grade comparison and regression controls](ai_comparison_measurement.md): frozen policies and raw traces, native replay, sampling/calibration/clock checks, conservative uncertainty and pinned-baseline regression assessment. TST025/TST026 remain partial until controlled hardware evidence and remaining compiler-performance coverage close.
+PR97 adds [measurement-grade comparison and regression controls](ai_comparison_measurement.md): frozen policies and raw traces, native replay, sampling/calibration/clock checks, conservative uncertainty and pinned-baseline regression assessment. PR99 adds the [enterprise pilot and release-candidate aggregate](enterprise_pilot_release_candidate.md), while TST025/TST026 remain partial until controlled hardware evidence and remaining compiler-performance coverage close.
+
+Historical strategy marker: compiler_test_strategy_version: 2026-09-15-pr97; 32 implemented areas; 3 partial areas; 1 open area.

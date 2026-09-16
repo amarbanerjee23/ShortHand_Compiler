@@ -149,7 +149,7 @@ The objectives are satisfied for enterprise production usage only when:
 - Signed auditor bundle, retention, surveillance and reporting: PR91.
 - Generated MLIR dialect and checked downstream SDK: PR92.
 - Production lowering and representative AI qualification: PR93 through PR94.
-- Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR96.
+- Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR99.
 
 ## Change-control rule
 
