@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-15-pr97
+ci_pipeline_architecture_version: 2026-09-16-pr99
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -150,6 +150,8 @@ GitHub PR89 adds `scripts/check_c3eco_measurement_workbook.sh` directly to `ubun
 
 GitHub PR90 adds `scripts/check_c3eco_assessment.sh` to those same mandatory paths. The gate structurally validates upstream evidence, evaluates G1-G14 before the complete 76-criterion A-K score, and tests tier boundaries, N/A reallocation, evidence caps, materiality, claims, AI applicability, quality/eco regressions and deterministic output. A passing result is still only a candidate recommendation.
 
+GitHub PR99 adds `shorthand.enterprise.pilot_rc.v1` to the inherited `ubuntu-core` DAG after the clean CMake/CTest build. The execution gate performs isolated install/reinstall/uninstall, transactional rollback, serving soak and deployment-contract checks, then emits a schema-shaped report with separate compiler and C3-ECO blocker arrays. The inherited live Kubernetes deployment/restart/DR gate remains mandatory; a blocked report is evidence of honest status, not release eligibility.
+
 Each job uploads structured logs even on failure. Artifacts identify the run/commit through GitHub metadata and should include compiler/LLVM versions, test seed, backend inventory and relevant security/release/deployment reports.
 
 ## Editor tooling execution model
@@ -209,6 +211,7 @@ Release-candidate profile: all declared production platforms/backends/hardware t
 - PR92-PR94: generated MLIR, lowering and representative AI qualification.
 - PR95: performance and measured-energy qualification.
 - PR96: enterprise pilot and zero-skip production RC aggregation.
+- PR99: explicit CPU-scope enterprise pilot and fail-closed release-candidate blocker aggregation.
 
 Every remaining implementation PR adds its applicable mandatory jobs as executable contracts become available. Release publication remains isolated from pull-request permissions and closes only with a verified protected tag exercise.
 
@@ -227,4 +230,6 @@ GitHub PR95 adds native CPU qualification to both existing mandatory MLIR lanes,
 
 PR96 extends both MLIR lanes with full-dataset source/LLVM/native application checks. The unsanitized GCC lane also executes `scripts/check_ai_application_baselines.sh`; Python wheels are test-only, version/hash pinned and cannot substitute for the native deployment runtime. Application correctness retains strict sanitizers in the Clang lane.
 
-PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workloads and enterprise pilot evidence remain open.
+PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 implements the enterprise pilot/RC aggregate while preserving the explicit CPU-only scope and retained blockers. The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workload baselines and enterprise GA evidence remain open.
+
+Historical pipeline marker: ci_pipeline_architecture_version: 2026-09-15-pr97.

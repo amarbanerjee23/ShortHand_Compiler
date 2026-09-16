@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.invalid/schemas/enterprise_pilot_rc_v1.schema.json",
+  "title": "ShortHand enterprise pilot release-candidate report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contract_version",
+    "commit",
+    "execution_mode",
+    "production_scope",
+    "production_backend",
+    "production_device",
+    "production_claim",
+    "accelerator_production_support",
+    "mandatory_skips",
+    "release_candidate_decision",
+    "lifecycle",
+    "deployment",
+    "compiler_blockers",
+    "traceability_blockers"
+  ],
+  "properties": {
+    "schema": {"const": "shorthand.enterprise.pilot_rc.v1"},
+    "contract_version": {"const": "shorthand.enterprise.pilot_rc.v1"},
+    "commit": {"type": "string", "minLength": 7},
+    "execution_mode": {"enum": ["contract", "executed"]},
+    "production_scope": {"const": "linux-x64-cpu-v1"},
+    "production_backend": {"const": "onnxruntime_cpu"},
+    "production_device": {"const": "cpu"},
+    "production_claim": {"const": false},
+    "accelerator_production_support": {"const": false},
+    "mandatory_skips": {"const": 0},
+    "release_candidate_decision": {
+      "enum": ["blocked_by_retained_evidence", "eligible_for_review"]
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clean_install", "same_version_upgrade", "rollback", "uninstall"],
+      "properties": {
+        "clean_install": {"type": "boolean"},
+        "same_version_upgrade": {"type": "boolean"},
+        "rollback": {"type": "boolean"},
+        "uninstall": {"type": "boolean"}
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_checked", "serving_soak_checked", "disaster_recovery_checked"],
+      "properties": {
+        "contract_checked": {"type": "boolean"},
+        "serving_soak_checked": {"type": "boolean"},
+        "disaster_recovery_checked": {"type": "boolean"}
+      }
+    },
+    "compiler_blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "area", "status", "closure_pr"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^TST[0-9]{3}$"},
+          "area": {"type": "string", "minLength": 1},
+          "status": {"enum": ["partial", "open"]},
+          "closure_pr": {"type": "string", "pattern": "^PR[0-9]+$"}
+        }
+      }
+    },
+    "traceability_blockers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "requirement", "status", "closure_pr"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "requirement": {"type": "string", "minLength": 1},
+          "status": {"enum": ["partial", "open"]},
+          "closure_pr": {"type": "string", "pattern": "^PR[0-9]+$"}
+        }
+      }
+    }
+  }
+}

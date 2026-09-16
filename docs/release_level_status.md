@@ -1,9 +1,9 @@
 # Release Level Status
 
-release_level_status_version: 2026-09-15-pr97
+release_level_status_version: 2026-09-16-pr99
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 97
+current_github_pr: 99
 final_planned_github_pr: unassigned
 final_planned_roadmap_pr: 102
 
@@ -31,7 +31,7 @@ ShortHand is a controlled beta with a versioned `linux-x64-cpu-v1` backend quali
 
 ## Open before enterprise production use
 
-Roadmap PR94-PR96 qualify representative workloads, measured performance/energy and a scoped enterprise RC. PR97-PR102 add the merged audit's broader release evidence. TST017 separately requires a real protected tag publication whose attestations verify cryptographically. Public ingress, authentication, authorization and TLS are not claimed by the process-scoped serving contract.
+Roadmap PR94-PR96 qualify representative workloads, measured performance/energy and a scoped enterprise RC. PR97-PR99 add the merged audit's broader release evidence; PR99 implements the fail-closed pilot/RC aggregate and leaves its decision blocked by retained evidence. TST017 separately requires a real protected tag publication whose attestations verify cryptographically. Public ingress, authentication, authorization and TLS are not claimed by the process-scoped serving contract.
 
 Only executed checks and retained artifacts are release evidence. Workflow source, a detected device, an installed SDK, a skipped test or a candidate evidence bundle is not proof of production readiness.
 
@@ -41,4 +41,8 @@ PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference l
 
 PR92 provides the generated MLIR dialect and SDK for Linux x64 with LLVM/MLIR 18, with mandatory lit, verifiers, sanitizer and installed-consumer evidence. GitHub PR94 adds source/runtime lowering in this scope; other MLIR platforms remain unqualified.
 
-GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. PR99 is the active pilot/RC candidate; three later audit increments remain after it, subject to complete exit evidence and external operational blockers.
+
+PR99 adds [the enterprise pilot and release-candidate contract](enterprise_pilot_release_candidate.md) for the explicit `linux-x64-cpu-v1` support set. A candidate report records clean install/reinstall/uninstall, rollback, serving soak, deployment contract and all retained blockers; it does not claim enterprise GA, accelerator support or certification.
+
+Historical release marker: release_level_status_version: 2026-09-15-pr97.

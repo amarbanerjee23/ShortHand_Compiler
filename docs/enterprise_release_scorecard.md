@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-09-15-pr97
+enterprise_release_scorecard_version: 2026-09-16-pr99
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta
@@ -34,11 +34,11 @@ This scorecard summarizes active release controls. The machine-readable authorit
 | C3-ECO readiness | Partial | Typed profile, instrument-backed accounting and deterministic candidate assessment exist; PR91 implements signed auditor lineage, retention-policy checks, recertification handling and redacted reporting. Independent certification and actual storage operations remain external. |
 | MLIR production lowering | Implemented for Linux x64/LLVM18 | GitHub PR94 verifies source/SDK lowering, bounded composite execution, real runtime handoff and optimized evidence retention. |
 | Measured performance and energy | Open | PR95 requires equivalent work, repeated trials, raw data, provenance and uncertainty. |
-| Final production RC aggregate | Open | PR96 requires zero mandatory skips, enterprise pilot, upgrade/rollback/DR and retained evidence. |
+| Final production RC aggregate | Implemented as a fail-closed gate | PR99 executes the `shorthand.enterprise.pilot_rc.v1` lifecycle/blocker report and consumes inherited deployment/soak/DR evidence; the decision remains blocked until retained blockers close. |
 
 ## ER4 promotion rule
 
-ER4 requires every production blocker in both matrices to be closed, the scoped roadmap PR96 aggregate and applicable PR97-PR102 audit closeout gates to pass on their final heads in `ci / ubuntu (push)` and `ci / ubuntu (pull_request)`, and TST017 to be closed by a verified protected release. A high C3-ECO score cannot override a failed critical gate. No efficiency improvement counts if required functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened.
+ER4 requires every production blocker in both matrices to be closed, the scoped roadmap PR96/PR99 aggregate and applicable PR100-PR102 audit closeout gates to pass on their final heads in `ci / ubuntu (push)` and `ci / ubuntu (pull_request)`, and TST017 to be closed by a verified protected release. A high C3-ECO score cannot override a failed critical gate. No efficiency improvement counts if required functionality, accuracy, reliability, security, privacy, safety or accessibility is weakened.
 
 The retained release bundle must include exact commit/run identity, toolchains, build/test/sanitizer results, backend/workload evidence, measurement and uncertainty records, security results, SBOM/provenance/signatures, deployment/pilot/rollback evidence, known limitations and approved claim wording.
 
@@ -48,4 +48,6 @@ GitHub PR96 candidate auditor evidence is implemented: signatures, replay, lifec
 
 GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. Ten increments remain including this candidate, nine after it, subject to complete exit evidence and external operational blockers.
 
-PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workloads and enterprise pilot evidence remain open.
+PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 implements the [enterprise pilot and release-candidate aggregate](enterprise_pilot_release_candidate.md) for the explicit CPU scope, including lifecycle and rollback evidence. The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workloads and independent certification remain open.
+
+Historical scorecard marker: enterprise_release_scorecard_version: 2026-09-15-pr97.

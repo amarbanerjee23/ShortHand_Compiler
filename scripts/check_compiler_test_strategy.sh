@@ -27,6 +27,11 @@ ASSESSMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_assessment.sh"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
+PILOT_RC_DOC="${ROOT_DIR}/docs/enterprise_pilot_release_candidate.md"
+PILOT_RC_SCOPE="${ROOT_DIR}/docs/production_rc_scope.tsv"
+PILOT_RC_SCHEMA="${ROOT_DIR}/schemas/enterprise_pilot_rc_v1.schema.json"
+PILOT_RC_GATE="${ROOT_DIR}/scripts/check_production_rc.sh"
+PILOT_RC_TEST="${ROOT_DIR}/tests/enterprise/test_production_rc_contract.sh"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
@@ -79,6 +84,9 @@ for file in "${DOC}" "${MATRIX}" "${PLAN}" "${STATUS}" "${TEMPLATE}" "${CI}" "${
   "${ROOT_DIR}/docs/external_security_policy.md"; do
   require_file "${file}"
 done
+for file in "${PILOT_RC_DOC}" "${PILOT_RC_SCOPE}" "${PILOT_RC_SCHEMA}" "${PILOT_RC_GATE}" "${PILOT_RC_TEST}"; do
+  require_file "${file}"
+done
 
 expected_header=$'id\tarea\tstatus\texisting_evidence\tmissing_evidence\tclosure_pr\tproduction_blocker'
 [[ "$(head -n 1 "${MATRIX}")" == "${expected_header}" ]] || { echo "error: compiler test matrix header changed unexpectedly" >&2; exit 1; }
@@ -87,9 +95,9 @@ implemented_count="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { count++ } END 
 partial_count="$(awk -F '\t' 'NR > 1 && $3 == "partial" { count++ } END { print count+0 }' "${MATRIX}")"
 open_count="$(awk -F '\t' 'NR > 1 && $3 == "open" { count++ } END { print count+0 }' "${MATRIX}")"
 [[ "${row_count}" == 36 ]] || { echo "error: expected 36 compiler test coverage rows, found ${row_count}" >&2; exit 1; }
-[[ "${implemented_count}" == 32 ]] || { echo "error: expected 32 implemented rows in the PR95 candidate" >&2; exit 1; }
-[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR95 candidate" >&2; exit 1; }
-[[ "${open_count}" == 1 ]] || { echo "error: expected 1 open row in the PR95 candidate" >&2; exit 1; }
+[[ "${implemented_count}" == 33 ]] || { echo "error: expected 33 implemented rows in the PR99 candidate" >&2; exit 1; }
+[[ "${partial_count}" == 3 ]] || { echo "error: expected 3 partial rows in the PR99 candidate" >&2; exit 1; }
+[[ "${open_count}" == 0 ]] || { echo "error: expected 0 open rows in the PR99 candidate" >&2; exit 1; }
 
 invalid_status="$(awk -F '\t' 'NR > 1 && $3 != "implemented" && $3 != "partial" && $3 != "open" { print $1 ":" $3 }' "${MATRIX}")"
 [[ -z "${invalid_status}" ]] || { echo "error: invalid compiler test matrix status values: ${invalid_status}" >&2; exit 1; }
@@ -101,11 +109,11 @@ require_contains "${PLAN}" 'GitHub PR82 -'
 for pr in $(seq 83 96); do require_contains "${PLAN}" "PR${pr} -"; done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-15-pr97' \
+  'compiler_test_strategy_version: 2026-09-16-pr99' \
   'production_claim: false' \
-  '32 implemented areas' \
+  '33 implemented areas' \
   '3 partial areas' \
-  '1 open area' \
+  '0 open areas' \
   'Required test layers for every implementation PR' \
   'A test passing because a dependency, device, backend, platform, container runtime or cluster was skipped is not production success evidence.' \
   'Signing source code is not signing evidence' \
@@ -130,8 +138,8 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-15-pr98'
-require_contains "${STATUS}" '32 implemented, 3 partial and 1 open'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-16-pr99'
+require_contains "${STATUS}" '33 implemented, 3 partial and 0 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'
 require_contains "${STATUS}" 'Container and Kubernetes hardening | Implemented'
@@ -149,7 +157,7 @@ require_contains "${MATRIX}" $'TST019\tcontainer and Kubernetes deployment\timpl
 require_contains "${MATRIX}" $'TST020\tformatter and linter correctness\timplemented'
 require_contains "${MATRIX}" $'TST021\tsyntax highlighting and LSP protocol\timplemented'
 require_contains "${MATRIX}" $'TST022\tlive backend and hardware qualification\timplemented'
-require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\topen'
+require_contains "${MATRIX}" $'TST027\tproduction release-candidate gate\timplemented'
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
@@ -158,6 +166,12 @@ require_contains "${MATRIX}" $'TST032\tconcurrent serving and operational runtim
 require_contains "${MATRIX}" $'TST033\ttyped C3-ECO certification profile\timplemented'
 require_contains "${MATRIX}" $'TST034\tinstrumented energy carbon and cost accounting\timplemented'
 require_contains "${MATRIX}" $'TST035\tC3-ECO eligibility scoring claims and eco-regression\timplemented'
+require_contains "${PILOT_RC_DOC}" 'enterprise_pilot_rc_contract: shorthand.enterprise.pilot_rc.v1'
+require_contains "${PILOT_RC_SCOPE}" $'production_scope\tlinux-x64-cpu-v1'
+require_contains "${PILOT_RC_SCHEMA}" 'shorthand.enterprise.pilot_rc.v1'
+require_contains "${PILOT_RC_GATE}" 'PASS production RC'
+require_contains "${PILOT_RC_TEST}" 'PASS PR99 production RC contract'
+require_contains "${CI}" 'Enterprise CPU-scope production RC lifecycle and blocker aggregate'
 
 require_contains "${MATRIX}" $'TST024\tMLIR dialect and lowering\timplemented\tGitHub PR94 Linux x64 LLVM18'
 require_contains "${MATRIX}" $'TST023\tC3-ECO language and evidence\timplemented\tFirst-class C3-ECO grammar AST semantics evidence, typed profile v2 and SHD5101-SHD5208 claim-safety gates; PR89 instrumented measurement workbook; PR90 non-certifying eligibility, scoring, claim and eco-regression controls'

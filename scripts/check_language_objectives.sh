@@ -57,7 +57,7 @@ require_contains 'C3-ECO eligibility, scoring, claims and eco-regression assessm
 require_contains 'Signed auditor bundle, retention, surveillance and reporting: PR91.'
 require_contains 'Generated MLIR dialect and checked downstream SDK: PR92.'
 require_contains 'Production lowering and representative AI qualification: PR93 through PR94.'
-require_contains 'PR95 through PR96.'
+require_contains 'PR95 through PR99.'
 require_contains '## Change-control rule'
 
 echo 'PASS language objectives gate'

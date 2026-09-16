@@ -1,0 +1,17 @@
+key	value
+schema	shorthand.enterprise.pilot_rc.v1
+introduced_github_pr	99
+production_scope	linux-x64-cpu-v1
+production_backend	onnxruntime_cpu
+production_device	cpu
+current_maturity	controlled_beta
+production_claim	false
+accelerator_production_support	false
+release_candidate_decision	blocked_by_retained_evidence
+mandatory_test_skip_policy	forbidden
+clean_install	required
+same_version_upgrade	required
+rollback	required
+deployment_soak_dr	required
+security_and_provenance	inherited_mandatory_gates
+evidence_retention	candidate_report_and_ci_artifacts
