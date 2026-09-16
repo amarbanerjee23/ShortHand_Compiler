@@ -381,17 +381,20 @@ require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_super
 require_contains "${HISTORICAL_BETA_REQUIREMENTS}" 'document_status: historical_baseline'
 require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_superseded'
 
+# Check inventory consistency before the compiler-backed qualification gates so
+# status drift fails early and its negative tests exercise the actual guard.
+implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
+partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
+open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
+[[ "${implemented}" == 21 ]] || { echo "error: expected 21 implemented C3-ECO traceability rows" >&2; exit 1; }
+[[ "${partial}" == 6 ]] || { echo "error: expected 6 partial C3-ECO traceability rows" >&2; exit 1; }
+[[ "${open}" == 0 ]] || { echo "error: expected 0 open C3-ECO traceability rows" >&2; exit 1; }
+
 bash "${MEASUREMENT_GATE}"
 bash "${LIFECYCLE_BOUNDARY_GATE}"
 bash "${ASSESSMENT_GATE}"
 bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
 
-implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
-partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
-open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-[[ "${implemented}" == 21 ]] || { echo "error: expected 21 implemented C3-ECO traceability rows" >&2; exit 1; }
-[[ "${partial}" == 5 ]] || { echo "error: expected 5 partial C3-ECO traceability rows" >&2; exit 1; }
-[[ "${open}" == 0 ]] || { echo "error: expected 0 open C3-ECO traceability rows" >&2; exit 1; }
 require_contains "${PILOT_RC_CONTRACT}" 'enterprise_pilot_rc_contract: shorthand.enterprise.pilot_rc.v1'
 require_contains "${PILOT_RC_SCOPE}" $'production_scope\tlinux-x64-cpu-v1'
 require_contains "${PILOT_RC_SCHEMA}" 'shorthand.enterprise.pilot_rc.v1'
