@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import shutil
@@ -31,7 +32,8 @@ def run(*args, code=0, diagnostic=None):
 
 
 def dump(path, value):
-    path.write_text(json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n')
+    # Sign the same canonical LF bytes on Windows and POSIX.
+    path.write_bytes((json.dumps(value, sort_keys=True, separators=(',', ':')) + '\n').encode('utf-8'))
 
 
 def read(path):
@@ -112,7 +114,12 @@ for role in ('reference', 'repeat', 'reviewer'):
     keys[role] = key
 
 base = WORK / 'bundle' / 'candidate'
-revision = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
+# Actions already supplies the checked-out revision. UCRT Python's native PATH
+# does not necessarily include the separate Git-for-Windows installation.
+revision = os.environ.get('GITHUB_SHA')
+if not revision:
+    revision = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip()
+assert re.fullmatch('[0-9a-f]{40}', revision), 'fixture requires an exact source revision'
 expected_output = (base / 'profile.json').read_bytes()  # Actual compiler-produced profile output.
 runs = []
 with (WORK / 'generated/measurement.tsv').open() as stream:
