@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShortHand pilot verification v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "pilot_id",
+    "as_of",
+    "review_sha256",
+    "trusted_policy_sha256",
+    "signature_verified",
+    "all_assessments_replayed",
+    "reference_runs",
+    "repeat_runs",
+    "reference_j_per_unit",
+    "repeat_j_per_unit",
+    "conservative_difference_percent",
+    "blockers",
+    "decision",
+    "organizational_independence_authenticated",
+    "physical_measurements_independently_verified",
+    "storage_retention_independently_verified",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.pilot_verification.v1"
+    },
+    "pilot_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "review_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "trusted_policy_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signature_verified": {
+      "const": true
+    },
+    "all_assessments_replayed": {
+      "const": true
+    },
+    "reference_runs": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 16
+    },
+    "repeat_runs": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 16
+    },
+    "reference_j_per_unit": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "repeat_j_per_unit": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "conservative_difference_percent": {
+      "type": "number",
+      "minimum": 0
+    },
+    "blockers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    },
+    "decision": {
+      "enum": [
+        "candidate_reproduction_consistent",
+        "blocked_by_pilot_evidence"
+      ]
+    },
+    "organizational_independence_authenticated": {
+      "const": false
+    },
+    "physical_measurements_independently_verified": {
+      "const": false
+    },
+    "storage_retention_independently_verified": {
+      "const": false
+    },
+    "official_certification_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "level_claim_permitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "type": "boolean",
+      "const": false
+    },
+    "production_claim": {
+      "type": "boolean",
+      "const": false
+    }
+  }
+}

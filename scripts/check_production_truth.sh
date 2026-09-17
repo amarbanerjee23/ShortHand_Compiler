@@ -91,22 +91,22 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-16'
+  'as_of_date=2026-09-17'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=99'
-  'current_github_pr=100'
+  'last_merged_github_pr=100'
+  'current_github_pr=101'
   'last_planned_github_pr=unassigned'
-  'remaining_implementation_prs_including_current=3'
-  'remaining_implementation_prs_after_current=2'
-  'coverage_matrix_status=implemented=34,partial=3,open=0,total=37'
+  'remaining_implementation_prs_including_current=2'
+  'remaining_implementation_prs_after_current=1'
+  'coverage_matrix_status=implemented=35,partial=3,open=0,total=38'
   'mlir_dialect_contract=shorthand.mlir.v1'
   'mlir_dialect_scope=linux-x64-llvm18'
   'mlir_lowering_status=implemented_linux_x64_llvm18'
-  'current_roadmap_pr=100'
+  'current_roadmap_pr=101'
   'last_planned_roadmap_pr=102'
   'audit_follow_on_increments=6'
   'enterprise_execution_contract=shorthand.enterprise_language.v2'
@@ -150,6 +150,8 @@ expected_truth=(
   'lifecycle_cloud_boundary_status=implemented_candidate_boundary_evidence'
   'enterprise_release_scope=linux-x64-cpu-v1'
   'production_rc_decision=blocked_by_open_evidence'
+  'independent_pilot_contract=shorthand.c3eco.independent_pilot.v1'
+  'independent_pilot_status=implemented_candidate_verification_external_authenticity_pending'
 )
 for expected in "${expected_truth[@]}"; do
   key="${expected%%=*}"
@@ -248,24 +250,25 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-16-pr100' \
-  'LAST_MERGED_GITHUB_PR: 99' \
-  'CURRENT_GITHUB_PR: 100' \
-  'CURRENT_ROADMAP_PR: 100' \
+  'production_readiness_plan_version: 2026-09-17-pr101' \
+  'LAST_MERGED_GITHUB_PR: 100' \
+  'CURRENT_GITHUB_PR: 101' \
+  'CURRENT_ROADMAP_PR: 101' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'remaining_planned_implementation_increments_including_current: 3' \
-  'remaining_planned_implementation_increments_after_current: 2' \
+  'remaining_planned_implementation_increments_including_current: 2' \
+  'remaining_planned_implementation_increments_after_current: 1' \
   'PR91 - Auditor bundle, retention, surveillance and reporting' \
   'PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98' \
-  'PR100 - Data lifecycle and cloud carbon boundary | IN PROGRESS as GitHub PR100'; do
+  'PR100 - Data lifecycle and cloud carbon boundary | MERGED as GitHub PR100' \
+  'PR101 - Independent reproduction and certification pilot | IN PROGRESS as GitHub PR101'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-16-pr100' \
-  'current_github_pr: 100' \
-  'current_roadmap_scope: lifecycle_cloud_carbon_boundary' \
-  '34 implemented, 3 partial and 0 open' \
+  'feature_status_version: 2026-09-17-pr101' \
+  'current_github_pr: 101' \
+  'current_roadmap_scope: independent_reproduction_certification_pilot' \
+  '35 implemented, 3 partial and 0 open' \
   'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
@@ -275,9 +278,9 @@ for anchor in \
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-16-pr100' \
-  '37-area production test matrix' \
-  '34 implemented areas' \
+  'compiler_test_strategy_version: 2026-09-17-pr101' \
+  '38-area production test matrix' \
+  '35 implemented areas' \
   '3 partial areas' \
   '0 open areas' \
   'Measured-accounting changes must reject declared/modelled evidence' \
@@ -285,11 +288,11 @@ for anchor in \
   require_contains "${STRATEGY}" "${anchor}"
 done
 
-[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 37 ]] || { echo "error: expected 37 compiler test coverage rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 34 ]] || { echo "error: expected 34 implemented compiler test rows" >&2; exit 1; }
+[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 38 ]] || { echo "error: expected 38 compiler test coverage rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 35 ]] || { echo "error: expected 35 implemented compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 partial compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX}")" == 0 ]] || { echo "error: expected 0 open compiler test rows" >&2; exit 1; }
-for number in $(seq 1 37); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 38); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
@@ -337,13 +340,13 @@ require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring cla
 
 for anchor in 'Language version: beta-0.7' 'Base grammar version: beta-0.2' 'production_claim: false'; do require_contains "${LANGUAGE_SPEC}" "${anchor}"; done
 for anchor in 'language_compatibility_contract: shorthand.language.compatibility.v1' 'active_language_version: beta-0.7' 'production_claim: false'; do require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"; done
-for anchor in 'known_limitations_version: 2026-09-16-pr100' 'current_maturity: controlled_beta' 'production_backend_scope: linux-x64-cpu-v1'; do require_contains "${LIMITATIONS}" "${anchor}"; done
-for anchor in 'release_level_status_version: 2026-09-16-pr100' 'current_maturity: controlled_beta' 'final_planned_github_pr: unassigned'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
-for anchor in 'public_release_readiness_version: 2026-09-16-pr100' 'current_maturity: controlled_beta' 'release_candidate_target: PR100'; do require_contains "${PUBLIC_READINESS}" "${anchor}"; done
-for anchor in 'enterprise_release_scorecard_version: 2026-09-16-pr100' 'current_state: ER3-controlled-beta' 'target_state: ER4-enterprise-release-candidate'; do require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"; done
+for anchor in 'known_limitations_version: 2026-09-17-pr101' 'current_maturity: controlled_beta' 'production_backend_scope: linux-x64-cpu-v1'; do require_contains "${LIMITATIONS}" "${anchor}"; done
+for anchor in 'release_level_status_version: 2026-09-17-pr101' 'current_maturity: controlled_beta' 'final_planned_github_pr: unassigned'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
+for anchor in 'public_release_readiness_version: 2026-09-17-pr101' 'current_maturity: controlled_beta' 'release_candidate_target: PR101'; do require_contains "${PUBLIC_READINESS}" "${anchor}"; done
+for anchor in 'enterprise_release_scorecard_version: 2026-09-17-pr101' 'current_state: ER3-controlled-beta' 'target_state: ER4-enterprise-release-candidate'; do require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"; done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-16-pr100'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-17-pr101'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -400,7 +403,7 @@ require_contains "${PILOT_RC_SCOPE}" $'production_scope\tlinux-x64-cpu-v1'
 require_contains "${PILOT_RC_SCHEMA}" 'shorthand.enterprise.pilot_rc.v1'
 require_contains "${PILOT_RC_GATE}" 'PASS production RC'
 require_contains "${PILOT_RC_TEST}" 'PASS PR99 production RC contract'
-printf 'PRODUCTION_TRUTH current_pr=100 remaining=3 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=101 remaining=2 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 
 require_contains "${ROOT_DIR}/docs/c3eco_auditor_bundle.md" 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1'
@@ -416,6 +419,14 @@ require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'CXX=g++ bash scripts/ch
 require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'scripts/check_c3eco_auditor_bundle.sh'
 require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST036\tC3-ECO signed auditor evidence lifecycle\timplemented'
 require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST037\tC3-ECO lifecycle cloud and hardware carbon boundary\timplemented'
+require_contains "${MATRIX}" $'TST038\tC3-ECO independent reproduction and organizational pilot verification\timplemented'
+require_contains "${ROOT_DIR}/docs/c3eco_independent_pilot.md" 'independent_pilot_contract: shorthand.c3eco.independent_pilot.v1'
+require_contains "${ROOT_DIR}/docs/c3eco_independent_pilot.md" 'G8/S9/S12 and the physical performance/energy blockers remain partial'
+require_contains "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh" 'tests/c3eco/audit/test_independent_pilot.py'
+require_contains "${ROOT_DIR}/tests/c3eco/audit/test_independent_pilot.py" 'PASS PR101 independent pilot integration'
+for schema in independent_pilot pilot_trust pilot_run pilot_operations pilot_verification; do
+  require_contains "${ROOT_DIR}/schemas/c3eco/${schema}_v1.schema.json" "shorthand.c3eco.${schema}.v1"
+done
 for id in G6 G9 G12 I K; do
   status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
   blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"

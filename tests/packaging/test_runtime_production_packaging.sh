@@ -86,6 +86,10 @@ require_installed '*/share/shorthand/schemas/ai_cpu_qualification_config_v1.sche
 require_installed '*/share/shorthand/docs/ai_cpu_energy_qualification.md'
 require_installed '*/share/shorthand/schemas/c3eco/auditor_bundle_v1.schema.json'
 require_installed '*/share/shorthand/docs/c3eco_auditor_bundle.md'
+require_installed '*/share/shorthand/docs/c3eco_independent_pilot.md'
+for schema in independent_pilot pilot_trust pilot_run pilot_operations pilot_verification; do
+  require_installed "*/share/shorthand/schemas/c3eco/${schema}_v1.schema.json"
+done
 require_installed '*/bin/shorthand_prometheus_adapter'
 require_installed '*/bin/shorthand_otlp_exporter'
 require_installed '*/ShortHandConfig.cmake'

@@ -67,15 +67,15 @@ fi
 matrix_header=$'id\tarea\tstatus\texisting_evidence\tmissing_evidence\tclosure_pr\tproduction_blocker'
 [[ "$(head -n 1 "${MATRIX_FILE}")" == "${matrix_header}" ]] || fail "coverage matrix header changed"
 matrix_rows="$(tail -n +2 "${MATRIX_FILE}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')"
-[[ "${matrix_rows}" == 37 ]] || fail "expected 37 coverage rows, found ${matrix_rows}"
+[[ "${matrix_rows}" == 38 ]] || fail "expected 38 coverage rows, found ${matrix_rows}"
 implemented="$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX_FILE}")"
 partial="$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX_FILE}")"
 open="$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX_FILE}")"
-[[ "${implemented}" == 34 && "${partial}" == 3 && "${open}" == 0 ]] || \
-  fail "PR100 coverage must be 34 implemented, 3 partial and 0 open (found ${implemented}/${partial}/${open})"
+[[ "${implemented}" == 35 && "${partial}" == 3 && "${open}" == 0 ]] || \
+  fail "PR101 coverage must be 35 implemented, 3 partial and 0 open (found ${implemented}/${partial}/${open})"
 grep -Fq $'TST027\tproduction release-candidate gate\timplemented' "${MATRIX_FILE}" || \
   fail "TST027 must be implemented by the PR99 gate"
-for number in $(seq 1 37); do grep -Fq "TST$(printf '%03d' "${number}")" "${MATRIX_FILE}" || fail "missing TST row ${number}"; done
+for number in $(seq 1 38); do grep -Fq "TST$(printf '%03d' "${number}")" "${MATRIX_FILE}" || fail "missing TST row ${number}"; done
 
 trace_header=$'id\tcategory\trequirement\tsource\tstatus\timplementation_evidence\tverification_evidence\towner\tclosure_target\tproduction_blocker'
 [[ "$(head -n 1 "${TRACE_FILE}")" == "${trace_header}" ]] || fail "traceability header changed"

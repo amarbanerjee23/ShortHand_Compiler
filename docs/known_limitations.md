@@ -1,6 +1,6 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-16-pr100
+known_limitations_version: 2026-09-17-pr101
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
@@ -28,3 +28,5 @@ PR96 qualifies a bounded real optical-digit application and native/Python execut
 PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 adds [the enterprise pilot and release-candidate contract](enterprise_pilot_release_candidate.md), including isolated SDK lifecycle, rollback and blocker aggregation. The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workload baselines and protected release evidence remain open.
 
 Historical limitations marker: known_limitations_version: 2026-09-15-pr97.
+
+PR101 implements [independent reproduction and draft-standard pilot verification](c3eco_independent_pilot.md) over signed PR91 bundles. Candidate consistency receipts do not authenticate physical measurements, legal independence, actual storage retention or certification. G8/S9/S12 and TST017/TST025/TST026 remain partial; PR102 is the remaining planned implementation batch after PR101.

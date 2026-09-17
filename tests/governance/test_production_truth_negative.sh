@@ -60,7 +60,12 @@ awk -F '\t' 'BEGIN { OFS="\t" } $1 == "G12" { $5="implemented"; $6="none"; $7="n
 expect_failure implemented_without_evidence "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-implemented-without-evidence.tsv" \
   'implemented traceability row G12 lacks execution evidence'
 
-# PR100 retains six partial rows. Keep the total at 27 while changing the
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "independent_pilot_status" { $2="independently_certified" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-pilot-certification.tsv"
+expect_failure premature_pilot_certification "${WORK_DIR}/truth-pilot-certification.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth independent_pilot_status expected implemented_candidate_verification_external_authenticity_pending, found independently_certified'
+
+# PR101 retains six partial rows. Keep the total at 27 while changing the
 # distribution, so both inventory guards must reject unsupported status drift.
 awk -F '\t' 'BEGIN { OFS="\t" } $1 == "B" { $5="open" } { print }' \
   "${WORK_DIR}/trace.tsv" >"${WORK_DIR}/trace-five-partial.tsv"
