@@ -26,6 +26,10 @@ MEASUREMENT_CONTRACT="${ROOT_DIR}/docs/c3eco_measurement_workbook.md"
 MEASUREMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_measurement_workbook_v1.schema.json"
 MEASUREMENT_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/MeasurementWorkbook.cpp"
 MEASUREMENT_GATE="${ROOT_DIR}/scripts/check_c3eco_measurement_workbook.sh"
+LIFECYCLE_BOUNDARY_CONTRACT="${ROOT_DIR}/docs/c3eco_lifecycle_cloud_boundary.md"
+LIFECYCLE_BOUNDARY_SCHEMA="${ROOT_DIR}/schemas/c3eco_lifecycle_cloud_boundary_v1.schema.json"
+LIFECYCLE_BOUNDARY_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/LifecycleCloudBoundary.cpp"
+LIFECYCLE_BOUNDARY_GATE="${ROOT_DIR}/scripts/check_c3eco_lifecycle_cloud_boundary.sh"
 ASSESSMENT_CONTRACT="${ROOT_DIR}/docs/c3eco_certification_assessment.md"
 ASSESSMENT_SCHEMA="${ROOT_DIR}/schemas/c3eco_assessment_v1.schema.json"
 ASSESSMENT_TOOL="${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/CertificationAssessment.cpp"
@@ -64,7 +68,7 @@ for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATE
   "${LANGUAGE_SPEC}" "${LANGUAGE_COMPATIBILITY}" "${LIMITATIONS}" "${RELEASE_STATUS}" \
   "${PUBLIC_READINESS}" "${ENTERPRISE_SCORECARD}" "${SBOM_STATUS}" "${OBSERVABILITY_STATUS}" "${PIPELINE}" \
   "${C3ECO_CONTRACT}" "${PROFILE_CONTRACT}" "${PROFILE_MATRIX}" "${PROFILE_GATE}" \
-  "${MEASUREMENT_CONTRACT}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_TOOL}" "${MEASUREMENT_GATE}" \
+  "${MEASUREMENT_CONTRACT}" "${MEASUREMENT_SCHEMA}" "${MEASUREMENT_TOOL}" "${MEASUREMENT_GATE}" "${LIFECYCLE_BOUNDARY_CONTRACT}" "${LIFECYCLE_BOUNDARY_SCHEMA}" "${LIFECYCLE_BOUNDARY_TOOL}" "${LIFECYCLE_BOUNDARY_GATE}" \
   "${ASSESSMENT_CONTRACT}" "${ASSESSMENT_SCHEMA}" "${ASSESSMENT_TOOL}" "${ASSESSMENT_GATE}" \
   "${CONTROL_FLOW_CONTRACT}" "${CONTROL_FLOW_MATRIX}" "${CONTROL_FLOW_GATE}" \
   "${ENTERPRISE_CONTRACT}" "${ENTERPRISE_MATRIX}" "${ENTERPRISE_GATE}" \
@@ -93,16 +97,16 @@ expected_truth=(
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=98'
-  'current_github_pr=99'
+  'last_merged_github_pr=99'
+  'current_github_pr=100'
   'last_planned_github_pr=unassigned'
-  'remaining_implementation_prs_including_current=4'
-  'remaining_implementation_prs_after_current=3'
-  'coverage_matrix_status=implemented=33,partial=3,open=0,total=36'
+  'remaining_implementation_prs_including_current=3'
+  'remaining_implementation_prs_after_current=2'
+  'coverage_matrix_status=implemented=34,partial=3,open=0,total=37'
   'mlir_dialect_contract=shorthand.mlir.v1'
   'mlir_dialect_scope=linux-x64-llvm18'
   'mlir_lowering_status=implemented_linux_x64_llvm18'
-  'current_roadmap_pr=99'
+  'current_roadmap_pr=100'
   'last_planned_roadmap_pr=102'
   'audit_follow_on_increments=6'
   'enterprise_execution_contract=shorthand.enterprise_language.v2'
@@ -142,6 +146,8 @@ expected_truth=(
   'ai_benchmark_status=bounded_cpu_family_execution_implemented_external_quality_baselines_and_physical_energy_pending'
   'enterprise_pilot_rc_contract=shorthand.enterprise.pilot_rc.v1'
   'enterprise_pilot_rc_status=implemented_fail_closed_blocked_by_retained_evidence'
+  'lifecycle_cloud_boundary_contract=shorthand.c3eco.lifecycle_cloud_boundary.v1'
+  'lifecycle_cloud_boundary_status=implemented_candidate_boundary_evidence'
   'enterprise_release_scope=linux-x64-cpu-v1'
   'production_rc_decision=blocked_by_open_evidence'
 )
@@ -194,7 +200,7 @@ while IFS=$'\t' read -r id category requirement source status implementation ver
   [[ "${id}" == "id" ]] && continue
   [[ "${category}" == "mandatory_gate" || "${category}" == "scoring_domain" || "${category}" == "software_class" ]] || { echo "error: invalid category for ${id}: ${category}" >&2; exit 1; }
   [[ "${status}" == "implemented" || "${status}" == "partial" || "${status}" == "open" ]] || { echo "error: invalid traceability status for ${id}: ${status}" >&2; exit 1; }
-  [[ "${closure}" =~ ^PR([8-9][0-9])$ ]] || { echo "error: invalid closure target for ${id}: ${closure}" >&2; exit 1; }
+  [[ "${closure}" =~ ^PR([8-9][0-9]|10[0-2])$ ]] || { echo "error: invalid closure target for ${id}: ${closure}" >&2; exit 1; }
   [[ "${blocker}" == "yes" || "${blocker}" == "no" ]] || { echo "error: invalid blocker flag for ${id}: ${blocker}" >&2; exit 1; }
   [[ -n "${requirement}" && -n "${source}" && -n "${owner}" ]] || { echo "error: incomplete traceability metadata for ${id}" >&2; exit 1; }
   if [[ "${implementation}" != "none" ]]; then
@@ -215,7 +221,7 @@ for id in G4 G5; do
   blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
   [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR89 requires ${id} implemented and non-blocking" >&2; exit 1; }
 done
-for id in G7 G13 G14 A G J; do
+for id in G7 G13 G14 A E F G H J; do
   status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
   blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
   [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR90 requires ${id} implemented and non-blocking" >&2; exit 1; }
@@ -242,24 +248,24 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-16-pr99' \
-  'LAST_MERGED_GITHUB_PR: 98' \
-  'CURRENT_GITHUB_PR: 99' \
-  'CURRENT_ROADMAP_PR: 99' \
+  'production_readiness_plan_version: 2026-09-16-pr100' \
+  'LAST_MERGED_GITHUB_PR: 99' \
+  'CURRENT_GITHUB_PR: 100' \
+  'CURRENT_ROADMAP_PR: 100' \
   'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'remaining_planned_implementation_increments_including_current: 4' \
-  'remaining_planned_implementation_increments_after_current: 3' \
+  'remaining_planned_implementation_increments_including_current: 3' \
+  'remaining_planned_implementation_increments_after_current: 2' \
   'PR91 - Auditor bundle, retention, surveillance and reporting' \
   'PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98' \
-  'PR99 - Accelerator execution or explicit CPU scope | IN PROGRESS as GitHub PR99'; do
+  'PR100 - Data lifecycle and cloud carbon boundary | IN PROGRESS as GitHub PR100'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-16-pr99' \
-  'current_github_pr: 99' \
-  'current_roadmap_scope: enterprise_cpu_scope_pilot_rc' \
-  '33 implemented, 3 partial and 0 open' \
+  'feature_status_version: 2026-09-16-pr100' \
+  'current_github_pr: 100' \
+  'current_roadmap_scope: lifecycle_cloud_carbon_boundary' \
+  '34 implemented, 3 partial and 0 open' \
   'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
   'assessment_decision_kind: candidate_recommendation_only' \
   'comparative_energy_claim: false' \
@@ -269,9 +275,9 @@ for anchor in \
 done
 
 for anchor in \
-  'compiler_test_strategy_version: 2026-09-16-pr99' \
-  '36-area production test matrix' \
-  '33 implemented areas' \
+  'compiler_test_strategy_version: 2026-09-16-pr100' \
+  '37-area production test matrix' \
+  '34 implemented areas' \
   '3 partial areas' \
   '0 open areas' \
   'Measured-accounting changes must reject declared/modelled evidence' \
@@ -279,11 +285,11 @@ for anchor in \
   require_contains "${STRATEGY}" "${anchor}"
 done
 
-[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 36 ]] || { echo "error: expected 36 compiler test coverage rows" >&2; exit 1; }
-[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 33 ]] || { echo "error: expected 33 implemented compiler test rows" >&2; exit 1; }
+[[ "$(tail -n +2 "${MATRIX}" | sed '/^[[:space:]]*$/d' | wc -l | tr -d ' ')" == 37 ]] || { echo "error: expected 37 compiler test coverage rows" >&2; exit 1; }
+[[ "$(awk -F '\t' 'NR > 1 && $3 == "implemented" { n++ } END { print n+0 }' "${MATRIX}")" == 34 ]] || { echo "error: expected 34 implemented compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "partial" { n++ } END { print n+0 }' "${MATRIX}")" == 3 ]] || { echo "error: expected 3 partial compiler test rows" >&2; exit 1; }
 [[ "$(awk -F '\t' 'NR > 1 && $3 == "open" { n++ } END { print n+0 }' "${MATRIX}")" == 0 ]] || { echo "error: expected 0 open compiler test rows" >&2; exit 1; }
-for number in $(seq 1 36); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
+for number in $(seq 1 37); do require_contains "${MATRIX}" "$(printf 'TST%03d' "${number}")"; done
 require_contains "${MATRIX}" $'TST028\tproduction truth and C3-ECO traceability\timplemented'
 require_contains "${MATRIX}" $'TST029\tproduction type system and memory model\timplemented'
 require_contains "${MATRIX}" $'TST030\tfunctions structured control flow and deterministic errors\timplemented'
@@ -309,6 +315,10 @@ require_contains "${MEASUREMENT_SCHEMA}" 'official_certification_granted'
 require_contains "${MEASUREMENT_TOOL}" 'double counting detected'
 require_contains "${MEASUREMENT_TOOL}" 'base_footprint_not_reduced_by_offsets'
 require_contains "${MEASUREMENT_GATE}" 'PASS: PR89 C3-ECO measurement, carbon accounting and cost workbook gate'
+require_contains "${LIFECYCLE_BOUNDARY_CONTRACT}" 'contract: `shorthand.c3eco.lifecycle_cloud_boundary.v1`'
+require_contains "${LIFECYCLE_BOUNDARY_SCHEMA}" 'shorthand.c3eco.lifecycle_cloud_boundary.v1'
+require_contains "${LIFECYCLE_BOUNDARY_TOOL}" 'double counting detected: allocation sum exceeds 1.0'
+require_contains "${LIFECYCLE_BOUNDARY_GATE}" 'PASS PR100 lifecycle cloud carbon boundary, shared allocation, data phases and hardware lifetime gate'
 
 require_contains "${ASSESSMENT_CONTRACT}" 'c3eco_assessment_contract: shorthand.c3eco.assessment.v1'
 require_contains "${ASSESSMENT_CONTRACT}" 'Exactly the 76 catalog criteria'
@@ -327,13 +337,13 @@ require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring cla
 
 for anchor in 'Language version: beta-0.7' 'Base grammar version: beta-0.2' 'production_claim: false'; do require_contains "${LANGUAGE_SPEC}" "${anchor}"; done
 for anchor in 'language_compatibility_contract: shorthand.language.compatibility.v1' 'active_language_version: beta-0.7' 'production_claim: false'; do require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"; done
-for anchor in 'known_limitations_version: 2026-09-16-pr99' 'current_maturity: controlled_beta' 'production_backend_scope: linux-x64-cpu-v1'; do require_contains "${LIMITATIONS}" "${anchor}"; done
-for anchor in 'release_level_status_version: 2026-09-16-pr99' 'current_maturity: controlled_beta' 'final_planned_github_pr: unassigned'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
-for anchor in 'public_release_readiness_version: 2026-09-16-pr99' 'current_maturity: controlled_beta' 'release_candidate_target: PR99'; do require_contains "${PUBLIC_READINESS}" "${anchor}"; done
-for anchor in 'enterprise_release_scorecard_version: 2026-09-16-pr99' 'current_state: ER3-controlled-beta' 'target_state: ER4-enterprise-release-candidate'; do require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"; done
+for anchor in 'known_limitations_version: 2026-09-16-pr100' 'current_maturity: controlled_beta' 'production_backend_scope: linux-x64-cpu-v1'; do require_contains "${LIMITATIONS}" "${anchor}"; done
+for anchor in 'release_level_status_version: 2026-09-16-pr100' 'current_maturity: controlled_beta' 'final_planned_github_pr: unassigned'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
+for anchor in 'public_release_readiness_version: 2026-09-16-pr100' 'current_maturity: controlled_beta' 'release_candidate_target: PR100'; do require_contains "${PUBLIC_READINESS}" "${anchor}"; done
+for anchor in 'enterprise_release_scorecard_version: 2026-09-16-pr100' 'current_state: ER3-controlled-beta' 'target_state: ER4-enterprise-release-candidate'; do require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"; done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
-require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-16-pr99'
+require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-16-pr100'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
 require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
@@ -371,22 +381,26 @@ require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_super
 require_contains "${HISTORICAL_BETA_REQUIREMENTS}" 'document_status: historical_baseline'
 require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_superseded'
 
-bash "${MEASUREMENT_GATE}"
-bash "${ASSESSMENT_GATE}"
-bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
-
+# Check inventory consistency before the compiler-backed qualification gates so
+# status drift fails early and its negative tests exercise the actual guard.
 implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
 partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
 open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
-[[ "${implemented}" == 18 ]] || { echo "error: expected 18 implemented C3-ECO traceability rows" >&2; exit 1; }
-[[ "${partial}" == 8 ]] || { echo "error: expected 8 partial C3-ECO traceability rows" >&2; exit 1; }
-[[ "${open}" == 1 ]] || { echo "error: expected 1 open C3-ECO traceability rows" >&2; exit 1; }
+[[ "${implemented}" == 21 ]] || { echo "error: expected 21 implemented C3-ECO traceability rows" >&2; exit 1; }
+[[ "${partial}" == 6 ]] || { echo "error: expected 6 partial C3-ECO traceability rows" >&2; exit 1; }
+[[ "${open}" == 0 ]] || { echo "error: expected 0 open C3-ECO traceability rows" >&2; exit 1; }
+
+bash "${MEASUREMENT_GATE}"
+bash "${LIFECYCLE_BOUNDARY_GATE}"
+bash "${ASSESSMENT_GATE}"
+bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
+
 require_contains "${PILOT_RC_CONTRACT}" 'enterprise_pilot_rc_contract: shorthand.enterprise.pilot_rc.v1'
 require_contains "${PILOT_RC_SCOPE}" $'production_scope\tlinux-x64-cpu-v1'
 require_contains "${PILOT_RC_SCHEMA}" 'shorthand.enterprise.pilot_rc.v1'
 require_contains "${PILOT_RC_GATE}" 'PASS production RC'
 require_contains "${PILOT_RC_TEST}" 'PASS PR99 production RC contract'
-printf 'PRODUCTION_TRUTH current_pr=99 remaining=4 maturity=controlled_beta production_claim=false\n'
+printf 'PRODUCTION_TRUTH current_pr=100 remaining=3 maturity=controlled_beta production_claim=false\n'
 printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
 
 require_contains "${ROOT_DIR}/docs/c3eco_auditor_bundle.md" 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1'
@@ -401,6 +415,7 @@ require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/Makefile" 'test-c3e
 require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'CXX=g++ bash scripts/check_c3eco_auditor_bundle.sh'
 require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'scripts/check_c3eco_auditor_bundle.sh'
 require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST036\tC3-ECO signed auditor evidence lifecycle\timplemented'
+require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST037\tC3-ECO lifecycle cloud and hardware carbon boundary\timplemented'
 for id in G6 G9 G12 I K; do
   status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
   blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"

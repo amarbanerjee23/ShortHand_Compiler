@@ -60,4 +60,16 @@ awk -F '\t' 'BEGIN { OFS="\t" } $1 == "G12" { $5="implemented"; $6="none"; $7="n
 expect_failure implemented_without_evidence "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-implemented-without-evidence.tsv" \
   'implemented traceability row G12 lacks execution evidence'
 
+# PR100 retains six partial rows. Keep the total at 27 while changing the
+# distribution, so both inventory guards must reject unsupported status drift.
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "B" { $5="open" } { print }' \
+  "${WORK_DIR}/trace.tsv" >"${WORK_DIR}/trace-five-partial.tsv"
+expect_failure partial_count "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-five-partial.tsv" \
+  'expected 6 partial C3-ECO traceability rows'
+
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "B" { $5="implemented" } { print }' \
+  "${WORK_DIR}/trace.tsv" >"${WORK_DIR}/trace-premature-completion.tsv"
+expect_failure premature_completion "${WORK_DIR}/truth.tsv" "${WORK_DIR}/trace-premature-completion.tsv" \
+  'expected 21 implemented C3-ECO traceability rows'
+
 printf 'PASS production truth negative contradiction, contract, completeness, mapping and evidence cases\n'

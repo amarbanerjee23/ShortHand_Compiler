@@ -1,9 +1,9 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-16-pr99
+public_release_readiness_version: 2026-09-16-pr100
 current_maturity: controlled_beta
 production_claim: false
-release_candidate_target: PR99
+release_candidate_target: PR100
 
 A GitHub PR99 candidate requires all mandatory commands to pass from a clean checkout, followed by the `shorthand.enterprise.pilot_rc.v1` lifecycle and blocker-aggregation gate:
 

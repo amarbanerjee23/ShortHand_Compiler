@@ -75,6 +75,8 @@ GREEN_AI_TOOL_BIN := ../build/green_ai_tool
 GREEN_AI_TOOL_SRC := green_ai/GreenAITool.cpp
 C3ECO_MEASURE_BIN := ../build/shorthand_c3eco_measure
 C3ECO_MEASURE_SRC := evidence/MeasurementWorkbook.cpp
+C3ECO_BOUNDARY_BIN := ../build/shorthand_c3eco_lifecycle_boundary
+C3ECO_BOUNDARY_SRC := evidence/LifecycleCloudBoundary.cpp
 C3ECO_ASSESS_BIN := ../build/shorthand_c3eco_assess
 C3ECO_ASSESS_SRC := evidence/CertificationAssessment.cpp evidence/C3EcoAssessmentScoring.cpp
 C3ECO_AUDIT_BIN := ../build/shorthand_c3eco_audit
@@ -184,6 +186,10 @@ c3eco_measurement_tool: $(C3ECO_MEASURE_SRC)
 	@mkdir -p ../build
 	$(CXX) $(CXXFLAGS) -o $(C3ECO_MEASURE_BIN) $(C3ECO_MEASURE_SRC)
 
+c3eco_lifecycle_boundary_tool: $(C3ECO_BOUNDARY_SRC)
+	@mkdir -p ../build
+	$(CXX) $(CXXFLAGS) -o $(C3ECO_BOUNDARY_BIN) $(C3ECO_BOUNDARY_SRC)
+
 c3eco_auditor_tool: $(C3ECO_AUDIT_SRC) evidence/C3EcoEvidenceIO.h evidence/C3EcoAssessment.h module/Sha256.h
 	@mkdir -p ../build
 	$(CXX) $(CXXFLAGS) -DSHORTHAND_C3ECO_ASSESS_LIBRARY -o $(C3ECO_AUDIT_BIN) $(C3ECO_AUDIT_SRC) -lcrypto
@@ -210,6 +216,9 @@ test-c3eco-profile: short_hand
 test-c3eco-measurement: c3eco_measurement_tool
 	SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) bash ../../../scripts/check_c3eco_measurement_workbook.sh
 
+test-c3eco-lifecycle-boundary: c3eco_lifecycle_boundary_tool
+	bash ../../../scripts/check_c3eco_lifecycle_cloud_boundary.sh
+
 test-c3eco-auditor: short_hand c3eco_measurement_tool c3eco_auditor_tool
 	SHORTHAND_BIN=$(BIN) SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) SHORTHAND_C3ECO_AUDIT_BIN=$(C3ECO_AUDIT_BIN) bash ../../../scripts/check_c3eco_auditor_bundle.sh
 
@@ -228,14 +237,14 @@ regen:
 	bison -Werror=conflicts-sr -Werror=conflicts-rr --debug -v -d scanner_parser/parser.yy -o parser.tab.cc
 	@if command -v flex >/dev/null 2>&1; then flex -o lex.yy.c scanner_parser/scanner.ll; else echo "warning: flex unavailable; using checked-in lex.yy.c"; fi
 
-.PHONY: all compiler short_hand runtime-source-lowering runtime_lib serving_runtime_lib serving_worker ai_app ai_train green_ai_tool c3eco_measurement_tool c3eco_assessment_tool c3eco_auditor_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-c3eco-measurement test-c3eco-assessment test-c3eco-auditor test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
+.PHONY: all compiler short_hand runtime-source-lowering runtime_lib serving_runtime_lib serving_worker ai_app ai_train green_ai_tool c3eco_measurement_tool c3eco_lifecycle_boundary_tool c3eco_assessment_tool c3eco_auditor_tool c3eco_gate test test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-c3eco-measurement test-c3eco-lifecycle-boundary test-c3eco-assessment test-c3eco-auditor test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-fuzz-sanitizers test-tsan test-llvm test-ai test-ai-app sanitize format-check regen patch-generated-parser clean distclean
 clean:
-	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/shorthand_c3eco_measure ../build/shorthand_c3eco_assess ../build/shorthand_c3eco_audit ../build/shorthand_serving_worker ../build/libshorthand_runtime.a ../build/libshorthand_serving.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o ../build/ServingRuntime.o *.bc *.ir *.o
+	rm -f ../build/short_hand ../build/short_ai_app ../build/short_ai_train ../build/green_ai_tool ../build/shorthand_c3eco_measure ../build/shorthand_c3eco_lifecycle_boundary ../build/shorthand_c3eco_assess ../build/shorthand_c3eco_audit ../build/shorthand_serving_worker ../build/libshorthand_runtime.a ../build/libshorthand_serving.a ../build/ShorthandRuntime.o ../build/ShorthandRuntimeImpl.o ../build/RuntimeThreadSafeFacade.o ../build/ServingRuntime.o *.bc *.ir *.o
 
 distclean: clean
 	rm -f lex.yy.c parser.tab.cc parser.tab.hh parser.output
 
-test: test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-c3eco-measurement test-c3eco-assessment test-c3eco-auditor test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai test-mlir test-ai-energy
+test: test-governance test-unit test-integration test-green test-c3eco test-c3eco-profile test-c3eco-measurement test-c3eco-lifecycle-boundary test-c3eco-assessment test-c3eco-auditor test-compiler test-negative test-diagnostics test-runtime-linking test-conformance test-semantic-differential test-control-flow test-enterprise-language test-serving test-llvm test-ai test-mlir test-ai-energy
 
 test-governance:
 	bash ../../../scripts/check_production_truth.sh
@@ -298,10 +307,11 @@ test-ai-app: ai_app
 
 sanitize:
 	$(MAKE) clean
-	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool c3eco_measurement_tool c3eco_assessment_tool c3eco_auditor_tool runtime_lib
+	$(MAKE) CXXFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -std=c++17" short_hand green_ai_tool c3eco_measurement_tool c3eco_lifecycle_boundary_tool c3eco_assessment_tool c3eco_auditor_tool runtime_lib
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_language_blocks.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_BIN=$(BIN) bash ../../../scripts/check_c3eco_certification_profile.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) bash ../../../scripts/check_c3eco_measurement_workbook.sh
+	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" C3ECO_BOUNDARY_CXXFLAGS="-std=c++17 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror" bash ../../../scripts/check_c3eco_lifecycle_cloud_boundary.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" C3ECO_ASSESS_CXXFLAGS="-std=c++17 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror" SHORTHAND_BIN=$(BIN) SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) SHORTHAND_C3ECO_ASSESS_BIN=$(C3ECO_ASSESS_BIN) bash ../../../scripts/check_c3eco_assessment.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" C3ECO_AUDIT_CXXFLAGS="-std=c++17 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror" SHORTHAND_BIN=$(BIN) SHORTHAND_C3ECO_MEASURE_BIN=$(C3ECO_MEASURE_BIN) SHORTHAND_C3ECO_AUDIT_BIN=$(C3ECO_AUDIT_BIN) bash ../../../scripts/check_c3eco_auditor_bundle.sh
 	ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" bash ../../../tests/run_language_tests.sh sanitize

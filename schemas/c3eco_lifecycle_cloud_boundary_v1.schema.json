@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://shorthand.dev/schemas/c3eco_lifecycle_cloud_boundary_v1.schema.json",
+  "title": "ShortHand lifecycle and cloud carbon boundary v1",
+  "type": "object",
+  "required": ["schema", "boundary_status", "official_certification_granted", "comparative_energy_claim", "production_claim", "totals", "records"],
+  "properties": {
+    "schema": {"const": "shorthand.c3eco.lifecycle_cloud_boundary.v1"},
+    "boundary_status": {"const": "candidate_evidence_complete_for_declared_scope"},
+    "official_certification_granted": {"const": false},
+    "comparative_energy_claim": {"const": false},
+    "production_claim": {"const": false},
+    "totals": {"type": "object", "required": ["allocated_operational_carbon_kgco2e", "allocated_embodied_carbon_kgco2e", "total_carbon_kgco2e", "allocated_data_bytes", "allocated_storage_gb_hours", "allocated_network_gb"]},
+    "records": {"type": "array", "minItems": 6}
+  },
+  "additionalProperties": true
+}

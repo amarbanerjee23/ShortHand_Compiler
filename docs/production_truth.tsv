@@ -6,12 +6,12 @@ current_maturity	controlled_beta
 production_claim	false
 active_language_version	beta-0.7
 base_grammar_version	beta-0.2
-last_merged_github_pr	98
-current_github_pr	99
+last_merged_github_pr	99
+current_github_pr	100
 last_planned_github_pr	unassigned
-remaining_implementation_prs_including_current	4
-remaining_implementation_prs_after_current	3
-coverage_matrix_status	implemented=33,partial=3,open=0,total=36
+remaining_implementation_prs_including_current	3
+remaining_implementation_prs_after_current	2
+coverage_matrix_status	implemented=34,partial=3,open=0,total=37
 type_system_contract	shorthand.type_memory.v1
 control_flow_contract	shorthand.control_flow.v1
 enterprise_language_contract	shorthand.enterprise_language.v1
@@ -39,7 +39,7 @@ c3eco_auditor_status	signed_candidate_evidence_with_assessment_replay
 mlir_dialect_contract	shorthand.mlir.v1
 mlir_dialect_scope	linux-x64-llvm18
 mlir_lowering_status	implemented_linux_x64_llvm18
-current_roadmap_pr	99
+current_roadmap_pr	100
 last_planned_roadmap_pr	102
 audit_follow_on_increments	6
 enterprise_execution_contract	shorthand.enterprise_language.v2
@@ -55,5 +55,7 @@ ai_benchmark_contract	shorthand.ai.benchmark_suite.v1
 ai_benchmark_status	bounded_cpu_family_execution_implemented_external_quality_baselines_and_physical_energy_pending
 enterprise_pilot_rc_contract	shorthand.enterprise.pilot_rc.v1
 enterprise_pilot_rc_status	implemented_fail_closed_blocked_by_retained_evidence
+lifecycle_cloud_boundary_contract	shorthand.c3eco.lifecycle_cloud_boundary.v1
+lifecycle_cloud_boundary_status	implemented_candidate_boundary_evidence
 enterprise_release_scope	linux-x64-cpu-v1
 production_rc_decision	blocked_by_open_evidence

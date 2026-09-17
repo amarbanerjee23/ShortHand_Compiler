@@ -1,6 +1,6 @@
 # Enterprise Release Readiness Scorecard
 
-enterprise_release_scorecard_version: 2026-09-16-pr99
+enterprise_release_scorecard_version: 2026-09-16-pr100
 current_maturity: controlled_beta
 production_claim: false
 current_state: ER3-controlled-beta

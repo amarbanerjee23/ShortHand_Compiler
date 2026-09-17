@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-16-pr99
+compiler_test_strategy_version: 2026-09-16-pr100
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,9 +13,9 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 36-area production test matrix records for the GitHub PR99 candidate:
+The 37-area production test matrix records for the GitHub PR100 candidate:
 
-- 33 implemented areas,
+- 34 implemented areas,
 - 3 partial areas,
 - 0 open areas.
 
@@ -27,7 +27,7 @@ GitHub PR90 adds TST035, `shorthand.c3eco.assessment.v1`, with mandatory-gate pr
 
 Strong current coverage includes grammar/module conformance, deterministic package resolution, semantic differential execution, staged fuzzing, ASan/LSan/UBSan, TSan, source-aware diagnostics, GCC/Clang qualification, Linux x64/arm64, macOS arm64 and Windows x64 execution, CTest parity, reproducible builds, frozen ABI consumers, installed-package lifecycle, fail-closed external security scanning, restricted container/Kubernetes deployment, process-scoped serving, formatter/linter preservation, native LSP/editor qualification, qualification-aware AI backend routing, measured-accounting validation and candidate C3-ECO assessment.
 
-Production-critical gaps remain for measured performance/equivalent-workload energy, complete AI-family quality baselines, lifecycle/cloud and independent review evidence. PR99 implements the final release-candidate gate as a fail-closed blocker aggregate; TST017 still requires a real protected signed-tag exercise.
+Production-critical gaps remain for measured performance/equivalent-workload energy, complete AI-family quality baselines and independent review evidence. PR100 implements lifecycle/cloud and hardware-boundary accounting as candidate evidence; TST017 still requires a real protected signed-tag exercise.
 
 ## Production backend and hardware qualification contract
 
