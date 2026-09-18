@@ -10,7 +10,7 @@ The implementation goal is to keep the language syntax simple for end users whil
 
 - A compiled-language artifact centered on C++17, Flex, Bison, Make/CMake, and LLVM.
 - A controlled-beta platform for language implementation, AI-runtime integration, and Green AI evidence reporting.
-- A C++/LLVM-first codebase. Python is not required for official compiler, runtime, Green AI, validation, report-generation, or test workflows.
+- A C++/LLVM-first codebase. Compiler/runtime execution is native; qualification tests, comparison tooling and release governance additionally require Python 3.
 - A work-in-progress artifact with explicit validation gates and known limitations.
 
 ## What this repository is not
@@ -297,3 +297,12 @@ The AI abstraction example is allowed to use fallback diagnostics for local expe
 ShortHand is ready for internal engineering review only. See `docs/known_limitations.md` before making external publication, certification, or production-readiness claims.
 
 The native PR91 [C3-ECO auditor tool](docs/c3eco_auditor_bundle.md) signs candidate evidence, verifies artifact/reference lineage, replays assessment, checks lifecycle policy and exports redacted signed reports. It requires OpenSSL 3.x and preserves all non-certification and non-production claim boundaries.
+
+<!-- BEGIN SHORTHAND VERIFIED CAPABILITIES -->
+Current release scope: **controlled_beta**; language **beta-0.7**.
+Qualified AI execution scope: **linux-x64-cpu-v1** (ONNX Runtime CPU).
+Compiler/runtime execution uses C++/LLVM. Qualification and release tooling also require Python 3.
+Packages use the curated offline registry and deterministic lockfiles; nested ownership and public service ingress remain outside the declared scope.
+C3-ECO support produces candidate evidence against draft v0.6 plus the dated v0.7 inclusion overlay. It does not grant certification or a certification level.
+Production readiness, accelerator production support, comparative energy superiority and universal lowest-carbon claims are not authorized.
+<!-- END SHORTHAND VERIFIED CAPABILITIES -->

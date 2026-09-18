@@ -185,6 +185,8 @@ jobs:
         run: |
           bash tests/enterprise/test_production_rc_contract.sh
           bash scripts/check_production_rc.sh build "$RUNNER_TEMP/shorthand-pr99-stage"
+          python3 scripts/release_closeout.py --root . --revision "$(git rev-parse HEAD)" \
+            --rc-report /tmp/shorthand_production_rc.json --report /tmp/shorthand_release_closeout.json
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
@@ -199,6 +201,7 @@ jobs:
             /tmp/shorthand_fuzz_artifacts/
             /tmp/shorthand_c3eco_bundle/
             /tmp/shorthand_production_rc*.json
+            /tmp/shorthand_release_closeout.json
             /tmp/shorthand_production_rc_*.out
             Compiler_new_ws/Short_Hand/build/
             build/

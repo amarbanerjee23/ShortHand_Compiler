@@ -1,6 +1,6 @@
 # Known Limitations
 
-known_limitations_version: 2026-09-17-pr101
+known_limitations_version: 2026-09-18-pr102
 current_maturity: controlled_beta
 production_claim: false
 production_backend_scope: linux-x64-cpu-v1
@@ -29,4 +29,6 @@ PR97 implements [measurement replay and regression controls](ai_comparison_measu
 
 Historical limitations marker: known_limitations_version: 2026-09-15-pr97.
 
-PR101 implements [independent reproduction and draft-standard pilot verification](c3eco_independent_pilot.md) over signed PR91 bundles. Candidate consistency receipts do not authenticate physical measurements, legal independence, actual storage retention or certification. G8/S9/S12 and TST017/TST025/TST026 remain partial; PR102 is the remaining planned implementation batch after PR101.
+PR101 implements [independent reproduction and draft-standard pilot verification](c3eco_independent_pilot.md) over signed PR91 bundles. Candidate consistency receipts do not authenticate physical measurements, legal independence, actual storage retention or certification. G8/S9/S12 and TST017/TST025/TST026 remain partial; PR102 is the active final planned implementation batch.
+
+PR102 adds [release claims and audit closeout](release_claims_closeout.md). Its 25-finding ledger retains 13 evidence-pending findings; public capabilities and live release identity are checked without granting GA authority. Physical/quality/organizational/protected-release evidence remains mandatory after the implementation sequence.

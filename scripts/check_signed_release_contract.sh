@@ -11,6 +11,8 @@ required_files=(
   scripts/prepare_release_bundle.sh
   scripts/verify_release_bundle.sh
   scripts/check_protected_release_environment.sh
+  scripts/release_closeout.py
+  scripts/check_release_closeout.sh
   schemas/release/release_bundle_provenance.schema.json
   tests/release/test_release_version_policy.sh
   tests/release/test_release_bundle_tamper.sh
@@ -60,6 +62,9 @@ require_workflow '--draft --verify-tag'
 require_workflow 'gh release delete "$VERSION"'
 require_workflow 'gh release edit "$VERSION"'
 require_workflow 'DRY_RUN_ONLY: workflow_dispatch can build and verify candidates but cannot publish.'
+require_workflow 'Validate release claims and block unauthorized GA publication'
+require_workflow 'args+=(--github --require-ga)'
+require_workflow 'python3 scripts/release_closeout.py "${args[@]}"'
 
 require_version_policy 'refs/remotes/origin/master'
 require_version_policy 'merge-base --is-ancestor'
@@ -96,5 +101,6 @@ fi
 bash tests/release/test_release_version_policy.sh
 bash tests/release/test_release_environment_policy.sh
 bash tests/release/test_release_bundle_tamper.sh
+bash scripts/check_release_closeout.sh
 
 printf 'PASS signed release and protected publication contract gate\n'

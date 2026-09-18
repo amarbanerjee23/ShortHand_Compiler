@@ -50,6 +50,24 @@ jobs:
           echo "version=${REQUESTED_VERSION}" >> "${GITHUB_OUTPUT}"
           echo "version_no_v=${REQUESTED_VERSION#v}" >> "${GITHUB_OUTPUT}"
           echo "publish=${publish}" >> "${GITHUB_OUTPUT}"
+      - name: Validate release claims and block unauthorized GA publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_VERSION: ${{ steps.policy.outputs.version }}
+          PUBLISH: ${{ steps.policy.outputs.publish }}
+        run: |
+          set -euo pipefail
+          args=(--root . --revision "$GITHUB_SHA" --report /tmp/shorthand_release_closeout.json)
+          if [[ "${PUBLISH}" == true && ! "${REQUESTED_VERSION}" =~ -rc\.[0-9]+$ ]]; then
+            args+=(--github --require-ga)
+          fi
+          python3 scripts/release_closeout.py "${args[@]}"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: release-closeout-policy
+          path: /tmp/shorthand_release_closeout.json
+          if-no-files-found: error
 
   linux-x64:
     needs: policy

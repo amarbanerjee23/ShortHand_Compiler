@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-17-pr101
+ci_pipeline_architecture_version: 2026-09-18-pr102
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -236,3 +236,5 @@ PR97 implements [measurement replay and regression controls](ai_comparison_measu
 Historical pipeline marker: ci_pipeline_architecture_version: 2026-09-15-pr97.
 
 PR101 extends the existing `scripts/check_c3eco_auditor_bundle.sh` command with signed independent-pilot integration and negative tests. It inherits the auditor CI/Make/CTest, compiler matrix, sanitizer, CodeQL and installed SDK lifecycle paths. Published pilot schemas and documentation are installed and checked by the packaging gate. No new skipped or warning-only lane is introduced.
+
+PR102 runs release-closeout regression checks inside production truth, Make/CTest governance and installed SDK lifecycle. The final Ubuntu RC step validates its executed report and uploads the resulting closeout JSON. Non-RC tag publication requires the no-go GA guard to pass before privileged publication; explicit RC tags preserve the protected candidate exercise path. No PR job gains publication permissions.
