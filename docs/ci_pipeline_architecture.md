@@ -1,6 +1,6 @@
 # ShortHand CI and release pipeline architecture
 
-ci_pipeline_architecture_version: 2026-09-16-pr100
+ci_pipeline_architecture_version: 2026-09-17-pr101
 pipeline_maturity: controlled_beta
 production_claim: false
 
@@ -234,3 +234,5 @@ PR96 extends both MLIR lanes with full-dataset source/LLVM/native application ch
 PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 implements the enterprise pilot/RC aggregate while preserving the explicit CPU-only scope and retained blockers. PR100 adds a native lifecycle/cloud boundary gate in the same CI, Make and CTest paths; missing material phases, provenance, allocation discipline or hardware lifetime evidence fail closed. Calibrated physical observations, broader workload baselines and enterprise GA evidence remain open.
 
 Historical pipeline marker: ci_pipeline_architecture_version: 2026-09-15-pr97.
+
+PR101 extends the existing `scripts/check_c3eco_auditor_bundle.sh` command with signed independent-pilot integration and negative tests. It inherits the auditor CI/Make/CTest, compiler matrix, sanitizer, CodeQL and installed SDK lifecycle paths. Published pilot schemas and documentation are installed and checked by the packaging gate. No new skipped or warning-only lane is introduced.

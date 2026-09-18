@@ -285,7 +285,9 @@ std::string keyId(EVP_PKEY *key) {
             "cannot identify signing key");
     return crypto::sha256(std::string(reinterpret_cast<char *>(bytes.data()), bytes.size()));
 }
-std::string message(const std::string &manifest) { return std::string(kSchema) + "\n" + manifest; }
+std::string message(const std::string &manifest, const char *schema = kSchema) {
+    return std::string(schema) + "\n" + manifest;
+}
 std::string sign(EVP_PKEY *key, const std::string &manifest) {
     Context context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
     require(context && EVP_DigestSignInit(context.get(), nullptr, nullptr, nullptr, key) == 1,
@@ -300,9 +302,10 @@ std::string sign(EVP_PKEY *key, const std::string &manifest) {
             "cannot sign manifest");
     return hex(signature.data(), signature.size());
 }
-void verifySignature(EVP_PKEY *key, const std::string &manifest, const std::string &signature) {
+void verifySignature(EVP_PKEY *key, const std::string &manifest, const std::string &signature,
+                     const char *schema = kSchema) {
     const auto bytes = unhex(signature, 64);
-    const auto payload = message(manifest);
+    const auto payload = message(manifest, schema);
     Context context(EVP_MD_CTX_new(), EVP_MD_CTX_free);
     require(context && EVP_DigestVerifyInit(context.get(), nullptr, nullptr, nullptr, key) == 1,
             "cannot initialize Ed25519 verifier");
@@ -819,11 +822,258 @@ void readiness(const fs::path &source) {
                              {"production_claim", boolean(false)}}))
               << '\n';
 }
+// PR101 composes the existing signed-bundle verifier and assessment replay. The
+// trust policy is supplied separately by the receiving reviewer, never by a bundle.
+constexpr const char *kPilotSchema = "shorthand.c3eco.independent_pilot.v1";
+std::string digestField(const Json &j, const std::string &field, std::size_t bytes = 32) {
+    const auto value = jsonString(j, field);
+    (void)unhex(value, bytes);
+    return value;
+}
+double boundedNumber(const Json &j, const std::string &field, double low, double high) {
+    const auto value = jsonNumber(j, field);
+    require(std::isfinite(value) && value >= low && value <= high,
+            "pilot numeric bound: " + field);
+    return value;
+}
+int verifyPilot(const fs::path &root, const fs::path &trustPath, const std::string &asOf) {
+    require(validIsoDate(asOf), "invalid pilot verification date");
+    const auto all = files(root);
+    require(!below(fs::canonical(trustPath), fs::canonical(root)),
+            "pilot trust policy must be outside evidence inputs");
+    const auto trust = readJson(trustPath);
+    requireExactKeys(trust, {"schema", "pilot_id", "reference_organization", "repeat_organization",
+        "reviewer_organization", "reference_key", "repeat_key", "reviewer_key",
+        "expected_profile_sha256", "expected_metadata_sha256", "expected_result_sha256",
+        "expected_revision", "min_repetitions", "max_difference_percent", "max_uncertainty_percent"},
+        "pilot trust policy");
+    require(jsonString(trust, "schema") == "shorthand.c3eco.pilot_trust.v1",
+            "unsupported pilot trust schema");
+    std::set<std::string> organizations, keyIds;
+    for (const auto &role : {"reference", "repeat", "reviewer"}) {
+        const auto organization = jsonString(trust, std::string(role) + "_organization");
+        identifier(organization);
+        require(organizations.insert(organization).second, "pilot organizations must be distinct");
+    }
+    const auto trustedKey = [&](const std::string &field) {
+        const auto name = jsonString(trust, field);
+        safePath(name);
+        const auto path = trustPath.parent_path() / name;
+        require(!below(fs::canonical(path), fs::canonical(root)),
+                "pilot trust key must be outside evidence inputs");
+        auto key = loadKey(path, false);
+        require(keyIds.insert(keyId(key.get())).second, "pilot signing keys must be distinct");
+        return key;
+    };
+    auto referenceKey = trustedKey("reference_key");
+    auto repeatKey = trustedKey("repeat_key");
+    auto reviewerKey = trustedKey("reviewer_key");
+    const auto expectedProfile = digestField(trust, "expected_profile_sha256");
+    const auto expectedMetadata = digestField(trust, "expected_metadata_sha256");
+    const auto expectedResult = digestField(trust, "expected_result_sha256");
+    const auto expectedRevision = digestField(trust, "expected_revision", 20);
+    const auto minimum = boundedNumber(trust, "min_repetitions", 3, 16);
+    require(std::floor(minimum) == minimum, "pilot repetition count must be an integer");
+    const auto tolerance = boundedNumber(trust, "max_difference_percent", 0, 100);
+    const auto uncertaintyLimit = boundedNumber(trust, "max_uncertainty_percent", 0, 100);
+    require(all.count("review.json") && all.count("review.sig"), "signed pilot review is required");
+    const auto &bytes = all.at("review.json");
+    verifySignature(reviewerKey.get(), bytes, all.at("review.sig"), kPilotSchema);
+    const auto review = parseJson(bytes);
+    require(canonical(review) + '\n' == bytes, "pilot review is not canonical");
+    requireExactKeys(review, {"schema", "pilot_id", "scope", "rules_id", "reviewer_key_id",
+        "reviewed_on", "valid_until", "runs", "artifacts", "official_certification_granted",
+        "level_claim_permitted", "comparative_energy_claim", "production_claim"}, "pilot review");
+    require(jsonString(review, "schema") == kPilotSchema &&
+            jsonString(review, "rules_id") == kRulesId &&
+            jsonString(review, "scope") == "linux-x64-cpu-v1", "unsupported pilot scope or rules");
+    identifier(jsonString(review, "pilot_id"));
+    require(jsonString(review, "pilot_id") == jsonString(trust, "pilot_id") &&
+            jsonString(review, "reviewer_key_id") == keyId(reviewerKey.get()), "untrusted pilot reviewer");
+    for (const auto &flag : {"official_certification_granted", "level_claim_permitted",
+                             "comparative_energy_claim", "production_claim"})
+        require(!jsonBoolean(review, flag), "unsupported pilot claim");
+    Files artifacts = all;
+    artifacts.erase("review.json");
+    artifacts.erase("review.sig");
+    require(canonical(jsonMember(review, "artifacts")) == canonical(inventory(artifacts)),
+            "pilot artifact inventory or digest mismatch");
+    const auto reviewed = dateField(review, "reviewed_on");
+    const auto validUntil = dateField(review, "valid_until");
+    require(reviewed <= asOf && reviewed <= validUntil && validUntil <= addMonths(reviewed, 12),
+            "invalid pilot review dates");
+    Json blockers = array();
+    const auto block = [&](bool condition, const char *reason) {
+        if (condition) blockers.array.push_back(str(reason));
+    };
+    block(asOf > validUntil, "pilot_review_expired");
+    const auto &runs = jsonMember(review, "runs");
+    require(runs.kind == Json::Kind::Array && runs.array.size() >= 6 && runs.array.size() <= 32,
+            "pilot requires bounded repeated runs from both organizations");
+    std::set<std::string> runIds, paths, measurements, samples;
+    std::set<std::string> environments[2];
+    std::size_t counts[2] = {0, 0};
+    double energy[2] = {0, 0}, uncertainty[2] = {0, 0};
+    std::vector<std::pair<double, double>> observations[2];
+    std::string retainUntil = addMonths(validUntil, 24);
+    for (const auto &run : runs.array) {
+        requireExactKeys(run, {"role", "bundle_path"}, "pilot run");
+        const auto role = jsonString(run, "role");
+        require(role == "reference" || role == "repeat", "invalid pilot run role");
+        const std::size_t group = role == "reference" ? 0 : 1;
+        const auto path = jsonString(run, "bundle_path");
+        identifier(path); // Each bundle is a distinct top-level directory.
+        require(paths.insert(path).second, "duplicate pilot bundle path");
+        // Replay the bytes covered by the review signature, not a second read
+        // of mutable external paths after the inventory was checked.
+        Stage snapshot(fs::temp_directory_path());
+        for (const auto &entry : artifacts)
+            if (entry.first.rfind(path + "/", 0) == 0)
+                write(snapshot.path / entry.first.substr(path.size() + 1), entry.second);
+        const auto bundle = verify(snapshot.path, group == 0 ? referenceKey.get() : repeatKey.get(), asOf);
+        block(!jsonBoolean(bundle.state, "current_review_ready"), "bundle_lifecycle_not_current");
+        require(crypto::sha256(bundle.contents.at("candidate/profile.json")) == expectedProfile &&
+                crypto::sha256(bundle.contents.at("candidate/metadata.tsv")) == expectedMetadata,
+                "pilot workload or functional boundary differs from trusted baseline");
+        const auto attestation = parseJson(bundle.contents.at("candidate/evidence/pilot-run.json"));
+        requireExactKeys(attestation, {"schema", "run_id", "organization", "executed_on",
+            "environment_sha256", "environment_ref", "result_sha256", "result_ref", "revision",
+            "completed_units"}, "pilot run attestation");
+        require(jsonString(attestation, "schema") == "shorthand.c3eco.pilot_run.v1" &&
+                jsonString(attestation, "organization") == jsonString(trust, role + "_organization"),
+                "pilot run organization mismatch");
+        identifier(jsonString(attestation, "run_id"));
+        require(runIds.insert(jsonString(attestation, "run_id")).second, "duplicate pilot run id");
+        require(digestField(attestation, "result_sha256") == expectedResult &&
+                digestField(attestation, "revision", 20) == expectedRevision,
+                "pilot output or revision mismatch");
+        const auto environment = digestField(attestation, "environment_sha256");
+        for (const auto &kind : {"environment", "result"}) {
+            const auto ref = jsonString(attestation, std::string(kind) + "_ref");
+            safePath(ref);
+            const auto file = "candidate/" + ref;
+            require(ref.rfind("evidence/", 0) == 0 && bundle.contents.count(file) &&
+                    !bundle.contents.at(file).empty() && crypto::sha256(bundle.contents.at(file)) ==
+                    digestField(attestation, std::string(kind) + "_sha256"),
+                    "pilot run artifact digest mismatch");
+        }
+        environments[group].insert(environment);
+        const auto executed = dateField(attestation, "executed_on");
+        require(executed <= reviewed, "pilot run is from the future");
+        const auto units = boundedNumber(attestation, "completed_units", 1, 1e12);
+        require(std::floor(units) == units, "completed units must be an integer");
+        const auto &workbookBytes = bundle.contents.at("candidate/measurement.json");
+        require(measurements.insert(crypto::sha256(workbookBytes)).second, "reused measurement workbook");
+        const auto workbook = parseJson(workbookBytes);
+        const auto &records = jsonMember(workbook, "records");
+        require(records.kind == Json::Kind::Array && !records.array.empty(), "pilot measurement records missing");
+        for (const auto &record : records.array) {
+            const auto measured = jsonString(record, "measured_at");
+            require(measured.size() >= 20 && measured.substr(0, 10) == executed,
+                    "pilot measurement date differs from run date");
+            require(samples.insert(environment + "|" + jsonString(record, "instrument_id") + "|" + measured).second,
+                    "reused instrument sample across pilot runs");
+        }
+        const auto &totals = jsonMember(workbook, "totals");
+        const auto kwh = boundedNumber(totals, "facility_energy_kwh", 1e-15, 1e15);
+        const auto error = boundedNumber(totals, "uncertainty_kwh", 0, kwh);
+        block(100 * error / kwh > uncertaintyLimit, "measurement_uncertainty_exceeds_policy");
+        const double normalized = kwh * 3600000 / units;
+        const double normalizedError = error * 3600000 / units;
+        energy[group] += normalized;
+        uncertainty[group] += normalizedError;
+        observations[group].emplace_back(normalized, normalizedError);
+        ++counts[group];
+        require(counts[group] <= 16, "pilot organization exceeds sixteen runs");
+        require(dateField(bundle.policy, "created_on") <= reviewed, "bundle created after pilot review");
+        require(dateField(bundle.policy, "valid_until") >= validUntil, "pilot outlives a source bundle");
+        retainUntil = std::max(retainUntil, dateField(bundle.policy, "retain_until"));
+    }
+    require(counts[0] >= minimum && counts[1] >= minimum, "insufficient independent repetitions");
+    for (const auto &environment : environments[0])
+        require(environments[1].count(environment) == 0, "reference and repeat environments overlap");
+    for (std::size_t group = 0; group < 2; ++group) {
+        energy[group] /= counts[group];
+        uncertainty[group] /= counts[group];
+        // Matching means cannot hide unstable or deliberately balanced repeats.
+        for (const auto &observation : observations[group])
+            block(100 * (std::abs(observation.first - energy[group]) + observation.second +
+                         uncertainty[group]) / energy[group] > tolerance,
+                  "within_group_variation_exceeds_policy");
+    }
+    // Conservative absolute repeatability bound, not an energy superiority test.
+    const double difference = 100 * (std::abs(energy[1] - energy[0]) +
+                                     uncertainty[0] + uncertainty[1]) / energy[0];
+    block(difference > tolerance, "repeatability_difference_exceeds_policy");
+    require(artifacts.count("operations.json"), "pilot organizational operations are required");
+    const auto operations = parseJson(artifacts.at("operations.json"));
+    requireExactKeys(operations, {"schema", "custodian", "observed_on", "retain_until",
+        "immutable_storage_enabled", "encryption_enabled", "access_review_passed",
+        "next_surveillance_on", "open_major_findings", "unreviewed_changes", "storage_evidence_ref",
+        "access_evidence_ref", "surveillance_evidence_ref", "independence_evidence_ref", "draft_review_ref",
+        "restore_source_ref", "restore_result_ref"}, "pilot organizational operations");
+    require(jsonString(operations, "schema") == "shorthand.c3eco.pilot_operations.v1",
+            "unsupported pilot operations schema");
+    identifier(jsonString(operations, "custodian"));
+    require(dateField(operations, "observed_on") <= reviewed, "organizational evidence is from the future");
+    block(dateField(operations, "retain_until") < retainUntil, "organizational_retention_too_short");
+    for (const auto &flag : {"immutable_storage_enabled", "encryption_enabled", "access_review_passed"})
+        block(!jsonBoolean(operations, flag), "organizational_storage_or_access_control_failed");
+    const auto next = dateField(operations, "next_surveillance_on");
+    require(next > dateField(operations, "observed_on") &&
+            next <= addMonths(dateField(operations, "observed_on"), 6), "invalid pilot surveillance schedule");
+    block(asOf >= next, "organizational_surveillance_due");
+    for (const auto &field : {"open_major_findings", "unreviewed_changes"}) {
+        const auto count = boundedNumber(operations, field, 0, 1000000);
+        require(std::floor(count) == count, "organizational finding count must be an integer");
+        block(count != 0, "organizational_review_has_open_findings");
+    }
+    for (const auto &field : {"storage_evidence_ref", "access_evidence_ref", "surveillance_evidence_ref",
+                              "independence_evidence_ref", "draft_review_ref", "restore_source_ref", "restore_result_ref"}) {
+        const auto path = jsonString(operations, field);
+        safePath(path);
+        require(path.rfind("operations/", 0) == 0 && artifacts.count(path) && !artifacts.at(path).empty(),
+                "missing retained organizational evidence");
+    }
+    const auto source = jsonString(operations, "restore_source_ref");
+    const auto restored = jsonString(operations, "restore_result_ref");
+    require(source != restored, "restore source and result must be separate artifacts");
+    block(artifacts.at(source) != artifacts.at(restored), "organizational_restore_digest_mismatch");
+    for (const auto &entry : artifacts) {
+        const auto first = entry.first.substr(0, entry.first.find('/'));
+        require(first == "operations" || entry.first == "operations.json" || paths.count(first),
+                "unexpected pilot artifact");
+    }
+    std::sort(blockers.array.begin(), blockers.array.end(), [](const Json &a, const Json &b) {
+        return a.string < b.string;
+    });
+    blockers.array.erase(std::unique(blockers.array.begin(), blockers.array.end(),
+        [](const Json &a, const Json &b) { return a.string == b.string; }), blockers.array.end());
+    const bool consistent = blockers.array.empty();
+    std::cout << canonical(object({{"schema", str("shorthand.c3eco.pilot_verification.v1")},
+        {"pilot_id", jsonMember(review, "pilot_id")}, {"as_of", str(asOf)},
+        {"review_sha256", str(crypto::sha256(bytes))}, {"trusted_policy_sha256", str(crypto::sha256(canonical(trust)))},
+        {"signature_verified", boolean(true)}, {"all_assessments_replayed", boolean(true)},
+        {"reference_runs", number(counts[0])}, {"repeat_runs", number(counts[1])},
+        {"reference_j_per_unit", number(energy[0])}, {"repeat_j_per_unit", number(energy[1])},
+        {"conservative_difference_percent", number(difference)}, {"blockers", blockers},
+        {"decision", str(consistent ? "candidate_reproduction_consistent" : "blocked_by_pilot_evidence")},
+        {"organizational_independence_authenticated", boolean(false)},
+        {"physical_measurements_independently_verified", boolean(false)},
+        {"storage_retention_independently_verified", boolean(false)},
+        {"official_certification_granted", boolean(false)}, {"level_claim_permitted", boolean(false)},
+        {"comparative_energy_claim", boolean(false)}, {"production_claim", boolean(false)}})) << '\n';
+    return consistent ? 0 : 3;
+}
 int run(int argc, char **argv) {
     require(argc >= 2, "usage: shorthand_c3eco_audit "
-                       "pack|verify|replay|export-public|verify-public|retention-check|readiness "
+                       "pack|verify|replay|export-public|verify-public|retention-check|readiness|verify-pilot "
                        "(see docs/c3eco_auditor_bundle.md)");
     const std::string command = argv[1];
+    if (command == "verify-pilot") {
+        require(argc == 5, "verify-pilot <pilot-dir> <external-trust.json> <as-of>");
+        return verifyPilot(argv[2], argv[3], argv[4]);
+    }
     if (command == "pack") {
         require(argc == 6, "pack <candidate-dir> <policy.json> <private.pem> <new-bundle-dir>");
         pack(argv[2], argv[3], argv[4], argv[5]);

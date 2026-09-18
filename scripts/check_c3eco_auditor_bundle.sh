@@ -25,4 +25,5 @@ C3ECO_ASSESS_CXXFLAGS="${C3ECO_AUDIT_CXXFLAGS:--std=c++17 -Wall -Wextra -Wpedant
 source "${ROOT_DIR}/tests/c3eco/assessment/fixture.sh"
 make_candidate "${WORK_DIR}/candidate" 95
 python3 "${ROOT_DIR}/tests/c3eco/audit/test_auditor_bundle.py" "${TOOL}" "${WORK_DIR}" "${ROOT_DIR}"
+python3 "${ROOT_DIR}/tests/c3eco/audit/test_independent_pilot.py" "${TOOL}" "${WORK_DIR}" "${ROOT_DIR}" "${MEASURE}"
 echo 'PASS PR91 signed auditor lineage replay retention surveillance redaction and readiness gate'

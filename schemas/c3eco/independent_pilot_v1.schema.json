@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShortHand independent pilot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "pilot_id",
+    "scope",
+    "rules_id",
+    "reviewer_key_id",
+    "reviewed_on",
+    "valid_until",
+    "runs",
+    "artifacts",
+    "official_certification_granted",
+    "level_claim_permitted",
+    "comparative_energy_claim",
+    "production_claim"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.independent_pilot.v1"
+    },
+    "pilot_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "scope": {
+      "const": "linux-x64-cpu-v1"
+    },
+    "rules_id": {
+      "const": "shorthand.c3eco.rules.v0.6+v0.7-20260718.v1"
+    },
+    "reviewer_key_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "reviewed_on": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "bundle_path"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "reference",
+              "repeat"
+            ]
+          },
+          "bundle_path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9_.-]+$"
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1022,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "bytes",
+          "sha256"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 33554432
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "official_certification_granted": {
+      "type": "boolean",
+      "const": false
+    },
+    "level_claim_permitted": {
+      "type": "boolean",
+      "const": false
+    },
+    "comparative_energy_claim": {
+      "type": "boolean",
+      "const": false
+    },
+    "production_claim": {
+      "type": "boolean",
+      "const": false
+    }
+  }
+}

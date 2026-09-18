@@ -135,7 +135,6 @@ unsanitized GCC MLIR lane additionally runs the actual paired Python baseline.
 Test data are public, pinned and attributed; synthetic comparison-validator
 fixtures never stand in for measurements.
 
-The plan has six remaining batches including PR97, five afterward.
+The current plan has two implementation batches including PR101, and one afterward (PR102).
 PR97 adds [native trace replay and declared engineering policies](ai_comparison_measurement.md). Physical measurements, performance budgets, larger workload
-families, enterprise pilot, explicit CPU GA scope, lifecycle accounting, protected
-signed release operation, independent reproduction and certification remain open.
+families, protected signed release operation, authenticated independent field reproduction and certification remain open. PR99 implements the CPU-scope pilot aggregate, PR100 the lifecycle/cloud validator and PR101 candidate independent-pilot verification; these contracts do not replace external evidence.

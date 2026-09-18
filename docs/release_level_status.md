@@ -1,6 +1,6 @@
 # Release Level Status
 
-release_level_status_version: 2026-09-16-pr100
+release_level_status_version: 2026-09-17-pr101
 current_maturity: controlled_beta
 production_claim: false
 current_github_pr: 100
@@ -41,8 +41,10 @@ PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference l
 
 PR92 provides the generated MLIR dialect and SDK for Linux x64 with LLVM/MLIR 18, with mandatory lit, verifiers, sanitizer and installed-consumer evidence. GitHub PR94 adds source/runtime lowering in this scope; other MLIR platforms remain unqualified.
 
-GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; roadmap PR94-PR102 remain future implementation IDs. PR99 is the active pilot/RC candidate; three later audit increments remain after it, subject to complete exit evidence and external operational blockers.
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; PR100 is merged; PR101 is the active independent-pilot candidate and PR102 is the one remaining implementation batch afterward. Physical observations, full family baselines, independently reviewed organizational operations and the protected release exercise remain mandatory external evidence.
 
 PR99 adds [the enterprise pilot and release-candidate contract](enterprise_pilot_release_candidate.md) for the explicit `linux-x64-cpu-v1` support set. A candidate report records clean install/reinstall/uninstall, rollback, serving soak, deployment contract and all retained blockers; it does not claim enterprise GA, accelerator support or certification.
 
 Historical release marker: release_level_status_version: 2026-09-15-pr97.
+
+PR101 implements [independent reproduction and draft-standard pilot verification](c3eco_independent_pilot.md) over signed PR91 bundles. Candidate consistency receipts do not authenticate physical measurements, legal independence, actual storage retention or certification. G8/S9/S12 and TST017/TST025/TST026 remain partial; PR102 is the remaining planned implementation batch after PR101.

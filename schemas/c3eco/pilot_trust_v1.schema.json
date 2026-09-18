@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShortHand pilot trust v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "pilot_id",
+    "reference_organization",
+    "repeat_organization",
+    "reviewer_organization",
+    "reference_key",
+    "repeat_key",
+    "reviewer_key",
+    "expected_profile_sha256",
+    "expected_metadata_sha256",
+    "expected_result_sha256",
+    "expected_revision",
+    "min_repetitions",
+    "max_difference_percent",
+    "max_uncertainty_percent"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.c3eco.pilot_trust.v1"
+    },
+    "pilot_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "reference_organization": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "repeat_organization": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "reviewer_organization": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "reference_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "repeat_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "reviewer_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "expected_profile_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expected_metadata_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expected_result_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "expected_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "min_repetitions": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 16
+    },
+    "max_difference_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "max_uncertainty_percent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    }
+  }
+}

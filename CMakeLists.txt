@@ -463,7 +463,7 @@ install(FILES schemas/ai_cpu_qualification_config_v1.schema.json schemas/ai_appl
 install(FILES docs/ai_cpu_energy_qualification.md docs/ai_application_qualification.md docs/ai_comparison_measurement.md docs/c3eco_lifecycle_cloud_boundary.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
-install(FILES docs/c3eco_auditor_bundle.md
+install(FILES docs/c3eco_auditor_bundle.md docs/c3eco_independent_pilot.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
 
