@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real held-out FP64 classifier: compiled ShortHand and two Python baselines."""
+"""Real held-out FP64 classifier baselines for the Shorthand energy study."""
 import argparse
 import json
 import pathlib
@@ -43,8 +43,6 @@ def prepare(output, repetitions):
     (output / 'input.txt').write_text(str(repetitions) + '\n' + '\n'.join(
         ' '.join(map(str, row[:-1])) for row in test) + '\n')
     source = ['int repeats, iteration, row, inputrow, shift, i, label, best, checksum, predictions[1797];',
-              # Existing SemanticIR limits each array to 65536 elements. Keep
-              # all 1797 images resident using two row-aligned arrays.
               'float raw0[65536], raw1[49472], values[64], weights[640], bias[10], score, maximum;']
     source += [f'weights[{i}] = {v:.17f};' for i, v in enumerate(weights)]
     source += [f'bias[{i}] = {v:.17f};' for i, v in enumerate(bias)]
@@ -67,7 +65,7 @@ def prepare(output, repetitions):
     (output / 'classifier.short').write_text('\n'.join(source) + '\n')
 
 
-def worker(model_path, baseline):
+def _numpy_inputs(model_path):
     import numpy as np
     if sys.version_info[:2] != (3, 12) or np.__version__ != '2.3.5':
         raise ValueError('baseline requires CPython 3.12 and pinned NumPy 2.3.5')
@@ -79,15 +77,41 @@ def worker(model_path, baseline):
     raw = data[1:].reshape(1797, 64)
     weights = np.asarray(model['weights'], dtype=np.float64).reshape(64, 10)
     bias = np.asarray(model['bias'], dtype=np.float64)
+    return np, repetitions, raw, weights, bias
+
+
+def worker(model_path, baseline):
+    np, repetitions, raw, weights, bias = _numpy_inputs(model_path)
     checksum = 0
     if baseline == 'numpy':
         for iteration in range(repetitions):
             shift = iteration % len(raw)
-            # Two contiguous views avoid copying/rolling the complete dataset.
             segments = (raw[shift:], raw[:shift]) if shift else (raw,)
             parts = [np.argmax((values / 16.0) @ weights + bias, axis=1) for values in segments]
             predictions = np.concatenate(parts)
             checksum += int(predictions.sum())
+        predictions = predictions.tolist()
+    elif baseline in ('torch-eager', 'torch-compile'):
+        import torch
+        torch.set_num_threads(1)
+        try:
+            torch.set_num_interop_threads(1)
+        except RuntimeError:
+            pass
+        values = torch.from_numpy(np.ascontiguousarray(raw)).to(dtype=torch.float64)
+        torch_weights = torch.from_numpy(np.ascontiguousarray(weights)).to(dtype=torch.float64)
+        torch_bias = torch.from_numpy(np.ascontiguousarray(bias)).to(dtype=torch.float64)
+
+        def classify(batch):
+            return torch.argmax((batch / 16.0) @ torch_weights + torch_bias, dim=1)
+
+        classify_impl = torch.compile(classify, fullgraph=True, dynamic=False) if baseline == 'torch-compile' else classify
+        for iteration in range(repetitions):
+            shift = iteration % len(raw)
+            segments = (values[shift:], values[:shift]) if shift else (values,)
+            parts = [classify_impl(segment) for segment in segments]
+            predictions = torch.cat(parts)
+            checksum += int(predictions.sum().item())
         predictions = predictions.tolist()
     else:
         raw, weights, bias = raw.tolist(), weights.tolist(), bias.tolist()
@@ -110,6 +134,6 @@ def worker(model_path, baseline):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--model', type=pathlib.Path, required=True)
-    parser.add_argument('--baseline', choices=['numpy', 'scalar'], default='numpy')
+    parser.add_argument('--baseline', choices=['numpy', 'scalar', 'torch-eager', 'torch-compile'], default='numpy')
     args = parser.parse_args()
     worker(args.model, args.baseline)

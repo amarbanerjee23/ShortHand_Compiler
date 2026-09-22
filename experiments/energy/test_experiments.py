@@ -9,6 +9,7 @@ import tempfile
 import unittest
 
 import campaign
+import state_of_practice
 from source_workload import prepare
 
 
@@ -75,6 +76,24 @@ class Experiments(unittest.TestCase):
             with self.assertRaises(ValueError):
                 campaign.prepare(args)
 
+    def test_state_of_practice_matrix_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = pathlib.Path(temp) / 'sota-plan'
+            state_of_practice.prepare(argparse.Namespace(output=root, mode='execution_only', profile='core',
+                repetitions=1, pairs=4, instrument=None, meter_csv=None, pytorch_python=None,
+                rust_command=None, rust_version=None, mojo_command=None, mojo_version=None))
+            plan = campaign.load(root / 'plan.json')
+            self.assertEqual(tuple(plan['baselines']), state_of_practice.CORE_BASELINES)
+            state_of_practice.validate_plan(plan)
+            incomplete = copy.deepcopy(plan)
+            incomplete['profile'] = 'full'
+            with self.assertRaises(ValueError):
+                state_of_practice.validate_plan(incomplete)
+            measured = copy.deepcopy(plan)
+            measured.update(mode='calibrated_energy', pairs=30, meter_csv=None)
+            with self.assertRaises(ValueError):
+                state_of_practice.validate_plan(measured)
+
 
 def compiled_integration(compiler, clang, tool):
     """Mandatory in the existing unsanitized MLIR lane; never an energy result."""
@@ -92,7 +111,6 @@ def compiled_integration(compiler, clang, tool):
         report = campaign.load(root / 'results/source/source.json')
         if len(report['pairs']) != 4 or any(p[k]['completed'] != 3594 for p in report['pairs'] for k in ('native', 'python')):
             raise AssertionError('incomplete compiled-source smoke experiment')
-        # A damaged retained prediction must fail replay before any new summary.
         digest = campaign.sha(root / 'results/manifest.json')
         (root / 'results/source/pair-0-native.stdout').write_text('0\n')
         try:
@@ -101,7 +119,19 @@ def compiled_integration(compiler, clang, tool):
             pass
         else:
             raise AssertionError('tampered campaign accepted')
-    print('PASS full execution-only campaign: compiled FP64 source, five FP32 ORT cells, replay, tamper rejection')
+
+        state_of_practice.prepare(argparse.Namespace(output=root / 'sota-plan', mode='execution_only', profile='core',
+            repetitions=1, pairs=4, instrument=None, meter_csv=None, pytorch_python=None,
+            rust_command=None, rust_version=None, mojo_command=None, mojo_version=None))
+        sota_plan = root / 'sota-plan/plan.json'
+        state_of_practice.run(argparse.Namespace(plan=sota_plan, plan_sha256=campaign.sha(sota_plan),
+            compiler=compiler, clang=clang, tool=tool, output=root / 'sota-results'))
+        sota = campaign.load(root / 'sota-results/sota-summary.json')
+        if sota['energy_evidence_qualified'] or sota['full_matrix_qualified'] or tuple(sota['baselines']) != state_of_practice.CORE_BASELINES:
+            raise AssertionError('invalid core state-of-practice smoke result')
+        if {cell['baseline'] for cell in sota['cells']} != set(state_of_practice.CORE_BASELINES):
+            raise AssertionError('missing optimized C++ or NumPy state-of-practice control')
+    print('PASS execution-only campaigns: compiled FP64, five FP32 ORT cells, C++17/NumPy controls, replay and tamper rejection')
 
 
 def native_meter_integration(tool):

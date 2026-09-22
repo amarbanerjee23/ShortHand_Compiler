@@ -198,3 +198,73 @@ References: [existing comparison protocol](../../docs/ai_comparison_measurement.
 [dataset attribution](../../tests/ai_application/data/README.md),
 [Linux powercap boundaries](https://docs.kernel.org/power/powercap/powercap.html),
 [ORT threading/session controls](https://onnxruntime.ai/docs/performance/tune-performance/threading.html).
+
+## State-of-practice benchmark matrix
+
+The publication/certification experiment must not stop at Shorthand versus a
+single Python implementation. `state_of_practice.py` adds a separate Track A
+that holds the FP64 Optdigits model, inputs, repetitions, predictions, checksum,
+hardware and measurement boundary constant while comparing Shorthand against:
+
+| Baseline | Role |
+| --- | --- |
+| NumPy 2.3.5 / CPython 3.12 | optimized Python/native-kernel baseline |
+| C++17 `-O3 -fno-fast-math` | independent optimized compiled control with the same weights embedded at build time |
+| PyTorch eager FP64 | mainstream framework baseline |
+| `torch.compile` FP64 | compiled PyTorch baseline |
+| Rust/Candle | modern compiled AI-stack baseline |
+| Mojo/MAX | modern compiled AI-stack baseline |
+
+The existing R1/R2 FP32 ONNX experiments remain Track B and are reported
+separately. Track A and Track B use different precision/model boundaries and
+must never be averaged into one number.
+
+Two profiles are available. `core` contains NumPy and optimized C++17 and is the
+offline CI smoke profile. `full` requires NumPy, C++17, PyTorch eager,
+`torch.compile`, Rust/Candle and Mojo/MAX. A full plan fails closed if any of
+those declarations is missing; unavailable baselines are never silently skipped.
+`full_matrix_qualified=true` only means the complete declared matrix ran. It
+does not authorize an energy, carbon, certification or "lowest carbon" claim.
+
+Rust/Candle and Mojo/MAX are supplied as prebuilt benchmark runners so the
+physical experiment does not download dependencies during measurement. Each
+runner must accept `--model MODEL.json`, consume the canonical workload on
+stdin, and emit the 1,797 final predictions followed by the repetition checksum.
+The frozen plan binds the runner binary by SHA-256 and records its framework or
+toolchain version. The PyTorch environment is likewise version-captured.
+
+For `torch.compile`, two predeclared warmups populate a dedicated TorchInductor
+cache before measured pairs. This deliberately compares against an optimized
+steady-state implementation rather than creating an easy cold-compilation win.
+Cold compilation can be studied separately, but must not be mixed into these
+steady-state rows.
+
+A minimal CI/core plan is:
+
+```sh
+python experiments/energy/state_of_practice.py prepare \
+  --mode execution_only --profile core --repetitions 1 --pairs 4 \
+  --output /tmp/shorthand-sota-plan
+python experiments/energy/state_of_practice.py run \
+  --plan /tmp/shorthand-sota-plan/plan.json --plan-sha256 PRINTED_PLAN_SHA256 \
+  --compiler "$PWD/build-energy/short_hand" --clang /usr/bin/clang++-18 \
+  --tool "$PWD/build-energy/shorthand_ai_qualify" --output /tmp/shorthand-sota-run
+```
+
+A physical full-matrix plan additionally supplies `--profile full`, at least 30
+pairs, the calibrated instrument and live meter CSV, a pinned PyTorch Python,
+plus prebuilt `--rust-command`/`--rust-version` and
+`--mojo-command`/`--mojo-version`. Repetition counts are chosen from the pilot
+and frozen before confirmatory collection.
+
+The state-of-practice runner writes `sota-summary.json` and `sota-summary.md`.
+Every row reports Shorthand versus one named baseline using the same paired
+bootstrap and physical-meter uncertainty treatment as the original campaign.
+Negative reduction means Shorthand consumed more than that baseline. All rows
+and all independently operated sessions must be reported; selecting only a
+favorable baseline is invalid.
+
+The mandatory unsanitized MLIR test path now exercises the `core` matrix,
+including the independent optimized C++17 control. PyTorch/Rust/Mojo remain
+full physical-campaign prerequisites rather than network-installed CI
+dependencies.
