@@ -33,14 +33,16 @@ def resolve_executable(value):
     return path
 
 
-def compile_cpp_baseline(out, clang, onnx_root):
+def compile_cpp_baseline(out, clang, onnx_root, source=None):
     out.mkdir(parents=True, exist_ok=True)
     root = pathlib.Path(onnx_root).resolve()
     header = root / 'include/onnxruntime_cxx_api.h'
     libdir = root / 'lib'
     if not header.is_file() or not libdir.is_dir() or not any(libdir.glob('libonnxruntime.so*')):
         raise ValueError('verified ONNX Runtime SDK root is required for independent C++ control')
-    source = HERE / 'cpp_onnx_baseline.cpp'
+    source = pathlib.Path(source) if source else HERE / 'cpp_onnx_baseline.cpp'
+    if not source.is_file():
+        raise ValueError('missing frozen independent C++ baseline source')
     binary = out / 'cpp-onnx-baseline'
     campaign.command([
         clang, '-std=c++17', '-O3', '-fno-fast-math', '-DNDEBUG',
@@ -306,7 +308,25 @@ def run(args):
         campaign.snapshot(plan_path, out / 'plan.json')
         campaign.verify_files(inputs, plan['hashes'])
 
-        cpp_binary = compile_cpp_baseline(out / 'build', clang, args.onnxruntime_root)
+        implementation = out / 'implementation'
+        implementation.mkdir()
+        campaign.snapshot(HERE / 'cpp_onnx_baseline.cpp', implementation / 'cpp_onnx_baseline.cpp')
+        campaign.snapshot(HERE / 'runtime_state_of_practice.py', implementation / 'runtime_state_of_practice.py')
+        campaign.snapshot(HERE / 'campaign.py', implementation / 'campaign.py')
+        campaign.snapshot(HERE / 'analysis.py', implementation / 'analysis.py')
+        implementation_sha256 = {
+            p.name: campaign.sha(p) for p in sorted(implementation.iterdir()) if p.is_file()
+        }
+        clang_sha256 = campaign.sha(clang)
+        tool_sha256 = campaign.sha(tool)
+        ort_root = pathlib.Path(args.onnxruntime_root).resolve()
+        ort_library = ort_root / 'lib/libonnxruntime.so'
+        if not ort_library.is_file():
+            raise ValueError('ONNX Runtime shared library is required for evidence identity')
+        ort_library_sha256 = campaign.sha(ort_library)
+
+        cpp_binary = compile_cpp_baseline(out / 'build', clang, args.onnxruntime_root,
+                                          implementation / 'cpp_onnx_baseline.cpp')
         cases = list(plan['runtime_cases'])
         random.Random(plan['seed']).shuffle(cases)
         reports = []
@@ -329,17 +349,25 @@ def run(args):
             affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None,
             onnxruntime_root=str(pathlib.Path(args.onnxruntime_root).resolve()),
             onnxruntime_version='1.30.0',
+            onnxruntime_library_sha256=ort_library_sha256,
             clang_version=subprocess.check_output([clang, '--version'], text=True),
-            tool_sha256=campaign.sha(tool),
+            clang_sha256=clang_sha256,
+            tool_sha256=tool_sha256,
             cpp_baseline_sha256=campaign.sha(cpp_binary),
-            cpp_source_sha256=campaign.sha(HERE / 'cpp_onnx_baseline.cpp'),
-            harness_sha256=campaign.sha(HERE / 'runtime_state_of_practice.py'),
+            implementation_sha256=implementation_sha256,
             completed_utc=datetime.datetime.now(datetime.timezone.utc).isoformat()))
 
         campaign.verify_files(plan_path.parent, plan['hashes'])
         campaign.verify_files(ROOT, plan['data_hashes'])
         if campaign.sha(plan_path) != args.plan_sha256:
             raise ValueError('plan changed during independent C++/ONNX capture')
+        if campaign.sha(clang) != clang_sha256 or campaign.sha(tool) != tool_sha256:
+            raise ValueError('compiler or Shorthand runtime tool changed during capture')
+        if campaign.sha(ort_library) != ort_library_sha256:
+            raise ValueError('ONNX Runtime shared library changed during capture')
+        if any(campaign.sha(implementation / name) != digest
+               for name, digest in implementation_sha256.items()):
+            raise ValueError('retained experiment implementation changed during capture')
 
         hashes = {str(p.relative_to(out)): campaign.sha(p)
                   for p in sorted(out.rglob('*')) if p.is_file() and p.name != 'manifest.json'}
@@ -373,8 +401,11 @@ def analyze(out, expected_sha, tool=None):
         raise ValueError('C++/ONNX plan integrity failure')
     measured = plan['mode'] == 'calibrated_energy'
     uncertainty = campaign.load(out / 'inputs/instrument.json')['uncertainty_percent'] if measured else 0
+    environment = campaign.load(out / 'environment.json')
     if measured and not tool:
         raise ValueError('physical replay requires the native meter-window tool')
+    if measured and campaign.sha(resolve_executable(tool)) != environment.get('tool_sha256'):
+        raise ValueError('physical replay tool differs from the captured meter-window implementation')
     policy = campaign.load(out / 'inputs/policy.json')
     reports = []
     with tempfile.TemporaryDirectory(prefix='cpp-onnx-replay-') as temp:
@@ -394,13 +425,15 @@ def analyze(out, expected_sha, tool=None):
                 cpp_process = pair['cpp_onnx']
                 native = validate_native_report(directory / native_process['application_report'], expected)
                 check_cpp_output(directory / cpp_process['stdout'], expected, checksum)
-                if native['trials'] != [{k: v for k, v in trial.items() if k != 'energy'} for trial in pair['native_trials']]:
-                    # Energy is attached after capture, so compare the original native
-                    # fields while allowing only the retained energy augmentation.
-                    for original, retained in zip(native['trials'], pair['native_trials']):
-                        if any(retained.get(k) != v for k, v in original.items()):
-                            raise ValueError('retained native inner trial changed')
-                parsed_cpp = load_cpp_trials(directory / cpp_process['trial_report'], campaign.load(out / 'inputs' / case['id'] / 'qualification.json'))
+                if len(native['trials']) != len(pair['native_trials']):
+                    raise ValueError('retained native inner trial count changed')
+                for original, retained in zip(native['trials'], pair['native_trials']):
+                    if any(retained.get(k) != v for k, v in original.items()):
+                        raise ValueError('retained native inner trial changed')
+                q = campaign.load(out / 'inputs' / case['id'] / 'qualification.json')
+                parsed_cpp = load_cpp_trials(directory / cpp_process['trial_report'], q)
+                if len(parsed_cpp) != len(pair['cpp_trials']):
+                    raise ValueError('retained C++ inner trial count changed')
                 for original, retained in zip(parsed_cpp, pair['cpp_trials']):
                     if any(retained.get(k) != v for k, v in original.items()):
                         raise ValueError('retained C++ inner trial changed')
