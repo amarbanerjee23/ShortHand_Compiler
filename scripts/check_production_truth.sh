@@ -59,6 +59,8 @@ ENTERPRISE_STRATEGY="${ROOT_DIR}/docs/enterprise_release_strategy.md"
 HISTORICAL_RELEASE_PLAN="${ROOT_DIR}/docs/release_plan_v3_beta.md"
 HISTORICAL_BETA_REQUIREMENTS="${ROOT_DIR}/docs/beta_enterprise_requirements.md"
 HISTORICAL_DIAGNOSTICS_PLAN="${ROOT_DIR}/docs/diagnostics_runtime_mlir_release_plan.md"
+POST_PR102_PLAN="${ROOT_DIR}/docs/post_pr102_enterprise_c3eco_release_plan.md"
+POST_PR102_PLAN_TSV="${ROOT_DIR}/docs/post_pr102_evidence_plan.tsv"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty production truth evidence: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq -- "$2" "$1" || { echo "error: $1 missing production truth anchor: $2" >&2; exit 1; }; }
@@ -80,7 +82,7 @@ for file in "${PILOT_RC_CONTRACT}" "${PILOT_RC_SCOPE}" "${PILOT_RC_SCHEMA}" "${P
   require_file "${file}"
 done
 for file in "${OBJECTIVES}" "${ENTERPRISE_STRATEGY}" "${HISTORICAL_RELEASE_PLAN}" \
-  "${HISTORICAL_BETA_REQUIREMENTS}" "${HISTORICAL_DIAGNOSTICS_PLAN}"; do
+  "${HISTORICAL_BETA_REQUIREMENTS}" "${HISTORICAL_DIAGNOSTICS_PLAN}" "${POST_PR102_PLAN}" "${POST_PR102_PLAN_TSV}"; do
   require_file "${file}"
 done
 
@@ -91,16 +93,16 @@ duplicate_keys="$(tail -n +2 "${TRUTH}" | cut -f1 | sort | uniq -d)"
 
 expected_truth=(
   'schema=shorthand.production.truth.v1'
-  'as_of_date=2026-09-18'
+  'as_of_date=2026-09-22'
   'plan_status=active'
   'current_maturity=controlled_beta'
   'production_claim=false'
   'active_language_version=beta-0.7'
   'base_grammar_version=beta-0.2'
-  'last_merged_github_pr=101'
-  'current_github_pr=102'
+  'last_merged_github_pr=102'
+  'current_github_pr=103'
   'last_planned_github_pr=102'
-  'remaining_implementation_prs_including_current=1'
+  'remaining_implementation_prs_including_current=0'
   'remaining_implementation_prs_after_current=0'
   'coverage_matrix_status=implemented=36,partial=3,open=0,total=39'
   'mlir_dialect_contract=shorthand.mlir.v1'
@@ -154,6 +156,10 @@ expected_truth=(
   'independent_pilot_status=implemented_candidate_verification_external_authenticity_pending'
   'release_closeout_contract=shorthand.release.closeout.v1'
   'release_closeout_status=implemented_no_go_pending_external_evidence'
+  'implementation_roadmap_status=closed_at_pr102'
+  'post_implementation_evidence_plan=docs/post_pr102_enterprise_c3eco_release_plan.md'
+  'enterprise_ga_status=blocked_by_retained_evidence'
+  'lowest_carbon_claim_status=not_substantiated'
   'ga_publication_authorized=false'
 )
 for expected in "${expected_truth[@]}"; do
@@ -253,25 +259,25 @@ for anchor in \
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-18-pr102' \
-  'LAST_MERGED_GITHUB_PR: 101' \
-  'CURRENT_GITHUB_PR: 102' \
+  'production_readiness_plan_version: 2026-09-22-pr103' \
+  'LAST_MERGED_GITHUB_PR: 102' \
+  'CURRENT_GITHUB_PR: 103' \
   'CURRENT_ROADMAP_PR: 102' \
   'LAST_PLANNED_GITHUB_PR: 102' \
-  'remaining_planned_implementation_increments_including_current: 1' \
+  'remaining_planned_implementation_increments_including_current: 0' \
   'remaining_planned_implementation_increments_after_current: 0' \
   'PR91 - Auditor bundle, retention, surveillance and reporting' \
   'PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98' \
   'PR100 - Data lifecycle and cloud carbon boundary | MERGED as GitHub PR100' \
   'PR101 - Independent reproduction and certification pilot | MERGED as GitHub PR101' \
-  'PR102 - Claims and general-release closeout | IN PROGRESS as GitHub PR102'; do
+  'PR102 - Claims and general-release closeout | MERGED as GitHub PR102'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
 for anchor in \
-  'feature_status_version: 2026-09-18-pr102' \
-  'current_github_pr: 102' \
-  'current_roadmap_scope: release_claims_audit_closeout' \
+  'feature_status_version: 2026-09-22-pr103' \
+  'current_github_pr: 103' \
+  'current_roadmap_scope: post_pr102_governance_and_evidence_plan' \
   '36 implemented, 3 partial and 0 open' \
   'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
   'assessment_decision_kind: candidate_recommendation_only' \
@@ -345,11 +351,162 @@ require_contains "${ASSESSMENT_GATE}" 'PASS: PR90 C3-ECO eligibility scoring cla
 for anchor in 'Language version: beta-0.7' 'Base grammar version: beta-0.2' 'production_claim: false'; do require_contains "${LANGUAGE_SPEC}" "${anchor}"; done
 for anchor in 'language_compatibility_contract: shorthand.language.compatibility.v1' 'active_language_version: beta-0.7' 'production_claim: false'; do require_contains "${LANGUAGE_COMPATIBILITY}" "${anchor}"; done
 for anchor in 'known_limitations_version: 2026-09-18-pr102' 'current_maturity: controlled_beta' 'production_backend_scope: linux-x64-cpu-v1'; do require_contains "${LIMITATIONS}" "${anchor}"; done
-for anchor in 'release_level_status_version: 2026-09-18-pr102' 'current_maturity: controlled_beta' 'current_github_pr: 102' 'final_planned_github_pr: 102'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
+for anchor in 'release_level_status_version: 2026-09-22-pr103' 'current_maturity: controlled_beta' 'current_github_pr: 103' 'last_merged_github_pr: 102' 'final_planned_github_pr: 102'; do require_contains "${RELEASE_STATUS}" "${anchor}"; done
 for anchor in 'public_release_readiness_version: 2026-09-18-pr102' 'current_maturity: controlled_beta' 'release_candidate_target: PR102'; do require_contains "${PUBLIC_READINESS}" "${anchor}"; done
 for anchor in 'enterprise_release_scorecard_version: 2026-09-18-pr102' 'current_state: ER3-controlled-beta' 'target_state: ER4-enterprise-release-candidate'; do require_contains "${ENTERPRISE_SCORECARD}" "${anchor}"; done
 require_contains "${SBOM_STATUS}" 'current_status: implemented_candidate_and_artifact_baseline'
 require_contains "${OBSERVABILITY_STATUS}" 'current_status: implemented_process_scoped_serving_v1'
+for anchor in \
+  'post_pr102_plan_version: 2026-09-22-pr103' \
+  'implementation_roadmap_status: closed_at_pr102' \
+  'current_maturity: controlled_beta' \
+  'production_claim: false' \
+  'ga_publication_authorized: false' \
+  'official_certification_granted: false' \
+  'comparative_energy_claim: false' \
+  'lowest_carbon_language_claim: false' \
+  'E1 — protected release and repository controls' \
+  'E6 — enterprise GA decision' \
+  'A global statement such as “ShortHand is the lowest-carbon programming language” is not authorized'; do
+  require_contains "${POST_PR102_PLAN}" "${anchor}"
+done
+[[ "$(head -n 1 "${POST_PR102_PLAN_TSV}")" == 
+
+require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
+require_contains "${CONTROL_FLOW_MATRIX}" $'CTL025\tcompatibility'
+require_contains "${CONTROL_FLOW_GATE}" 'PASS beta-0.5 functions scopes control flow deterministic errors and cleanup gate'
+require_contains "${ENTERPRISE_CONTRACT}" 'enterprise_contract: shorthand.enterprise_language.v1'
+require_contains "${ENTERPRISE_MATRIX}" $'ENT024\tinstalled-consumer'
+require_contains "${ENTERPRISE_GATE}" 'PASS enterprise packages standard library and safe FFI gate'
+require_contains "${SERVING_CONTRACT}" 'serving_runtime_contract: shorthand.serving.runtime.v1'
+require_contains "${SERVING_GATE}" 'PASS concurrent serving cancellation deadline backpressure quota isolation health load soak restart and graceful shutdown gate'
+require_contains "${PROFILE_CONTRACT}" 'c3eco_profile_contract: shorthand.c3eco.profile.v2'
+require_contains "${PROFILE_MATRIX}" $'C3P021\tclaim-safety'
+require_contains "${PROFILE_GATE}" 'PASS typed C3-ECO profile identity units links boundary materiality lifecycle validity migration and claim-safety gate'
+require_contains "${ROOT_DIR}/scripts/check_runtime_memory_sanitizer.sh" 'SERVING_MEMORY_SANITIZER contract=shorthand.serving.runtime.v1'
+require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'SERVING_TSAN contract=shorthand.serving.runtime.v1'
+require_contains "${C3ECO_CONTRACT}" 'normative_candidate: C3-ECO draft v0.6'
+require_contains "${C3ECO_CONTRACT}" 'inclusion_overlay: C3-ECO draft v0.7 dated 2026-07-18'
+require_contains "${C3ECO_CONTRACT}" 'A programming language, framework, cloud, backend or model is not inherently green.'
+require_contains "${README}" 'Current maturity: `controlled_beta`. Production claim: `false`.'
+require_contains "${README}" 'Active language: beta-0.7'
+require_contains "${README}" 'shorthand.control_flow.v1'
+require_contains "${README}" 'shorthand.serving.runtime.v1'
+require_contains "${README}" 'The only qualified backend scope is `linux-x64-cpu-v1`'
+require_contains "${OBJECTIVES}" 'Production truth and certification traceability: PR83.'
+require_contains "${OBJECTIVES}" 'Production type and memory model: PR84.'
+require_contains "${OBJECTIVES}" 'Functions, lexical scopes, structured control flow and deterministic errors: PR85.'
+require_contains "${OBJECTIVES}" 'Enterprise composite/ownership schemas, cryptographic offline packages, core library and safe FFI: PR86.'
+require_contains "${OBJECTIVES}" 'Concurrent serving and operational runtime: PR87.'
+require_contains "${OBJECTIVES}" 'Typed C3-ECO profile and deterministic migration: PR88.'
+require_contains "${OBJECTIVES}" 'Instrument-backed C3-ECO measurement and accounting: PR89.'
+require_contains "${OBJECTIVES}" 'C3-ECO eligibility, scoring, claims and eco-regression assessment: PR90.'
+require_contains "${OBJECTIVES}" 'Signed auditor bundle, retention, surveillance and reporting: PR91.'
+require_contains "${OBJECTIVES}" 'Measured performance/energy and the enterprise release-candidate aggregate: PR95 through PR99.'
+require_contains "${ENTERPRISE_STRATEGY}" 'Current maturity: controlled enterprise beta (ER3), not an enterprise release candidate.'
+require_contains "${HISTORICAL_RELEASE_PLAN}" 'document_status: historical_superseded'
+require_contains "${HISTORICAL_BETA_REQUIREMENTS}" 'document_status: historical_baseline'
+require_contains "${HISTORICAL_DIAGNOSTICS_PLAN}" 'document_status: historical_superseded'
+
+# Check inventory consistency before the compiler-backed qualification gates so
+# status drift fails early and its negative tests exercise the actual guard.
+implemented="$(awk -F '\t' 'NR > 1 && $5 == "implemented" { count++ } END { print count+0 }' "${TRACE}")"
+partial="$(awk -F '\t' 'NR > 1 && $5 == "partial" { count++ } END { print count+0 }' "${TRACE}")"
+open="$(awk -F '\t' 'NR > 1 && $5 == "open" { count++ } END { print count+0 }' "${TRACE}")"
+[[ "${implemented}" == 21 ]] || { echo "error: expected 21 implemented C3-ECO traceability rows" >&2; exit 1; }
+[[ "${partial}" == 6 ]] || { echo "error: expected 6 partial C3-ECO traceability rows" >&2; exit 1; }
+[[ "${open}" == 0 ]] || { echo "error: expected 0 open C3-ECO traceability rows" >&2; exit 1; }
+
+bash "${MEASUREMENT_GATE}"
+bash "${LIFECYCLE_BOUNDARY_GATE}"
+bash "${ASSESSMENT_GATE}"
+bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
+
+require_contains "${PILOT_RC_CONTRACT}" 'enterprise_pilot_rc_contract: shorthand.enterprise.pilot_rc.v1'
+require_contains "${PILOT_RC_SCOPE}" $'production_scope\tlinux-x64-cpu-v1'
+require_contains "${PILOT_RC_SCHEMA}" 'shorthand.enterprise.pilot_rc.v1'
+require_contains "${PILOT_RC_GATE}" 'PASS production RC'
+require_contains "${PILOT_RC_TEST}" 'PASS PR99 production RC contract'
+printf 'PRODUCTION_TRUTH current_pr=102 remaining=1 maturity=controlled_beta production_claim=false\n'
+printf 'C3ECO_TRACEABILITY implemented=%s partial=%s open=%s total=27\n' "${implemented}" "${partial}" "${open}"
+
+require_contains "${ROOT_DIR}/docs/c3eco_auditor_bundle.md" 'c3eco_auditor_contract: shorthand.c3eco.auditor_bundle.v1'
+require_contains "${ROOT_DIR}/schemas/c3eco/auditor_bundle_v1.schema.json" 'shorthand.c3eco.auditor_bundle.v1'
+require_contains "${ROOT_DIR}/schemas/c3eco/audit_policy_v1.schema.json" 'shorthand.c3eco.audit_policy.v1'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/AuditorBundle.cpp" 'EVP_DigestVerify('
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/evidence/AuditorBundle.cpp" 'assessment replay differs from signed output'
+require_contains "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh" 'PASS PR91 signed auditor lineage replay retention surveillance redaction and readiness gate'
+require_contains "${ROOT_DIR}/tests/c3eco/audit/test_auditor_bundle.py" 'CONFIDENTIAL_SENTINEL_91'
+require_contains "${ROOT_DIR}/CMakeLists.txt" 'NAME c3eco_auditor_bundle'
+require_contains "${ROOT_DIR}/Compiler_new_ws/Short_Hand/src/Makefile" 'test-c3eco-auditor:'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" 'CXX=g++ bash scripts/check_c3eco_auditor_bundle.sh'
+require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'scripts/check_c3eco_auditor_bundle.sh'
+require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST036\tC3-ECO signed auditor evidence lifecycle\timplemented'
+require_contains "${ROOT_DIR}/tests/coverage/compiler_test_coverage_matrix.tsv" $'TST037\tC3-ECO lifecycle cloud and hardware carbon boundary\timplemented'
+require_contains "${MATRIX}" $'TST038\tC3-ECO independent reproduction and organizational pilot verification\timplemented'
+require_contains "${ROOT_DIR}/docs/c3eco_independent_pilot.md" 'independent_pilot_contract: shorthand.c3eco.independent_pilot.v1'
+require_contains "${ROOT_DIR}/docs/c3eco_independent_pilot.md" 'G8/S9/S12 and the physical performance/energy blockers remain partial'
+require_contains "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh" 'tests/c3eco/audit/test_independent_pilot.py'
+require_contains "${ROOT_DIR}/tests/c3eco/audit/test_independent_pilot.py" 'PASS PR101 independent pilot integration'
+for schema in independent_pilot pilot_trust pilot_run pilot_operations pilot_verification; do
+  require_contains "${ROOT_DIR}/schemas/c3eco/${schema}_v1.schema.json" "shorthand.c3eco.${schema}.v1"
+done
+for id in G6 G9 G12 I K; do
+  status="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $5 }' "${TRACE}")"
+  blocker="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { print $10 }' "${TRACE}")"
+  [[ "${status}" == "implemented" && "${blocker}" == "no" ]] || { echo "error: PR91 requires ${id} implemented and non-blocking" >&2; exit 1; }
+done
+
+require_contains "${ROOT_DIR}/docs/mlir_lowering.md" 'qualified_lowering_scope: linux-x64-llvm18'
+require_contains "${ROOT_DIR}/scripts/check_mlir_dialect.sh" 'bash "${ROOT_DIR}/scripts/check_mlir_lowering.sh"'
+
+[[ "$(truth_value ai_qualification_contract)" == shorthand.ai.cpu_qualification.v1 ]]
+[[ "$(truth_value ai_qualification_status)" == implemented_controlled_hardware_evidence_pending ]]
+require_contains "${ROOT_DIR}/docs/ai_cpu_energy_qualification.md" 'controlled_hardware_evidence: pending'
+require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1'
+require_contains "${ROOT_DIR}/scripts/check_thread_sanitizer.sh" 'tests/ai_energy/training_tsan.cpp'
+require_contains "${ROOT_DIR}/tests/ctest_parity/expected_make_targets.txt" 'test-ai-energy'
+
+[[ "$(truth_value ai_application_contract)" == shorthand.ai.application.v1 ]]
+[[ "$(truth_value ai_application_status)" == implemented_bounded_cpu_digit_classification ]]
+[[ "$(truth_value ai_baseline_status)" == equivalent_execution_replay_policy_implemented_physical_measurements_pending ]]
+require_contains "${ROOT_DIR}/docs/ai_application_qualification.md" 'controlled_hardware_evidence: pending'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_application.py'
+require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'tests/ai_application/test_source_application.py'
+require_contains "${ROOT_DIR}/scripts/check_mlir_lowering.sh" 'scripts/check_ai_application_baselines.sh'
+
+[[ "$(truth_value ai_comparison_contract)" == shorthand.ai.application.comparison.v2 ]]
+[[ "$(truth_value ai_comparison_status)" == implemented_replay_policy_regression_physical_evidence_pending ]]
+require_contains "${ROOT_DIR}/docs/ai_comparison_measurement.md" 'controlled_hardware_evidence: pending'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_application/test_comparison_evidence.py'
+require_contains "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" 'assess_ai_application_comparison.py'
+
+[[ "$(truth_value ai_benchmark_contract)" == shorthand.ai.benchmark_suite.v1 ]]
+[[ "$(truth_value ai_benchmark_status)" == bounded_cpu_family_execution_implemented_external_quality_baselines_and_physical_energy_pending ]]
+require_contains "${BENCHMARK_CONTRACT}" 'benchmark_family_contract: shorthand.ai.benchmark_suite.v1'
+require_contains "${BENCHMARK_CONTRACT}" 'full_standard_dataset_coverage: false'
+require_contains "${BENCHMARK_CONTRACT}" 'full_equivalent_baseline_coverage: false'
+require_contains "${BENCHMARK_CONTRACT}" 'lowest_carbon_language_claim: false'
+require_contains "${BENCHMARK_SCHEMA}" 'shorthand.ai.benchmark_suite.v1'
+require_contains "${BENCHMARK_MANIFEST}" '"calibrated_energy_coverage": false'
+require_contains "${BENCHMARK_RUNTIME}" 'INT8 internal roundtrip exceeded quantization bound'
+require_contains "${ROOT_DIR}/scripts/check_ai_energy_qualification.sh" 'tests/ai_benchmark/test_benchmark_runtime.cpp'
+python3 "${BENCHMARK_VALIDATOR}" "${BENCHMARK_MANIFEST}" "${ROOT_DIR}"
+python3 "${BENCHMARK_TEST}" "${ROOT_DIR}"
+
+bash "${ROOT_DIR}/scripts/check_release_closeout.sh"
+require_contains "${MATRIX}" $'TST039\trelease claims and audit closeout\timplemented'
+require_contains "${ROOT_DIR}/docs/release_claims_closeout.md" 'release_closeout_contract: shorthand.release.closeout.v1'
+require_contains "${ROOT_DIR}/.github/workflows/ci.yml" '--rc-report /tmp/shorthand_production_rc.json --report /tmp/shorthand_release_closeout.json'
+require_contains "${ROOT_DIR}/scripts/check_installed_sdk_lifecycle.sh" 'scripts/check_release_closeout.sh'
+require_contains "${ROOT_DIR}/CMakeLists.txt" 'install(FILES scripts/release_closeout.py'
+printf 'PASS production truth and C3-ECO traceability gate\n'
+id\tphase\tstatus\tprimary_blockers\texit_summary' ]] || { echo "error: invalid post-PR102 evidence-plan header" >&2; exit 1; }
+for id in G0 E1 E2 E3 E4 E5 E6 C5; do
+  count="$(awk -F '\t' -v id="${id}" 'NR > 1 && $1 == id { n++ } END { print n+0 }' "${POST_PR102_PLAN_TSV}")"
+  [[ "${count}" == 1 ]] || { echo "error: post-PR102 evidence plan requires exactly one ${id} row, found ${count}" >&2; exit 1; }
+done
+[[ "$(awk -F '\t' 'NR > 1 && $1 == "C5" { print $3 }' "${POST_PR102_PLAN_TSV}")" == "blocked" ]] || { echo "error: lowest-carbon C5 milestone must remain blocked before evidence" >&2; exit 1; }
 require_contains "${PIPELINE}" 'ci_pipeline_architecture_version: 2026-09-18-pr102'
 
 require_contains "${CONTROL_FLOW_CONTRACT}" 'control_flow_contract: shorthand.control_flow.v1'
