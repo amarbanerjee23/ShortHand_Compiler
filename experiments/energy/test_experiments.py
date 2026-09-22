@@ -78,6 +78,17 @@ class Experiments(unittest.TestCase):
             with self.assertRaises(ValueError):
                 campaign.prepare(args)
 
+    def test_external_state_of_practice_version_is_verified(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runner = pathlib.Path(temp) / 'peer-runner'
+            runner.write_text('#!/bin/sh\nif [ "$1" = "--version" ]; then echo 1.2.3; exit 0; fi\nexit 2\n')
+            runner.chmod(0o755)
+            spec = state_of_practice._external(runner, '1.2.3', 'rust')
+            self.assertEqual(spec['version'], '1.2.3')
+            self.assertEqual(spec['sha256'], campaign.sha(runner))
+            with self.assertRaises(ValueError):
+                state_of_practice._external(runner, '9.9.9', 'rust')
+
     def test_state_of_practice_matrix_is_fail_closed(self):
         with tempfile.TemporaryDirectory() as temp:
             root = pathlib.Path(temp) / 'sota-plan'
