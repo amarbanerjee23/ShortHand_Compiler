@@ -61,7 +61,7 @@ HISTORICAL_BETA_REQUIREMENTS="${ROOT_DIR}/docs/beta_enterprise_requirements.md"
 HISTORICAL_DIAGNOSTICS_PLAN="${ROOT_DIR}/docs/diagnostics_runtime_mlir_release_plan.md"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing or empty production truth evidence: $1" >&2; exit 1; }; }
-require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing production truth anchor: $2" >&2; exit 1; }; }
+require_contains() { require_file "$1"; grep -Fq -- "$2" "$1" || { echo "error: $1 missing production truth anchor: $2" >&2; exit 1; }; }
 truth_value() { awk -F '\t' -v key="$1" 'NR > 1 && $1 == key { print $2 }' "${TRUTH}"; }
 
 for file in "${TRUTH}" "${TRACE}" "${TRUTH_DOC}" "${PLAN}" "${STATUS}" "${STRATEGY}" "${MATRIX}" \
