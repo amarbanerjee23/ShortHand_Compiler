@@ -61,7 +61,11 @@ def compile_cpp_baseline(out, clang, onnx_root, source=None):
 def validate_native_report(path, expected_predictions=None):
     report = campaign.load(path)
     if report.get('schema') != 'shorthand.ai.application.report.v1' or report.get('success') is not True:
-        raise ValueError('native AIRuntime did not produce a successful application report')
+        reasons = [trial.get('reason') for trial in report.get('trials', [])
+                   if isinstance(trial, dict) and trial.get('success') is not True]
+        raise ValueError(
+            'native AIRuntime did not produce a successful application report: '
+            f'reason={report.get("reason")!r}, trial_reasons={reasons!r}')
     predictions = report.get('predictions')
     if not isinstance(predictions, list) or len(predictions) != 1797:
         raise ValueError('native AIRuntime prediction shape mismatch')
