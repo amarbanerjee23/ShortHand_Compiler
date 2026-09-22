@@ -6,6 +6,11 @@ Current maturity: `controlled_beta`. Production claim: `false`. Active language:
 
 The implementation goal is to keep the language syntax simple for end users while allowing advanced C/C++ AI libraries such as ONNX Runtime, TensorRT, OpenVINO, LibTorch, llama.cpp, Eigen, and OpenBLAS to be integrated behind a stable compiler/runtime abstraction.
 
+For reproducible energy experiments against equivalent Python/NumPy/ONNX workloads,
+see [the experiment protocol and runner](experiments/energy/README.md). It covers
+compiled-source execution, batch/thread sweeps and compilation amortization;
+physical measurements are still required before reporting energy savings.
+
 ## What this repository is
 
 - A compiled-language artifact centered on C++17, Flex, Bison, Make/CMake, and LLVM.
