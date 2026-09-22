@@ -3,10 +3,12 @@
 #include <onnxruntime_cxx_api.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -16,8 +18,18 @@
 namespace {
 
 struct Dataset {
+  // Raw Optdigits pixels in [0, 16]. Normalization is intentionally repeated
+  // inside every classify() call so preprocessing remains inside the same
+  // inference boundary used by the native/Python controls.
   std::vector<float> values;
   std::vector<int64_t> labels;
+};
+
+struct Trial {
+  double start_unix_seconds;
+  double end_unix_seconds;
+  double elapsed_ms;
+  int64_t completed;
 };
 
 Dataset read_csv(const std::string &path) {
@@ -35,7 +47,7 @@ Dataset read_csv(const std::string &path) {
     for (size_t i = 0; i < 64; ++i) {
       if (!std::isfinite(fields[i]) || fields[i] < 0.0 || fields[i] > 16.0)
         throw std::runtime_error("invalid feature value");
-      out.values.push_back(static_cast<float>(fields[i] / 16.0));
+      out.values.push_back(static_cast<float>(fields[i]));
     }
     const auto label = static_cast<int64_t>(fields[64]);
     if (fields[64] != static_cast<double>(label) || label < 0 || label > 9)
@@ -84,7 +96,8 @@ std::vector<int64_t> classify(Ort::Session &session,
   for (size_t offset = 0; offset < data.labels.size(); offset += batch) {
     const size_t count = std::min(batch, data.labels.size() - offset);
     std::vector<float> buffer(batch * 64, 0.0f);
-    std::copy_n(data.values.data() + offset * 64, count * 64, buffer.data());
+    for (size_t i = 0; i < count * 64; ++i)
+      buffer[i] = data.values[offset * 64 + i] / 16.0f;
     std::vector<int64_t> shape = {static_cast<int64_t>(batch), 64};
     auto tensor = Ort::Value::CreateTensor<float>(
         memory, buffer.data(), buffer.size(), shape.data(), shape.size());
@@ -113,17 +126,40 @@ std::vector<int64_t> classify(Ort::Session &session,
 }
 
 int positive(const char *value, const char *name, int maximum = 10000) {
-  const long parsed = std::strtol(value, nullptr, 10);
-  if (parsed < 1 || parsed > maximum) throw std::runtime_error(std::string("invalid ") + name);
+  char *end = nullptr;
+  const long parsed = std::strtol(value, &end, 10);
+  if (!value[0] || !end || *end != '\0' || parsed < 1 || parsed > maximum)
+    throw std::runtime_error(std::string("invalid ") + name);
   return static_cast<int>(parsed);
+}
+
+double unix_seconds(std::chrono::system_clock::time_point value) {
+  return std::chrono::duration<double>(value.time_since_epoch()).count();
+}
+
+void write_trials(const std::string &path, const std::vector<Trial> &trials) {
+  if (path.empty()) return;
+  std::ofstream out(path, std::ios::trunc);
+  if (!out) throw std::runtime_error("cannot create trial report");
+  out << "start_unix_seconds,end_unix_seconds,elapsed_ms,completed\n";
+  out << std::setprecision(17);
+  for (const auto &trial : trials)
+    out << trial.start_unix_seconds << ',' << trial.end_unix_seconds << ','
+        << trial.elapsed_ms << ',' << trial.completed << '\n';
+  out.flush();
+  if (!out) throw std::runtime_error("failed to finalize trial report");
 }
 
 }  // namespace
 
 int main(int argc, char **argv) {
   try {
-    if (argc != 8) {
-      std::cerr << "usage: cpp_onnx_baseline MODEL DATASET BATCH THREADS WARMUPS REPETITIONS TRIALS\n";
+    if (argc == 2 && std::string(argv[1]) == "--version") {
+      std::cout << OrtGetApiBase()->GetVersionString() << '\n';
+      return 0;
+    }
+    if (argc != 8 && argc != 9) {
+      std::cerr << "usage: cpp_onnx_baseline MODEL DATASET BATCH THREADS WARMUPS REPETITIONS TRIALS [TRIAL_REPORT]\n";
       return 2;
     }
 #ifdef _WIN32
@@ -138,6 +174,7 @@ int main(int argc, char **argv) {
     const int warmups = positive(argv[5], "warmups", 100);
     const int repetitions = positive(argv[6], "repetitions");
     const int trials = positive(argv[7], "trials", 100);
+    const std::string trial_report = argc == 9 ? argv[8] : "";
 
     Dataset data = read_csv(dataset_path);
     Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "shorthand_independent_cpp_baseline");
@@ -157,22 +194,37 @@ int main(int argc, char **argv) {
     const std::string out_name = output_name(session, allocator);
     if (in_name.empty() || out_name.empty()) throw std::runtime_error("missing ONNX names");
 
-    for (int n = 0; n < warmups; ++n) (void)classify(session, in_name, out_name, data, static_cast<size_t>(batch));
+    for (int n = 0; n < warmups; ++n)
+      (void)classify(session, in_name, out_name, data, static_cast<size_t>(batch));
 
     std::vector<int64_t> predictions;
+    std::vector<Trial> trial_records;
+    trial_records.reserve(static_cast<size_t>(trials));
     int64_t checksum = 0;
     for (int trial = 0; trial < trials; ++trial) {
+      const auto wall_start = std::chrono::system_clock::now();
+      const auto steady_start = std::chrono::steady_clock::now();
+      int64_t completed = 0;
       for (int rep = 0; rep < repetitions; ++rep) {
         predictions = classify(session, in_name, out_name, data, static_cast<size_t>(batch));
         for (auto value : predictions) checksum += value;
+        completed += static_cast<int64_t>(predictions.size());
       }
+      const auto steady_end = std::chrono::steady_clock::now();
+      const auto wall_end = std::chrono::system_clock::now();
+      const double elapsed_ms =
+          std::chrono::duration<double, std::milli>(steady_end - steady_start).count();
+      trial_records.push_back(
+          {unix_seconds(wall_start), unix_seconds(wall_end), elapsed_ms, completed});
     }
+
     size_t correct = 0;
     for (size_t i = 0; i < predictions.size(); ++i)
       if (predictions[i] == data.labels[i]) ++correct;
     if (static_cast<double>(correct) / data.labels.size() < 0.85)
       throw std::runtime_error("accuracy below predeclared threshold");
 
+    write_trials(trial_report, trial_records);
     for (auto value : predictions) std::cout << value << '\n';
     std::cout << checksum << '\n';
     return 0;
