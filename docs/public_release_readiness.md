@@ -1,11 +1,11 @@
 # Public Release Readiness Gate
 
-public_release_readiness_version: 2026-09-17-pr101
+public_release_readiness_version: 2026-09-18-pr102
 current_maturity: controlled_beta
 production_claim: false
-release_candidate_target: PR101
+release_candidate_target: PR102
 
-A GitHub PR101 candidate requires all mandatory commands to pass from a clean checkout, followed by the `shorthand.enterprise.pilot_rc.v1` lifecycle and blocker-aggregation gate:
+A GitHub PR102 candidate requires all mandatory commands to pass from a clean checkout, followed by the `shorthand.enterprise.pilot_rc.v1` lifecycle and blocker-aggregation gate:
 
 ```bash
 bash setup_build_infra.sh
@@ -26,11 +26,13 @@ bash scripts/smoke_test.sh
 bash scripts/check_mlir_dialect.sh
 make -C Compiler_new_ws/Short_Hand/src test
 make -C Compiler_new_ws/Short_Hand/src sanitize
-cmake -S . -B build
+cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/tmp/shorthand-pr102-stage
 cmake --build build
 ctest --test-dir build --output-on-failure
 bash tests/enterprise/test_production_rc_contract.sh
-bash scripts/check_production_rc.sh build /tmp/shorthand-pr101-stage
+bash scripts/check_production_rc.sh build /tmp/shorthand-pr102-stage
+python3 scripts/release_closeout.py --root . --revision "$(git rev-parse HEAD)" \
+  --rc-report /tmp/shorthand_production_rc.json --report /tmp/shorthand_release_closeout.json
 ```
 
 This command set qualifies the current PR candidate only. PR99's aggregate must emit a blocked decision when retained evidence remains. Public enterprise release requires the roadmap PR96/PR99 zero-skip scoped aggregate and applicable PR100-PR102 audit closeout gates, every production blocker closed, both stable CI contexts green on the final head, and the protected release exercise completed.
@@ -49,10 +51,21 @@ Experimental paths outside `linux-x64-cpu-v1` may be unavailable without expandi
 
 Do not make unsupported production, certification, external-publication, absolute defect-freedom, inherent-greenness, carbon-neutrality or guaranteed-savings claims. C3-ECO outputs remain candidate evidence only. Electricity-cost statements require measured kWh reduction, disclosed tariff, boundary and uncertainty. The scoped reliability wording remains: no known bugs under the full validation suite, after that suite passes.
 
-GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; PR100 is merged; PR101 is the active independent-pilot candidate and PR102 is the one remaining implementation batch afterward. Physical observations, full family baselines, independently reviewed organizational operations and the protected release exercise remain mandatory external evidence.
+GitHub PR94 implements original roadmap PR93 in the Linux x64/LLVM18 scope: verified SemanticIR, source and SDK lowering, bounded composite values, checked real ONNX runtime calls and optimization-preserved evidence. See [the lowering contract](mlir_lowering.md). TST024 is implemented within this scope. Merged GitHub PR93 is the separate gap assessment; PR101 is merged; PR102 is the final planned implementation batch, covering release claims and audit closeout. Physical observations, full family baselines, independently reviewed organizational operations and the protected release exercise remain mandatory external evidence.
 
 PR97 implements [measurement replay and regression controls](ai_comparison_measurement.md). PR99 implements the enterprise pilot/RC aggregate while preserving the explicit CPU-only scope and retained blockers. The mandatory native gate adds synthetic replay/negative cases, and the real locked Python gate assesses its execution bundle. Calibrated physical observations, broader workload baselines and enterprise GA evidence remain open.
 
 Historical readiness marker: public_release_readiness_version: 2026-09-15-pr97; release_candidate_target: PR96.
 
-PR101 implements [independent reproduction and draft-standard pilot verification](c3eco_independent_pilot.md) over signed PR91 bundles. Candidate consistency receipts do not authenticate physical measurements, legal independence, actual storage retention or certification. G8/S9/S12 and TST017/TST025/TST026 remain partial; PR102 is the remaining planned implementation batch after PR101.
+PR101 implements [independent reproduction and draft-standard pilot verification](c3eco_independent_pilot.md) over signed PR91 bundles. Candidate consistency receipts do not authenticate physical measurements, legal independence, actual storage retention or certification. G8/S9/S12 and TST017/TST025/TST026 remain partial; PR102 is the active final planned implementation batch.
+
+PR102 adds [release claims and audit closeout](release_claims_closeout.md). Its 25-finding ledger retains 13 evidence-pending findings; public capabilities and live release identity are checked without granting GA authority. Physical/quality/organizational/protected-release evidence remains mandatory after the implementation sequence.
+
+<!-- BEGIN SHORTHAND VERIFIED CAPABILITIES -->
+Current release scope: **controlled_beta**; language **beta-0.7**.
+Qualified AI execution scope: **linux-x64-cpu-v1** (ONNX Runtime CPU).
+Compiler/runtime execution uses C++/LLVM. Qualification and release tooling also require Python 3.
+Packages use the curated offline registry and deterministic lockfiles; nested ownership and public service ingress remain outside the declared scope.
+C3-ECO support produces candidate evidence against draft v0.6 plus the dated v0.7 inclusion overlay. It does not grant certification or a certification level.
+Production readiness, accelerator production support, comparative energy superiority and universal lowest-carbon claims are not authorized.
+<!-- END SHORTHAND VERIFIED CAPABILITIES -->

@@ -87,6 +87,13 @@ require_installed '*/share/shorthand/docs/ai_cpu_energy_qualification.md'
 require_installed '*/share/shorthand/schemas/c3eco/auditor_bundle_v1.schema.json'
 require_installed '*/share/shorthand/docs/c3eco_auditor_bundle.md'
 require_installed '*/share/shorthand/docs/c3eco_independent_pilot.md'
+require_installed '*/share/shorthand/tools/release_closeout.py'
+require_installed '*/share/shorthand/docs/release_claims_closeout.md'
+require_installed '*/share/shorthand/docs/release_closeout_ledger.json'
+require_installed '*/share/shorthand/schemas/release/release_closeout_v1.schema.json'
+require_installed '*/share/shorthand/schemas/release/release_closeout_ledger_v1.schema.json'
+SHORTHAND_RELEASE_CLOSEOUT_TOOL="${INSTALL_DIR}/share/shorthand/tools/release_closeout.py" \
+  bash "${ROOT_DIR}/scripts/check_release_closeout.sh"
 for schema in independent_pilot pilot_trust pilot_run pilot_operations pilot_verification; do
   require_installed "*/share/shorthand/schemas/c3eco/${schema}_v1.schema.json"
 done

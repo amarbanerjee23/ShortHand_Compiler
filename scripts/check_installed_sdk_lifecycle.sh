@@ -57,6 +57,8 @@ SHORTHAND_BIN="${BUILD_DIR}/short_hand${audit_suffix}" \
 SHORTHAND_C3ECO_MEASURE_BIN="${PREFIX}/bin/shorthand_c3eco_measure${audit_suffix}" \
 SHORTHAND_C3ECO_AUDIT_BIN="${PREFIX}/bin/shorthand_c3eco_audit${audit_suffix}" \
   bash "${ROOT_DIR}/scripts/check_c3eco_auditor_bundle.sh"
+SHORTHAND_RELEASE_CLOSEOUT_TOOL="${PREFIX}/share/shorthand/tools/release_closeout.py" \
+  bash "${ROOT_DIR}/scripts/check_release_closeout.sh"
 
 bash "${ROOT_DIR}/scripts/check_installed_consumer_cmake.sh" "${PREFIX}" "${CONSUMER_BUILD}-first"
 

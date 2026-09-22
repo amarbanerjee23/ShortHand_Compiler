@@ -148,15 +148,15 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR101 state must be present and claim-safe.
+# Active PR102 state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-17-pr101' \
+  'feature_status_version: 2026-09-18-pr102' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 101' \
-  'current_roadmap_scope: independent_reproduction_certification_pilot' \
-  '35 implemented, 3 partial and 0 open' \
+  'current_github_pr: 102' \
+  'current_roadmap_scope: release_claims_audit_closeout' \
+  '36 implemented, 3 partial and 0 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 implements `shorthand.c3eco.assessment.v1`' \
   'Realistic AI benchmark families | Partial for `shorthand.ai.benchmark_suite.v1`' \
@@ -169,7 +169,7 @@ for anchor in \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
   'level_claim_permitted: false'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR101 active anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR102 active anchor: ${anchor}" >&2; exit 1; }
 done
 
 # Stable historical anchors remain mandatory so a new PR cannot erase previously
@@ -331,7 +331,7 @@ if [[ "${REQUIRE_PRODUCTION_READY:-0}" == 1 ]]; then
   fi
 fi
 
-echo "Feature plan status check passed. GitHub PR101 adds signed independent-pilot verification while preserving PR100 lifecycle accounting, the PR99 CPU-scope RC, candidate-only claims, prior audit anchors and zero-skip gates; physical/organizational/protected-release evidence and PR102 remain required."
+echo "Feature plan status check passed. GitHub PR102 adds the 25-finding closeout ledger, public capability validation and no-go GA gate while retaining all compiler, physical, organizational and protected-release blockers."
 
 grep -Fq 'c3eco_language_contract_version: shorthand.c3eco.language.v1' docs/c3eco_language_contract.md
 grep -Fq 'official_certification_granted: false' docs/c3eco_language_contract.md

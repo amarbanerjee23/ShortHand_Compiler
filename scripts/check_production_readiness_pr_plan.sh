@@ -70,18 +70,18 @@ for file in "${PILOT_RC_DOC}" "${PILOT_RC_SCOPE}" "${PILOT_RC_SCHEMA}" "${PILOT_
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-17-pr101' \
+  'production_readiness_plan_version: 2026-09-18-pr102' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 100' \
-  'CURRENT_GITHUB_PR: 101' \
-  'CURRENT_ROADMAP_PR: 101' \
-  'LAST_PLANNED_GITHUB_PR: unassigned' \
-  'CURRENT_IMPLEMENTATION_SCOPE: independent_reproduction_certification_pilot' \
+  'LAST_MERGED_GITHUB_PR: 101' \
+  'CURRENT_GITHUB_PR: 102' \
+  'CURRENT_ROADMAP_PR: 102' \
+  'LAST_PLANNED_GITHUB_PR: 102' \
+  'CURRENT_IMPLEMENTATION_SCOPE: release_claims_audit_closeout' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'GitHub PR101 - independent reproduction and certification pilot is IN PROGRESS' \
-  'remaining_planned_implementation_increments_including_current: 2' \
-  'remaining_planned_implementation_increments_after_current: 1' \
+  'GitHub PR102 - release claims and audit closeout is IN PROGRESS' \
+  'remaining_planned_implementation_increments_including_current: 1' \
+  'remaining_planned_implementation_increments_after_current: 0' \
   'Mandatory rule for every remaining PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
@@ -116,10 +116,11 @@ require_contains "${PLAN}" '| PR91 - Auditor bundle, retention, surveillance and
 require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
 require_contains "${PLAN}" '| PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98'
 require_contains "${PLAN}" '| PR100 - Data lifecycle and cloud carbon boundary | MERGED as GitHub PR100'
-require_contains "${PLAN}" '| PR101 - Independent reproduction and certification pilot | IN PROGRESS as GitHub PR101'
+require_contains "${PLAN}" '| PR101 - Independent reproduction and certification pilot | MERGED as GitHub PR101'
+require_contains "${PLAN}" '| PR102 - Claims and general-release closeout | IN PROGRESS as GitHub PR102'
 
 for anchor in \
-  'ci_pipeline_architecture_version: 2026-09-17-pr101' \
+  'ci_pipeline_architecture_version: 2026-09-18-pr102' \
   'Tier 0 - CI policy and repository invariants' \
   'Tier 3 - memory, undefined behavior and concurrency safety' \
   'Tier 5 - runtime/backend/hardware qualification' \

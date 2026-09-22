@@ -466,6 +466,15 @@ install(FILES docs/ai_cpu_energy_qualification.md docs/ai_application_qualificat
 install(FILES docs/c3eco_auditor_bundle.md docs/c3eco_independent_pilot.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
+install(FILES scripts/release_closeout.py
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/tools
+)
+install(FILES docs/release_claims_closeout.md docs/release_closeout_ledger.json
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
+)
+install(FILES schemas/release/release_closeout_v1.schema.json schemas/release/release_closeout_ledger_v1.schema.json
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/schemas/release
+)
 
 
 if(TARGET shorthand_prometheus_adapter)

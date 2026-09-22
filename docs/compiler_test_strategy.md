@@ -1,6 +1,6 @@
 # ShortHand compiler test strategy and production coverage audit
 
-compiler_test_strategy_version: 2026-09-17-pr101
+compiler_test_strategy_version: 2026-09-18-pr102
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
@@ -13,9 +13,9 @@ A test passing because a dependency, device, backend, platform, container runtim
 
 ## Current audit
 
-The 38-area production test matrix records for the GitHub PR101 candidate:
+The 39-area production test matrix records for the GitHub PR102 candidate:
 
-- 35 implemented areas,
+- 36 implemented areas,
 - 3 partial areas,
 - 0 open areas.
 
@@ -179,11 +179,11 @@ The following exact strings are retained only for milestone guards and are not c
 - 9 open areas
 - compiler_test_strategy_version: 2026-08-09-pr70
 
-The current strategy is `2026-09-17-pr101`.
+The current strategy is `2026-09-18-pr102`.
 
-PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The current matrix has 35 implemented, 3 partial and 0 open areas. PR99 implements TST027 as a fail-closed pilot/RC aggregate; its report remains blocked while retained evidence rows are partial or open.
+PR92 adds mandatory `scripts/check_mlir_dialect.sh`, GCC/Clang sanitizer qualification, lit/FileCheck diagnostics, typed SSA/symbol rejection, bytecode/location roundtrips, relocated installed API consumers and TableGen freshness mutations. GitHub PR94 closes TST024 for Linux x64/LLVM18 with source/module and composite execution, relocated SDK lowering, independent invalid-IR/ABI attacks, O0/O2 output/evidence preservation, real ONNX CPU inference and failure tests. The same gate runs under ASan/LSan/UBSan without suppressions. The current matrix has 36 implemented, 3 partial and 0 open areas. PR99 implements TST027 as a fail-closed pilot/RC aggregate; its report remains blocked while retained evidence rows are partial or open.
 
-Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. TST025 and TST026 remain partial pending controlled performance budgets and calibrated physical comparisons. PR100 is merged. The current plan has two remaining implementation batches including PR101 and one afterward; calibrated physical observations remain pending. Every remaining roadmap exit is preserved. The PR93 audit remains historical evidence at its original SHA.
+Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. TST025 and TST026 remain partial pending controlled performance budgets and calibrated physical comparisons. PR101 is merged. PR102 is the final planned implementation batch; calibrated physical observations remain pending. Every remaining roadmap exit is preserved. The PR93 audit remains historical evidence at its original SHA.
 
 GitHub PR95 adds `test-ai-energy`, taking Make/CTest parity to 22 suites. The native collector/planner/CNN gate, prepared real ONNX gate, external-weight and profile-integrity negatives, unchanged workbook replay and strict training TSan are mandatory. Controlled standard-model and 120M-weight runs are separate evidence; missing real telemetry cannot pass the measured qualification command. The full hardware evidence exit remains pending.
 
@@ -194,3 +194,5 @@ PR97 adds [measurement-grade comparison and regression controls](ai_comparison_m
 Historical strategy marker: compiler_test_strategy_version: 2026-09-15-pr97; 32 implemented areas; 3 partial areas; 1 open area.
 
 PR101 extends the existing native auditor gate with `verify-pilot`, six independently signed producer fixtures, replay, output/workload pins, duplicate-measurement rejection, uncertainty bounds and organizational retention/restore/surveillance checks. TST038 covers the executable contract; G8/S9/S12 remain partial because synthetic CI fixtures do not establish independent field reproduction or actual organizational operations. The gate inherits strict compiler, sanitizer, CodeQL, Make/CTest and installed-SDK execution.
+
+PR102 adds TST039 for the release-closeout validator, all 25 audit dispositions, generated public capability blocks, live source/CI/lineage reconciliation and a non-RC no-go publication guard. Positive and negative tests run through production-truth qualification and installed SDK lifecycle. TST017/TST025/TST026 and all six partial C3-ECO rows remain unchanged.

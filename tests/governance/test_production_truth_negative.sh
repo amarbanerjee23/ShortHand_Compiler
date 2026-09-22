@@ -65,7 +65,12 @@ awk -F '\t' 'BEGIN { OFS="\t" } $1 == "independent_pilot_status" { $2="independe
 expect_failure premature_pilot_certification "${WORK_DIR}/truth-pilot-certification.tsv" "${WORK_DIR}/trace.tsv" \
   'production truth independent_pilot_status expected implemented_candidate_verification_external_authenticity_pending, found independently_certified'
 
-# PR101 retains six partial rows. Keep the total at 27 while changing the
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "ga_publication_authorized" { $2="true" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-premature-ga.tsv"
+expect_failure premature_ga "${WORK_DIR}/truth-premature-ga.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth ga_publication_authorized expected false, found true'
+
+# PR102 retains six partial rows. Keep the total at 27 while changing the
 # distribution, so both inventory guards must reject unsupported status drift.
 awk -F '\t' 'BEGIN { OFS="\t" } $1 == "B" { $5="open" } { print }' \
   "${WORK_DIR}/trace.tsv" >"${WORK_DIR}/trace-five-partial.tsv"

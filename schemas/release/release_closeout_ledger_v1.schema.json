@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "audit_sha256",
+    "production_scope",
+    "gaps"
+  ],
+  "properties": {
+    "schema": {
+      "const": "shorthand.release.closeout_ledger.v1"
+    },
+    "audit_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "production_scope": {
+      "const": "linux-x64-cpu-v1"
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "severity",
+          "title",
+          "status",
+          "disposition",
+          "evidence",
+          "remaining_exit",
+          "owner"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^SH-EA-[0-9]{3}$"
+          },
+          "severity": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "implemented",
+              "scoped",
+              "evidence_pending"
+            ]
+          },
+          "disposition": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "maxItems": 12,
+            "uniqueItems": true
+          },
+          "remaining_exit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "minItems": 25,
+      "maxItems": 25
+    }
+  }
+}

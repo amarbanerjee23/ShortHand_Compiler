@@ -20,7 +20,7 @@ Llama.cpp fixture marker: `llamacpp_optional_fixture_status: unavailable_path_pr
 
 ## Format to backend compatibility
 
-| Model format | Compatible production backends | Fallback allowed | Current execution status |
+| Model format | Policy-compatible runtime aliases | Fallback allowed | Current execution status |
 | --- | --- | --- | --- |
 | ONNX | `onnxruntime_cpu`, `onnxruntime_cuda`, `onnxruntime_tensorrt`, `tensorrt` | Yes, but fallback must report `not_executed` | `onnxruntime_cpu` has SDK-backed execution when `ONNXRUNTIME_ROOT` is configured; the matrix harness records row-level status. `onnxruntime_tensorrt` is not production-qualified until live TensorRT EP support exists. |
 | TensorRT engine | `tensorrt`, `onnxruntime_tensorrt` | Yes, but fallback must report `not_executed` | PR #53 adds a TensorRT unavailable-path proof with no false success. This is not live TensorRT execution. |
@@ -35,7 +35,7 @@ The backend matrix has four separate validation tiers. These tiers must not be c
 | Tier | Meaning | Current evidence | Claim boundary |
 | --- | --- | --- | --- |
 | `policy_compatible` | The language/runtime understands that a model format can be associated with a backend family. | `AI_Types.cpp` parses model formats and backend aliases, and `backendSupportsFormat` encodes compatibility. | This is compatibility policy, not proof of live backend execution. |
-| `sdk_execution_optional` | A backend can execute when its SDK is present and configured. | `tests/integration/test_onnxruntime_sdk_gate.sh` runs the ONNX identity fixture only when `ONNXRUNTIME_ROOT` is set, and fails if fallback is used during that SDK-enabled run. | Default CI may skip SDK execution when the SDK is absent. |
+| `sdk_execution_optional` | A backend can execute when its SDK is present and configured. | `tests/integration/test_onnxruntime_sdk_gate.sh` runs the ONNX identity fixture only when `ONNXRUNTIME_ROOT` is set, and fails if fallback is used during that SDK-enabled run. | Declared Linux x64 qualification requires live ONNX Runtime CPU execution and fails if its SDK is absent. Other backend families retain explicit unavailable-path evidence. |
 | `backend_live_sdk_matrix_harness` | One matrix runner records a row for each marketed backend as `live_success`, `negative_qualified`, or `not_production_qualified`. | `tests/integration/test_backend_live_sdk_matrix.sh` writes `/tmp/shorthand_backend_live_sdk_matrix.jsonl` and runs backend row gates. | Only rows with real fixture execution may claim `live_success`. |
 | `compiled_hook_bridge_pending` | Legacy compatibility tier name retained for no-SDK and fallback paths where compiled metadata and typed float32 buffers exist but no backend execution result is available. | `short_ai_infer_f32` records `shorthand.runtime.typed_infer_buffer_bridge_request.v1`; no-SDK and unsupported-backend paths return `SHORTHAND_RUNTIME_NOT_EXECUTED` or an honest unavailable/error status. | A bridge request is not a successful inference execution path unless backend execution returns success. |
 
@@ -125,3 +125,12 @@ The ONNX Runtime CPU path is the first real backend execution path. Full enterpr
 5. Runtime telemetry for latency, input/output shape, backend, device class, execution status, and energy source.
 6. Certification evidence bundle linkage to measured execution.
 7. Compiled typed-buffer hook execution through `AI_Runtime`, returning success only when backend execution actually succeeds.
+
+<!-- BEGIN SHORTHAND VERIFIED CAPABILITIES -->
+Current release scope: **controlled_beta**; language **beta-0.7**.
+Qualified AI execution scope: **linux-x64-cpu-v1** (ONNX Runtime CPU).
+Compiler/runtime execution uses C++/LLVM. Qualification and release tooling also require Python 3.
+Packages use the curated offline registry and deterministic lockfiles; nested ownership and public service ingress remain outside the declared scope.
+C3-ECO support produces candidate evidence against draft v0.6 plus the dated v0.7 inclusion overlay. It does not grant certification or a certification level.
+Production readiness, accelerator production support, comparative energy superiority and universal lowest-carbon claims are not authorized.
+<!-- END SHORTHAND VERIFIED CAPABILITIES -->

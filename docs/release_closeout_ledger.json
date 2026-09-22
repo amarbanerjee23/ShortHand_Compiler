@@ -1,0 +1,335 @@
+{
+  "schema": "shorthand.release.closeout_ledger.v1",
+  "audit_sha256": "6b80d3204676b3d5986d781d312bb13b3c37e9cc32117b7284c49f22a7c17060",
+  "production_scope": "linux-x64-cpu-v1",
+  "gaps": [
+    {
+      "id": "SH-EA-001",
+      "severity": "S0",
+      "title": "Complete real AST-to-SemanticIR lowering",
+      "status": "implemented",
+      "disposition": "Linux x64 LLVM18 uses AST-backed SemanticIR and verified source/SDK lowering.",
+      "evidence": [
+        "docs/mlir_lowering.md",
+        "scripts/check_mlir_lowering.sh"
+      ],
+      "remaining_exit": "Broader platform lowering and nested ownership remain outside this execution scope.",
+      "owner": "compiler-lowering"
+    },
+    {
+      "id": "SH-EA-002",
+      "severity": "S0",
+      "title": "Add representative end-to-end AI workloads",
+      "status": "evidence_pending",
+      "disposition": "PR96 provides held-out classification and PR98 bounded family execution; broad claim-quality datasets and physical telemetry remain incomplete.",
+      "evidence": [
+        "docs/ai_application_qualification.md",
+        "docs/ai_benchmark_families.md"
+      ],
+      "remaining_exit": "Retain representative family datasets, quality-equivalent baselines and measured end-to-end trials.",
+      "owner": "ai-qualification"
+    },
+    {
+      "id": "SH-EA-003",
+      "severity": "S0",
+      "title": "Replace energy probing with a measurement-grade harness",
+      "status": "evidence_pending",
+      "disposition": "PR95/97 implement collectors, raw-trace replay, uncertainty and pinned-baseline policy.",
+      "evidence": [
+        "docs/ai_cpu_energy_qualification.md",
+        "docs/ai_comparison_measurement.md"
+      ],
+      "remaining_exit": "Run calibrated controlled-hardware trials, retaining raw readings, failures, functional units and uncertainty.",
+      "owner": "measurement-runtime"
+    },
+    {
+      "id": "SH-EA-004",
+      "severity": "S0",
+      "title": "Define a scientifically defensible “lowest power” benchmark claim protocol",
+      "status": "implemented",
+      "disposition": "Comparison contracts bind declared workloads, comparators, source, hardware, quality, timing and measurement policy; no universal superiority claim is allowed.",
+      "evidence": [
+        "docs/ai_comparison_measurement.md",
+        "docs/release_claims_closeout.md",
+        "scripts/release_closeout.py"
+      ],
+      "remaining_exit": "Any future comparative claim needs separately reviewed, equivalent-quality physical evidence and bounded wording.",
+      "owner": "claims-review"
+    },
+    {
+      "id": "SH-EA-005",
+      "severity": "S0",
+      "title": "Close PR95 auditability and certification evidence bundle",
+      "status": "evidence_pending",
+      "disposition": "PR91 signed bundles and PR101 pilot verification bind artifacts and replay assessments.",
+      "evidence": [
+        "docs/c3eco_auditor_bundle.md",
+        "docs/c3eco_independent_pilot.md"
+      ],
+      "remaining_exit": "Retain authentic field records, safety/privacy/accessibility review and independent claim approval.",
+      "owner": "independent-auditor"
+    },
+    {
+      "id": "SH-EA-006",
+      "severity": "S0",
+      "title": "Produce the final reproducible release candidate",
+      "status": "evidence_pending",
+      "disposition": "PR99 executes SDK lifecycle and aggregates retained blockers; its implemented gate still reports no-go.",
+      "evidence": [
+        "docs/enterprise_pilot_release_candidate.md",
+        "scripts/check_production_rc.sh"
+      ],
+      "remaining_exit": "Close the retained release blockers and qualify reproducible signed artifacts for the declared scope.",
+      "owner": "release-engineering"
+    },
+    {
+      "id": "SH-EA-007",
+      "severity": "S0 external",
+      "title": "Protect `master` and production release controls",
+      "status": "evidence_pending",
+      "disposition": "Protected publication policy exists; repository settings and actual protected-release execution require external verification.",
+      "evidence": [
+        "docs/signed_release_publication.md",
+        "scripts/check_protected_release_environment.sh",
+        ".github/workflows/release.yml"
+      ],
+      "remaining_exit": "Verify master review/status/bypass controls, protected environment admission and real signed-tag attestations.",
+      "owner": "repository-administration"
+    },
+    {
+      "id": "SH-EA-008",
+      "severity": "S0/S1",
+      "title": "Eliminate production-truth drift",
+      "status": "implemented",
+      "disposition": "PR102 reads source/PR/head/tree/lineage and both required CI contexts from GitHub at release review time.",
+      "evidence": [
+        "scripts/release_closeout.py",
+        "docs/production_truth.tsv"
+      ],
+      "remaining_exit": "Run live review on the merged release commit; unavailable or contradictory remote state cannot authorize publication.",
+      "owner": "release-governance"
+    },
+    {
+      "id": "SH-EA-009",
+      "severity": "S1",
+      "title": "Add real accelerator execution or explicitly constrain v1 scope",
+      "status": "scoped",
+      "disposition": "The declared AI production support set is linux-x64-cpu-v1; GPU/TPU/NPU production support is excluded.",
+      "evidence": [
+        "docs/production_backend_hardware_qualification.md",
+        "docs/production_rc_scope.tsv"
+      ],
+      "remaining_exit": "Separately live-qualify each accelerator before expanding scope or making cross-hardware claims.",
+      "owner": "runtime-backends"
+    },
+    {
+      "id": "SH-EA-010",
+      "severity": "S1",
+      "title": "Turn backend preferences into measured energy-aware selection",
+      "status": "scoped",
+      "disposition": "Measured configuration selection is bounded to qualified CPU candidates and declared constraints.",
+      "evidence": [
+        "docs/ai_cpu_energy_qualification.md",
+        "scripts/check_ai_energy_qualification.sh"
+      ],
+      "remaining_exit": "Broader backend/model selection needs live evidence; inventory preferences cannot establish execution efficiency.",
+      "owner": "runtime-routing"
+    },
+    {
+      "id": "SH-EA-011",
+      "severity": "S1",
+      "title": "Complete executable/evidentiary AI lifecycle controls from C3-ECO Section 17",
+      "status": "evidence_pending",
+      "disposition": "Typed AI lifecycle and declared-boundary accounting exist; representative execution does not yet cover all material lifecycle phases.",
+      "evidence": [
+        "docs/c3eco_certification_profile.md",
+        "docs/c3eco_lifecycle_cloud_boundary.md"
+      ],
+      "remaining_exit": "Retain workload-specific training/inference/evaluation/monitoring/failed-run and quality-energy evidence where material.",
+      "owner": "ai-lifecycle"
+    },
+    {
+      "id": "SH-EA-012",
+      "severity": "S1",
+      "title": "Close C3-ECO Domain E, data lifecycle efficiency",
+      "status": "evidence_pending",
+      "disposition": "PR100 validates declared data ingestion/storage/egress records and allocation boundaries.",
+      "evidence": [
+        "docs/c3eco_lifecycle_cloud_boundary.md",
+        "scripts/check_c3eco_lifecycle_cloud_boundary.sh"
+      ],
+      "remaining_exit": "Produce material data-movement, retention, compression/index and repeated-movement observations per functional unit.",
+      "owner": "data-platform"
+    },
+    {
+      "id": "SH-EA-013",
+      "severity": "S1",
+      "title": "Complete attributable carbon-boundary evidence",
+      "status": "evidence_pending",
+      "disposition": "PR89/100 calculate attributed compute, data, network and hardware lifecycle records without double counting.",
+      "evidence": [
+        "docs/c3eco_measurement_workbook.md",
+        "docs/c3eco_lifecycle_cloud_boundary.md"
+      ],
+      "remaining_exit": "Substantiate material client, third-party, embodied and lifecycle phases with actual provenance and measurements.",
+      "owner": "carbon-accounting"
+    },
+    {
+      "id": "SH-EA-014",
+      "severity": "S1",
+      "title": "Implement auditable carbon factors and cloud/shared allocation",
+      "status": "scoped",
+      "disposition": "Dated factors, attribution, shared allocation and hardware lifetime are validated for explicitly declared candidate boundaries.",
+      "evidence": [
+        "docs/c3eco_lifecycle_cloud_boundary.md",
+        "Compiler_new_ws/Short_Hand/src/evidence/LifecycleCloudBoundary.cpp"
+      ],
+      "remaining_exit": "Independent factor authenticity and provider observations remain external; hosting claims cannot replace measured efficiency.",
+      "owner": "carbon-accounting"
+    },
+    {
+      "id": "SH-EA-015",
+      "severity": "S1",
+      "title": "Add hardware longevity and low-resource evidence",
+      "status": "evidence_pending",
+      "disposition": "Portability, SDK lifecycle and hardware-lifetime attribution exist; older-hardware and low-resource field baselines remain incomplete.",
+      "evidence": [
+        "docs/c3eco_lifecycle_cloud_boundary.md",
+        "scripts/check_installed_sdk_lifecycle.sh"
+      ],
+      "remaining_exit": "Qualify minimum/older hardware, pressure limits and update/model payload regressions on retained workloads.",
+      "owner": "platform-qualification"
+    },
+    {
+      "id": "SH-EA-016",
+      "severity": "S1",
+      "title": "Close or scope composite dependency/runtime limitations",
+      "status": "scoped",
+      "disposition": "V1 uses curated offline packages, deterministic locks and bounded composite execution; nested ownership/FFI limits are explicit.",
+      "evidence": [
+        "docs/enterprise_packages_stdlib_ffi.md",
+        "docs/mlir_lowering.md"
+      ],
+      "remaining_exit": "Implement and qualify additional ownership/dependency semantics before expanding the declared language scope.",
+      "owner": "language-packages"
+    },
+    {
+      "id": "SH-EA-017",
+      "severity": "S1/S2",
+      "title": "Strengthen enterprise diagnostics and developer observability",
+      "status": "scoped",
+      "disposition": "Source diagnostics, LSP and bounded lowering provenance are supported; full debugger/live reload and general profiling are excluded.",
+      "evidence": [
+        "docs/known_limitations.md",
+        "docs/mlir_lowering.md"
+      ],
+      "remaining_exit": "Broader debugging and energy hot-path attribution require separately qualified tools and workload evidence.",
+      "owner": "developer-tooling"
+    },
+    {
+      "id": "SH-EA-018",
+      "severity": "S1",
+      "title": "Add an energy eco-regression release gate",
+      "status": "evidence_pending",
+      "disposition": "PR97 enforces trace replay, quality-preserving comparison and conservative regression policy.",
+      "evidence": [
+        "docs/ai_comparison_measurement.md",
+        "scripts/assess_ai_application_comparison.py"
+      ],
+      "remaining_exit": "Retain controlled physical baselines across releases and review measured regressions with uncertainty.",
+      "owner": "performance-energy"
+    },
+    {
+      "id": "SH-EA-019",
+      "severity": "S1",
+      "title": "Implement measurement-quality, data-quality, and uncertainty gates as executable release logic",
+      "status": "implemented",
+      "disposition": "Native assessment checks MQ/DQ, materiality, evidence caps, uncertainty and conservative candidate recommendations.",
+      "evidence": [
+        "docs/c3eco_certification_assessment.md",
+        "scripts/check_c3eco_assessment.sh"
+      ],
+      "remaining_exit": "Certification levels still require an independent scheme decision; estimates cannot grant a level.",
+      "owner": "certification-controls"
+    },
+    {
+      "id": "SH-EA-020",
+      "severity": "S1",
+      "title": "Make “no quality degradation” inseparable from energy optimization",
+      "status": "evidence_pending",
+      "disposition": "Bounded application tests enforce accuracy/SLA/output constraints; full workload quality and organizational safeguards remain required.",
+      "evidence": [
+        "docs/ai_application_qualification.md",
+        "docs/ai_benchmark_families.md"
+      ],
+      "remaining_exit": "Validate relevant accuracy, reliability, latency, safety, privacy, security and accessibility alongside every energy comparison.",
+      "owner": "quality-safety"
+    },
+    {
+      "id": "SH-EA-021",
+      "severity": "S2",
+      "title": "Decide the production package-registry strategy",
+      "status": "scoped",
+      "disposition": "The v1 registry is deliberately curated and offline with cryptographic locks; no public network registry is claimed.",
+      "evidence": [
+        "docs/enterprise_packages_stdlib_ffi.md"
+      ],
+      "remaining_exit": "Any later network registry needs its own namespace, signing, revocation, transport and supply-chain threat model.",
+      "owner": "package-security"
+    },
+    {
+      "id": "SH-EA-022",
+      "severity": "S2",
+      "title": "Keep all public capability documents machine-consistent",
+      "status": "implemented",
+      "disposition": "PR102 renders one capability block from machine-readable truth and checks README, backend matrix and public readiness text.",
+      "evidence": [
+        "scripts/release_closeout.py",
+        "README.md",
+        "docs/backend_compatibility_matrix.md",
+        "docs/public_release_readiness.md"
+      ],
+      "remaining_exit": "Keep public fields synchronized and review prose outside generated capability blocks before publication.",
+      "owner": "documentation-governance"
+    },
+    {
+      "id": "SH-EA-023",
+      "severity": "S0/S2",
+      "title": "Harden certification and environmental claim wording",
+      "status": "implemented",
+      "disposition": "Public wording identifies draft-standard candidate evidence and disallows certification, level, universal-lowest-carbon and production claims.",
+      "evidence": [
+        "docs/release_claims_closeout.md",
+        "scripts/release_closeout.py"
+      ],
+      "remaining_exit": "A recognized scheme and independent evidence review are prerequisites to any later certification claim.",
+      "owner": "claims-review"
+    },
+    {
+      "id": "SH-EA-024",
+      "severity": "S1",
+      "title": "Add independent reproducibility before Platinum/Diamond-style or best-in-class claims",
+      "status": "evidence_pending",
+      "disposition": "PR101 verifies separately signed repeats and organizational records but explicitly does not authenticate physical/legal independence.",
+      "evidence": [
+        "docs/c3eco_independent_pilot.md",
+        "scripts/check_c3eco_auditor_bundle.sh"
+      ],
+      "remaining_exit": "Obtain independent field reruns, calibrated measurements, uncertainty and a reviewer/lab decision bound to exact workload artifacts.",
+      "owner": "independent-reproduction"
+    },
+    {
+      "id": "SH-EA-025",
+      "severity": "S1/S2",
+      "title": "Operationalize surveillance and recertification if C3-ECO certification becomes a product goal",
+      "status": "evidence_pending",
+      "disposition": "PR91/101 implement retention, expiry, surveillance, nonconformity and signed pilot-record verification.",
+      "evidence": [
+        "docs/c3eco_auditor_bundle.md",
+        "docs/c3eco_independent_pilot.md"
+      ],
+      "remaining_exit": "Actually operate retention/access/restore/surveillance controls and independently review material changes, suspension and claim correction.",
+      "owner": "certification-operations"
+    }
+  ]
+}
