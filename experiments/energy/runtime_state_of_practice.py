@@ -471,24 +471,24 @@ def smoke(clang, tool, onnx_root):
         app = campaign.load(app_path)
         qpath = pathlib.Path(app['qualification_config'])
         q = campaign.load(qpath)
-        q['repetitions'] = 1
-        q['trials'] = 2
-        q['warmups'] = 1
-        campaign.write(qpath, q)
-        app['qualification_sha256'] = campaign.sha(qpath)
-        campaign.write(app_path, app)
+        total_completed = 1797 * q['repetitions'] * q['trials']
+        per_trial_completed = 1797 * q['repetitions']
 
         cpp = compile_cpp_baseline(root / 'build', resolve_executable(clang), onnx_root)
         native_path = root / 'native.json'
-        campaign.command([tool, 'application', app_path, native_path], root, 'native', 3594)
+        campaign.command([tool, 'application', app_path, native_path], root, 'native', total_completed)
         expected = validate_native_report(native_path)['predictions']
         trial_report = root / 'cpp-trials.csv'
         trial = campaign.command(
-            [cpp, q['model_path'], app['dataset_path'], 16, 1, 1, 1, 2, trial_report],
-            root, 'cpp', 3594)
-        check_cpp_output(root / trial['stdout'], expected, int(sum(expected) * 2))
+            [cpp, q['model_path'], app['dataset_path'], q['batch_size'], app['threads'],
+             q['warmups'], q['repetitions'], q['trials'], trial_report],
+            root, 'cpp', total_completed)
+        check_cpp_output(
+            root / trial['stdout'], expected,
+            int(sum(expected) * q['repetitions'] * q['trials']))
         observed = load_cpp_trials(trial_report, q)
-        if len(observed) != 2 or any(item['completed'] != 1797 for item in observed):
+        if len(observed) != q['trials'] or any(
+                item['completed'] != per_trial_completed for item in observed):
             raise AssertionError('invalid independent C++ inner trial report')
     print('PASS independent C++/ONNX baseline matches native FP32 predictions')
 
