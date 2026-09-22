@@ -2,6 +2,7 @@
 """Correctness/negative tests; all fabricated energy is unit-test data only."""
 import argparse
 import copy
+import os
 import pathlib
 import subprocess
 import sys
@@ -10,6 +11,7 @@ import unittest
 
 import campaign
 import state_of_practice
+import runtime_state_of_practice
 from source_workload import prepare
 
 
@@ -131,7 +133,11 @@ def compiled_integration(compiler, clang, tool):
             raise AssertionError('invalid core state-of-practice smoke result')
         if {cell['baseline'] for cell in sota['cells']} != set(state_of_practice.CORE_BASELINES):
             raise AssertionError('missing optimized C++ or NumPy state-of-practice control')
-    print('PASS execution-only campaigns: compiled FP64, five FP32 ORT cells, C++17/NumPy controls, replay and tamper rejection')
+        onnx_root = os.environ.get('ONNXRUNTIME_ROOT')
+        if not onnx_root:
+            raise AssertionError('ONNXRUNTIME_ROOT is required for the independent C++/ONNX experiment smoke')
+        runtime_state_of_practice.smoke(clang, tool, onnx_root)
+    print('PASS execution-only campaigns: compiled FP64, five FP32 ORT cells, C++17/NumPy and independent C++/ONNX controls, replay and tamper rejection')
 
 
 def native_meter_integration(tool):
