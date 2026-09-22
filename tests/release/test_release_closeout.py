@@ -14,7 +14,11 @@ import tempfile
 ROOT, TOOL = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
 # Native Windows process lookup can select System32's WSL launcher for "bash".
 # The wrapper supplies its actual shell; MSYS2 converts this argument to a native path.
-BASH = Path(sys.argv[3]).resolve(strict=True)
+BASH = Path(sys.argv[3])
+# MSYS2 may omit .exe in BASH, while native Python requires the real filename.
+if os.name == 'nt' and not BASH.is_file() and BASH.suffix.lower() != '.exe':
+    BASH = BASH.with_name(BASH.name + '.exe')
+BASH = BASH.resolve(strict=True)
 spec = importlib.util.spec_from_file_location('release_closeout', TOOL)
 closeout = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(closeout)
