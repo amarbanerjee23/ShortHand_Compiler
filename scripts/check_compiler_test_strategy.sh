@@ -138,7 +138,7 @@ for anchor in \
   require_contains "${TEMPLATE}" "${anchor}"
 done
 
-require_contains "${STATUS}" 'feature_status_version: 2026-09-18-pr102'
+require_contains "${STATUS}" 'feature_status_version: 2026-09-22-pr103'
 require_contains "${STATUS}" '36 implemented, 3 partial and 0 open'
 require_contains "${STATUS}" 'Signed releases | Partial'
 require_contains "${STATUS}" 'External vulnerability gate | Implemented'

@@ -201,8 +201,17 @@ def evaluate(root, revision, rc_path=None, observation=None, live=False):
     public = capabilities(truth)
     require(truth.get('ga_publication_authorized') == 'false' and truth.get('release_closeout_contract') == SCHEMA,
             'unsupported release publication policy')
-    require(truth.get('current_github_pr') == '102' and truth.get('last_merged_github_pr') == '101'
-            and truth.get('remaining_implementation_prs_after_current') == '0', 'closeout roadmap identity drift')
+    require(truth.get('last_planned_github_pr') == '102'
+            and truth.get('last_planned_roadmap_pr') == '102'
+            and truth.get('remaining_implementation_prs_including_current') == '0'
+            and truth.get('remaining_implementation_prs_after_current') == '0'
+            and truth.get('implementation_roadmap_status') == 'closed_at_pr102',
+            'closeout roadmap identity drift')
+    current_pr = truth.get('current_github_pr', '')
+    last_merged = truth.get('last_merged_github_pr', '')
+    require(current_pr.isdigit() and last_merged.isdigit()
+            and int(current_pr) >= 102 and int(last_merged) >= 102,
+            'closeout repository identity drift')
     matrix = table(take(MATRIX), 'id area status existing_evidence missing_evidence closure_pr production_blocker')
     trace = table(take(TRACE), 'id category requirement source status implementation_evidence verification_evidence owner closure_target production_blocker')
     require({r['id'] for r in matrix} == {'TST%03d' % i for i in range(1, 40)}, 'incomplete compiler coverage inventory')

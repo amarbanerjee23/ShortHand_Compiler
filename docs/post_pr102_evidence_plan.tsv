@@ -1,0 +1,9 @@
+id	phase	status	primary_blockers	exit_summary
+G0	PR103 governance closeout	in_progress	stale PR102 bookkeeping	PR102 recorded as final merged planned implementation; implementation count zero; guards reject stale state
+E1	protected release and repository controls	pending	SH-EA-006;SH-EA-007;TST017	real protected signed publication, verified attestations and rollback evidence
+E2	representative workload and quality evidence	pending	SH-EA-002;SH-EA-011;SH-EA-020;TST025	real workloads and quality-equivalent baselines for every declared AI family
+E3	calibrated physical energy and eco-regression	pending	SH-EA-003;SH-EA-018;TST026	repeated calibrated paired physical measurements with raw traces and uncertainty
+E4	lifecycle data carbon and hardware boundary	pending	SH-EA-012;SH-EA-013;SH-EA-015	material lifecycle boundary observations with provenance and no double counting
+E5	independent reproduction and C3-ECO operations	pending	SH-EA-005;SH-EA-024;SH-EA-025;G8;S9;S12	independent reruns plus actually operated retention surveillance and claim review
+E6	enterprise GA decision	pending	all remaining production blockers	zero unresolved blockers for linux-x64-cpu-v1 and fail-closed RC explicitly authorizes GA
+C5	lowest-carbon claim	blocked	E2;E3;E4;E5;E6	independent pre-declared comparison universe with quality-equivalent lifecycle-aware measurements supports bounded wording

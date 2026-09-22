@@ -148,14 +148,14 @@ for term in "${required_status_terms[@]}"; do
   grep -Fiq "${term}" "${STATUS_FILE}" || { echo "error: feature implementation status missing required tracking term: ${term}" >&2; exit 1; }
 done
 
-# Active PR102 state must be present and claim-safe.
+# Active post-PR102 governance/evidence state must be present and claim-safe.
 for anchor in \
-  'feature_status_version: 2026-09-18-pr102' \
+  'feature_status_version: 2026-09-22-pr103' \
   'language_version: beta-0.7' \
   'current_maturity: controlled_beta' \
   'production_claim: false' \
-  'current_github_pr: 102' \
-  'current_roadmap_scope: release_claims_audit_closeout' \
+  'current_github_pr: 103' \
+  'current_roadmap_scope: post_pr102_governance_and_evidence_plan' \
   '36 implemented, 3 partial and 0 open' \
   'PR91 implements `shorthand.c3eco.auditor_bundle.v1`' \
   'GitHub PR90 implements `shorthand.c3eco.assessment.v1`' \
@@ -169,7 +169,7 @@ for anchor in \
   'comparative_energy_claim: false' \
   'official_certification_granted: false' \
   'level_claim_permitted: false'; do
-  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing PR102 active anchor: ${anchor}" >&2; exit 1; }
+  grep -Fiq "${anchor}" "${STATUS_FILE}" || { echo "error: feature implementation status missing post-PR102 active anchor: ${anchor}" >&2; exit 1; }
 done
 
 # Stable historical anchors remain mandatory so a new PR cannot erase previously

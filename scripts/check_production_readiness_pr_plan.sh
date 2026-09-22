@@ -25,11 +25,13 @@ PILOT_RC_TEST="${ROOT_DIR}/tests/enterprise/test_production_rc_contract.sh"
 TRUTH_DOC="${ROOT_DIR}/docs/production_truth.md"
 TRUTH="${ROOT_DIR}/docs/production_truth.tsv"
 TRACE="${ROOT_DIR}/docs/c3eco_traceability.tsv"
+POST_PR102_PLAN="${ROOT_DIR}/docs/post_pr102_enterprise_c3eco_release_plan.md"
+POST_PR102_PLAN_TSV="${ROOT_DIR}/docs/post_pr102_evidence_plan.tsv"
 
 require_file() { [[ -s "$1" ]] || { echo "error: missing required file: $1" >&2; exit 1; }; }
 require_contains() { require_file "$1"; grep -Fq "$2" "$1" || { echo "error: $1 missing required text: $2" >&2; exit 1; }; }
 
-for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_GATE}" "${ASSESSMENT_DOC}" "${ASSESSMENT_GATE}" "${AUDITOR_DOC}" "${AUDITOR_GATE}" "${BENCHMARK_DOC}" "${BENCHMARK_SCHEMA}" "${BENCHMARK_MANIFEST}" "${BENCHMARK_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" \
+for file in "${PLAN}" "${PIPELINE}" "${LSP_DOC}" "${BACKEND_DOC}" "${C3ECO_DOC}" "${PROFILE_DOC}" "${MEASUREMENT_DOC}" "${MEASUREMENT_GATE}" "${ASSESSMENT_DOC}" "${ASSESSMENT_GATE}" "${AUDITOR_DOC}" "${AUDITOR_GATE}" "${BENCHMARK_DOC}" "${BENCHMARK_SCHEMA}" "${BENCHMARK_MANIFEST}" "${BENCHMARK_GATE}" "${TRUTH_DOC}" "${TRUTH}" "${TRACE}" "${POST_PR102_PLAN}" "${POST_PR102_PLAN_TSV}" \
   "${ROOT_DIR}/docs/language_objectives.md" \
   "${ROOT_DIR}/docs/module_resolution_and_lockfile.md" \
   "${ROOT_DIR}/docs/execution_semantics_beta_0_3.md" \
@@ -70,23 +72,40 @@ for file in "${PILOT_RC_DOC}" "${PILOT_RC_SCOPE}" "${PILOT_RC_SCHEMA}" "${PILOT_
 done
 
 for anchor in \
-  'production_readiness_plan_version: 2026-09-18-pr102' \
+  'production_readiness_plan_version: 2026-09-22-pr103' \
   'PLAN_STATUS: active' \
-  'LAST_MERGED_GITHUB_PR: 101' \
-  'CURRENT_GITHUB_PR: 102' \
+  'LAST_MERGED_GITHUB_PR: 102' \
+  'CURRENT_GITHUB_PR: 103' \
   'CURRENT_ROADMAP_PR: 102' \
   'LAST_PLANNED_GITHUB_PR: 102' \
-  'CURRENT_IMPLEMENTATION_SCOPE: release_claims_audit_closeout' \
+  'CURRENT_IMPLEMENTATION_SCOPE: post_pr102_governance_closeout_and_evidence_plan' \
   'BASELINE_LANGUAGE_VERSION: beta-0.7' \
   'TARGET: enterprise production usage ready language' \
-  'GitHub PR102 - release claims and audit closeout is IN PROGRESS' \
-  'remaining_planned_implementation_increments_including_current: 1' \
+  'GitHub PR102 - release claims and audit closeout is MERGED' \
+  'remaining_planned_implementation_increments_including_current: 0' \
   'remaining_planned_implementation_increments_after_current: 0' \
-  'Mandatory rule for every remaining PR' \
+  'Mandatory rule for any post-PR102 remediation PR' \
   'Robust pipeline architecture'; do
   require_contains "${PLAN}" "${anchor}"
 done
 
+for anchor in \
+  'post_pr102_plan_version: 2026-09-22-pr103' \
+  'implementation_roadmap_status: closed_at_pr102' \
+  'governance_closeout_pr: 103' \
+  'production_scope: linux-x64-cpu-v1' \
+  'lowest_carbon_language_claim: false' \
+  'E1 — protected release and repository controls' \
+  'E2 — representative enterprise AI workload and quality evidence' \
+  'E3 — calibrated physical energy and eco-regression' \
+  'E4 — full lifecycle, data, carbon and hardware boundary' \
+  'E5 — independent reproduction and C3-ECO operations' \
+  'E6 — enterprise GA decision' \
+  'Remediation-PR rule'; do
+  require_contains "${POST_PR102_PLAN}" "${anchor}"
+done
+header="$(awk -F '\t' 'NR == 1 { print NF ":" $1 ":" $2 ":" $3 ":" $4 ":" $5 }' "${POST_PR102_PLAN_TSV}")"
+[[ "${header}" == '5:id:phase:status:primary_blockers:exit_summary' ]] || { echo 'error: invalid post-PR102 evidence plan TSV header' >&2; exit 1; }
 for pr in $(seq 68 80); do
   require_contains "${PLAN}" "PR${pr} -"
   require_contains "${PLAN}" "| PR${pr} -"
@@ -117,7 +136,7 @@ require_contains "${PLAN}" '| PR92 - Generated ShortHand MLIR dialect | MERGED'
 require_contains "${PLAN}" '| PR98 - Realistic benchmark families | BOUNDED implementation in merged GitHub PR98'
 require_contains "${PLAN}" '| PR100 - Data lifecycle and cloud carbon boundary | MERGED as GitHub PR100'
 require_contains "${PLAN}" '| PR101 - Independent reproduction and certification pilot | MERGED as GitHub PR101'
-require_contains "${PLAN}" '| PR102 - Claims and general-release closeout | IN PROGRESS as GitHub PR102'
+require_contains "${PLAN}" '| PR102 - Claims and general-release closeout | MERGED as GitHub PR102'
 
 for anchor in \
   'ci_pipeline_architecture_version: 2026-09-18-pr102' \

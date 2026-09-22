@@ -70,6 +70,26 @@ awk -F '\t' 'BEGIN { OFS="\t" } $1 == "ga_publication_authorized" { $2="true" } 
 expect_failure premature_ga "${WORK_DIR}/truth-premature-ga.tsv" "${WORK_DIR}/trace.tsv" \
   'production truth ga_publication_authorized expected false, found true'
 
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "last_merged_github_pr" { $2="101" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-stale-last-merged.tsv"
+expect_failure stale_last_merged "${WORK_DIR}/truth-stale-last-merged.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth last_merged_github_pr expected 102, found 101'
+
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "remaining_implementation_prs_including_current" { $2="1" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-stale-remaining.tsv"
+expect_failure stale_remaining "${WORK_DIR}/truth-stale-remaining.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth remaining_implementation_prs_including_current expected 0, found 1'
+
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "enterprise_ga_status" { $2="released" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-premature-enterprise-ga.tsv"
+expect_failure premature_enterprise_ga "${WORK_DIR}/truth-premature-enterprise-ga.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth enterprise_ga_status expected blocked_by_retained_evidence, found released'
+
+awk -F '\t' 'BEGIN { OFS="\t" } $1 == "lowest_carbon_claim_status" { $2="substantiated" } { print }' \
+  "${WORK_DIR}/truth.tsv" >"${WORK_DIR}/truth-premature-lowest-carbon.tsv"
+expect_failure premature_lowest_carbon "${WORK_DIR}/truth-premature-lowest-carbon.tsv" "${WORK_DIR}/trace.tsv" \
+  'production truth lowest_carbon_claim_status expected not_substantiated, found substantiated'
+
 # PR102 retains six partial rows. Keep the total at 27 while changing the
 # distribution, so both inventory guards must reject unsupported status drift.
 awk -F '\t' 'BEGIN { OFS="\t" } $1 == "B" { $5="open" } { print }' \
