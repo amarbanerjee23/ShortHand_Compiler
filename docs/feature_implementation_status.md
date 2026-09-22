@@ -1,11 +1,11 @@
 # Feature Implementation Status
 
-feature_status_version: 2026-09-18-pr102
+feature_status_version: 2026-09-22-pr103
 language_version: beta-0.7
 current_maturity: controlled_beta
 production_claim: false
-current_github_pr: 102
-current_roadmap_scope: release_claims_audit_closeout
+current_github_pr: 103
+current_roadmap_scope: post_pr102_governance_and_evidence_plan
 
 ## Goal
 
@@ -13,13 +13,13 @@ ShortHand is intended to become a production-grade compiled AI language that let
 
 ## Current baseline
 
-GitHub PR83 through PR101 are merged. These increments established production truth and C3-ECO traceability, the production type/memory model, structured control flow and deterministic errors, enterprise packages/core FFI, bounded concurrent serving, the beta-0.7 typed C3-ECO certification-preparation profile, instrument-backed energy/carbon/cost accounting, production lowering, native CPU AI qualification, a real held-out application, equivalent application baselines, replayable measurement/regression controls and bounded seven-family AI execution evidence.
+GitHub PR83 through PR102 are merged. These increments established production truth and C3-ECO traceability, the production type/memory model, structured control flow and deterministic errors, enterprise packages/core FFI, bounded concurrent serving, the beta-0.7 typed C3-ECO certification-preparation profile, instrument-backed energy/carbon/cost accounting, production lowering, native CPU AI qualification, a real held-out application, equivalent application baselines, replayable measurement/regression controls and bounded seven-family AI execution evidence.
 
 GitHub PR89 implements `shorthand.c3eco.measurement_workbook.v1`: instrument-backed energy records, calibration provenance, allocation, PUE, carbon-factor provenance, tariff provenance, MQ/DQ, uncertainty and deterministic CSV/JSON accounting. Modelled or declared values cannot enter the measured evidence path.
 
 GitHub PR90 implements `shorthand.c3eco.assessment.v1`: structural profile/workbook validation, mandatory G1-G14 precedence, the complete 76-criterion A-K catalog, evidence and uncertainty caps, controlled N/A reallocation, materiality, AI applicability, tier prerequisites, claim safety, eco/quality regression decisions and surveillance schedules. Its output is a candidate recommendation only.
 
-The compiler test audit records **36 implemented, 3 partial and 0 open** areas for the GitHub PR102 candidate, 39 areas total. TST027 is an implemented fail-closed aggregate, PR100 adds declared lifecycle/cloud/hardware-boundary evidence, PR101 adds signed independent-pilot verification (TST038), and PR102 adds release claims/audit closeout (TST039); ShortHand remains a controlled beta because calibrated physical comparison evidence, complete standard-dataset/equivalent-baseline coverage across AI families, independent certification operations and the protected-release exercise remain incomplete.
+The compiler test audit records **36 implemented, 3 partial and 0 open** areas for the merged GitHub PR102 implementation baseline, 39 areas total. TST027 is an implemented fail-closed aggregate, PR100 adds declared lifecycle/cloud/hardware-boundary evidence, PR101 adds signed independent-pilot verification (TST038), and PR102 adds release claims/audit closeout (TST039); ShortHand remains a controlled beta because calibrated physical comparison evidence, complete standard-dataset/equivalent-baseline coverage across AI families, independent certification operations and the protected-release exercise remain incomplete.
 
 ## Production truth authority
 
@@ -107,6 +107,8 @@ The result is an internal candidate recommendation, not an auditor decision or c
 
 GPU/TPU/NPU support is not a blocker for the declared `linux-x64-cpu-v1` production scope. A future expanded support set must independently qualify each backend/device pair.
 
+The authoritative post-implementation sequence is [the post-PR102 enterprise GA and C3-ECO evidence plan](post_pr102_enterprise_c3eco_release_plan.md). It keeps enterprise GA, comparative-energy, certification and lowest-carbon claims blocked until the corresponding retained physical and independent evidence succeeds.
+
 PR91 implements `shorthand.c3eco.auditor_bundle.v1`: signed artifact/reference lineage, native assessment replay, retention-policy and surveillance verification, nonconformity handling, redacted public reports and separate estimated readiness. See [the auditor contract](c3eco_auditor_bundle.md). It does not grant certification or independently verify storage retention.
 
 ## Historical audit anchors
@@ -159,7 +161,7 @@ These strings are historical compatibility anchors required by the repository's 
 
 Any PR that changes syntax, semantic meaning, runtime behavior, editor behavior, release/evidence output, pipeline behavior, test coverage or production claims must update this tracker and `tests/coverage/compiler_test_coverage_matrix.tsv`, while retaining historical anchors required for milestone auditability.
 
-Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. GitHub PR97 adds replayable measurement traces and conservative comparison/regression controls. TST025 and TST026 remain partial pending controlled performance budgets, calibrated physical comparisons, complete family baselines and compiler-performance coverage. The PR98-era plan had five remaining delivery batches including PR98 and four afterward; PR101 is now merged and PR102 is the final planned implementation batch. Every remaining roadmap exit is preserved.
+Merged GitHub PR94 completes roadmap PR93 for Linux x64/LLVM18. GitHub PR95 adds [native CPU energy qualification](ai_cpu_energy_qualification.md), reusable ONNX sessions, deterministic CNN training and candidate evidence export. GitHub PR96 adds real held-out digit classification through ShortHand source, reusable CPU inference, bounded serving and equivalent optimized Python baselines. GitHub PR97 adds replayable measurement traces and conservative comparison/regression controls. TST025 and TST026 remain partial pending controlled performance budgets, calibrated physical comparisons, complete family baselines and compiler-performance coverage. The PR98-era plan had five remaining delivery batches including PR98 and four afterward; PR102 is merged and closes the planned implementation sequence; the post-PR102 evidence program is active. Every remaining roadmap exit is preserved.
 
 PR96 implements `shorthand.ai.application.v1`: real UCI held-out quality, standalone ShortHand classifier execution, validated CPU batches, bounded streaming/serving and paired optimized Python execution. Physical comparisons and broader family evidence were intentionally left to later work.
 
