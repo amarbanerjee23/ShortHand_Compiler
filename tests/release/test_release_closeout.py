@@ -12,6 +12,9 @@ import sys
 import tempfile
 
 ROOT, TOOL = Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve()
+# Native Windows process lookup can select System32's WSL launcher for "bash".
+# The wrapper supplies its actual shell; MSYS2 converts this argument to a native path.
+BASH = Path(sys.argv[3]).resolve(strict=True)
 spec = importlib.util.spec_from_file_location('release_closeout', TOOL)
 closeout = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(closeout)
@@ -253,7 +256,9 @@ with tempfile.TemporaryDirectory(prefix='shorthand-pr102-') as temp:
     for version, publish, require_ga in [('v1.0.0', 'true', True), ('v1.0.0-rc.1', 'true', False),
                                          ('v1.0.0', 'false', False), ('v1.0.0-rc.2', 'false', False)]:
         env = dict(os.environ, REQUESTED_VERSION=version, PUBLISH=publish, GITHUB_SHA=REVISION)
-        arguments = subprocess.check_output(['bash', '-c', recorder + shell], env=env, text=True).splitlines()
+        result = subprocess.run([str(BASH), '-c', recorder + shell], env=env, capture_output=True, text=True)
+        assert result.returncode == 0, (result.returncode, result.stdout, result.stderr)
+        arguments = result.stdout.splitlines()
         assert arguments[0] == 'scripts/release_closeout.py'
         assert ('--require-ga' in arguments) is require_ga and ('--github' in arguments) is require_ga
         assert arguments[arguments.index('--revision') + 1] == REVISION
