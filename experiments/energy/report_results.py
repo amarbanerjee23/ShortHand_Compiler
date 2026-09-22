@@ -120,7 +120,7 @@ def export(root, out):
         'ONNX Runtime and the independent C++17 ONNX Runtime executable. This measures host '
         'integration overhead around the same inference backend, separately from the FP64 source experiment.', '',
         'Ten balanced process pairs per cell; each process contains three resident-session trials, '
-        'each classifying 1,797 images 20 times. One process mean is the bootstrap unit, so inner '
+        'each classifying 1,797 images 10 times. One process mean is the bootstrap unit, so inner '
         'trials are not treated as independent samples. Session preparation, warmup and final '
         'serialization are outside the trial window; validation, normalization, inference and '
         'top-k processing are inside. Batch size varies at one thread; thread count varies at batch 16.', '',

@@ -83,6 +83,10 @@ def prepare(args):
     out = args.output.resolve()
     bounded(args.source_repetitions, 1, 10000, 'source repetitions')
     bounded(args.runtime_repetitions, 1, 10000, 'runtime repetitions')
+    # The fixed b1 cell has 1,797 batches and three trials. AIRuntime caps
+    # completed batches at 100,000 to bound its retained per-batch report.
+    if 1797 * args.runtime_repetitions * 3 > 100000:
+        raise ValueError('runtime repetitions exceed AIRuntime application_report_size_limit; use at most 18 for the five-cell plan')
     bounded(args.source_pairs, 4, 100, 'source pairs')
     bounded(args.runtime_pairs, 4, 10, 'runtime pairs')
     bounded(args.compile_repetitions, 1, 100, 'compile repetitions')

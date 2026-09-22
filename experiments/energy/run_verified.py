@@ -33,7 +33,7 @@ def main():
                  run_id=os.environ.get('GITHUB_RUN_ID'), run_attempt=os.environ.get('GITHUB_RUN_ATTEMPT'),
                  platform=platform.platform(), python=sys.version, affinity=sorted(os.sched_getaffinity(0)),
                  stages=[], design=dict(source_pairs=30, source_repetitions=[10, 100],
-                                        runtime_pairs=10, runtime_repetitions=20, runtime_trials=3),
+                                        runtime_pairs=10, runtime_repetitions=10, runtime_trials=3),
                  unavailable_baselines={'rust-candle': 'repository supplies a runner contract, no implementation',
                                         'mojo-max': 'repository supplies a runner contract, no implementation'},
                  energy_savings_percent=None, **campaign.CLAIMS)
@@ -72,7 +72,7 @@ def main():
 
     def prepare_runtime():
         campaign.prepare(argparse.Namespace(
-            output=plan_dir, source_repetitions=10, runtime_repetitions=20,
+            output=plan_dir, source_repetitions=10, runtime_repetitions=10,
             source_pairs=30, runtime_pairs=10, compile_repetitions=3, source_baseline='numpy',
             mode='execution_only', instrument=None, meter_csv=None))
 

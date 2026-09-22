@@ -102,6 +102,16 @@ class Experiments(unittest.TestCase):
             with self.assertRaises(ValueError):
                 campaign.prepare(args)
 
+    def test_runtime_plan_rejects_application_batch_limit_before_capture(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out = pathlib.Path(temp) / 'plan'
+            args = argparse.Namespace(output=out, source_repetitions=1, runtime_repetitions=20,
+                source_pairs=4, runtime_pairs=4, compile_repetitions=1, source_baseline='numpy',
+                mode='execution_only', instrument=None, meter_csv=None)
+            with self.assertRaisesRegex(ValueError, 'application_report_size_limit'):
+                campaign.prepare(args)
+            self.assertFalse(out.exists())
+
     def test_external_state_of_practice_version_is_verified(self):
         with tempfile.TemporaryDirectory() as temp:
             runner = pathlib.Path(temp) / 'peer-runner'
