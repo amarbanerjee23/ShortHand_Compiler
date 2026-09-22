@@ -291,7 +291,7 @@ def run(args):
             hashes=hashes,
             **CLAIMS)
         campaign.write(out / 'manifest.json', manifest)
-        replay = analyze(out, campaign.sha(out / 'manifest.json'))
+        replay = analyze(out, campaign.sha(out / 'manifest.json'), str(tool))
         if replay != summary:
             raise ValueError('independent C++/ONNX replay differs from captured summary')
         print(f'bundle={out}\nmanifest_sha256={campaign.sha(out / "manifest.json")}')
@@ -300,7 +300,7 @@ def run(args):
         raise
 
 
-def analyze(out, expected_sha):
+def analyze(out, expected_sha, tool=None):
     out = pathlib.Path(out).resolve()
     if campaign.sha(out / 'manifest.json') != expected_sha:
         raise ValueError('trusted C++/ONNX bundle digest mismatch')
@@ -314,16 +314,39 @@ def analyze(out, expected_sha):
         raise ValueError('C++/ONNX plan integrity failure')
     measured = plan['mode'] == 'calibrated_energy'
     uncertainty = campaign.load(out / 'inputs/instrument.json')['uncertainty_percent'] if measured else 0
+    if measured and not tool:
+        raise ValueError('physical replay requires the native meter-window tool')
+    policy = campaign.load(out / 'inputs/policy.json')
     reports = []
-    for case in plan['runtime_cases']:
-        directory = out / 'cells' / case['id']
-        report = campaign.load(directory / 'report.json')
-        if report.get('id') != case['id'] or len(report.get('pairs', [])) != plan['runtime_pairs']:
-            raise ValueError('incomplete C++/ONNX runtime report: ' + case['id'])
-        orders = [p['order'] for p in report['pairs']]
-        if orders.count(['native', 'cpp_onnx']) != plan['runtime_pairs'] // 2 or orders.count(['cpp_onnx', 'native']) != plan['runtime_pairs'] // 2:
-            raise ValueError('unbalanced C++/ONNX runner order: ' + case['id'])
-        reports.append((case['id'], report, directory))
+    with tempfile.TemporaryDirectory(prefix='cpp-onnx-replay-') as temp:
+        scratch = pathlib.Path(temp)
+        for case in plan['runtime_cases']:
+            directory = out / 'cells' / case['id']
+            report = campaign.load(directory / 'report.json')
+            if report.get('id') != case['id'] or len(report.get('pairs', [])) != plan['runtime_pairs']:
+                raise ValueError('incomplete C++/ONNX runtime report: ' + case['id'])
+            orders = [p['order'] for p in report['pairs']]
+            if orders.count(['native', 'cpp_onnx']) != plan['runtime_pairs'] // 2 or orders.count(['cpp_onnx', 'native']) != plan['runtime_pairs'] // 2:
+                raise ValueError('unbalanced C++/ONNX runner order: ' + case['id'])
+            expected = validate_native_report(directory / 'preflight-native-report.json')['predictions']
+            checksum = int(sum(expected) * report['repetitions'] * report['trials'])
+            for pair in report['pairs']:
+                native_trial = pair['native']
+                cpp_trial = pair['cpp_onnx']
+                validate_native_report(directory / native_trial['application_report'], expected)
+                check_cpp_output(directory / cpp_trial['stdout'], expected, checksum)
+                if measured:
+                    for trial in (native_trial, cpp_trial):
+                        recorded = trial.get('energy')
+                        if not recorded:
+                            raise ValueError('missing physical C++/ONNX energy during replay')
+                        replay_trial = dict(trial)
+                        replay_trial.pop('energy', None)
+                        campaign.attach_energy(tool, scratch, [replay_trial], out / 'meter.csv',
+                                               out / 'inputs/instrument.json', policy)
+                        if replay_trial['energy'] != recorded:
+                            raise ValueError('C++/ONNX physical-meter replay mismatch')
+            reports.append((case['id'], report, directory))
 
     summary = build_summary(plan, reports, measured, uncertainty)
     if campaign.load(out / 'summary.json') != summary:
@@ -373,12 +396,13 @@ def main():
     replay = commands.add_parser('analyze')
     replay.add_argument('--bundle', type=pathlib.Path, required=True)
     replay.add_argument('--manifest-sha256', required=True)
+    replay.add_argument('--tool', help='required for calibrated-energy replay')
 
     args = parser.parse_args()
     if args.action == 'run':
         run(args)
     else:
-        analyze(args.bundle, args.manifest_sha256)
+        analyze(args.bundle, args.manifest_sha256, args.tool)
 
 
 if __name__ == '__main__':
