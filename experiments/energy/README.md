@@ -29,8 +29,11 @@ L1 compares complete implementation approaches. NumPy calls optimized native
 kernels; ordinary Python is not inherently an energy-intensive AI backend.
 FP64 L1 and FP32 R1/R2 are **separate results**. R1/R2 measure the native host
 AIRuntime, not a `.short` compiled program. No result is averaged across these
-boundaries. All L1 repetitions contribute to an observable checksum to prevent
-discarding unused work; every run must reproduce all 1,797 held-out predictions.
+boundaries. Each L1 repetition rotates the input order by one image, making
+runtime indexing depend on the repetition. NumPy uses contiguous views rather
+than copying the whole input. Every repetition contributes to an observable
+checksum; every run must reproduce all 1,797 final ordered predictions. These
+controls resist dead-work elimination and simple loop-invariant reuse.
 
 ## Fixed experimental protocol
 

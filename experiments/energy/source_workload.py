@@ -36,23 +36,33 @@ def prepare(output, repetitions):
         raise ValueError('held-out accuracy below predeclared 85%')
     output.mkdir(parents=True, exist_ok=False)
     write_json(output / 'model.json', dict(weights=weights, bias=bias, precision='float64'))
-    write_json(output / 'expected.json', dict(predictions=predictions, accuracy=accuracy,
+    final_shift = (repetitions - 1) % len(test)
+    ordered = predictions[final_shift:] + predictions[:final_shift]
+    write_json(output / 'expected.json', dict(predictions=ordered, accuracy=accuracy,
                completed=len(test) * repetitions, checksum=sum(predictions) * repetitions))
     (output / 'input.txt').write_text(str(repetitions) + '\n' + '\n'.join(
         ' '.join(map(str, row[:-1])) for row in test) + '\n')
-    source = ['int repeats, iteration, row, i, label, best, checksum, predictions[1797];',
-              'float raw[115008], values[64], weights[640], bias[10], score, maximum;']
+    source = ['int repeats, iteration, row, inputrow, shift, i, label, best, checksum, predictions[1797];',
+              # Existing SemanticIR limits each array to 65536 elements. Keep
+              # all 1797 images resident using two row-aligned arrays.
+              'float raw0[65536], raw1[49472], values[64], weights[640], bias[10], score, maximum;']
     source += [f'weights[{i}] = {v:.17f};' for i, v in enumerate(weights)]
     source += [f'bias[{i}] = {v:.17f};' for i, v in enumerate(bias)]
-    source += ['read repeats; i = 0;', 'loop i = 0, 1, 115008 { read score; raw[i] = score; }',
-               'checksum = 0; iteration = 0;', 'loop iteration = 0, 1, repeats {',
+    source += ['read repeats; i = 0;', 'loop i = 0, 1, 65536 { read score; raw0[i] = score; }',
+               'i = 0;', 'loop i = 0, 1, 49472 { read score; raw1[i] = score; }',
+               'checksum = 0; iteration = 0; shift = 0;', 'loop iteration = 0, 1, repeats {',
                'row = 0;', 'loop row = 0, 1, 1797 {', 'i = 0;',
-               'loop i = 0, 1, 64 { values[i] = raw[row * 64 + i] / 16.0; }',
+               'inputrow = row + shift; if inputrow >= 1797 { inputrow = inputrow - 1797; }',
+               'if inputrow < 1024 {',
+               'loop i = 0, 1, 64 { values[i] = raw0[inputrow * 64 + i] / 16.0; }',
+               '} else {',
+               'loop i = 0, 1, 64 { values[i] = raw1[(inputrow - 1024) * 64 + i] / 16.0; }', '}',
                'label = 0; best = 0; maximum = -1000000.0;',
                'loop label = 0, 1, 10 {', 'score = bias[label]; i = 0;',
                'loop i = 0, 1, 64 { score = score + values[i] * weights[i * 10 + label]; }',
                'if score > maximum { maximum = score; best = label; }', '}',
-               'predictions[row] = best; checksum = checksum + best;', '}', '}',
+               'predictions[row] = best; checksum = checksum + best;', '}',
+               'shift = shift + 1; if shift >= 1797 { shift = 0; }', '}',
                'row = 0;', 'loop row = 0, 1, 1797 { print predictions[row]; }', 'print checksum;']
     (output / 'classifier.short').write_text('\n'.join(source) + '\n')
 
@@ -71,16 +81,20 @@ def worker(model_path, baseline):
     bias = np.asarray(model['bias'], dtype=np.float64)
     checksum = 0
     if baseline == 'numpy':
-        for _ in range(repetitions):
-            scores = (raw / 16.0) @ weights + bias
-            predictions = np.argmax(scores, axis=1)
+        for iteration in range(repetitions):
+            shift = iteration % len(raw)
+            # Two contiguous views avoid copying/rolling the complete dataset.
+            segments = (raw[shift:], raw[:shift]) if shift else (raw,)
+            parts = [np.argmax((values / 16.0) @ weights + bias, axis=1) for values in segments]
+            predictions = np.concatenate(parts)
             checksum += int(predictions.sum())
         predictions = predictions.tolist()
     else:
         raw, weights, bias = raw.tolist(), weights.tolist(), bias.tolist()
-        for _ in range(repetitions):
+        for iteration in range(repetitions):
             predictions = []
-            for row in raw:
+            for index in range(len(raw)):
+                row = raw[(index + iteration) % len(raw)]
                 values = [v / 16.0 for v in row]
                 scores = []
                 for label in range(10):

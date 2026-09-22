@@ -148,9 +148,10 @@ def command(argv, directory, name, completed=1, stdin=None):
                  elapsed_ms=elapsed * 1000, returncode=result.returncode,
                  stdout=f'{name}.stdout', stderr=f'{name}.stderr')
     write(directory / f'{name}.json', trial)
-    if result.returncode or abs(end - start - elapsed) > .01:
-        raise ValueError(f'failed command or discontinuous clock: {name}')
     errors = (directory / f'{name}.stderr').read_text(errors='replace')
+    if result.returncode or abs(end - start - elapsed) > .01:
+        output = (directory / f'{name}.stdout').read_text(errors='replace')
+        raise ValueError(f'failed command or discontinuous clock: {name}, exit={result.returncode}\n{errors[-4000:]}\n{output[-4000:]}')
     if any(v in errors for v in ('AddressSanitizer', 'LeakSanitizer', 'runtime error:')):
         raise ValueError('sanitizer finding in ' + name)
     return trial
@@ -371,6 +372,15 @@ def analyze(out, expected_sha, tool):
                   source_energy=None, compilation_amortization=None, runtime_cells=[])
     if measured:
         energies = [[p[k]['energy']['joules_per_fu'] for p in source['pairs']] for k in ('native', 'python')]
+        # Apply the same engineering stability limits used by the ORT assessor.
+        # Preserve the entire failed session instead of filtering noisy trials.
+        for values in energies + [[t['energy']['joules_per_fu'] for t in source['compilations']]]:
+            variability = 100 * statistics.stdev(values) / statistics.mean(values)
+            if uncertainty + 2 * variability > policy['maximum_uncertainty_percent']:
+                raise ValueError('source or compilation energy uncertainty exceeds declared policy')
+        for values in timings:
+            if 100 * statistics.stdev(values) / statistics.mean(values) > policy['maximum_trial_variability_percent']:
+                raise ValueError('source timing variability exceeds declared policy')
         result['source_energy'] = energy_statistics.compare(*energies, seed=plan['seed'], uncertainty_percent=uncertainty)
         result['compilation_amortization'] = energy_statistics.break_even(
             statistics.mean(t['energy']['joules_per_fu'] for t in source['compilations']),
