@@ -38,5 +38,7 @@ python3 "${ROOT_DIR}/tests/ai_application/test_source_application.py" "${ROOT_DI
 # application paths above remain mandatory under ASan/LSan/UBSan in this lane.
 if [[ "${SHORTHAND_MLIR_SANITIZERS:-OFF}" == OFF ]]; then
   bash "${ROOT_DIR}/scripts/check_ai_application_baselines.sh" "${BUILD_DIR}/shorthand_ai_qualify" "${BUILD_DIR}/application-baselines"
+  "${BUILD_DIR}/application-baselines/venv/bin/python" "${ROOT_DIR}/experiments/energy/test_experiments.py" \
+    --compiler "${BUILD_DIR}/short_hand" --clang "${SHORTHAND_LLVM_CLANG}" --tool "${BUILD_DIR}/shorthand_ai_qualify"
 fi
 echo "PASS verified SemanticIR MLIR LLVM composite execution and real runtime lowering gate"
