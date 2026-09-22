@@ -484,7 +484,7 @@ def smoke(clang, tool, onnx_root):
         expected = validate_native_report(native_path)['predictions']
         trial_report = root / 'cpp-trials.csv'
         trial = campaign.command(
-            [cpp, q['model_path'], app['dataset_path'], 16, 1, 1, 1, 1, trial_report],
+            [cpp, q['model_path'], app['dataset_path'], 16, 1, 1, 1, 2, trial_report],
             root, 'cpp', 3594)
         check_cpp_output(root / trial['stdout'], expected, int(sum(expected) * 2))
         observed = load_cpp_trials(trial_report, q)
