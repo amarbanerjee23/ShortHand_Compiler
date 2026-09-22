@@ -23,11 +23,12 @@ predeclared minimum 85% accuracy. Never tune on the held-out labels.
 | L1-scalar | Separate L1 campaign using ordinary Python loops | Same L1 task and FP64 arithmetic | Diagnostic interpreter-overhead baseline; report alongside NumPy, never replace the optimized baseline with this easier comparison |
 | R1 | Native AIRuntime versus Python NumPy + ONNX Runtime at batch 1, 16, 32 | Same FP32 model/data; ORT 1.30.0, CPU provider, one thread, session options, quality, tail policy | Resident-data application execution; tests batching effects and runtime integration |
 | R2 | R1 at batch 16 with 1, 2, 4 intra-op threads | All R1 settings except declared thread count | Tests CPU parallelism; do not equate more threads or less runtime with less energy |
+| R3 | Native AIRuntime versus standalone C++17 + ONNX Runtime over the same five R1/R2 cells | Same FP32 model/data, ORT CPU provider/session controls, batch, threads, repetitions, trials and predictions | Independent compiled-runtime control; determines whether an observed gain is Python/framework overhead or survives against direct C++ ORT |
 | C1 | Repeated `.short` code generation and `clang++ -O2 -fno-fast-math` linking | Same source, compiler, flags, machine | Complete application builds; compute how many L1 executions would repay compilation energy |
 
 L1 compares complete implementation approaches. NumPy calls optimized native
 kernels; ordinary Python is not inherently an energy-intensive AI backend.
-FP64 L1 and FP32 R1/R2 are **separate results**. R1/R2 measure the native host
+FP64 L1 and FP32 R1/R2/R3 are **separate results**. R1/R2/R3 measure the native host
 AIRuntime, not a `.short` compiled program. No result is averaged across these
 boundaries. Each L1 repetition rotates the input order by one image, making
 runtime indexing depend on the repetition. NumPy uses contiguous views rather
@@ -199,6 +200,46 @@ References: [existing comparison protocol](../../docs/ai_comparison_measurement.
 [Linux powercap boundaries](https://docs.kernel.org/power/powercap/powercap.html),
 [ORT threading/session controls](https://onnxruntime.ai/docs/performance/tune-performance/threading.html).
 
+## Independent C++ / ONNX Runtime control
+
+The primary runtime campaign already compares native AIRuntime with optimized
+Python + ONNX Runtime. That comparison is necessary but not sufficient for a
+compiled-language energy claim because Python dispatches the expensive tensor
+work into native ORT kernels. `runtime_state_of_practice.py` therefore reuses the
+same frozen `campaign.py prepare` plan and adds a standalone C++17 control that:
+
+- compiles only `experiments/energy/cpp_onnx_baseline.cpp` against the verified
+  ONNX Runtime SDK;
+- does **not** link or call any Shorthand runtime implementation;
+- uses the same ORT CPU provider, sequential execution, basic graph
+  optimization, no-spinning settings, batch size and intra-op thread count;
+- requires exact FP32 prediction parity and the same >=85% held-out quality;
+- uses balanced process-pair ordering and the same whole-host physical-meter
+  protocol, with negative or zero Shorthand savings retained as valid results;
+- reports every one of the five batch/thread cells separately and never averages
+  the FP32 runtime control with the FP64 source-language matrix.
+
+After preparing the ordinary campaign plan, run the C++ control with:
+
+```sh
+python experiments/energy/runtime_state_of_practice.py run \\
+  --plan /evidence/declared-plan/plan.json --plan-sha256 PRINTED_PLAN_SHA256 \\
+  --clang /usr/bin/clang++-18 --tool "$PWD/build-energy/shorthand_ai_qualify" \\
+  --onnxruntime-root /tmp/shorthand-energy-ort \\
+  --output /evidence/cpp-onnx-session-1
+```
+
+Replay uses the retained manifest without rerunning either implementation:
+
+```sh
+python experiments/energy/runtime_state_of_practice.py analyze \\
+  --bundle /evidence/cpp-onnx-session-1 \\
+  --manifest-sha256 PRINTED_MANIFEST_SHA256
+```
+
+This control is mandatory evidence before attributing a runtime energy advantage
+to Shorthand rather than merely to elimination of Python-side orchestration.
+
 ## State-of-practice benchmark matrix
 
 The publication/certification experiment must not stop at Shorthand versus a
@@ -265,6 +306,7 @@ and all independently operated sessions must be reported; selecting only a
 favorable baseline is invalid.
 
 The mandatory unsanitized MLIR test path now exercises the `core` matrix,
-including the independent optimized C++17 control. PyTorch/Rust/Mojo remain
+including the independent optimized C++17 source control, and compiles/runs the
+standalone C++/ONNX FP32 control against the native AIRuntime prediction oracle. PyTorch/Rust/Mojo remain
 full physical-campaign prerequisites rather than network-installed CI
 dependencies.
