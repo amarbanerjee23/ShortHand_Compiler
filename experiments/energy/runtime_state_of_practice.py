@@ -120,6 +120,13 @@ def case_inputs(case):
         raise ValueError('runtime dataset digest mismatch')
     if q.get('batch_size') not in (1, 16, 32) or app.get('threads') not in (1, 2, 4):
         raise ValueError('unexpected runtime state-of-practice cell')
+    expected_application = dict(features=64, classes=10, top_k=3, input_min=0,
+                                input_max=16, offset=0, scale=0.0625,
+                                minimum_accuracy=0.85)
+    if any(app.get(key) != value for key, value in expected_application.items()):
+        raise ValueError('independent C++ control no longer matches application semantics: ' + case['id'])
+    if q.get('workload') != 'uci_optdigits_centroid' or q.get('input_shape') != [q['batch_size'], 64] or q.get('output_shape') != [q['batch_size'], 10]:
+        raise ValueError('independent C++ control no longer matches ONNX workload shape')
     return app, q
 
 
