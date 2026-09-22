@@ -214,8 +214,15 @@ same frozen `campaign.py prepare` plan and adds a standalone C++17 control that:
 - uses the same ORT CPU provider, sequential execution, basic graph
   optimization, no-spinning settings, batch size and intra-op thread count;
 - requires exact FP32 prediction parity and the same >=85% held-out quality;
-- uses balanced process-pair ordering and the same whole-host physical-meter
-  protocol, with negative or zero Shorthand savings retained as valid results;
+- uses balanced process-pair ordering, but measures matched **resident-session
+  inner inference trial windows** on both sides so asymmetric process startup or
+  report serialization cannot bias the comparison;
+- repeats raw-pixel normalization inside every measured inference pass on the
+  C++ side, matching the native/Python preprocessing boundary;
+- pins and verifies ONNX Runtime 1.30.0 and retains hashes for the C++ source,
+  experiment harness, compiler, ShortHand runtime tool and ORT shared library;
+- uses the same whole-host physical-meter protocol, with negative or zero
+  Shorthand savings retained as valid results;
 - reports every one of the five batch/thread cells separately and never averages
   the FP32 runtime control with the FP64 source-language matrix.
 
@@ -238,6 +245,13 @@ python experiments/energy/runtime_state_of_practice.py analyze \\
   --tool "$PWD/build-energy/shorthand_ai_qualify"
 ```
 
+The retained bundle contains the exact experiment implementation used for the
+capture and replays every native/C++ trial window against the immutable physical
+meter trace. The C++ compilation itself, session construction, warmups and final
+report/output serialization are outside the compared steady-state trial window
+on both sides; they remain observable as separate process artifacts rather than
+being mixed into inference energy.
+
 This control is mandatory evidence before attributing a runtime energy advantage
 to Shorthand rather than merely to elimination of Python-side orchestration.
 
@@ -257,9 +271,9 @@ hardware and measurement boundary constant while comparing Shorthand against:
 | Rust/Candle | modern compiled AI-stack baseline |
 | Mojo/MAX | modern compiled AI-stack baseline |
 
-The existing R1/R2 FP32 ONNX experiments remain Track B and are reported
-separately. Track A and Track B use different precision/model boundaries and
-must never be averaged into one number.
+The existing R1/R2 FP32 ONNX experiments plus the independent C++/ONNX control
+remain Track B and are reported separately. Track A and Track B use different
+precision/model boundaries and must never be averaged into one number.
 
 Two profiles are available. `core` contains NumPy and optimized C++17 and is the
 offline CI smoke profile. `full` requires NumPy, C++17, PyTorch eager,
