@@ -247,9 +247,12 @@ def run(args):
         random.Random(plan['seed']).shuffle(blocks)
         pairs = []
         for serial, block in enumerate(blocks):
-            pair = dict(baseline=block['baseline'], index=block['index'], order=block['order'])
+            # Keep the baseline identity separate from the retained peer trial.
+            # Using one "baseline" key for both silently overwrote the name and
+            # made the evidence bundle impossible to replay.
+            pair = dict(baseline_name=block['baseline'], index=block['index'], order=block['order'])
             for runner in block['order']:
-                key = 'shorthand' if runner == 'shorthand' else 'baseline'
+                key = 'shorthand' if runner == 'shorthand' else 'peer'
                 name = f'pair-{serial}-{block["baseline"]}-{runner}'
                 trial = campaign.command(commands[runner], out, name, expected['completed'], inputs / 'source/input.txt')
                 campaign.check_output(out / trial['stdout'], expected)
@@ -262,7 +265,7 @@ def run(args):
             campaign.snapshot(pathlib.Path(plan['meter_csv']), meter)
             if not meter.read_bytes().endswith(b'\n'):
                 raise ValueError('incomplete meter trace')
-            all_trials = [p[k] for p in pairs for k in ('shorthand', 'baseline')]
+            all_trials = [p[k] for p in pairs for k in ('shorthand', 'peer')]
             campaign.attach_energy(str(tool), out, all_trials, meter, inputs / 'instrument.json', policy)
         environment = dict(platform=platform.platform(), python=sys.version,
             clang_version=subprocess.check_output([clang, '--version'], text=True),
@@ -315,7 +318,7 @@ def analyze(out, expected_sha, tool):
     uncertainty = campaign.load(out / 'inputs/instrument.json')['uncertainty_percent'] if measured else 0
     policy = campaign.load(out / 'inputs/policy.json')
     for baseline in plan['baselines']:
-        pairs = [p for p in report['pairs'] if p['baseline'] == baseline]
+        pairs = [p for p in report['pairs'] if p.get('baseline_name') == baseline]
         if len(pairs) != plan['pairs']:
             raise ValueError('missing comparison pairs for ' + baseline)
         orders = [p['order'] for p in pairs]
@@ -323,7 +326,7 @@ def analyze(out, expected_sha, tool):
             raise ValueError('unbalanced runner order for ' + baseline)
         shorthand_values, baseline_values = [], []
         for pair in pairs:
-            for key in ('shorthand', 'baseline'):
+            for key in ('shorthand', 'peer'):
                 trial = pair[key]
                 if trial['returncode'] != 0 or trial['completed'] != expected['completed']:
                     raise ValueError('failed or incomplete trial')
