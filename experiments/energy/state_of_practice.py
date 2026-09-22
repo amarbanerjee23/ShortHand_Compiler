@@ -56,8 +56,12 @@ def _external(path, version, name):
     resolved = pathlib.Path(path).expanduser().resolve()
     if resolved.is_symlink() or not resolved.is_file():
         raise ValueError(f'invalid {name} runner')
-    return dict(path=str(resolved), sha256=campaign.sha(resolved), version=version,
-                contract='accept --model MODEL.json, read canonical workload on stdin, emit predictions and checksum on stdout')
+    probe = subprocess.run([str(resolved), '--version'], text=True, capture_output=True, timeout=60)
+    observed = probe.stdout.strip()
+    if probe.returncode or not observed or observed != version:
+        raise ValueError(f'{name} runner --version must exactly match the frozen version declaration')
+    return dict(path=str(resolved), sha256=campaign.sha(resolved), version=observed,
+                contract='support --version; accept --model MODEL.json; read canonical workload on stdin; emit predictions and checksum on stdout')
 
 
 def validate_plan(plan):
@@ -169,8 +173,12 @@ def _verify_external_identities(plan):
     if campaign.sha(torch_python) != plan['torch']['sha256'] or _tool_version(torch_python) != plan['torch']['versions']:
         raise ValueError('PyTorch environment changed after plan freeze')
     for name, spec in plan['external'].items():
-        if campaign.sha(pathlib.Path(spec['path'])) != spec['sha256']:
+        path = pathlib.Path(spec['path'])
+        if campaign.sha(path) != spec['sha256']:
             raise ValueError(name + ' executable changed after plan freeze')
+        probe = subprocess.run([str(path), '--version'], text=True, capture_output=True, timeout=60)
+        if probe.returncode or probe.stdout.strip() != spec['version']:
+            raise ValueError(name + ' version identity changed after plan freeze')
 
 
 def run(args):
