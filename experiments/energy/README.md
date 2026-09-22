@@ -234,7 +234,8 @@ Replay uses the retained manifest without rerunning either implementation:
 ```sh
 python experiments/energy/runtime_state_of_practice.py analyze \\
   --bundle /evidence/cpp-onnx-session-1 \\
-  --manifest-sha256 PRINTED_MANIFEST_SHA256
+  --manifest-sha256 PRINTED_MANIFEST_SHA256 \\
+  --tool "$PWD/build-energy/shorthand_ai_qualify"
 ```
 
 This control is mandatory evidence before attributing a runtime energy advantage
