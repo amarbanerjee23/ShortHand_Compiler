@@ -36,8 +36,22 @@ def _bounded(value, low, high, name):
 
 
 def _tool_version(python):
-    result = subprocess.run([str(python), '-c',
-        'import json, numpy, sys, torch; print(json.dumps({"python":sys.version.split()[0],"numpy":numpy.__version__,"torch":torch.__version__},sort_keys=True))'],
+    probe = (
+        'import hashlib, importlib.metadata as md, json, numpy, sys, torch; '
+        'rec=lambda n: (md.distribution(n).read_text("RECORD") or "").encode(); '
+        'cfg=torch.__config__.show().encode(); '
+        'print(json.dumps({'
+        '"python":sys.version.split()[0],'
+        '"numpy":numpy.__version__,'
+        '"numpy_record_sha256":hashlib.sha256(rec("numpy")).hexdigest(),'
+        '"torch":torch.__version__,'
+        '"torch_git_version":getattr(torch.version,"git_version",None),'
+        '"torch_cuda_version":getattr(torch.version,"cuda",None),'
+        '"torch_config_sha256":hashlib.sha256(cfg).hexdigest(),'
+        '"torch_record_sha256":hashlib.sha256(rec("torch")).hexdigest()'
+        '},sort_keys=True))'
+    )
+    result = subprocess.run([str(python), '-c', probe],
         text=True, capture_output=True, timeout=60)
     if result.returncode:
         raise ValueError('full profile requires an importable PyTorch environment: ' + result.stderr[-1000:])
