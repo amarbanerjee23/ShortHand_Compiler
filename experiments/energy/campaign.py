@@ -14,6 +14,7 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -129,7 +130,7 @@ def prepare(args):
     print(f'plan={out / "plan.json"}\nplan_sha256={sha(out / "plan.json")}')
 
 
-def command(argv, directory, name, completed=1, stdin=None):
+def command(argv, directory, name, completed=1, stdin=None, timeout=1800):
     """Whole subprocess window includes startup/imports/I/O and process teardown."""
     argv = list(map(str, argv))
     with contextlib.ExitStack() as stack:
@@ -137,12 +138,24 @@ def command(argv, directory, name, completed=1, stdin=None):
         stdout = stack.enter_context((directory / f'{name}.stdout').open('wb'))
         stderr = stack.enter_context((directory / f'{name}.stderr').open('wb'))
         start, monotonic = time.time(), time.perf_counter()
-        try:
-            result = subprocess.run(argv, stdin=inp, stdout=stdout, stderr=stderr,
-                                    env=dict(os.environ, **ENV), timeout=1800, check=False)
-        except subprocess.TimeoutExpired:
-            write(directory / f'{name}.failure.json', dict(error='timeout', argv=argv))
-            raise
+        # POSIX wait(timeout=...) polls with sleeps and biases short trials.
+        # A watchdog bounds execution while wait() wakes on child completion.
+        expired = threading.Event()
+        with subprocess.Popen(argv, stdin=inp, stdout=stdout, stderr=stderr,
+                              env=dict(os.environ, **ENV)) as result:
+            def expire():
+                expired.set()
+                result.kill()
+            watchdog = threading.Timer(timeout, expire)
+            watchdog.daemon = True
+            watchdog.start()
+            try:
+                result.wait()
+            finally:
+                watchdog.cancel()
+            if expired.is_set():
+                write(directory / f'{name}.failure.json', dict(error='timeout', argv=argv))
+                raise subprocess.TimeoutExpired(argv, timeout)
         elapsed, end = time.perf_counter() - monotonic, time.time()
     trial = dict(argv=argv, completed=completed, start_unix_seconds=start, end_unix_seconds=end,
                  elapsed_ms=elapsed * 1000, returncode=result.returncode,

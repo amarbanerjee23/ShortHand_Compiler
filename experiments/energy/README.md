@@ -229,19 +229,19 @@ same frozen `campaign.py prepare` plan and adds a standalone C++17 control that:
 After preparing the ordinary campaign plan, run the C++ control with:
 
 ```sh
-python experiments/energy/runtime_state_of_practice.py run \\
-  --plan /evidence/declared-plan/plan.json --plan-sha256 PRINTED_PLAN_SHA256 \\
-  --clang /usr/bin/clang++-18 --tool "$PWD/build-energy/shorthand_ai_qualify" \\
-  --onnxruntime-root /tmp/shorthand-energy-ort \\
+python experiments/energy/runtime_state_of_practice.py run \
+  --plan /evidence/declared-plan/plan.json --plan-sha256 PRINTED_PLAN_SHA256 \
+  --clang /usr/bin/clang++-18 --tool "$PWD/build-energy/shorthand_ai_qualify" \
+  --onnxruntime-root /tmp/shorthand-energy-ort \
   --output /evidence/cpp-onnx-session-1
 ```
 
 Replay uses the retained manifest without rerunning either implementation:
 
 ```sh
-python experiments/energy/runtime_state_of_practice.py analyze \\
-  --bundle /evidence/cpp-onnx-session-1 \\
-  --manifest-sha256 PRINTED_MANIFEST_SHA256 \\
+python experiments/energy/runtime_state_of_practice.py analyze \
+  --bundle /evidence/cpp-onnx-session-1 \
+  --manifest-sha256 PRINTED_MANIFEST_SHA256 \
   --tool "$PWD/build-energy/shorthand_ai_qualify"
 ```
 
@@ -275,12 +275,12 @@ The existing R1/R2 FP32 ONNX experiments plus the independent C++/ONNX control
 remain Track B and are reported separately. Track A and Track B use different
 precision/model boundaries and must never be averaged into one number.
 
-Two profiles are available. `core` contains NumPy and optimized C++17 and is the
-offline CI smoke profile. `full` requires NumPy, C++17, PyTorch eager,
-`torch.compile`, Rust/Candle and Mojo/MAX. A full plan fails closed if any of
-
-External Rust/Candle and Mojo/MAX runners must support `--version`; the observed version must exactly match the frozen declaration, and the runner SHA-256 is revalidated before and after capture.
-those declarations is missing; unavailable baselines are never silently skipped.
+Three profiles are available. `core` contains NumPy and optimized C++17 and is
+also the CI smoke profile. `torch` adds PyTorch eager and `torch.compile` without
+requiring unavailable external runners. `full` requires all six baselines and
+fails closed if any declaration is missing. External Rust/Candle and Mojo/MAX
+runners must support `--version`; its output must exactly match the frozen
+version declaration. Runner SHA-256 values are checked before and after capture.
 `full_matrix_qualified=true` only means the complete declared matrix ran. It
 does not authorize an energy, carbon, certification or "lowest carbon" claim.
 
@@ -291,13 +291,17 @@ stdin, and emit the 1,797 final predictions followed by the repetition checksum.
 The frozen plan binds the runner binary by SHA-256 and records its framework or
 toolchain version. The PyTorch environment is likewise version-captured.
 
-For `torch.compile`, two predeclared warmups populate a dedicated TorchInductor
-cache before measured pairs. This deliberately compares against an optimized
-steady-state implementation rather than creating an easy cold-compilation win.
-Cold compilation can be studied separately, but must not be mixed into these
-steady-state rows.
+For `torch.compile`, two predeclared warmup processes populate a dedicated
+TorchInductor disk cache. Every measured trial starts a fresh Python process;
+imports, graph tracing and cache loading remain inside the timing boundary.
+This measures warm-cache process execution, not resident steady-state PyTorch
+inference. Dynamic shapes handle the changing segment lengths from cyclic input
+rotation without exhausting the static-shape recompilation limit.
 
-A minimal CI/core plan is:
+The C++ source control normalizes each row once, matching the Shorthand workload,
+and disables iostream synchronization. Both source controls use embedded weights.
+The process timer uses a blocking child wait with a separate timeout watchdog,
+avoiding the sleep polling of POSIX `wait(timeout=...)` for short processes.
 
 ```sh
 python experiments/energy/state_of_practice.py prepare \
@@ -327,3 +331,35 @@ including the independent optimized C++17 source control, and compiles/runs the
 standalone C++/ONNX FP32 control against the native AIRuntime prediction oracle. PyTorch/Rust/Mojo remain
 full physical-campaign prerequisites rather than network-installed CI
 dependencies.
+
+## Execute and retain a verified comparison run
+
+The `experiment-results` GitHub Actions workflow builds the real LLVM 18 compiler
+and ONNX Runtime 1.30.0 host, installs the existing hash-locked NumPy/ORT baseline,
+and pins CPU PyTorch to 2.9.1. Its pip install report records wheel digests and
+resolved dependencies; the frozen source plan records the installed PyTorch identity.
+This workflow is an execution-only experiment, not an energy-measurement job.
+
+After building those dependencies, the same capture can be run directly:
+
+```sh
+build-energy/venv/bin/python experiments/energy/run_verified.py \
+  --output experiment-output \
+  --compiler "$PWD/build-energy/short_hand" \
+  --clang /usr/bin/clang++-18 \
+  --tool "$PWD/build-energy/shorthand_ai_qualify" \
+  --onnxruntime-root "$PWD/build-energy/onnxruntime-1.30.0"
+python3 experiments/energy/report_results.py \
+  --input experiment-output --output experiment-report
+```
+
+The fixed design uses 30 paired source processes per baseline at 10 repetitions,
+a second NumPy/C++ source session at 100 repetitions, and ten paired processes per
+FP32 runtime cell with three inner trials of 20 repetitions. Failed stages are
+retained; the driver continues other declared stages without filtering observations.
+`experiment-report/RESULTS.md`, `summary.json`, `observations.json` and `metadata/`
+are the compact repository results. The workflow artifact retains the complete
+capture, including outputs, predictions, scores, builds and replay manifests.
+
+Method references: [PyTorch dynamic shapes and recompilation](https://docs.pytorch.org/docs/stable/generated/torch.compile.html),
+[Python POSIX timeout waiting](https://docs.python.org/3.12/library/subprocess.html#subprocess.Popen.wait).

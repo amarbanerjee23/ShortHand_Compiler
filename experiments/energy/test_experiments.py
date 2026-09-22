@@ -16,6 +16,17 @@ from source_workload import prepare
 
 
 class Experiments(unittest.TestCase):
+    def test_command_failure_and_watchdog_are_not_observations(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out = pathlib.Path(temp)
+            with self.assertRaises(ValueError):
+                campaign.command([sys.executable, '-c', 'raise SystemExit(3)'], out, 'bad')
+            with self.assertRaises(subprocess.TimeoutExpired):
+                campaign.command([sys.executable, '-c', 'import time; time.sleep(10)'],
+                                 out, 'timeout', timeout=.05)
+            self.assertEqual(campaign.load(out / 'timeout.failure.json')['error'], 'timeout')
+            self.assertFalse((out / 'timeout.json').exists())
+
     def test_signed_results_and_compilation_amortization(self):
         compare = campaign.energy_statistics.compare
         a = compare([1., 2., 3., 4.], [2., 4., 6., 8.])
@@ -102,6 +113,12 @@ class Experiments(unittest.TestCase):
             incomplete['profile'] = 'full'
             with self.assertRaises(ValueError):
                 state_of_practice.validate_plan(incomplete)
+            torch_plan = copy.deepcopy(plan)
+            torch_plan.update(profile='torch', baselines=list(state_of_practice.PROFILES['torch']), torch={'frozen': True})
+            state_of_practice.validate_plan(torch_plan)
+            torch_plan['baselines'].pop()
+            with self.assertRaises(ValueError):
+                state_of_practice.validate_plan(torch_plan)
             measured = copy.deepcopy(plan)
             measured.update(mode='calibrated_energy', pairs=30, meter_csv=None)
             with self.assertRaises(ValueError):
