@@ -16,6 +16,19 @@ from source_workload import prepare
 
 
 class Experiments(unittest.TestCase):
+    def test_cpp_onnx_validation_rejects_score_and_topk_regressions(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = pathlib.Path(temp) / 'trials.csv'
+            reference = dict(predictions=[9], scores=list(range(10)))
+            good = dict(scores=list(range(10)), top_k=[9, 8, 7])
+            campaign.write(str(path) + '.validation.json', good)
+            runtime_state_of_practice.check_cpp_validation(path, reference)
+            for bad in (dict(scores=list(range(10)), top_k=[9, 7, 8]),
+                        dict(scores=[0] * 9 + [9], top_k=[9, 8, 7])):
+                campaign.write(str(path) + '.validation.json', bad)
+                with self.assertRaises(ValueError):
+                    runtime_state_of_practice.check_cpp_validation(path, reference)
+
     def test_command_failure_and_watchdog_are_not_observations(self):
         with tempfile.TemporaryDirectory() as temp:
             out = pathlib.Path(temp)
