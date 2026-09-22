@@ -278,6 +278,8 @@ precision/model boundaries and must never be averaged into one number.
 Two profiles are available. `core` contains NumPy and optimized C++17 and is the
 offline CI smoke profile. `full` requires NumPy, C++17, PyTorch eager,
 `torch.compile`, Rust/Candle and Mojo/MAX. A full plan fails closed if any of
+
+External Rust/Candle and Mojo/MAX runners must support `--version`; the observed version must exactly match the frozen declaration, and the runner SHA-256 is revalidated before and after capture.
 those declarations is missing; unavailable baselines are never silently skipped.
 `full_matrix_qualified=true` only means the complete declared matrix ran. It
 does not authorize an energy, carbon, certification or "lowest carbon" claim.
