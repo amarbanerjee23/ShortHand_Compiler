@@ -65,7 +65,9 @@ def validate_native_report(path, expected_predictions=None):
                    if isinstance(trial, dict) and trial.get('success') is not True]
         raise ValueError(
             'native AIRuntime did not produce a successful application report: '
-            f'reason={report.get("reason")!r}, trial_reasons={reasons!r}')
+            f'schema={report.get("schema")!r}, success={report.get("success")!r}, '
+            f'error={report.get("error")!r}, reason={report.get("reason")!r}, '
+            f'trial_reasons={reasons!r}, keys={sorted(report)!r}')
     predictions = report.get('predictions')
     if not isinstance(predictions, list) or len(predictions) != 1797:
         raise ValueError('native AIRuntime prediction shape mismatch')
