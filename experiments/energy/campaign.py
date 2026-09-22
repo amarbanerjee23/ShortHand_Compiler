@@ -240,7 +240,9 @@ def run(args):
         raise ValueError('physical campaign requires four available CPU threads; no cells skipped')
     if platform.system() != 'Linux' or platform.machine() != 'x86_64':
         raise ValueError('declared experiment scope requires Linux x64')
-    executables = [pathlib.Path(shutil.which(str(p)) or p).resolve() for p in (args.compiler, args.clang, args.tool, sys.executable)]
+    # Preserve the invoked symlink name: resolving venv/bin/python bypasses
+    # its installed baseline packages; resolving clang++ changes driver mode.
+    executables = [pathlib.Path(shutil.which(str(p)) or p).absolute() for p in (args.compiler, args.clang, args.tool, sys.executable)]
     compiler, clang, tool, python = executables
     identities = {str(p): sha(p) for p in executables}
     out = args.output.resolve()
