@@ -1,13 +1,13 @@
 # ShortHand production readiness PR plan
 
-production_readiness_plan_version: 2026-09-18-pr102
+production_readiness_plan_version: 2026-09-22-pr103
 PLAN_STATUS: active
-LAST_MERGED_GITHUB_PR: 101
-CURRENT_GITHUB_PR: 102
+LAST_MERGED_GITHUB_PR: 102
+CURRENT_GITHUB_PR: 103
 CURRENT_ROADMAP_PR: 102
 LAST_PLANNED_GITHUB_PR: 102
 LAST_PLANNED_ROADMAP_PR: 102
-CURRENT_IMPLEMENTATION_SCOPE: release_claims_audit_closeout
+CURRENT_IMPLEMENTATION_SCOPE: post_pr102_governance_closeout_and_evidence_plan
 BASELINE_LANGUAGE_VERSION: beta-0.7
 TARGET: enterprise production usage ready language
 
@@ -17,17 +17,23 @@ ShortHand must become a production-grade compiled AI language that lets engineer
 
 Unsupported or unavailable paths must never report production success. A skipped dependency, absent accelerator, unprotected release environment, cancelled workflow, unavailable security scanner, missing container runtime, unavailable compiler oracle or unavailable deployment cluster is not production execution evidence.
 
+## Post-implementation authority
+
+The planned implementation roadmap is closed at merged GitHub PR102. PR103 is a governance-only closeout: it corrects active repository truth and registers the evidence program without changing language syntax, compiler/runtime semantics or ABI.
+
+The active post-implementation roadmap is [the enterprise GA and C3-ECO evidence plan](post_pr102_enterprise_c3eco_release_plan.md), with machine-readable milestones in `post_pr102_evidence_plan.tsv`. It defines E1-E6 for protected release controls, representative workloads and quality, calibrated physical energy, lifecycle/carbon boundaries, independent reproduction/certification operations and the final enterprise GA decision. Evidence failures may result in narrowly scoped remediation PRs; no further feature PR is pre-authorized.
+
 ## Current baseline
 
-GitHub PR89 through PR101 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. Merged GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. PR95-PR98 added native CPU qualification, a real held-out classification application, equivalent application baselines, trace replay, conservative regression policy and bounded realistic AI-family execution. None of these grants certification or a universal energy-superiority claim.
+GitHub PR89 through PR102 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. Merged GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. PR95-PR98 added native CPU qualification, a real held-out classification application, equivalent application baselines, trace replay, conservative regression policy and bounded realistic AI-family execution. None of these grants certification or a universal energy-superiority claim.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.
 
-The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The original roadmap retains PR83 through PR96. The merged PR93 assessment adds six follow-on increments, tracked as roadmap PR97 through PR102. One planned implementation batch remains: PR102 claims/general-release closeout. No further implementation batches are scheduled after it; retained evidence and any necessary remediation still require review. This is a planning count, not a guarantee of general release readiness.
+The active machine-readable state is `docs/production_truth.tsv`; certification traceability is `docs/c3eco_traceability.tsv`. The original roadmap retains PR83 through PR96 and the merged PR93 assessment added six follow-on increments through PR102. GitHub PR102 is merged and the planned implementation sequence is closed. No planned implementation batches remain. The post-PR102 evidence program remains active, and retained evidence or failed qualification may require narrowly scoped remediation PRs. Zero remaining planned implementation PRs is not a guarantee of general release readiness.
 
 ## Current completion contract
 
-GitHub PR102 - release claims and audit closeout is IN PROGRESS on top of merged GitHub PR101. It implements `shorthand.release.closeout.v1`: an immutable 25-finding audit reconciliation, generated public capability wording, source/CI/merge binding, RC report validation and explicit no-go GA publication guard. All certification, comparative-energy and production claims remain false.
+GitHub PR102 - release claims and audit closeout is MERGED. It implements `shorthand.release.closeout.v1`: an immutable 25-finding audit reconciliation, generated public capability wording, source/CI/merge binding, RC report validation and explicit no-go GA publication guard. GitHub PR103 is governance-only and records the closed implementation roadmap plus the active evidence program. All certification, comparative-energy, lowest-carbon and production claims remain false.
 
 1. Preserve all syntax, interpreter/MLIR/LLVM semantics, runtime ABI and the strict PR95 measured-energy qualification contract.
 2. Reconcile all 25 historical audit findings without rewriting their original severity or acceptance requirements; retain physical, quality/safety and organizational evidence exits.
@@ -36,11 +42,11 @@ GitHub PR102 - release claims and audit closeout is IN PROGRESS on top of merged
 5. Keep independent authenticity, calibrated physical observations, equivalent baselines and certification explicitly pending; no universal energy, certification or lowest-carbon claim is allowed.
 6. Update coverage, production truth and C3-ECO traceability, install the schemas/documentation and require both exact-head event-specific CI statuses before merge. See [the release closeout contract](release_claims_closeout.md).
 
-## Mandatory rule for every remaining PR
+## Mandatory rule for any post-PR102 remediation PR
 
-Every implementation PR through roadmap PR102 must include all applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability, performance and energy tests. It must update production truth, traceability, feature tracker, this roadmap and the compiler coverage matrix. No mandatory production test may be converted to an unconditional skip, warning-only success or `continue-on-error` success.
+Any remediation PR opened after PR102 must include all applicable unit, positive integration, negative boundary, regression, sanitizer, security, portability, performance and energy tests. It must name the failed evidence milestone, update production truth and affected traceability, and add a regression for the defect. No mandatory production test may be converted to an unconditional skip, warning-only success or `continue-on-error` success.
 
-The final head of every implementation PR must have both stable event-specific CI statuses green before merge.
+The final head of every remediation PR must have both stable event-specific CI statuses green before merge. A merged remediation PR does not close a physical or operational evidence milestone until the affected evidence is rerun successfully.
 
 ## Robust pipeline architecture
 
@@ -103,15 +109,15 @@ PR89-PR91 already implement accounting, assessment and signed auditor preparatio
 | PR99 - Accelerator execution or explicit CPU scope | MERGED as GitHub PR99, combined with PR96 pilot/RC | Versioned CPU-only pilot/RC scope, fail-closed install/upgrade/rollback, deployment/soak/DR aggregation and retained blocker report; every accelerator production claim excluded. |
 | PR100 - Data lifecycle and cloud carbon boundary | MERGED as GitHub PR100 | Material data/storage/network, AI lifecycle, shared-cloud allocation, factors and hardware lifetime evidence using existing accounting controls. |
 | PR101 - Independent reproduction and certification pilot | MERGED as GitHub PR101 | Independent repeated measurements and organizational evidence-retention, surveillance and draft-standard pilot review. |
-| PR102 - Claims and general-release closeout | IN PROGRESS as GitHub PR102 | Review every audit gap, bounded claims, quality/safety controls, operational evidence and final GA decision. |
+| PR102 - Claims and general-release closeout | MERGED as GitHub PR102 | Review every audit gap, bounded claims, quality/safety controls, operational evidence and final GA decision. |
 
 ## Current count and combined delivery batches
 
-remaining_planned_implementation_increments_including_current: 1
+remaining_planned_implementation_increments_including_current: 0
 remaining_planned_implementation_increments_after_current: 0
 audit_follow_on_increments: 6
 
-The nine original roadmap gates (PR94-PR102) were consolidated into seven delivery batches. PR96 through PR101 are merged; PR102 is the final planned implementation batch. GitHub numbers and roadmap IDs are distinct. Combining implementation does not close missing evidence; every retained exit remains mandatory.
+The nine original roadmap gates (PR94-PR102) were consolidated into seven delivery batches. PR96 through PR102 are merged; PR102 is the final merged planned implementation batch and closes the scheduled implementation sequence. GitHub numbers and roadmap IDs are distinct. Combining implementation does not close missing evidence; every retained exit remains mandatory.
 
 | Batch | Roadmap coverage | Completion evidence |
 | --- | --- | --- |
@@ -122,7 +128,7 @@ The nine original roadmap gates (PR94-PR102) were consolidated into seven delive
 | Merged GitHub PR101: independent reproduction and certification pilot | PR101 | Independent repeats, organizational storage/retention/surveillance and draft-standard pilot review. |
 | Claims and GA decision | PR102 | All audit gaps, quality/safety, physical evidence, protected release operation and a bounded externally reviewable release decision. |
 
-Three planned delivery batches remain after this scoped increment. Its calibrated physical evidence and uncovered family baseline exits remain open. This estimate is not a guarantee of enterprise or general release readiness. Counts exclude repository administration and independent certification decisions. Measurement, lifecycle and organizational evidence cannot be manufactured by combining PRs.
+No planned implementation delivery batches remain after merged PR102. Its calibrated physical evidence and uncovered family baseline exits remain open. This estimate is not a guarantee of enterprise or general release readiness. Counts exclude repository administration and independent certification decisions. Measurement, lifecycle and organizational evidence cannot be manufactured by combining PRs.
 
 ## External production blocker not counted as an implementation PR
 
