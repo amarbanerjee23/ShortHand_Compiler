@@ -43,10 +43,16 @@ def compile_cpp_baseline(out, clang, onnx_root):
     source = HERE / 'cpp_onnx_baseline.cpp'
     binary = out / 'cpp-onnx-baseline'
     campaign.command([
-        clang, '-std=c++17', '-O2', '-DNDEBUG', '-Wall', '-Wextra', '-Wpedantic', '-Werror',
+        clang, '-std=c++17', '-O3', '-fno-fast-math', '-DNDEBUG',
+        '-Wall', '-Wextra', '-Wpedantic', '-Werror',
         source, '-I' + str(root / 'include'), '-L' + str(libdir),
         '-Wl,-rpath,' + str(libdir), '-lonnxruntime', '-pthread', '-o', binary
     ], out, 'compile-cpp-onnx')
+    env = dict(os.environ)
+    env['LD_LIBRARY_PATH'] = str(libdir) + ':' + env.get('LD_LIBRARY_PATH', '')
+    version = subprocess.check_output([binary, '--version'], text=True, env=env).strip()
+    if version != '1.30.0':
+        raise ValueError('independent C++ control requires ONNX Runtime 1.30.0, observed ' + version)
     return binary
 
 
@@ -78,6 +84,31 @@ def check_cpp_output(path, predictions, checksum):
         raise ValueError('independent C++ prediction/checksum mismatch')
 
 
+def load_cpp_trials(path, q):
+    rows = []
+    with pathlib.Path(path).open() as stream:
+        header = stream.readline().strip()
+        if header != 'start_unix_seconds,end_unix_seconds,elapsed_ms,completed':
+            raise ValueError('invalid C++ trial report header')
+        for line in stream:
+            fields = line.strip().split(',')
+            if len(fields) != 4:
+                raise ValueError('invalid C++ trial report row')
+            start, end, elapsed = map(float, fields[:3])
+            completed = int(fields[3])
+            if not all(map(math.isfinite, (start, end, elapsed))) or end <= start or elapsed <= 0:
+                raise ValueError('invalid C++ trial timing')
+            if completed != 1797 * q['repetitions']:
+                raise ValueError('incomplete C++ inner trial')
+            if abs((end - start) * 1000 - elapsed) > max(10.0, elapsed * .05):
+                raise ValueError('C++ wall/steady clocks disagree')
+            rows.append(dict(start_unix_seconds=start, end_unix_seconds=end,
+                             elapsed_ms=elapsed, completed=completed, success=True))
+    if len(rows) != q['trials']:
+        raise ValueError('C++ inner trial count mismatch')
+    return rows
+
+
 def case_inputs(case):
     app = campaign.load(case['application'])
     q = campaign.load(app['qualification_config'])
@@ -94,21 +125,24 @@ def run_case(plan, case, out, tool, cpp_binary):
     out.mkdir(parents=True, exist_ok=False)
     app, q = case_inputs(case)
     rows = 1797
-    completed = rows * q['repetitions'] * q['trials']
+    completed_per_trial = rows * q['repetitions']
+    completed_per_process = completed_per_trial * q['trials']
 
     # Preflight is outside measured pairs and establishes exact FP32 output parity.
     native_preflight = out / 'preflight-native-report.json'
     campaign.command([tool, 'application', case['application'], native_preflight],
-                     out, 'preflight-native', completed)
+                     out, 'preflight-native', completed_per_process)
     expected = validate_native_report(native_preflight)['predictions']
     checksum = int(sum(expected) * q['repetitions'] * q['trials'])
 
-    cpp_command = [
+    cpp_base = [
         cpp_binary, q['model_path'], app['dataset_path'], q['batch_size'], app['threads'],
         q['warmups'], q['repetitions'], q['trials']
     ]
-    cpp_preflight = campaign.command(cpp_command, out, 'preflight-cpp', completed)
+    preflight_trials = out / 'preflight-cpp-trials.csv'
+    cpp_preflight = campaign.command(cpp_base + [preflight_trials], out, 'preflight-cpp', completed_per_process)
     check_cpp_output(out / cpp_preflight['stdout'], expected, checksum)
+    load_cpp_trials(preflight_trials, q)
 
     orders = [['native', 'cpp_onnx'], ['cpp_onnx', 'native']] * (plan['runtime_pairs'] // 2)
     random.Random(plan['seed'] + q['batch_size'] * 31 + app['threads']).shuffle(orders)
@@ -118,21 +152,31 @@ def run_case(plan, case, out, tool, cpp_binary):
         for runner in order:
             if runner == 'native':
                 report_path = out / f'pair-{index}-native-report.json'
-                trial = campaign.command(
+                process = campaign.command(
                     [tool, 'application', case['application'], report_path],
-                    out, f'pair-{index}-native', completed)
-                validate_native_report(report_path, expected)
-                trial['application_report'] = report_path.name
+                    out, f'pair-{index}-native', completed_per_process)
+                native = validate_native_report(report_path, expected)
+                if len(native.get('trials', [])) != q['trials']:
+                    raise ValueError('native inner trial count mismatch')
+                if any(t.get('completed') != completed_per_trial for t in native['trials']):
+                    raise ValueError('native inner trial functional unit mismatch')
+                process['application_report'] = report_path.name
+                pair['native'] = process
+                pair['native_trials'] = native['trials']
             else:
-                trial = campaign.command(cpp_command, out, f'pair-{index}-cpp_onnx', completed)
-                check_cpp_output(out / trial['stdout'], expected, checksum)
-            pair[runner] = trial
+                trial_path = out / f'pair-{index}-cpp-trials.csv'
+                process = campaign.command(
+                    cpp_base + [trial_path], out, f'pair-{index}-cpp_onnx', completed_per_process)
+                check_cpp_output(out / process['stdout'], expected, checksum)
+                process['trial_report'] = trial_path.name
+                pair['cpp_onnx'] = process
+                pair['cpp_trials'] = load_cpp_trials(trial_path, q)
         pairs.append(pair)
 
     report = dict(
         schema='shorthand.energy.cpp_onnx_runtime.v1',
         id=case['id'],
-        boundary='whole_process_warm_os_cache',
+        boundary='resident_session_inner_trial',
         functional_unit='completed_classification',
         precision='float32',
         model_sha256=q['model_sha256'],
@@ -141,7 +185,7 @@ def run_case(plan, case, out, tool, cpp_binary):
         threads=app['threads'],
         repetitions=q['repetitions'],
         trials=q['trials'],
-        completed_per_process=completed,
+        completed_per_trial=completed_per_trial,
         pairs=pairs,
         **CLAIMS)
     campaign.write(out / 'report.json', report)
@@ -156,36 +200,49 @@ def attach_energy(plan, inputs, out, tool, reports):
         raise ValueError('incomplete live meter trace snapshot')
     policy = campaign.load(inputs / 'policy.json')
     for _, report, directory in reports:
-        trials = [p[k] for p in report['pairs'] for k in p['order']]
+        trials = [trial for pair in report['pairs']
+                  for key in ('native_trials', 'cpp_trials') for trial in pair[key]]
         campaign.attach_energy(tool, directory, trials, trace, inputs / 'instrument.json', policy)
         campaign.write(directory / 'report.json', report)
 
 
-def compare_cell(plan, report, measured, uncertainty):
+def compare_cell(plan, report, measured, uncertainty, policy):
     native, cpp = [], []
     for pair in report['pairs']:
-        for key, values in (('native', native), ('cpp_onnx', cpp)):
-            trial = pair[key]
-            if trial.get('returncode') != 0 or trial.get('completed') != report['completed_per_process']:
-                raise ValueError('failed or incomplete C++/ONNX runtime trial')
-            value = trial['elapsed_ms'] / trial['completed']
-            if measured:
-                energy = trial.get('energy')
-                if not energy:
-                    raise ValueError('missing physical energy for C++/ONNX runtime trial')
-                value = energy['joules_per_fu']
-            values.append(value)
+        for key, values in (('native_trials', native), ('cpp_trials', cpp)):
+            inner = pair[key]
+            if len(inner) != report['trials']:
+                raise ValueError('incomplete C++/ONNX inner trial set')
+            observations = []
+            for trial in inner:
+                if trial.get('completed') != report['completed_per_trial']:
+                    raise ValueError('C++/ONNX inner trial functional unit mismatch')
+                value = trial['elapsed_ms'] / trial['completed']
+                if measured:
+                    energy = trial.get('energy')
+                    if not energy:
+                        raise ValueError('missing physical energy for C++/ONNX inner trial')
+                    value = energy['joules_per_fu']
+                observations.append(value)
+            values.append(statistics.mean(observations))
+    for values in (native, cpp):
+        variability = 100 * statistics.stdev(values) / statistics.mean(values)
+        limit = policy['maximum_trial_variability_percent']
+        if variability > limit:
+            raise ValueError('C++/ONNX process-pair variability exceeds declared policy')
+        if measured and uncertainty + 2 * variability > policy['maximum_uncertainty_percent']:
+            raise ValueError('C++/ONNX energy uncertainty exceeds declared policy')
     return campaign.energy_statistics.compare(
         native, cpp, seed=plan['seed'], uncertainty_percent=uncertainty if measured else 0)
 
 
-def build_summary(plan, reports, measured, uncertainty):
+def build_summary(plan, reports, measured, uncertainty, policy):
     cells = []
     for cell, report, _ in sorted(reports):
         cells.append(dict(
             id=cell,
             metric='joules_per_image' if measured else 'ms_per_image',
-            comparison=compare_cell(plan, report, measured, uncertainty)))
+            comparison=compare_cell(plan, report, measured, uncertainty, policy)))
     return dict(
         schema='shorthand.energy.cpp_onnx_runtime.summary.v1',
         scope='same FP32 ONNX workload: Shorthand AIRuntime versus independent C++17 ONNX Runtime',
@@ -263,7 +320,7 @@ def run(args):
             attach_energy(plan, inputs, out, str(tool), reports)
             uncertainty = campaign.load(inputs / 'instrument.json')['uncertainty_percent']
 
-        summary = build_summary(plan, reports, measured, uncertainty)
+        summary = build_summary(plan, reports, measured, uncertainty, campaign.load(inputs / 'policy.json'))
         campaign.write(out / 'summary.json', summary)
         write_markdown(out, summary)
         campaign.write(out / 'environment.json', dict(
@@ -271,10 +328,12 @@ def run(args):
             available_cpus=available,
             affinity=sorted(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else None,
             onnxruntime_root=str(pathlib.Path(args.onnxruntime_root).resolve()),
+            onnxruntime_version='1.30.0',
             clang_version=subprocess.check_output([clang, '--version'], text=True),
             tool_sha256=campaign.sha(tool),
             cpp_baseline_sha256=campaign.sha(cpp_binary),
             cpp_source_sha256=campaign.sha(HERE / 'cpp_onnx_baseline.cpp'),
+            harness_sha256=campaign.sha(HERE / 'runtime_state_of_practice.py'),
             completed_utc=datetime.datetime.now(datetime.timezone.utc).isoformat()))
 
         campaign.verify_files(plan_path.parent, plan['hashes'])
@@ -331,12 +390,22 @@ def analyze(out, expected_sha, tool=None):
             expected = validate_native_report(directory / 'preflight-native-report.json')['predictions']
             checksum = int(sum(expected) * report['repetitions'] * report['trials'])
             for pair in report['pairs']:
-                native_trial = pair['native']
-                cpp_trial = pair['cpp_onnx']
-                validate_native_report(directory / native_trial['application_report'], expected)
-                check_cpp_output(directory / cpp_trial['stdout'], expected, checksum)
+                native_process = pair['native']
+                cpp_process = pair['cpp_onnx']
+                native = validate_native_report(directory / native_process['application_report'], expected)
+                check_cpp_output(directory / cpp_process['stdout'], expected, checksum)
+                if native['trials'] != [{k: v for k, v in trial.items() if k != 'energy'} for trial in pair['native_trials']]:
+                    # Energy is attached after capture, so compare the original native
+                    # fields while allowing only the retained energy augmentation.
+                    for original, retained in zip(native['trials'], pair['native_trials']):
+                        if any(retained.get(k) != v for k, v in original.items()):
+                            raise ValueError('retained native inner trial changed')
+                parsed_cpp = load_cpp_trials(directory / cpp_process['trial_report'], campaign.load(out / 'inputs' / case['id'] / 'qualification.json'))
+                for original, retained in zip(parsed_cpp, pair['cpp_trials']):
+                    if any(retained.get(k) != v for k, v in original.items()):
+                        raise ValueError('retained C++ inner trial changed')
                 if measured:
-                    for trial in (native_trial, cpp_trial):
+                    for trial in pair['native_trials'] + pair['cpp_trials']:
                         recorded = trial.get('energy')
                         if not recorded:
                             raise ValueError('missing physical C++/ONNX energy during replay')
@@ -348,7 +417,7 @@ def analyze(out, expected_sha, tool=None):
                             raise ValueError('C++/ONNX physical-meter replay mismatch')
             reports.append((case['id'], report, directory))
 
-    summary = build_summary(plan, reports, measured, uncertainty)
+    summary = build_summary(plan, reports, measured, uncertainty, policy)
     if campaign.load(out / 'summary.json') != summary:
         raise ValueError('stored C++/ONNX summary is not replayable')
     return summary
@@ -373,10 +442,14 @@ def smoke(clang, tool, onnx_root):
         native_path = root / 'native.json'
         campaign.command([tool, 'application', app_path, native_path], root, 'native', 1797)
         expected = validate_native_report(native_path)['predictions']
+        trial_report = root / 'cpp-trials.csv'
         trial = campaign.command(
-            [cpp, q['model_path'], app['dataset_path'], 16, 1, 1, 1, 1],
+            [cpp, q['model_path'], app['dataset_path'], 16, 1, 1, 1, 1, trial_report],
             root, 'cpp', 1797)
         check_cpp_output(root / trial['stdout'], expected, int(sum(expected)))
+        observed = load_cpp_trials(trial_report, q)
+        if len(observed) != 1 or observed[0]['completed'] != 1797:
+            raise AssertionError('invalid independent C++ inner trial report')
     print('PASS independent C++/ONNX baseline matches native FP32 predictions')
 
 
