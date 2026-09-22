@@ -481,7 +481,7 @@ def smoke(clang, tool, onnx_root):
         per_trial_completed = 1797 * q['repetitions']
 
         cpp = compile_cpp_baseline(root / 'build', resolve_executable(clang), onnx_root)
-        native_path = root / 'native.json'
+        native_path = root / 'native-report.json'
         campaign.command([tool, 'application', app_path, native_path], root, 'native', total_completed)
         expected = validate_native_report(native_path)['predictions']
         trial_report = root / 'cpp-trials.csv'
