@@ -160,6 +160,21 @@ with tempfile.TemporaryDirectory(prefix='shorthand-pr102-') as temp:
     path.write_bytes(path.read_bytes().replace(b'ga_publication_authorized\tfalse', b'ga_publication_authorized\ttrue'))
     invalid(lambda: closeout.evaluate(root, REVISION), 'unsupported release publication policy')
     root = clone()
+    path = root / closeout.TRUTH
+    path.write_bytes(path.read_bytes().replace(b'implementation_roadmap_status\tclosed_at_pr102',
+                                               b'implementation_roadmap_status\tactive'))
+    invalid(lambda: closeout.evaluate(root, REVISION), 'closeout roadmap identity drift')
+    root = clone()
+    path = root / closeout.TRUTH
+    path.write_bytes(path.read_bytes().replace(b'remaining_implementation_prs_including_current\t0',
+                                               b'remaining_implementation_prs_including_current\t1'))
+    invalid(lambda: closeout.evaluate(root, REVISION), 'closeout roadmap identity drift')
+    root = clone()
+    path = root / closeout.TRUTH
+    path.write_bytes(path.read_bytes().replace(b'last_merged_github_pr\t102',
+                                               b'last_merged_github_pr\t101'))
+    invalid(lambda: closeout.evaluate(root, REVISION), 'closeout repository identity drift')
+    root = clone()
     path = root / closeout.MATRIX
     rows = path.read_text().splitlines()
     for index, line in enumerate(rows):
