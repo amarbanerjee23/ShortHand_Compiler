@@ -121,12 +121,16 @@ example or fabricated calibration values. After the pilot, freeze a new plan:
 /tmp/shorthand-energy-venv/bin/python experiments/energy/campaign.py prepare \
   --mode calibrated_energy --instrument /evidence/instrument.json \
   --meter-csv /evidence/live-meter.csv --source-repetitions 1000 \
-  --runtime-repetitions 1000 --compile-repetitions 10 \
+  --runtime-repetitions 18 --compile-repetitions 10 \
   --output /evidence/declared-plan
 ```
 
-The repetition values above are **illustrative starting values**, not validated
-for your host/meter. Use the run command with this plan, its externally retained
+The source repetition value is an **illustrative starting value**, not validated
+for your host/meter. The runtime value is capped at 18 by the batch-1 application
+report budget. If any runtime trial is shorter than the meter policy's minimum
+window, this plan cannot qualify energy evidence on that host. A separately
+reviewed longer-window capture design is required; do not relax the runtime
+budget or measurement policy to obtain a passing result. Use the run command with this plan, its externally retained
 digest and a fresh output directory for each session. The frozen plan and its
 generated configuration paths must remain accessible during capture. There are
 no downloads during the experiment. The same native meter tool replays a saved
@@ -355,7 +359,7 @@ python3 experiments/energy/report_results.py \
 
 The fixed design uses 30 paired source processes per baseline at 10 repetitions,
 a second NumPy/C++ source session at 100 repetitions, and ten paired processes per
-FP32 runtime cell with three inner trials of 20 repetitions. Failed stages are
+FP32 runtime cell with three inner trials of 10 repetitions. Failed stages are
 retained; the driver continues other declared stages without filtering observations.
 `experiment-report/RESULTS.md`, `summary.json`, `observations.json` and `metadata/`
 are the compact repository results. The workflow artifact retains the complete
@@ -363,3 +367,23 @@ capture, including outputs, predictions, scores, builds and replay manifests.
 
 Method references: [PyTorch dynamic shapes and recompilation](https://docs.pytorch.org/docs/stable/generated/torch.compile.html),
 [Python POSIX timeout waiting](https://docs.python.org/3.12/library/subprocess.html#subprocess.Popen.wait).
+
+[Comparison verification and limitations](VERIFICATION.md) documents the audited
+approaches, corrections, timing boundaries and unimplemented external runners.
+
+The fixed five-cell runtime plan is limited to 18 repetitions by AIRuntime's
+100,000-batch report bound (`1797 × repetitions × 3` in the batch-1 cell).
+The retained capture uses 10. A calibrated-energy study must also meet its
+minimum measurement-window duration; execution-only timings do not waive it.
+
+## Recorded results
+
+[Results from 22 September 2026](results/2026-09-22-run-35747601906/RESULTS.md)
+contain all 16 comparison rows, confidence intervals, raw paired timings and
+environment metadata. The source and runtime conclusions differ substantially;
+read the regressions as well as improvements. These are latency results, not
+measured energy savings. [Earlier failed captures](results/failed-runs/README.md)
+are retained with their source observations and runtime failure traces.
+
+The capture workflow is manually dispatched so ordinary report edits do not
+automatically launch another statistical experiment.

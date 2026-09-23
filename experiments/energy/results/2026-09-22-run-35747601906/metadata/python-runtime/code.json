@@ -1,0 +1,7 @@
+{
+  "experiments/energy/analysis.py": "9271bca684eb136df9befd3858d5b8dc143b3c560ce65582bd4461d822d6b238",
+  "experiments/energy/campaign.py": "075b8e8c23fe3b776c230053d78d54a8d54e1b636d5e17167d11965e789f0006",
+  "experiments/energy/source_workload.py": "e6d8a726643094990ee6dcbde027f2b0063e9e5e8e91f96da99c96b1098efc2f",
+  "scripts/assess_ai_application_comparison.py": "20bd7b8e7a2ac86f7c6e7aa880e953995dde02c5f2888c08291a51f1268eff8b",
+  "scripts/compare_ai_application_baselines.py": "d25a4591405a353c9ab628e2d8035fa5eb0dd47acded0579411f5874e522136e"
+}

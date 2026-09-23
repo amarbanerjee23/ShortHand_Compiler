@@ -19,6 +19,13 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def trial_windows(trials):
+    # These are the independent process/inner-trial observations used in the
+    # analysis. Per-batch diagnostic arrays remain in the full capture artifact.
+    keys = ('start_unix_seconds', 'end_unix_seconds', 'elapsed_ms', 'completed', 'success', 'accuracy')
+    return [{key: trial[key] for key in keys if key in trial} for trial in trials]
+
+
 def export(root, out):
     out.mkdir(parents=True, exist_ok=False)
     if not (root / 'run.json').is_file():
@@ -27,7 +34,8 @@ def export(root, out):
     run = read(root / 'run.json')
     passed = {stage['name'] for stage in run['stages'] if stage['success']}
     records = dict(schema='shorthand.energy.results-export.v1', run=run, cells=[],
-                   source_manifests={}, energy_savings_percent=None)
+                   source_manifests={}, energy_savings_percent=None,
+                   exporter_sha256=digest(pathlib.Path(__file__)))
     observations = []
     for name in ('source-r10', 'source-r100'):
         directory = root / name
@@ -56,7 +64,7 @@ def export(root, out):
             for n, pair in enumerate(comparison['pairs']):
                 a, b = (read(base / pair[k + '_file']) for k in ('native', 'python'))
                 observations.append(dict(campaign='python-runtime', cell=cell['id'], pair=n,
-                    order=pair['order'], shorthand=a['trials'], peer=b['trials'], accuracy=a['accuracy'],
+                    order=pair['order'], shorthand=trial_windows(a['trials']), peer=trial_windows(b['trials']), accuracy=a['accuracy'],
                     predictions_sha256=hashlib.sha256(json.dumps(a['predictions']).encode()).hexdigest()))
     directory = root / 'cpp-runtime'
     if 'cpp-runtime' in passed and (directory / 'manifest.json').is_file():
@@ -68,17 +76,19 @@ def export(root, out):
             report = read(directory / 'cells' / cell['id'] / 'report.json')
             for n, pair in enumerate(report['pairs']):
                 observations.append(dict(campaign='cpp-runtime', cell=cell['id'], pair=n,
-                    order=pair['order'], shorthand=pair['native_trials'], peer=pair['cpp_trials']))
+                    order=pair['order'], shorthand=trial_windows(pair['native_trials']), peer=trial_windows(pair['cpp_trials'])))
     write(out / 'summary.json', records)
     write(out / 'observations.json', observations)
     # Keep environment, frozen plans, raw source timings and build costs in Git.
     # The complete workflow artifact also contains binaries, outputs and scores.
     metadata = out / 'metadata'
-    for pattern in ('run.json', 'pip-freeze.txt', 'pip-torch-install.json', 'lscpu.json', 'energy-probe.json',
+    for pattern in ('run.json', 'pip-freeze.txt', 'pip-torch-install.json', 'lscpu.json', 'energy-probe.json', 'energy-probe.txt',
                     '*-failure.txt', '*-plan/plan.json', '*/environment.json', '*/code.json',
                     '*/capture.json', '*/manifest.json', 'python-runtime/source/source.json'):
         for path in sorted(root.glob(pattern)):
             target = metadata / path.relative_to(root)
+            if path.name == 'energy-probe.json':
+                target = target.with_suffix('.txt')  # The native probe emits plain text.
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(path, target)
     url = 'https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/' + str(run['run_id'])
@@ -133,7 +143,22 @@ def export(root, out):
         lo, hi = c['paired_bootstrap_95_percent_interval']
         lines.append(f'| {cell["cell"]} | {cell["baseline"]} | {c["native_mean"]:.6f} | '
                      f'{c["python_mean"]:.6f} | {c["savings_percent"]:.2f} | [{lo:.2f}, {hi:.2f}] |')
-    lines += ['', '## Interpretation and evidence', '',
+    lines += ['', '## What the measurements show', '']
+    source = {(c['repetitions'], c['baseline']): c['comparison'] for c in records['cells'] if c['track'] == 'source'}
+    if all(k in source for k in ((10, 'numpy'), (10, 'cpp17-o3'), (100, 'numpy'), (100, 'cpp17-o3'))):
+        lines += [f'At ten repetitions, source-process latency was {source[10, "numpy"]["savings_percent"]:.2f}% lower than NumPy '
+            f'and {source[10, "cpp17-o3"]["savings_percent"]:.2f}% lower than C++. At 100 repetitions, these reductions were '
+            f'{source[100, "numpy"]["savings_percent"]:.2f}% and {source[100, "cpp17-o3"]["savings_percent"]:.2f}%. '
+            'The smaller advantage with more work per process shows why startup and workload size matter.', '']
+    cpp = [c['comparison']['native_over_python_ratio'] for c in records['cells'] if c.get('campaign') == 'cpp-runtime']
+    if cpp and all(r > 1 for r in cpp):
+        lines += [f'**Shorthand AIRuntime was slower than independent C++/ONNX in every cell: {min(cpp):.2f}–{max(cpp):.2f}× '
+            'the latency.** The Python comparison also changes with batching: read every cell rather than selecting '
+            'the batch-1 improvement. These results do not support a general runtime-efficiency advantage.', '']
+    lines += ['Large fresh-process reductions versus PyTorch include framework startup and tracing. '
+        'They do not establish an advantage over resident PyTorch inference. Runtime gaps require profiling '
+        'before their causes can be assigned to validation, memory handling, instrumentation or backend integration.', '',
+        '## Interpretation and evidence', '',
         'Reduction = `100 × (1 − mean(Shorthand) / mean(baseline))`. Negative values mean '
         'Shorthand was slower. All pairs are retained; no outlier filtering or best-run selection '
         'is used. Intervals use 10,000 paired-block bootstrap resamples, seed 104. They are '

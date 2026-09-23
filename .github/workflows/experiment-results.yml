@@ -2,12 +2,6 @@ name: experiment-results
 
 on:
   workflow_dispatch:
-  push:
-    branches: ['agent/pr105-experiment-results']
-    paths:
-      - '.github/workflows/experiment-results.yml'
-      - 'experiments/energy/*.py'
-      - 'experiments/energy/*.cpp'
 
 permissions:
   contents: read
@@ -48,7 +42,7 @@ jobs:
           build-energy/venv/bin/python -m pip install --only-binary=:all: --report experiment-output/pip-torch-install.json 'torch==2.9.1+cpu' --index-url https://download.pytorch.org/whl/cpu
           build-energy/venv/bin/python -m pip freeze --all > experiment-output/pip-freeze.txt
           lscpu --json > experiment-output/lscpu.json
-          build-energy/shorthand_ai_qualify probe > experiment-output/energy-probe.json
+          build-energy/shorthand_ai_qualify probe > experiment-output/energy-probe.txt
       - name: Validate experiment correctness and rejection paths
         run: build-energy/venv/bin/python experiments/energy/test_experiments.py --tool "$PWD/build-energy/shorthand_ai_qualify"
       - name: Capture the predefined paired comparisons

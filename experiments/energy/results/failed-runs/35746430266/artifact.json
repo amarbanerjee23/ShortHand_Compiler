@@ -1,0 +1,19 @@
+{
+  "id": 10704061041,
+  "name": "experiment-results-35746430266",
+  "size_in_bytes": 25209333,
+  "url": "https://api.github.com/repos/amarbanerjee23/ShortHand_Compiler/actions/artifacts/10704061041",
+  "archive_download_url": "https://api.github.com/repos/amarbanerjee23/ShortHand_Compiler/actions/artifacts/10704061041/zip",
+  "expired": false,
+  "created_at": "2026-09-22T15:27:34Z",
+  "expires_at": "2026-12-21T15:18:43Z",
+  "updated_at": "2026-09-22T15:27:34Z",
+  "digest": "sha256:aa51988619db5e5066103a201980b201944acfe8c1ece39eacc5abdf67ab0733",
+  "workflow_run": {
+    "id": 35746430266,
+    "repository_id": 231309968,
+    "head_repository_id": 231309968,
+    "head_branch": "agent/pr105-experiment-results",
+    "head_sha": "f21ee4dc3fccf2051cc2d9f511f51bdd7d9de7d7"
+  }
+}

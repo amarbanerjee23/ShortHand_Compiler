@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/run_verified.py", line 48, in stage
+    function()
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/run_verified.py", line 87, in cpp_runtime
+    runtime_state_of_practice.run(argparse.Namespace(plan=plan, plan_sha256=campaign.sha(plan),
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/runtime_state_of_practice.py", line 368, in run
+    report = run_case(plan, case, directory, tool, cpp_binary)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/runtime_state_of_practice.py", line 165, in run_case
+    campaign.command([tool, 'application', case['application'], native_preflight],
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/campaign.py", line 167, in command
+    raise ValueError(f'failed command or discontinuous clock: {name}, exit={result.returncode}\n{errors[-4000:]}\n{output[-4000:]}')
+ValueError: failed command or discontinuous clock: preflight-native, exit=2
+qualification error: application_report_size_limit
+
+

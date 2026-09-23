@@ -1,0 +1,6 @@
+{
+  "experiments/energy/analysis.py": "9271bca684eb136df9befd3858d5b8dc143b3c560ce65582bd4461d822d6b238",
+  "experiments/energy/campaign.py": "075b8e8c23fe3b776c230053d78d54a8d54e1b636d5e17167d11965e789f0006",
+  "experiments/energy/source_workload.py": "e6d8a726643094990ee6dcbde027f2b0063e9e5e8e91f96da99c96b1098efc2f",
+  "experiments/energy/state_of_practice.py": "cf5f86d7b164c71bd8db624011ee1f95e8820e077a4d292e1b33d1ede645f69f"
+}

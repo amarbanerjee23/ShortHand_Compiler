@@ -1,0 +1,27 @@
+{
+  "baselines": [
+    "numpy",
+    "cpp17-o3"
+  ],
+  "comparative_energy_claim": false,
+  "external": {},
+  "hashes": {
+    "policy.json": "7065547a385ab4514249547db1c38bcb7abc0d57aecc674dffcce9c4701a2262",
+    "source/classifier.short": "b966a237441bf827bf5d6c50fa5058b098f061717087d052707a2800ad98f0ea",
+    "source/expected.json": "e5220f7e296a9279d1ef82e2f184126459e98723a774422ef52814026b3b261d",
+    "source/input.txt": "e9561ae453d0cdeeb0ee0d78dc48bf42a763b990193d30f683494cd76a4851dc",
+    "source/model.json": "7b01987979b64b8f864aa1b9dff8475c4342348d304c217042502714075e85ff"
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_csv": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "pairs": 30,
+  "profile": "core",
+  "repetitions": 100,
+  "schema": "shorthand.energy.state-of-practice.plan.v1",
+  "scope": "UCI Optdigits FP64 nearest-centroid source workload on Linux x64 CPU",
+  "seed": 104,
+  "torch": null,
+  "warmups": 2
+}
