@@ -2,6 +2,13 @@ name: experiment-results
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/experiment-results.yml'
+      - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
+      - 'experiments/energy/**'
+      - 'scripts/install_ci_onnxruntime_cpu.sh'
+      - 'tests/ai_application/**'
 
 permissions:
   contents: read
@@ -44,7 +51,9 @@ jobs:
           lscpu --json > experiment-output/lscpu.json
           build-energy/shorthand_ai_qualify probe > experiment-output/energy-probe.txt
       - name: Validate experiment correctness and rejection paths
-        run: build-energy/venv/bin/python experiments/energy/test_experiments.py --tool "$PWD/build-energy/shorthand_ai_qualify"
+        run: |
+          build-energy/venv/bin/python experiments/energy/test_experiments.py --tool "$PWD/build-energy/shorthand_ai_qualify"
+          build-energy/venv/bin/python experiments/energy/test_energy_status.py
       - name: Capture the predefined paired comparisons
         env:
           ONNXRUNTIME_ROOT: ${{ github.workspace }}/build-energy/onnxruntime-1.30.0
@@ -53,6 +62,9 @@ jobs:
             --output experiment-output --compiler "$PWD/build-energy/short_hand" \
             --clang /usr/bin/clang++-18 --tool "$PWD/build-energy/shorthand_ai_qualify" \
             --onnxruntime-root "$ONNXRUNTIME_ROOT"
+      - name: Record physical-energy availability
+        if: always()
+        run: python3 experiments/energy/energy_status.py --output experiment-output/energy-status.json
       - name: Export durable observations and Markdown
         if: always()
         run: python3 experiments/energy/report_results.py --input experiment-output --output experiment-report

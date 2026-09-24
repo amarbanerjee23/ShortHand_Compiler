@@ -1,0 +1,74 @@
+{
+  "comparative_energy_claim": false,
+  "compile_blocks": 3,
+  "compile_repetitions": 3,
+  "data_hashes": {
+    "tests/ai_application/data/optdigits.tes.csv": "6ebb3d2fee246a4e99363262ddf8a00a3c41bee6014c373ed9d9216ba7f651b8",
+    "tests/ai_application/data/optdigits.tra.csv": "e1b683cc211604fe8fd8c4417e6a69f31380e0c61d4af22e93cc21e9257ffedd"
+  },
+  "hashes": {
+    "ort-b1-t1/application.json": "5fef4d8ee0de5f7ed369db976e57abb7d66784bff0c425477c43929ad10ac216",
+    "ort-b1-t1/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b1-t1/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b1-t1/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b1-t1/qualification.json": "eb8896b959e612b497f063954234ef7e38b29dac3bdd11c461b942fb7160e765",
+    "ort-b16-t1/application.json": "c2053c03bbc8cf620db33beee8ec5440491621da76c200ea4a41880681d0bae1",
+    "ort-b16-t1/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b16-t1/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b16-t1/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b16-t1/qualification.json": "c8b062c5b91849194b46d05df07aaa51671bf4361c194d0966c639d71cd1c32b",
+    "ort-b16-t2/application.json": "c7bc6db9a74b40ed02374d1748704751e74774f00ed7d7cf0b5899d1964fb475",
+    "ort-b16-t2/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b16-t2/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b16-t2/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b16-t2/qualification.json": "8fd40f27dab2d41faebdc9167d1513f74654321235d7225cc83f72e0b20d526d",
+    "ort-b16-t4/application.json": "04bb2edb45408214c9853052e4a375ec7dfbc8edb496c87e3e8807487a7a4ba5",
+    "ort-b16-t4/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b16-t4/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b16-t4/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b16-t4/qualification.json": "b8c34396cd1df7af1e6e9ce44dddf576c0c62ab7584befffb43133317e0ef190",
+    "ort-b32-t1/application.json": "5ce5a539fc31d00f8894f7835a8b33e2ee86de021550d813df41e6fcec834521",
+    "ort-b32-t1/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b32-t1/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b32-t1/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b32-t1/qualification.json": "aa1383e677a6e47ac404fe9584a06325c7a90e4feb499e18dff2a04bbdc8e22a",
+    "policy.json": "7065547a385ab4514249547db1c38bcb7abc0d57aecc674dffcce9c4701a2262",
+    "source/classifier.short": "b966a237441bf827bf5d6c50fa5058b098f061717087d052707a2800ad98f0ea",
+    "source/expected.json": "121b6bb285c83adc9debbcb35da9585fe3b9a2c5997276686e7a681a77be1e31",
+    "source/input.txt": "6b4331a27a81e6e0af0646480368103f04bae24bcb02c5b9b16aabf4d4d6fb85",
+    "source/model.json": "7b01987979b64b8f864aa1b9dff8475c4342348d304c217042502714075e85ff"
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_csv": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "runtime_cases": [
+    {
+      "application": "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/runtime-plan/ort-b1-t1/application.json",
+      "id": "ort-b1-t1"
+    },
+    {
+      "application": "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/runtime-plan/ort-b16-t1/application.json",
+      "id": "ort-b16-t1"
+    },
+    {
+      "application": "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/runtime-plan/ort-b32-t1/application.json",
+      "id": "ort-b32-t1"
+    },
+    {
+      "application": "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/runtime-plan/ort-b16-t2/application.json",
+      "id": "ort-b16-t2"
+    },
+    {
+      "application": "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/runtime-plan/ort-b16-t4/application.json",
+      "id": "ort-b16-t4"
+    }
+  ],
+  "runtime_pairs": 10,
+  "schema": "shorthand.energy.experiment.plan.v1",
+  "scope": "UCI Optdigits CPU classification only",
+  "seed": 104,
+  "source_baseline": "numpy",
+  "source_pairs": 30,
+  "warmups": 2
+}

@@ -1,0 +1,25 @@
+{
+  "boundary": "whole_host_ac",
+  "disallowed_substitutes": [
+    "elapsed_time",
+    "tdp",
+    "rapl",
+    "nvml",
+    "cpu_utilization"
+  ],
+  "energy_savings_percent": null,
+  "host": {
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "powercap_paths_present": [
+      "/sys/class/powercap"
+    ]
+  },
+  "joules_per_completed_task": null,
+  "mode": "execution_only",
+  "physical_energy_measured": false,
+  "qualification_next_step": "Run the frozen matrix on a dedicated isolated Linux host with a calibrated whole-host AC instrument and retained meter CSV.",
+  "reason": "This hosted workflow has no calibrated, independently logging whole-host AC meter. Timing and correctness are recorded, but joules and energy savings are intentionally unavailable.",
+  "recorded_utc": "2026-09-24T11:04:48.708277+00:00",
+  "schema": "shorthand.energy.availability.v1",
+  "source": "unavailable"
+}

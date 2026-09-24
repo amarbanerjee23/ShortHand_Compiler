@@ -282,11 +282,17 @@ precision/model boundaries and must never be averaged into one number.
 Three profiles are available. `core` contains NumPy and optimized C++17 and is
 also the CI smoke profile. `torch` adds PyTorch eager and `torch.compile` without
 requiring unavailable external runners. `full` requires all six baselines and
-fails closed if any declaration is missing. External Rust/Candle and Mojo/MAX
+fails closed if any declaration is missing. The CI `run_verified.py` campaign
+uses the `torch` profile at both 10 and 100 repetitions so the implemented
+baseline matrix is rectangular. External Rust/Candle and Mojo/MAX
 runners must support `--version`; its output must exactly match the frozen
 version declaration. Runner SHA-256 values are checked before and after capture.
 `full_matrix_qualified=true` only means the complete declared matrix ran. It
 does not authorize an energy, carbon, certification or "lowest carbon" claim.
+
+For the exact exhaustive CI matrix, timing boundaries, retained artifacts and
+the physical-energy qualification boundary, see
+[`EXHAUSTIVE_BENCHMARK.md`](EXHAUSTIVE_BENCHMARK.md).
 
 Rust/Candle and Mojo/MAX are supplied as prebuilt benchmark runners so the
 physical experiment does not download dependencies during measurement. Each
