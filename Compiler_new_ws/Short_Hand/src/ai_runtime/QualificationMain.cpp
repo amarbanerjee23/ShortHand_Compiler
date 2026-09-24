@@ -14,6 +14,9 @@ void write(const std::string &path,const shorthand::c3eco::Json &j) {
 }
 int main(int argc,char **argv) {
     try {
+        if (argc==4 && std::string(argv[1])=="application-profile") {
+            write(argv[3],shorthand::ai::profileApplication(shorthand::ai::readApplicationConfiguration(argv[2]))); return 0;
+        }
         if (argc==3 && std::string(argv[1])=="application-stream") {
             shorthand::ai::serveApplicationStream(shorthand::ai::readApplicationConfiguration(argv[2]),std::cin,std::cout); return 0;
         }
@@ -50,7 +53,7 @@ int main(int argc,char **argv) {
         if (argc==6 && std::string(argv[1])=="export-workbook") {
             shorthand::ai::exportQualificationWorkbook(argv[2],argv[3],argv[4],argv[5]); return 0;
         }
-        std::cerr<<"usage: shorthand_ai_qualify probe | qualify CONFIG REPORT | execute CONFIG REPORT TRUSTED_REPORT_SHA256 OUTPUT | export-workbook REPORT TRUSTED_REPORT_SHA256 ACCOUNTING OUTPUT.tsv | application[-serve|-describe] CONFIG REPORT | application-meter-window CONFIG START_UNIX END_UNIX UNITS REPORT | meter-window TRACE INSTRUMENT_JSON START_UNIX END_UNIX UNITS REPORT\n";
+        std::cerr<<"usage: shorthand_ai_qualify probe | qualify CONFIG REPORT | execute CONFIG REPORT TRUSTED_REPORT_SHA256 OUTPUT | export-workbook REPORT TRUSTED_REPORT_SHA256 ACCOUNTING OUTPUT.tsv | application[-serve|-describe|-profile] CONFIG REPORT | application-meter-window CONFIG START_UNIX END_UNIX UNITS REPORT | meter-window TRACE INSTRUMENT_JSON START_UNIX END_UNIX UNITS REPORT\n";
         return 2;
     } catch (const std::exception &e) { std::cerr<<"qualification error: "<<e.what()<<'\n'; return 2; }
 }

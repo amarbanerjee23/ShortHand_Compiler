@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import math
 import os
 import pathlib
 import subprocess
@@ -72,6 +73,28 @@ if live:
     assert native['top_k_accuracy'] >= native['accuracy'] and not native['comparative_energy_claim']
     assert all(t['completed'] == 3594 and not t['energy']['claim_eligible'] for t in native['trials'])
     assert len(native['trials']) == 3 and len(native['scores']) == 17970
+    profile_path = work / 'profile.json'
+    run('application-profile', config, profile_path)
+    profile = json.loads(profile_path.read_text())
+    assert profile['schema'] == 'shorthand.ai.application.profile.v2'
+    assert profile['success'] and profile['diagnostic_only']
+    assert not profile['measured_energy_available'] and not profile['latency_claim_eligible']
+    assert not profile['comparative_energy_claim'] and not profile['production_claim']
+    assert profile['accuracy'] == native['accuracy'] and profile['backend_version'] == native['backend_version']
+    assert len(profile['trials']) == len(native['trials'])
+    stages = ('preprocessing_ns', 'prepared_call_ns', 'output_validation_ns', 'postprocessing_ns')
+    for trial in profile['trials']:
+        assert trial['completed'] == 3594 and trial['total_ns'] > 0
+        assert trial['total_ns'] == sum(trial[key] for key in stages)
+        assert all(trial[key] >= 0 for key in stages)
+        backend = trial['backend']
+        assert backend['total_ns'] == sum(backend[key] for key in backend if key != 'total_ns')
+        assert backend['session_run_ns'] > 0 and backend['telemetry_ns'] > 0
+        assert backend['total_ns'] + trial['prepared_call_unattributed_ns'] == trial['prepared_call_ns']
+    q = copy.deepcopy(original_q); q['require_measured_energy'] = True; reset(qualification=q)
+    run('application-profile', config, work / 'invalid-profile.json', good=False,
+        contains='profiling_cannot_qualify_measured_energy')
+    reset()
     run('application-serve', config, work / 'serving.json')
     served = json.loads((work / 'serving.json').read_text())
     assert served['predictions'] == native['predictions'] and served['success']
@@ -81,6 +104,9 @@ if live:
         reset(qualification=q); run('application', config, work / f'batch-{batch}.json')
         result = json.loads((work / f'batch-{batch}.json').read_text())
         assert result['predictions'] == native['predictions'] and result['rows'] == 1797
+        assert len(result['scores']) == len(native['scores'])
+        assert all(math.isclose(a, b, rel_tol=1e-4, abs_tol=1e-5)
+                   for a, b in zip(result['scores'], native['scores']))
     reset()
     c = copy.deepcopy(original); c['minimum_accuracy'] = .99; reset(c)
     run('application', config, work / 'quality-failure.json', good=False)
@@ -107,6 +133,30 @@ if live:
     assert not replies[2]['results'][0]['success'] and replies[3]['results'][0]['success']
     assert not replies[4]['results'][0]['success'] and 'error' in replies[5] and 'error' in replies[6]
     assert replies[7]['results'][0]['success'] and not replies[8]['results'][1]['success'] and replies[9]['results'][0]['success']
+    # Full, partial and final batches must transfer only real rows; repeated
+    # requests must not retain stale scores from an earlier batch.
+    rows = [list(map(float, line.split(',')))[:-1] for line in original_data.splitlines()]
+    batch = original_q['batch_size']
+    cases = [(0, batch), (0, 1), (len(rows) - 1, 1), (0, batch)]
+    batch_frames = [frame([req(f'batch-{i}', values=[v for row in rows[start:start+count] for v in row])])
+                    for i, (start, count) in enumerate(cases)]
+    batch_reply = run('application-stream', config, stdin='\n'.join(batch_frames) + '\n')
+    batch_results = [json.loads(line) for line in batch_reply.stdout.splitlines()]
+    assert len(batch_results) == len(cases)
+    for reply, (start, count) in zip(batch_results, cases):
+        item = reply['results'][0]
+        assert item['success']
+        classification = item['classification']
+        assert classification['predictions'] == native['predictions'][start:start+count]
+        expected = native['scores'][start*10:(start+count)*10]
+        assert len(classification['scores']) == len(expected)
+        assert all(math.isclose(a, b, rel_tol=1e-4, abs_tol=1e-5)
+                   for a, b in zip(classification['scores'], expected))
+        top_k = []
+        for row in range(count):
+            scores = classification['scores'][row*10:(row+1)*10]
+            top_k.extend(sorted(range(10), key=lambda label: (-scores[label], label))[:original['top_k']])
+        assert classification['top_k'] == top_k
     # Compare identical copies only to exercise validators, never as measured evidence.
     python = copy.deepcopy(native)
     assert not validate_pair(native, python, original_q)
@@ -127,5 +177,6 @@ if live:
 else:
     run('application', config, work / 'sdk-off.json', good=False, contains='application_prepare_failed')
     run('application-stream', config, good=False, contains='application_prepare_failed')
+    run('application-profile', config, work / 'sdk-off-profile.json', good=False, contains='application_prepare_failed')
 reset()
 print(f'PASS {checks} application boundary cases; real_dataset_rows=1797; live_onnx={int(live)}; no measured energy claim')

@@ -6,10 +6,24 @@
 
 namespace shorthand::ai {
 struct InferenceConfiguration { unsigned threads=1; std::size_t maximum_tensor_elements=16U*1024U*1024U; };
+// Opt-in diagnostics. These clocks never authorize latency or energy claims.
+struct PreparedInferenceProfile {
+    std::uint64_t setup_ns=0, input_validation_ns=0, tensor_setup_ns=0;
+    std::uint64_t session_run_ns=0, output_copy_ns=0, telemetry_ns=0, total_ns=0;
+    bool success=false;
+};
 class PreparedInference {
 public:
     virtual ~PreparedInference() = default;
     virtual InferenceResult run(const TensorBuffer &) = 0;
+    virtual InferenceResult runProfiled(const TensorBuffer &,PreparedInferenceProfile &profile) {
+        profile={};
+        // This header is also included by the exception-disabled compiler.
+        InferenceResult result;
+        result.status=InferenceStatus::BackendUnavailable;
+        result.reason="prepared_profiling_unavailable";
+        return result;
+    }
     virtual TensorSpec inputSpec() const = 0;
     virtual TensorSpec outputSpec() const = 0;
     virtual std::string runtimeVersion() const = 0;
