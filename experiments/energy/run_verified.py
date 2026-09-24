@@ -66,7 +66,11 @@ def main():
             tool=args.tool, output=out / name))
 
     stage('source-r10', lambda: source('source-r10', 'torch', 10))
-    stage('source-r100', lambda: source('source-r100', 'core', 100))
+    # Keep the source matrix rectangular: every implemented baseline is run at
+    # both repetition counts.  The previous core-only r100 capture silently
+    # omitted PyTorch at the higher workload, which made startup amortization
+    # comparisons incomplete.
+    stage('source-r100', lambda: source('source-r100', 'torch', 100))
 
     plan_dir = out / 'runtime-plan'
 

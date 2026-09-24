@@ -32,9 +32,16 @@ def export(root, out):
         (out / 'RESULTS.md').write_text('# Capture failed before experiments started\n\nSee workflow logs. No performance or energy result is available.\n')
         return
     run = read(root / 'run.json')
+    energy_status = read(root / 'energy-status.json') if (root / 'energy-status.json').is_file() else {
+        'schema': 'shorthand.energy.availability.v1',
+        'physical_energy_measured': False,
+        'energy_savings_percent': None,
+        'source': 'missing',
+    }
     passed = {stage['name'] for stage in run['stages'] if stage['success']}
     records = dict(schema='shorthand.energy.results-export.v1', run=run, cells=[],
                    source_manifests={}, energy_savings_percent=None,
+                   energy_status=energy_status,
                    exporter_sha256=digest(pathlib.Path(__file__)))
     observations = []
     for name in ('source-r10', 'source-r100'):
@@ -82,7 +89,7 @@ def export(root, out):
     # Keep environment, frozen plans, raw source timings and build costs in Git.
     # The complete workflow artifact also contains binaries, outputs and scores.
     metadata = out / 'metadata'
-    for pattern in ('run.json', 'pip-freeze.txt', 'pip-torch-install.json', 'lscpu.json', 'energy-probe.json', 'energy-probe.txt',
+    for pattern in ('run.json', 'pip-freeze.txt', 'pip-torch-install.json', 'lscpu.json', 'energy-status.json', 'energy-probe.json', 'energy-probe.txt',
                     '*-failure.txt', '*-plan/plan.json', '*/environment.json', '*/code.json',
                     '*/capture.json', '*/manifest.json', 'python-runtime/source/source.json'):
         for path in sorted(root.glob(pattern)):
@@ -169,7 +176,7 @@ def export(root, out):
         'These results cannot establish a universal language, framework or energy ranking.', '',
         '- [summary.json](summary.json): exact numbers and all per-pair values used by the bootstrap.',
         '- [observations.json](observations.json): ordered pairs, raw durations, completed work and inner trial windows.',
-        '- [metadata/](metadata/): frozen plans, source captures, build timings, environment and original bundle digests.',
+        '- [metadata/](metadata/): frozen plans, source captures, build timings, environment, energy availability and original bundle digests.',
         '- Full artifact: raw stdout/stderr, predictions/scores, binaries, LLVM IR and replay manifests.', '',
         'Reproduce with the `experiment-results` workflow, or follow '
         '[the experiment instructions](../../README.md). Use `run_verified.py` with the same '
