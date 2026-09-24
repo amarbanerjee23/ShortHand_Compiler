@@ -9,6 +9,8 @@
 #include <ostream>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
+#include <utility>
 #ifdef __linux__
 #include <sys/resource.h>
 #endif
@@ -126,15 +128,22 @@ ClassificationBatch ClassificationApplication::classify(const std::vector<float>
     require(!raw.empty() && raw.size()%c.features==0 && raw.size()<=std::size_t(b)*c.features,"invalid_application_batch");
     TensorBuffer input; input.spec=session_->inputSpec(); input.f32_data.assign(std::size_t(b)*c.features,0);
     for (std::size_t i=0;i<raw.size();++i) {
-        require(std::isfinite(raw[i]) && raw[i]>=c.input_min && raw[i]<=c.input_max,"application_input_outside_range");
+        if (!std::isfinite(raw[i]) || raw[i]<c.input_min || raw[i]>c.input_max)
+            throw std::runtime_error("application_input_outside_range");
         input.f32_data[i]=static_cast<float>((double(raw[i])-c.offset)*c.scale);
-        require(std::isfinite(input.f32_data[i]),"application_preprocessing_overflow");
+        if (!std::isfinite(input.f32_data[i])) throw std::runtime_error("application_preprocessing_overflow");
     }
-    auto result=session_->run(input); require(result.status==InferenceStatus::Success,"application_inference_failed:"+result.reason);
+    auto result=session_->run(input);
+    if (result.status!=InferenceStatus::Success) throw std::runtime_error("application_inference_failed:"+result.reason);
     require(result.output_f32.size()==std::size_t(b)*c.classes,"application_output_count_mismatch");
-    for (float v:result.output_f32) require(std::isfinite(v),"nonfinite_application_output");
+    for (float v:result.output_f32)
+        if (!std::isfinite(v)) throw std::runtime_error("nonfinite_application_output");
     ClassificationBatch out; const auto count=raw.size()/c.features;
-    out.scores.assign(result.output_f32.begin(),result.output_f32.begin()+count*c.classes);
+    // The result owns these scores. Transfer ownership, then trim padded rows.
+    // All backend scores, including padding, were validated above.
+    out.scores=std::move(result.output_f32);
+    out.scores.resize(count*c.classes);
+    out.predictions.reserve(count); out.top_k.reserve(count*c.top_k);
     std::vector<unsigned> order(c.classes);
     for (std::size_t row=0;row<count;++row) {
         std::iota(order.begin(),order.end(),0);

@@ -12,6 +12,16 @@ ENERGY_SOURCES=("${SRC_DIR}/ai_runtime/ExecutionPlan.cpp" "${SRC_DIR}/ai_runtime
 "${CXX_BIN}" "${FLAGS[@]}" -pthread -I"${ROOT_DIR}" "${ROOT_DIR}/tests/ai_energy/test_energy.cpp" "${ENERGY_SOURCES[@]}" -o "${WORK_DIR}/test_energy"
 "${WORK_DIR}/test_energy" "${WORK_DIR}/counters"
 
+# Host-only regression uses a deterministic prepared-session test double.
+# It is additional coverage, never a replacement for mandatory real ONNX tests.
+HOST_LINK_FLAGS=(-Wl,--gc-sections)
+if [[ "$(uname -s)" == Darwin ]]; then HOST_LINK_FLAGS=(-Wl,-dead_strip); fi
+"${CXX_BIN}" "${FLAGS[@]}" -ffunction-sections -fdata-sections -pthread -I"${ROOT_DIR}" \
+  "${ROOT_DIR}/tests/ai_application/test_classification_host.cpp" \
+  "${SRC_DIR}/ai_runtime/ApplicationQualification.cpp" "${SRC_DIR}/ai_runtime/AI_Types.cpp" \
+  "${HOST_LINK_FLAGS[@]}" -o "${WORK_DIR}/test_classification_host"
+"${WORK_DIR}/test_classification_host"
+
 SDK_FLAGS=(-DSHORTHAND_HAS_ONNXRUNTIME=0)
 SDK_LIBS=()
 if [[ "${SHORTHAND_AI_ENERGY_REQUIRE_ONNX:-0}" == 1 ]]; then
