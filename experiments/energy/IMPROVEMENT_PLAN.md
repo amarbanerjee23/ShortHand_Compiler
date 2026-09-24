@@ -1,6 +1,8 @@
 # Energy improvement implementation plan
 
-Status: first conservative host optimization implemented; runtime profiling, new baselines and physical measurement remain pending. This plan does not establish energy savings.
+Status: first conservative host optimization and opt-in classification-stage profiling implemented. Reviewed real-ONNX profiling results, deeper backend attribution, new baselines and physical measurement remain pending. This plan does not establish energy savings.
+
+[Profiling instructions](PROFILING.md) describe the additive diagnostic command, five-cell capture workflow and replayable Markdown reports. Package B is only partially implemented; C/Rust/Java and resident Python comparisons are still outstanding.
 
 ## Evidence and scope
 

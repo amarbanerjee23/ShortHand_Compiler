@@ -73,6 +73,24 @@ if live:
     assert native['top_k_accuracy'] >= native['accuracy'] and not native['comparative_energy_claim']
     assert all(t['completed'] == 3594 and not t['energy']['claim_eligible'] for t in native['trials'])
     assert len(native['trials']) == 3 and len(native['scores']) == 17970
+    profile_path = work / 'profile.json'
+    run('application-profile', config, profile_path)
+    profile = json.loads(profile_path.read_text())
+    assert profile['schema'] == 'shorthand.ai.application.profile.v1'
+    assert profile['success'] and profile['diagnostic_only']
+    assert not profile['measured_energy_available'] and not profile['latency_claim_eligible']
+    assert not profile['comparative_energy_claim'] and not profile['production_claim']
+    assert profile['accuracy'] == native['accuracy'] and profile['backend_version'] == native['backend_version']
+    assert len(profile['trials']) == len(native['trials'])
+    stages = ('preprocessing_ns', 'prepared_call_ns', 'output_validation_ns', 'postprocessing_ns')
+    for trial in profile['trials']:
+        assert trial['completed'] == 3594 and trial['total_ns'] > 0
+        assert trial['total_ns'] == sum(trial[key] for key in stages)
+        assert all(trial[key] >= 0 for key in stages)
+    q = copy.deepcopy(original_q); q['require_measured_energy'] = True; reset(qualification=q)
+    run('application-profile', config, work / 'invalid-profile.json', good=False,
+        contains='profiling_cannot_qualify_measured_energy')
+    reset()
     run('application-serve', config, work / 'serving.json')
     served = json.loads((work / 'serving.json').read_text())
     assert served['predictions'] == native['predictions'] and served['success']
@@ -155,5 +173,6 @@ if live:
 else:
     run('application', config, work / 'sdk-off.json', good=False, contains='application_prepare_failed')
     run('application-stream', config, good=False, contains='application_prepare_failed')
+    run('application-profile', config, work / 'sdk-off-profile.json', good=False, contains='application_prepare_failed')
 reset()
 print(f'PASS {checks} application boundary cases; real_dataset_rows=1797; live_onnx={int(live)}; no measured energy claim')
