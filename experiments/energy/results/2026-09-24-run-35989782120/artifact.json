@@ -1,0 +1,12 @@
+{
+  "artifact_id": 10804505664,
+  "artifact_name": "experiment-results-35989782120",
+  "artifact_sha256": "sha256:172ce9a76106c6c7d25aae4c96219988684bc1f605a483b0806437ece1f898a1",
+  "artifact_size_bytes": 31365807,
+  "expires_at": "2026-12-23T10:52:52Z",
+  "head_branch": "agent/exhaustive-energy-benchmark",
+  "head_sha": "fcf0c88cc1ca3febb95e63d381fd44add22ad3ab",
+  "repository": "amarbanerjee23/ShortHand_Compiler",
+  "run_id": 35989782120,
+  "run_url": "https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/35989782120"
+}

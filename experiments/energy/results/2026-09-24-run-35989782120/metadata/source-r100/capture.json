@@ -1,0 +1,6342 @@
+{
+  "baseline_contract": "identical FP64 model/input/repetitions/predictions/checksum; whole process warm-OS-cache window",
+  "build_reports": [
+    {
+      "argv": [
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/short_hand",
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/classifier.short",
+        "compile-mlir",
+        "--output",
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.ll"
+      ],
+      "completed": 1,
+      "elapsed_ms": 1088.7058440000033,
+      "end_unix_seconds": 1790247553.5318174,
+      "returncode": 0,
+      "start_unix_seconds": 1790247552.4431098,
+      "stderr": "shorthand-ir.stderr",
+      "stdout": "shorthand-ir.stdout"
+    },
+    {
+      "argv": [
+        "/usr/bin/clang++-18",
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.ll",
+        "-O2",
+        "-fno-fast-math",
+        "-o",
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+      ],
+      "completed": 1,
+      "elapsed_ms": 209.84925899995233,
+      "end_unix_seconds": 1790247553.742206,
+      "returncode": 0,
+      "start_unix_seconds": 1790247553.5323553,
+      "stderr": "shorthand-link.stderr",
+      "stdout": "shorthand-link.stdout"
+    },
+    {
+      "argv": [
+        "/usr/bin/clang++-18",
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.cpp",
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-o",
+        "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+      ],
+      "completed": 1,
+      "elapsed_ms": 598.6911829999713,
+      "end_unix_seconds": 1790247554.341354,
+      "returncode": 0,
+      "start_unix_seconds": 1790247553.7426612,
+      "stderr": "cpp17-o3-build.stderr",
+      "stdout": "cpp17-o3-build.stdout"
+    }
+  ],
+  "comparative_energy_claim": false,
+  "expected": {
+    "accuracy": 0.8937117417918754,
+    "checksum": 822900,
+    "completed": 179700,
+    "predictions": [
+      1,
+      4,
+      0,
+      5,
+      7,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      8,
+      8,
+      5,
+      7,
+      9,
+      5,
+      4,
+      1,
+      1,
+      4,
+      9,
+      0,
+      8,
+      9,
+      1,
+      0,
+      9,
+      2,
+      3,
+      1,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      1,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      1,
+      1,
+      1,
+      7,
+      7,
+      3,
+      5,
+      9,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      1,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      7,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      1,
+      1,
+      7,
+      2,
+      1,
+      2,
+      2,
+      5,
+      5,
+      1,
+      8,
+      1,
+      4,
+      9,
+      0,
+      1,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      7,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      7,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      7,
+      6,
+      8,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      0,
+      8,
+      9,
+      3,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      5,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      8,
+      9,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      4,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      9,
+      2,
+      0,
+      2,
+      2,
+      6,
+      3,
+      3,
+      5,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      9,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      4,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      9,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      8,
+      1,
+      7,
+      5,
+      4,
+      4,
+      9,
+      2,
+      8,
+      2,
+      1,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      1,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      2,
+      2,
+      9,
+      4,
+      5,
+      6,
+      7,
+      1,
+      9,
+      0,
+      2,
+      2,
+      3,
+      7,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      2,
+      2,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      8,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      6,
+      7,
+      7,
+      3,
+      5,
+      6,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      6,
+      2,
+      6,
+      9,
+      3,
+      7,
+      9,
+      9,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      6,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      2,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      6,
+      9,
+      9,
+      1,
+      7,
+      6,
+      1,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      8,
+      1,
+      1,
+      4,
+      9,
+      0,
+      1,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      4,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      4,
+      4,
+      5,
+      6,
+      5,
+      0,
+      1,
+      8,
+      4,
+      8,
+      4,
+      1,
+      4,
+      7,
+      9,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      8,
+      4,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      1,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      8,
+      7,
+      4,
+      6,
+      3,
+      8,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      7,
+      0,
+      5,
+      3,
+      6,
+      4,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      8,
+      2,
+      5,
+      7,
+      4,
+      5,
+      4,
+      8,
+      8,
+      7,
+      9,
+      0,
+      8,
+      1,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      6,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      0,
+      7,
+      1,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      9,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      9,
+      2,
+      0,
+      2,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      8,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      1,
+      7,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      9,
+      8,
+      4,
+      9,
+      0,
+      1,
+      9,
+      1,
+      2,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      2,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      2,
+      2,
+      3,
+      4,
+      9,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      9,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      3,
+      7,
+      7,
+      3,
+      9,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      2,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      2,
+      7,
+      6,
+      3,
+      2,
+      2,
+      4,
+      6,
+      3,
+      2,
+      3,
+      9,
+      1,
+      7,
+      6,
+      9,
+      4,
+      3,
+      2,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      2,
+      7,
+      9,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      9,
+      7,
+      9,
+      5,
+      4,
+      4,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      3,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      7,
+      8,
+      2,
+      0,
+      8,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      9,
+      9,
+      1,
+      5,
+      0,
+      8,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      7,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      3,
+      5,
+      4,
+      2,
+      8,
+      4,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      5,
+      4,
+      1,
+      7,
+      7,
+      7,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      8,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      5,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      5,
+      8,
+      9,
+      8,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      9,
+      9,
+      7,
+      8,
+      3,
+      0,
+      1,
+      9,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      6,
+      2,
+      8,
+      9,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      0,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      9,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      9,
+      7,
+      7,
+      3,
+      5,
+      9,
+      0,
+      0,
+      2,
+      2,
+      7,
+      9,
+      2,
+      0,
+      9,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      9,
+      5,
+      0,
+      9,
+      5,
+      2,
+      9,
+      2,
+      0,
+      0,
+      9,
+      7,
+      6,
+      3,
+      2,
+      9,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      9,
+      7,
+      6,
+      9,
+      4,
+      3,
+      9,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      9,
+      7,
+      9,
+      4,
+      4,
+      7,
+      2,
+      5,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      0,
+      5,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      1,
+      8,
+      1,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      1,
+      7,
+      8,
+      9,
+      4,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      5,
+      8,
+      5,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      0,
+      2,
+      8,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      8,
+      7,
+      7,
+      7,
+      8,
+      4,
+      6,
+      6,
+      6,
+      8,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      3,
+      8,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      8,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      2,
+      5,
+      7,
+      3,
+      5,
+      8,
+      4,
+      5,
+      0,
+      8,
+      5,
+      7,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      3,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      5,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      7,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      8,
+      8,
+      7,
+      3,
+      8,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      8,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      5,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      1,
+      4,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      1,
+      1,
+      3,
+      4,
+      9,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      3,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      3,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      8,
+      1,
+      7,
+      8,
+      7,
+      0,
+      1,
+      1,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      8,
+      1,
+      5,
+      0,
+      9,
+      5,
+      1,
+      8,
+      1,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      1,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      1,
+      8,
+      4,
+      3
+    ]
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_file": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "pairs": [
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 15,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.15234899998813,
+        "end_unix_seconds": 1790247572.4094696,
+        "returncode": 0,
+        "start_unix_seconds": 1790247572.3263166,
+        "stderr": "pair-0-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-0-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.98513499999171,
+        "end_unix_seconds": 1790247572.325338,
+        "returncode": 0,
+        "start_unix_seconds": 1790247572.244352,
+        "stderr": "pair-0-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-0-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 0,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5552.750400999968,
+        "end_unix_seconds": 1790247578.044866,
+        "returncode": 0,
+        "start_unix_seconds": 1790247572.4921138,
+        "stderr": "pair-1-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-1-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.68581399999175,
+        "end_unix_seconds": 1790247572.4911191,
+        "returncode": 0,
+        "start_unix_seconds": 1790247572.4104328,
+        "stderr": "pair-1-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-1-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 18,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.84977399998661,
+        "end_unix_seconds": 1790247578.1298988,
+        "returncode": 0,
+        "start_unix_seconds": 1790247578.0460477,
+        "stderr": "pair-2-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-2-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 82.41144400000167,
+        "end_unix_seconds": 1790247578.2134209,
+        "returncode": 0,
+        "start_unix_seconds": 1790247578.1310086,
+        "stderr": "pair-2-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-2-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 19,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.10209999996232,
+        "end_unix_seconds": 1790247578.3792617,
+        "returncode": 0,
+        "start_unix_seconds": 1790247578.2961588,
+        "stderr": "pair-3-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-3-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.69447000002583,
+        "end_unix_seconds": 1790247578.2951066,
+        "returncode": 0,
+        "start_unix_seconds": 1790247578.2144115,
+        "stderr": "pair-3-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-3-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 6,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1330.8326339999894,
+        "end_unix_seconds": 1790247579.7926948,
+        "returncode": 0,
+        "start_unix_seconds": 1790247578.4618607,
+        "stderr": "pair-4-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-4-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.59850400002233,
+        "end_unix_seconds": 1790247578.4608974,
+        "returncode": 0,
+        "start_unix_seconds": 1790247578.3802977,
+        "stderr": "pair-4-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-4-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 6,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.81731700001183,
+        "end_unix_seconds": 1790247579.8775322,
+        "returncode": 0,
+        "start_unix_seconds": 1790247579.7937138,
+        "stderr": "pair-5-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-5-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.58388699998886,
+        "end_unix_seconds": 1790247579.9590862,
+        "returncode": 0,
+        "start_unix_seconds": 1790247579.8785014,
+        "stderr": "pair-5-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-5-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 26,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.59552199999598,
+        "end_unix_seconds": 1790247580.1262503,
+        "returncode": 0,
+        "start_unix_seconds": 1790247580.0426538,
+        "stderr": "pair-6-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-6-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.32246899998563,
+        "end_unix_seconds": 1790247580.0414817,
+        "returncode": 0,
+        "start_unix_seconds": 1790247579.9601574,
+        "stderr": "pair-6-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-6-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 5,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1348.8206409999748,
+        "end_unix_seconds": 1790247581.4760828,
+        "returncode": 0,
+        "start_unix_seconds": 1790247580.1272604,
+        "stderr": "pair-7-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-7-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.29639099996666,
+        "end_unix_seconds": 1790247581.558571,
+        "returncode": 0,
+        "start_unix_seconds": 1790247581.4772737,
+        "stderr": "pair-7-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-7-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 22,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.41439300001457,
+        "end_unix_seconds": 1790247581.6999967,
+        "returncode": 0,
+        "start_unix_seconds": 1790247581.5595803,
+        "stderr": "pair-8-numpy-numpy.stderr",
+        "stdout": "pair-8-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.15313199999719,
+        "end_unix_seconds": 1790247581.7822223,
+        "returncode": 0,
+        "start_unix_seconds": 1790247581.7010677,
+        "stderr": "pair-8-numpy-shorthand.stderr",
+        "stdout": "pair-8-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 141.29099399997358,
+        "end_unix_seconds": 1790247582.0066297,
+        "returncode": 0,
+        "start_unix_seconds": 1790247581.8653371,
+        "stderr": "pair-9-numpy-numpy.stderr",
+        "stdout": "pair-9-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.99318199998606,
+        "end_unix_seconds": 1790247581.8642483,
+        "returncode": 0,
+        "start_unix_seconds": 1790247581.7832534,
+        "stderr": "pair-9-numpy-shorthand.stderr",
+        "stdout": "pair-9-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 25,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1330.8532319999813,
+        "end_unix_seconds": 1790247583.4210455,
+        "returncode": 0,
+        "start_unix_seconds": 1790247582.0901906,
+        "stderr": "pair-10-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-10-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.32196799999747,
+        "end_unix_seconds": 1790247582.0889363,
+        "returncode": 0,
+        "start_unix_seconds": 1790247582.0076127,
+        "stderr": "pair-10-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-10-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1329.0390880000018,
+        "end_unix_seconds": 1790247584.8332286,
+        "returncode": 0,
+        "start_unix_seconds": 1790247583.5041878,
+        "stderr": "pair-11-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-11-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.92754999995577,
+        "end_unix_seconds": 1790247583.5031164,
+        "returncode": 0,
+        "start_unix_seconds": 1790247583.422188,
+        "stderr": "pair-11-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-11-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 28,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.4736940000198,
+        "end_unix_seconds": 1790247584.9177516,
+        "returncode": 0,
+        "start_unix_seconds": 1790247584.8342772,
+        "stderr": "pair-12-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-12-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.80132399999229,
+        "end_unix_seconds": 1790247584.9994328,
+        "returncode": 0,
+        "start_unix_seconds": 1790247584.9186306,
+        "stderr": "pair-12-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-12-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 19,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.0691470000197,
+        "end_unix_seconds": 1790247585.2222252,
+        "returncode": 0,
+        "start_unix_seconds": 1790247585.082155,
+        "stderr": "pair-13-numpy-numpy.stderr",
+        "stdout": "pair-13-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.79294899999923,
+        "end_unix_seconds": 1790247585.081156,
+        "returncode": 0,
+        "start_unix_seconds": 1790247585.0003622,
+        "stderr": "pair-13-numpy-shorthand.stderr",
+        "stdout": "pair-13-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1328.3845070000098,
+        "end_unix_seconds": 1790247586.6334007,
+        "returncode": 0,
+        "start_unix_seconds": 1790247585.3050144,
+        "stderr": "pair-14-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-14-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.74962699998878,
+        "end_unix_seconds": 1790247585.3039756,
+        "returncode": 0,
+        "start_unix_seconds": 1790247585.2232249,
+        "stderr": "pair-14-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-14-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 16,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.7569049999729,
+        "end_unix_seconds": 1790247586.718253,
+        "returncode": 0,
+        "start_unix_seconds": 1790247586.6344945,
+        "stderr": "pair-15-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-15-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.27787700004774,
+        "end_unix_seconds": 1790247586.8006115,
+        "returncode": 0,
+        "start_unix_seconds": 1790247586.719333,
+        "stderr": "pair-15-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-15-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 11,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1334.9729049999723,
+        "end_unix_seconds": 1790247588.1365767,
+        "returncode": 0,
+        "start_unix_seconds": 1790247586.8016024,
+        "stderr": "pair-16-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-16-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.07424499996796,
+        "end_unix_seconds": 1790247588.2188616,
+        "returncode": 0,
+        "start_unix_seconds": 1790247588.1377861,
+        "stderr": "pair-16-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-16-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 18,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5593.500752000011,
+        "end_unix_seconds": 1790247593.813506,
+        "returncode": 0,
+        "start_unix_seconds": 1790247588.2200034,
+        "stderr": "pair-17-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-17-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.3058990000286,
+        "end_unix_seconds": 1790247593.8960035,
+        "returncode": 0,
+        "start_unix_seconds": 1790247593.8146968,
+        "stderr": "pair-17-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-17-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 19,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5579.705991000026,
+        "end_unix_seconds": 1790247599.4766915,
+        "returncode": 0,
+        "start_unix_seconds": 1790247593.896984,
+        "stderr": "pair-18-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-18-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.03934300004312,
+        "end_unix_seconds": 1790247599.5587142,
+        "returncode": 0,
+        "start_unix_seconds": 1790247599.4776738,
+        "stderr": "pair-18-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-18-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.81690200000685,
+        "end_unix_seconds": 1790247599.7816455,
+        "returncode": 0,
+        "start_unix_seconds": 1790247599.6418273,
+        "stderr": "pair-19-numpy-numpy.stderr",
+        "stdout": "pair-19-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.12162699990222,
+        "end_unix_seconds": 1790247599.6408093,
+        "returncode": 0,
+        "start_unix_seconds": 1790247599.5596867,
+        "stderr": "pair-19-numpy-shorthand.stderr",
+        "stdout": "pair-19-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 28,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1325.9969780000347,
+        "end_unix_seconds": 1790247601.190913,
+        "returncode": 0,
+        "start_unix_seconds": 1790247599.864914,
+        "stderr": "pair-20-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-20-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.935830000044,
+        "end_unix_seconds": 1790247599.8637104,
+        "returncode": 0,
+        "start_unix_seconds": 1790247599.7827737,
+        "stderr": "pair-20-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-20-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 7,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.485089000078,
+        "end_unix_seconds": 1790247601.2754936,
+        "returncode": 0,
+        "start_unix_seconds": 1790247601.1920078,
+        "stderr": "pair-21-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-21-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.54810299995552,
+        "end_unix_seconds": 1790247601.3570826,
+        "returncode": 0,
+        "start_unix_seconds": 1790247601.2765338,
+        "stderr": "pair-21-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-21-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 9,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1441.541935000032,
+        "end_unix_seconds": 1790247602.8812048,
+        "returncode": 0,
+        "start_unix_seconds": 1790247601.439661,
+        "stderr": "pair-22-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-22-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.57033599993702,
+        "end_unix_seconds": 1790247601.4385958,
+        "returncode": 0,
+        "start_unix_seconds": 1790247601.3580246,
+        "stderr": "pair-22-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-22-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 7,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1329.870810999978,
+        "end_unix_seconds": 1790247604.2121606,
+        "returncode": 0,
+        "start_unix_seconds": 1790247602.8822882,
+        "stderr": "pair-23-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-23-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.74131699990994,
+        "end_unix_seconds": 1790247604.2950723,
+        "returncode": 0,
+        "start_unix_seconds": 1790247604.21333,
+        "stderr": "pair-23-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-23-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 18,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1328.3276240000532,
+        "end_unix_seconds": 1790247605.7060728,
+        "returncode": 0,
+        "start_unix_seconds": 1790247604.377743,
+        "stderr": "pair-24-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-24-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.6623790000458,
+        "end_unix_seconds": 1790247604.3768058,
+        "returncode": 0,
+        "start_unix_seconds": 1790247604.2961428,
+        "stderr": "pair-24-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-24-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 6,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.23137100005079,
+        "end_unix_seconds": 1790247605.9283054,
+        "returncode": 0,
+        "start_unix_seconds": 1790247605.7890728,
+        "stderr": "pair-25-numpy-numpy.stderr",
+        "stdout": "pair-25-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.97760800001197,
+        "end_unix_seconds": 1790247605.788196,
+        "returncode": 0,
+        "start_unix_seconds": 1790247605.707218,
+        "stderr": "pair-25-numpy-shorthand.stderr",
+        "stdout": "pair-25-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 25,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5539.392240999973,
+        "end_unix_seconds": 1790247611.5506296,
+        "returncode": 0,
+        "start_unix_seconds": 1790247606.011236,
+        "stderr": "pair-26-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-26-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.95523700001195,
+        "end_unix_seconds": 1790247606.010287,
+        "returncode": 0,
+        "start_unix_seconds": 1790247605.9293313,
+        "stderr": "pair-26-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-26-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 0,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1328.792478999958,
+        "end_unix_seconds": 1790247612.880425,
+        "returncode": 0,
+        "start_unix_seconds": 1790247611.5516307,
+        "stderr": "pair-27-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-27-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.16346500003147,
+        "end_unix_seconds": 1790247612.962626,
+        "returncode": 0,
+        "start_unix_seconds": 1790247612.881462,
+        "stderr": "pair-27-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-27-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 17,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 141.84876999991047,
+        "end_unix_seconds": 1790247613.1054816,
+        "returncode": 0,
+        "start_unix_seconds": 1790247612.9636319,
+        "stderr": "pair-28-numpy-numpy.stderr",
+        "stdout": "pair-28-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.98438100000749,
+        "end_unix_seconds": 1790247613.1876273,
+        "returncode": 0,
+        "start_unix_seconds": 1790247613.1066422,
+        "stderr": "pair-28-numpy-shorthand.stderr",
+        "stdout": "pair-28-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1337.3126189999311,
+        "end_unix_seconds": 1790247614.6076815,
+        "returncode": 0,
+        "start_unix_seconds": 1790247613.270368,
+        "stderr": "pair-29-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-29-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.77204400001392,
+        "end_unix_seconds": 1790247613.269437,
+        "returncode": 0,
+        "start_unix_seconds": 1790247613.1886644,
+        "stderr": "pair-29-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-29-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 17,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1338.32045500003,
+        "end_unix_seconds": 1790247615.947038,
+        "returncode": 0,
+        "start_unix_seconds": 1790247614.608716,
+        "stderr": "pair-30-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-30-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.39873599998282,
+        "end_unix_seconds": 1790247616.0296092,
+        "returncode": 0,
+        "start_unix_seconds": 1790247615.9482098,
+        "stderr": "pair-30-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-30-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 26,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.87779199999295,
+        "end_unix_seconds": 1790247616.2522388,
+        "returncode": 0,
+        "start_unix_seconds": 1790247616.11236,
+        "stderr": "pair-31-numpy-numpy.stderr",
+        "stdout": "pair-31-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.76721400004772,
+        "end_unix_seconds": 1790247616.1113346,
+        "returncode": 0,
+        "start_unix_seconds": 1790247616.0305667,
+        "stderr": "pair-31-numpy-shorthand.stderr",
+        "stdout": "pair-31-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 3,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1330.0415659999771,
+        "end_unix_seconds": 1790247617.5832746,
+        "returncode": 0,
+        "start_unix_seconds": 1790247616.2532313,
+        "stderr": "pair-32-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-32-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.1128909999752,
+        "end_unix_seconds": 1790247617.6654155,
+        "returncode": 0,
+        "start_unix_seconds": 1790247617.5843017,
+        "stderr": "pair-32-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-32-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 26,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1320.6105579999985,
+        "end_unix_seconds": 1790247619.0688405,
+        "returncode": 0,
+        "start_unix_seconds": 1790247617.7482283,
+        "stderr": "pair-33-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-33-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.6602440000006,
+        "end_unix_seconds": 1790247617.7470994,
+        "returncode": 0,
+        "start_unix_seconds": 1790247617.6664383,
+        "stderr": "pair-33-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-33-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 5,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5646.796148000021,
+        "end_unix_seconds": 1790247624.798878,
+        "returncode": 0,
+        "start_unix_seconds": 1790247619.1520803,
+        "stderr": "pair-34-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-34-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.07955499997388,
+        "end_unix_seconds": 1790247619.1510487,
+        "returncode": 0,
+        "start_unix_seconds": 1790247619.0699685,
+        "stderr": "pair-34-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-34-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 13,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1335.3821340000422,
+        "end_unix_seconds": 1790247626.1353621,
+        "returncode": 0,
+        "start_unix_seconds": 1790247624.7999775,
+        "stderr": "pair-35-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-35-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.02868000003127,
+        "end_unix_seconds": 1790247626.2175524,
+        "returncode": 0,
+        "start_unix_seconds": 1790247626.1365228,
+        "stderr": "pair-35-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-35-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 9,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5664.223968000101,
+        "end_unix_seconds": 1790247631.9647987,
+        "returncode": 0,
+        "start_unix_seconds": 1790247626.300573,
+        "stderr": "pair-36-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-36-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.81268499995531,
+        "end_unix_seconds": 1790247626.299434,
+        "returncode": 0,
+        "start_unix_seconds": 1790247626.21862,
+        "stderr": "pair-36-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-36-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 28,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5606.7971229999785,
+        "end_unix_seconds": 1790247637.572654,
+        "returncode": 0,
+        "start_unix_seconds": 1790247631.9658551,
+        "stderr": "pair-37-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-37-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.35378100007529,
+        "end_unix_seconds": 1790247637.655192,
+        "returncode": 0,
+        "start_unix_seconds": 1790247637.573837,
+        "stderr": "pair-37-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-37-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 26,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5572.638321999989,
+        "end_unix_seconds": 1790247643.2289608,
+        "returncode": 0,
+        "start_unix_seconds": 1790247637.6563208,
+        "stderr": "pair-38-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-38-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.09360399998877,
+        "end_unix_seconds": 1790247643.3110955,
+        "returncode": 0,
+        "start_unix_seconds": 1790247643.230001,
+        "stderr": "pair-38-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-38-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 7,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5566.851188999976,
+        "end_unix_seconds": 1790247648.878902,
+        "returncode": 0,
+        "start_unix_seconds": 1790247643.3120487,
+        "stderr": "pair-39-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-39-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.03646799997932,
+        "end_unix_seconds": 1790247648.9609613,
+        "returncode": 0,
+        "start_unix_seconds": 1790247648.879924,
+        "stderr": "pair-39-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-39-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 3,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.0205950000336,
+        "end_unix_seconds": 1790247649.1828508,
+        "returncode": 0,
+        "start_unix_seconds": 1790247649.043829,
+        "stderr": "pair-40-numpy-numpy.stderr",
+        "stdout": "pair-40-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.75799699997788,
+        "end_unix_seconds": 1790247649.0428107,
+        "returncode": 0,
+        "start_unix_seconds": 1790247648.9620519,
+        "stderr": "pair-40-numpy-shorthand.stderr",
+        "stdout": "pair-40-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 4,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1348.912739999946,
+        "end_unix_seconds": 1790247650.5328739,
+        "returncode": 0,
+        "start_unix_seconds": 1790247649.1839592,
+        "stderr": "pair-41-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-41-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.33993300009479,
+        "end_unix_seconds": 1790247650.6154792,
+        "returncode": 0,
+        "start_unix_seconds": 1790247650.5341382,
+        "stderr": "pair-41-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-41-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 28,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 141.91877999996905,
+        "end_unix_seconds": 1790247650.7585292,
+        "returncode": 0,
+        "start_unix_seconds": 1790247650.616609,
+        "stderr": "pair-42-numpy-numpy.stderr",
+        "stdout": "pair-42-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.02972200003933,
+        "end_unix_seconds": 1790247650.8407204,
+        "returncode": 0,
+        "start_unix_seconds": 1790247650.75969,
+        "stderr": "pair-42-numpy-shorthand.stderr",
+        "stdout": "pair-42-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 9,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.95360299994081,
+        "end_unix_seconds": 1790247651.0079424,
+        "returncode": 0,
+        "start_unix_seconds": 1790247650.9239876,
+        "stderr": "pair-43-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-43-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.21540400009053,
+        "end_unix_seconds": 1790247650.922996,
+        "returncode": 0,
+        "start_unix_seconds": 1790247650.841779,
+        "stderr": "pair-43-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-43-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 17,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5534.507066999936,
+        "end_unix_seconds": 1790247656.5434036,
+        "returncode": 0,
+        "start_unix_seconds": 1790247651.008865,
+        "stderr": "pair-44-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-44-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.08888300000672,
+        "end_unix_seconds": 1790247656.6255271,
+        "returncode": 0,
+        "start_unix_seconds": 1790247656.5444372,
+        "stderr": "pair-44-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-44-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.31106099994395,
+        "end_unix_seconds": 1790247656.8476305,
+        "returncode": 0,
+        "start_unix_seconds": 1790247656.7083182,
+        "stderr": "pair-45-numpy-numpy.stderr",
+        "stdout": "pair-45-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.7575530000122,
+        "end_unix_seconds": 1790247656.70736,
+        "returncode": 0,
+        "start_unix_seconds": 1790247656.6266015,
+        "stderr": "pair-45-numpy-shorthand.stderr",
+        "stdout": "pair-45-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5570.299130999956,
+        "end_unix_seconds": 1790247662.5007534,
+        "returncode": 0,
+        "start_unix_seconds": 1790247656.9304519,
+        "stderr": "pair-46-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-46-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.92760099998486,
+        "end_unix_seconds": 1790247656.9295387,
+        "returncode": 0,
+        "start_unix_seconds": 1790247656.8486102,
+        "stderr": "pair-46-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-46-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 25,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.36808799992923,
+        "end_unix_seconds": 1790247662.5853207,
+        "returncode": 0,
+        "start_unix_seconds": 1790247662.501951,
+        "stderr": "pair-47-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-47-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.82064100005937,
+        "end_unix_seconds": 1790247662.6671743,
+        "returncode": 0,
+        "start_unix_seconds": 1790247662.5863528,
+        "stderr": "pair-47-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-47-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 2,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1327.5747449999926,
+        "end_unix_seconds": 1790247664.0778086,
+        "returncode": 0,
+        "start_unix_seconds": 1790247662.750232,
+        "stderr": "pair-48-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-48-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.8943189999809,
+        "end_unix_seconds": 1790247662.7491457,
+        "returncode": 0,
+        "start_unix_seconds": 1790247662.6682506,
+        "stderr": "pair-48-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-48-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.53922799998963,
+        "end_unix_seconds": 1790247664.3004985,
+        "returncode": 0,
+        "start_unix_seconds": 1790247664.1609583,
+        "stderr": "pair-49-numpy-numpy.stderr",
+        "stdout": "pair-49-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.93228999996427,
+        "end_unix_seconds": 1790247664.1599104,
+        "returncode": 0,
+        "start_unix_seconds": 1790247664.0789773,
+        "stderr": "pair-49-numpy-shorthand.stderr",
+        "stdout": "pair-49-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 4,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.27986200004034,
+        "end_unix_seconds": 1790247664.384793,
+        "returncode": 0,
+        "start_unix_seconds": 1790247664.3015125,
+        "stderr": "pair-50-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-50-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.97009100004016,
+        "end_unix_seconds": 1790247664.4668307,
+        "returncode": 0,
+        "start_unix_seconds": 1790247664.3858597,
+        "stderr": "pair-50-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-50-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 16,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5581.068237999943,
+        "end_unix_seconds": 1790247670.0489311,
+        "returncode": 0,
+        "start_unix_seconds": 1790247664.4678612,
+        "stderr": "pair-51-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-51-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.95699600005446,
+        "end_unix_seconds": 1790247670.1309283,
+        "returncode": 0,
+        "start_unix_seconds": 1790247670.04997,
+        "stderr": "pair-51-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-51-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.27267799995752,
+        "end_unix_seconds": 1790247670.2971897,
+        "returncode": 0,
+        "start_unix_seconds": 1790247670.213916,
+        "stderr": "pair-52-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-52-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.76748999997108,
+        "end_unix_seconds": 1790247670.2127833,
+        "returncode": 0,
+        "start_unix_seconds": 1790247670.1320148,
+        "stderr": "pair-52-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-52-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 29,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1339.5562109999446,
+        "end_unix_seconds": 1790247671.6378202,
+        "returncode": 0,
+        "start_unix_seconds": 1790247670.2982624,
+        "stderr": "pair-53-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-53-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.05236400001559,
+        "end_unix_seconds": 1790247671.7200427,
+        "returncode": 0,
+        "start_unix_seconds": 1790247671.6389897,
+        "stderr": "pair-53-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-53-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 11,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.31547900003716,
+        "end_unix_seconds": 1790247671.8613963,
+        "returncode": 0,
+        "start_unix_seconds": 1790247671.7210793,
+        "stderr": "pair-54-numpy-numpy.stderr",
+        "stdout": "pair-54-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.19794700007787,
+        "end_unix_seconds": 1790247671.9435902,
+        "returncode": 0,
+        "start_unix_seconds": 1790247671.8623903,
+        "stderr": "pair-54-numpy-shorthand.stderr",
+        "stdout": "pair-54-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 21,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1339.5291110000471,
+        "end_unix_seconds": 1790247673.3662155,
+        "returncode": 0,
+        "start_unix_seconds": 1790247672.0266848,
+        "stderr": "pair-55-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-55-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.0424649999959,
+        "end_unix_seconds": 1790247672.025634,
+        "returncode": 0,
+        "start_unix_seconds": 1790247671.9445906,
+        "stderr": "pair-55-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-55-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 14,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.37935800004198,
+        "end_unix_seconds": 1790247673.5898857,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.4505055,
+        "stderr": "pair-56-numpy-numpy.stderr",
+        "stdout": "pair-56-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 82.0296120000421,
+        "end_unix_seconds": 1790247673.4494581,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.3674276,
+        "stderr": "pair-56-numpy-shorthand.stderr",
+        "stdout": "pair-56-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 8,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 141.68611299999156,
+        "end_unix_seconds": 1790247673.814424,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.672737,
+        "stderr": "pair-57-numpy-numpy.stderr",
+        "stdout": "pair-57-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.84152999992966,
+        "end_unix_seconds": 1790247673.67169,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.5908477,
+        "stderr": "pair-57-numpy-shorthand.stderr",
+        "stdout": "pair-57-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.21897700000136,
+        "end_unix_seconds": 1790247673.9807086,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.8974886,
+        "stderr": "pair-58-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-58-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.96100300008402,
+        "end_unix_seconds": 1790247673.8964548,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.815493,
+        "stderr": "pair-58-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-58-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 0,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.10821999998552,
+        "end_unix_seconds": 1790247674.064756,
+        "returncode": 0,
+        "start_unix_seconds": 1790247673.9816468,
+        "stderr": "pair-59-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-59-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.71720700002061,
+        "end_unix_seconds": 1790247674.1463668,
+        "returncode": 0,
+        "start_unix_seconds": 1790247674.0656486,
+        "stderr": "pair-59-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-59-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 5,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.36213500001577,
+        "end_unix_seconds": 1790247674.312683,
+        "returncode": 0,
+        "start_unix_seconds": 1790247674.2293196,
+        "stderr": "pair-60-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-60-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.79561400006696,
+        "end_unix_seconds": 1790247674.22825,
+        "returncode": 0,
+        "start_unix_seconds": 1790247674.1474538,
+        "stderr": "pair-60-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-60-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 20,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5591.230829999972,
+        "end_unix_seconds": 1790247679.9866886,
+        "returncode": 0,
+        "start_unix_seconds": 1790247674.395456,
+        "stderr": "pair-61-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-61-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.69866200003162,
+        "end_unix_seconds": 1790247674.3944955,
+        "returncode": 0,
+        "start_unix_seconds": 1790247674.313796,
+        "stderr": "pair-61-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-61-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 21,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.73421999999664,
+        "end_unix_seconds": 1790247680.0715597,
+        "returncode": 0,
+        "start_unix_seconds": 1790247679.987824,
+        "stderr": "pair-62-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-62-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.99595599992426,
+        "end_unix_seconds": 1790247680.1537697,
+        "returncode": 0,
+        "start_unix_seconds": 1790247680.0727725,
+        "stderr": "pair-62-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-62-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5540.783311000041,
+        "end_unix_seconds": 1790247685.7779408,
+        "returncode": 0,
+        "start_unix_seconds": 1790247680.237156,
+        "stderr": "pair-63-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-63-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.1629790000552,
+        "end_unix_seconds": 1790247680.2360072,
+        "returncode": 0,
+        "start_unix_seconds": 1790247680.1548421,
+        "stderr": "pair-63-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-63-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 16,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1329.198761999919,
+        "end_unix_seconds": 1790247687.1083035,
+        "returncode": 0,
+        "start_unix_seconds": 1790247685.7791033,
+        "stderr": "pair-64-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-64-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.54895699999543,
+        "end_unix_seconds": 1790247687.1908915,
+        "returncode": 0,
+        "start_unix_seconds": 1790247687.1093419,
+        "stderr": "pair-64-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-64-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 15,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1331.7390360000445,
+        "end_unix_seconds": 1790247688.605247,
+        "returncode": 0,
+        "start_unix_seconds": 1790247687.2735062,
+        "stderr": "pair-65-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-65-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.56960400006119,
+        "end_unix_seconds": 1790247687.2725015,
+        "returncode": 0,
+        "start_unix_seconds": 1790247687.1919308,
+        "stderr": "pair-65-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-65-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 4,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5611.483190000058,
+        "end_unix_seconds": 1790247694.2998748,
+        "returncode": 0,
+        "start_unix_seconds": 1790247688.6883903,
+        "stderr": "pair-66-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-66-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.16806400005316,
+        "end_unix_seconds": 1790247688.6874633,
+        "returncode": 0,
+        "start_unix_seconds": 1790247688.6062946,
+        "stderr": "pair-66-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-66-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 14,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.53988099997878,
+        "end_unix_seconds": 1790247694.4665875,
+        "returncode": 0,
+        "start_unix_seconds": 1790247694.3830464,
+        "stderr": "pair-67-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-67-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.09069900001487,
+        "end_unix_seconds": 1790247694.3820672,
+        "returncode": 0,
+        "start_unix_seconds": 1790247694.3009753,
+        "stderr": "pair-67-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-67-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 11,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5561.33334499998,
+        "end_unix_seconds": 1790247700.0290558,
+        "returncode": 0,
+        "start_unix_seconds": 1790247694.4677207,
+        "stderr": "pair-68-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-68-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.12642300000061,
+        "end_unix_seconds": 1790247700.1114676,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.0303395,
+        "stderr": "pair-68-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-68-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 13,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.38896700001897,
+        "end_unix_seconds": 1790247700.1959715,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.1125815,
+        "stderr": "pair-69-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-69-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.60339599999133,
+        "end_unix_seconds": 1790247700.2785776,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.1969728,
+        "stderr": "pair-69-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-69-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 23,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.3251270000801,
+        "end_unix_seconds": 1790247700.4444785,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.3611524,
+        "stderr": "pair-70-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-70-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.65606299999217,
+        "end_unix_seconds": 1790247700.3601582,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.2795017,
+        "stderr": "pair-70-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-70-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 2,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5593.387849999999,
+        "end_unix_seconds": 1790247706.1205158,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.5271263,
+        "stderr": "pair-71-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-71-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.64130599996133,
+        "end_unix_seconds": 1790247700.5260694,
+        "returncode": 0,
+        "start_unix_seconds": 1790247700.4454272,
+        "stderr": "pair-71-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-71-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 20,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.83372899997448,
+        "end_unix_seconds": 1790247706.2614117,
+        "returncode": 0,
+        "start_unix_seconds": 1790247706.1215768,
+        "stderr": "pair-72-numpy-numpy.stderr",
+        "stdout": "pair-72-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.01049599997623,
+        "end_unix_seconds": 1790247706.3434842,
+        "returncode": 0,
+        "start_unix_seconds": 1790247706.2624729,
+        "stderr": "pair-72-numpy-shorthand.stderr",
+        "stdout": "pair-72-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 12,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5590.030914000067,
+        "end_unix_seconds": 1790247711.9345255,
+        "returncode": 0,
+        "start_unix_seconds": 1790247706.344493,
+        "stderr": "pair-73-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-73-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.28459099998508,
+        "end_unix_seconds": 1790247712.017265,
+        "returncode": 0,
+        "start_unix_seconds": 1790247711.935979,
+        "stderr": "pair-73-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-73-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 4,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 141.79781699999694,
+        "end_unix_seconds": 1790247712.1600912,
+        "returncode": 0,
+        "start_unix_seconds": 1790247712.0182917,
+        "stderr": "pair-74-numpy-numpy.stderr",
+        "stdout": "pair-74-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.94675899997128,
+        "end_unix_seconds": 1790247712.2420492,
+        "returncode": 0,
+        "start_unix_seconds": 1790247712.1611016,
+        "stderr": "pair-74-numpy-shorthand.stderr",
+        "stdout": "pair-74-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 12,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.2077029999873,
+        "end_unix_seconds": 1790247712.3833523,
+        "returncode": 0,
+        "start_unix_seconds": 1790247712.2431438,
+        "stderr": "pair-75-numpy-numpy.stderr",
+        "stdout": "pair-75-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.06483999995362,
+        "end_unix_seconds": 1790247712.4655688,
+        "returncode": 0,
+        "start_unix_seconds": 1790247712.3845031,
+        "stderr": "pair-75-numpy-shorthand.stderr",
+        "stdout": "pair-75-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1352.008600999966,
+        "end_unix_seconds": 1790247713.9006472,
+        "returncode": 0,
+        "start_unix_seconds": 1790247712.5486364,
+        "stderr": "pair-76-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-76-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.94555699994999,
+        "end_unix_seconds": 1790247712.5475934,
+        "returncode": 0,
+        "start_unix_seconds": 1790247712.4666471,
+        "stderr": "pair-76-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-76-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 12,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1339.2773419999457,
+        "end_unix_seconds": 1790247715.2409813,
+        "returncode": 0,
+        "start_unix_seconds": 1790247713.9017026,
+        "stderr": "pair-77-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-77-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.2376179999319,
+        "end_unix_seconds": 1790247715.323272,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.2420337,
+        "stderr": "pair-77-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-77-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 23,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.50968699998612,
+        "end_unix_seconds": 1790247715.5457098,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.4061983,
+        "stderr": "pair-78-numpy-numpy.stderr",
+        "stdout": "pair-78-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.04758199999651,
+        "end_unix_seconds": 1790247715.4051871,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.3241386,
+        "stderr": "pair-78-numpy-shorthand.stderr",
+        "stdout": "pair-78-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 3,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.63191800003733,
+        "end_unix_seconds": 1790247715.6304092,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.546776,
+        "stderr": "pair-79-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-79-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.10086200008482,
+        "end_unix_seconds": 1790247715.7126584,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.631556,
+        "stderr": "pair-79-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-79-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.40172800001255,
+        "end_unix_seconds": 1790247715.8797393,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.7963367,
+        "stderr": "pair-80-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-80-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.14711899997928,
+        "end_unix_seconds": 1790247715.795247,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.7140992,
+        "stderr": "pair-80-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-80-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 8,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1331.9402560000526,
+        "end_unix_seconds": 1790247717.2946973,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.9627554,
+        "stderr": "pair-81-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-81-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.00008300004902,
+        "end_unix_seconds": 1790247715.9618123,
+        "returncode": 0,
+        "start_unix_seconds": 1790247715.880811,
+        "stderr": "pair-81-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-81-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.03953899996941,
+        "end_unix_seconds": 1790247717.4609675,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.377927,
+        "stderr": "pair-82-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-82-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.15739799995936,
+        "end_unix_seconds": 1790247717.3768914,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.2957332,
+        "stderr": "pair-82-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-82-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 29,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.14859400002206,
+        "end_unix_seconds": 1790247717.5451505,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.4620008,
+        "stderr": "pair-83-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-83-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.8479490000309,
+        "end_unix_seconds": 1790247717.6270595,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.5462103,
+        "stderr": "pair-83-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-83-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 5,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.4695620000448,
+        "end_unix_seconds": 1790247717.7676601,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.6281893,
+        "stderr": "pair-84-numpy-numpy.stderr",
+        "stdout": "pair-84-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.93230700001186,
+        "end_unix_seconds": 1790247717.8496268,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.7686937,
+        "stderr": "pair-84-numpy-shorthand.stderr",
+        "stdout": "pair-84-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 22,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.81484100004855,
+        "end_unix_seconds": 1790247718.0166214,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.9328055,
+        "stderr": "pair-85-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-85-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.9201850000818,
+        "end_unix_seconds": 1790247717.9316864,
+        "returncode": 0,
+        "start_unix_seconds": 1790247717.8507648,
+        "stderr": "pair-85-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-85-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 8,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.29900600006113,
+        "end_unix_seconds": 1790247718.1830819,
+        "returncode": 0,
+        "start_unix_seconds": 1790247718.0997822,
+        "stderr": "pair-86-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-86-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.12918500000887,
+        "end_unix_seconds": 1790247718.0987349,
+        "returncode": 0,
+        "start_unix_seconds": 1790247718.0176044,
+        "stderr": "pair-86-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-86-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 20,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1335.630556999945,
+        "end_unix_seconds": 1790247719.5196302,
+        "returncode": 0,
+        "start_unix_seconds": 1790247718.1839976,
+        "stderr": "pair-87-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-87-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.2221999999565,
+        "end_unix_seconds": 1790247719.6020246,
+        "returncode": 0,
+        "start_unix_seconds": 1790247719.5208015,
+        "stderr": "pair-87-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-87-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 15,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5614.26394700004,
+        "end_unix_seconds": 1790247725.2993722,
+        "returncode": 0,
+        "start_unix_seconds": 1790247719.685107,
+        "stderr": "pair-88-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-88-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.87682400002905,
+        "end_unix_seconds": 1790247719.6839943,
+        "returncode": 0,
+        "start_unix_seconds": 1790247719.6031163,
+        "stderr": "pair-88-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-88-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 19,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1340.3572089999898,
+        "end_unix_seconds": 1790247726.640798,
+        "returncode": 0,
+        "start_unix_seconds": 1790247725.3004394,
+        "stderr": "pair-89-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-89-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.1060969999744,
+        "end_unix_seconds": 1790247726.72297,
+        "returncode": 0,
+        "start_unix_seconds": 1790247726.6418626,
+        "stderr": "pair-89-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-89-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 11,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.38261599999441,
+        "end_unix_seconds": 1790247726.8074036,
+        "returncode": 0,
+        "start_unix_seconds": 1790247726.7240198,
+        "stderr": "pair-90-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-90-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.68089100004272,
+        "end_unix_seconds": 1790247726.8893018,
+        "returncode": 0,
+        "start_unix_seconds": 1790247726.80862,
+        "stderr": "pair-90-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-90-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 23,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5766.70409999997,
+        "end_unix_seconds": 1790247732.6569579,
+        "returncode": 0,
+        "start_unix_seconds": 1790247726.8902526,
+        "stderr": "pair-91-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-91-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.40361499999926,
+        "end_unix_seconds": 1790247732.7394178,
+        "returncode": 0,
+        "start_unix_seconds": 1790247732.6580133,
+        "stderr": "pair-91-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-91-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 2,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.1712909999851,
+        "end_unix_seconds": 1790247732.8239079,
+        "returncode": 0,
+        "start_unix_seconds": 1790247732.7407355,
+        "stderr": "pair-92-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-92-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.41206899995268,
+        "end_unix_seconds": 1790247732.9061937,
+        "returncode": 0,
+        "start_unix_seconds": 1790247732.8247807,
+        "stderr": "pair-92-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-92-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 14,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1339.5570029999817,
+        "end_unix_seconds": 1790247734.3284883,
+        "returncode": 0,
+        "start_unix_seconds": 1790247732.9889297,
+        "stderr": "pair-93-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-93-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.77539400005662,
+        "end_unix_seconds": 1790247732.9880216,
+        "returncode": 0,
+        "start_unix_seconds": 1790247732.9072454,
+        "stderr": "pair-93-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-93-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5593.602008000062,
+        "end_unix_seconds": 1790247740.0057075,
+        "returncode": 0,
+        "start_unix_seconds": 1790247734.412104,
+        "stderr": "pair-94-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-94-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.2971349999998,
+        "end_unix_seconds": 1790247734.4110212,
+        "returncode": 0,
+        "start_unix_seconds": 1790247734.3297231,
+        "stderr": "pair-94-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-94-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 7,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 142.06057199999123,
+        "end_unix_seconds": 1790247740.1489072,
+        "returncode": 0,
+        "start_unix_seconds": 1790247740.0068455,
+        "stderr": "pair-95-numpy-numpy.stderr",
+        "stdout": "pair-95-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.8344650000663,
+        "end_unix_seconds": 1790247740.2308772,
+        "returncode": 0,
+        "start_unix_seconds": 1790247740.1500413,
+        "stderr": "pair-95-numpy-shorthand.stderr",
+        "stdout": "pair-95-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 22,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1339.9980799999867,
+        "end_unix_seconds": 1790247741.5718417,
+        "returncode": 0,
+        "start_unix_seconds": 1790247740.231842,
+        "stderr": "pair-96-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-96-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.43428799996855,
+        "end_unix_seconds": 1790247741.6542997,
+        "returncode": 0,
+        "start_unix_seconds": 1790247741.5728648,
+        "stderr": "pair-96-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-96-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 17,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.40363199999956,
+        "end_unix_seconds": 1790247741.8208222,
+        "returncode": 0,
+        "start_unix_seconds": 1790247741.737417,
+        "stderr": "pair-97-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-97-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.95851699999912,
+        "end_unix_seconds": 1790247741.7363632,
+        "returncode": 0,
+        "start_unix_seconds": 1790247741.6554039,
+        "stderr": "pair-97-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-97-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 22,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5633.931360999895,
+        "end_unix_seconds": 1790247747.5381873,
+        "returncode": 0,
+        "start_unix_seconds": 1790247741.904254,
+        "stderr": "pair-98-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-98-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.10970900008851,
+        "end_unix_seconds": 1790247741.9031122,
+        "returncode": 0,
+        "start_unix_seconds": 1790247741.8220007,
+        "stderr": "pair-98-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-98-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 6,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5646.21152899997,
+        "end_unix_seconds": 1790247753.267773,
+        "returncode": 0,
+        "start_unix_seconds": 1790247747.6215596,
+        "stderr": "pair-99-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-99-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.2472439999965,
+        "end_unix_seconds": 1790247747.6204982,
+        "returncode": 0,
+        "start_unix_seconds": 1790247747.53925,
+        "stderr": "pair-99-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-99-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 23,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1332.2366080000165,
+        "end_unix_seconds": 1790247754.601049,
+        "returncode": 0,
+        "start_unix_seconds": 1790247753.2688103,
+        "stderr": "pair-100-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-100-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.02797799995187,
+        "end_unix_seconds": 1790247754.6833556,
+        "returncode": 0,
+        "start_unix_seconds": 1790247754.6023266,
+        "stderr": "pair-100-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-100-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 9,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.185855000027,
+        "end_unix_seconds": 1790247754.8245785,
+        "returncode": 0,
+        "start_unix_seconds": 1790247754.684391,
+        "stderr": "pair-101-numpy-numpy.stderr",
+        "stdout": "pair-101-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.22028699995099,
+        "end_unix_seconds": 1790247754.906916,
+        "returncode": 0,
+        "start_unix_seconds": 1790247754.8256946,
+        "stderr": "pair-101-numpy-shorthand.stderr",
+        "stdout": "pair-101-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 15,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.38842500008286,
+        "end_unix_seconds": 1790247755.0483134,
+        "returncode": 0,
+        "start_unix_seconds": 1790247754.907924,
+        "stderr": "pair-102-numpy-numpy.stderr",
+        "stdout": "pair-102-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.45894399990539,
+        "end_unix_seconds": 1790247755.130783,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.0493228,
+        "stderr": "pair-102-numpy-shorthand.stderr",
+        "stdout": "pair-102-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 18,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.78631899997163,
+        "end_unix_seconds": 1790247755.2727401,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.1319525,
+        "stderr": "pair-103-numpy-numpy.stderr",
+        "stdout": "pair-103-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.18126499994105,
+        "end_unix_seconds": 1790247755.3549721,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.27379,
+        "stderr": "pair-103-numpy-shorthand.stderr",
+        "stdout": "pair-103-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 13,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.7546879999254,
+        "end_unix_seconds": 1790247755.577731,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.4379747,
+        "stderr": "pair-104-numpy-numpy.stderr",
+        "stdout": "pair-104-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.90508800000862,
+        "end_unix_seconds": 1790247755.4370327,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.3561265,
+        "stderr": "pair-104-numpy-shorthand.stderr",
+        "stdout": "pair-104-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 21,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 142.29016199999478,
+        "end_unix_seconds": 1790247755.803098,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.6608064,
+        "stderr": "pair-105-numpy-numpy.stderr",
+        "stdout": "pair-105-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.89321500006008,
+        "end_unix_seconds": 1790247755.6597347,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.5788407,
+        "stderr": "pair-105-numpy-shorthand.stderr",
+        "stdout": "pair-105-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 29,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5547.080771000083,
+        "end_unix_seconds": 1790247761.3511813,
+        "returncode": 0,
+        "start_unix_seconds": 1790247755.8040988,
+        "stderr": "pair-106-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-106-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.10219699995014,
+        "end_unix_seconds": 1790247761.4334917,
+        "returncode": 0,
+        "start_unix_seconds": 1790247761.3523886,
+        "stderr": "pair-106-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-106-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 14,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5609.796637999921,
+        "end_unix_seconds": 1790247767.0444334,
+        "returncode": 0,
+        "start_unix_seconds": 1790247761.4346352,
+        "stderr": "pair-107-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-107-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.24979399997301,
+        "end_unix_seconds": 1790247767.1268744,
+        "returncode": 0,
+        "start_unix_seconds": 1790247767.045623,
+        "stderr": "pair-107-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-107-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 13,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5563.994103000027,
+        "end_unix_seconds": 1790247772.7739556,
+        "returncode": 0,
+        "start_unix_seconds": 1790247767.20996,
+        "stderr": "pair-108-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-108-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.04463999995914,
+        "end_unix_seconds": 1790247767.208958,
+        "returncode": 0,
+        "start_unix_seconds": 1790247767.1279123,
+        "stderr": "pair-108-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-108-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 16,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 142.07078100002946,
+        "end_unix_seconds": 1790247772.9172425,
+        "returncode": 0,
+        "start_unix_seconds": 1790247772.77517,
+        "stderr": "pair-109-numpy-numpy.stderr",
+        "stdout": "pair-109-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.21560799997951,
+        "end_unix_seconds": 1790247772.9994953,
+        "returncode": 0,
+        "start_unix_seconds": 1790247772.9182782,
+        "stderr": "pair-109-numpy-shorthand.stderr",
+        "stdout": "pair-109-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5577.428384000086,
+        "end_unix_seconds": 1790247778.660796,
+        "returncode": 0,
+        "start_unix_seconds": 1790247773.0833662,
+        "stderr": "pair-110-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-110-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.6593690000218,
+        "end_unix_seconds": 1790247773.0822666,
+        "returncode": 0,
+        "start_unix_seconds": 1790247773.0006063,
+        "stderr": "pair-110-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-110-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 0,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.3336930000023,
+        "end_unix_seconds": 1790247778.8847516,
+        "returncode": 0,
+        "start_unix_seconds": 1790247778.7444167,
+        "stderr": "pair-111-numpy-numpy.stderr",
+        "stdout": "pair-111-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.2931519999438,
+        "end_unix_seconds": 1790247778.7433646,
+        "returncode": 0,
+        "start_unix_seconds": 1790247778.6620705,
+        "stderr": "pair-111-numpy-shorthand.stderr",
+        "stdout": "pair-111-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 12,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 84.05553100010366,
+        "end_unix_seconds": 1790247778.9697757,
+        "returncode": 0,
+        "start_unix_seconds": 1790247778.8857186,
+        "stderr": "pair-112-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-112-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.20958599999994,
+        "end_unix_seconds": 1790247779.052178,
+        "returncode": 0,
+        "start_unix_seconds": 1790247778.9709678,
+        "stderr": "pair-112-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-112-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 20,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 84.09699799994996,
+        "end_unix_seconds": 1790247779.219216,
+        "returncode": 0,
+        "start_unix_seconds": 1790247779.135118,
+        "stderr": "pair-113-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-113-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 80.8667849998983,
+        "end_unix_seconds": 1790247779.1340332,
+        "returncode": 0,
+        "start_unix_seconds": 1790247779.0531652,
+        "stderr": "pair-113-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-113-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 29,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.923493000083,
+        "end_unix_seconds": 1790247779.44225,
+        "returncode": 0,
+        "start_unix_seconds": 1790247779.3023255,
+        "stderr": "pair-114-numpy-numpy.stderr",
+        "stdout": "pair-114-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.00123600002007,
+        "end_unix_seconds": 1790247779.3012953,
+        "returncode": 0,
+        "start_unix_seconds": 1790247779.2202933,
+        "stderr": "pair-114-numpy-shorthand.stderr",
+        "stdout": "pair-114-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 8,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5611.795640999958,
+        "end_unix_seconds": 1790247785.0551965,
+        "returncode": 0,
+        "start_unix_seconds": 1790247779.4433994,
+        "stderr": "pair-115-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-115-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.36109999998098,
+        "end_unix_seconds": 1790247785.1376758,
+        "returncode": 0,
+        "start_unix_seconds": 1790247785.0563133,
+        "stderr": "pair-115-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-115-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 3,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5553.913390000048,
+        "end_unix_seconds": 1790247790.692602,
+        "returncode": 0,
+        "start_unix_seconds": 1790247785.138687,
+        "stderr": "pair-116-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-116-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.42432399995414,
+        "end_unix_seconds": 1790247790.7750983,
+        "returncode": 0,
+        "start_unix_seconds": 1790247790.6936731,
+        "stderr": "pair-116-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-116-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 25,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.14426400001412,
+        "end_unix_seconds": 1790247790.916367,
+        "returncode": 0,
+        "start_unix_seconds": 1790247790.7762213,
+        "stderr": "pair-117-numpy-numpy.stderr",
+        "stdout": "pair-117-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.11821099998906,
+        "end_unix_seconds": 1790247790.9984653,
+        "returncode": 0,
+        "start_unix_seconds": 1790247790.9173458,
+        "stderr": "pair-117-numpy-shorthand.stderr",
+        "stdout": "pair-117-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 21,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5555.223850999937,
+        "end_unix_seconds": 1790247796.5547752,
+        "returncode": 0,
+        "start_unix_seconds": 1790247790.9995499,
+        "stderr": "pair-118-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-118-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.34217200006333,
+        "end_unix_seconds": 1790247796.6371553,
+        "returncode": 0,
+        "start_unix_seconds": 1790247796.5558126,
+        "stderr": "pair-118-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-118-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 2,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.00943600001392,
+        "end_unix_seconds": 1790247796.7781982,
+        "returncode": 0,
+        "start_unix_seconds": 1790247796.6381874,
+        "stderr": "pair-119-numpy-numpy.stderr",
+        "stdout": "pair-119-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.11400500001764,
+        "end_unix_seconds": 1790247796.8605666,
+        "returncode": 0,
+        "start_unix_seconds": 1790247796.7794516,
+        "stderr": "pair-119-numpy-shorthand.stderr",
+        "stdout": "pair-119-numpy-shorthand.stdout"
+      }
+    }
+  ],
+  "profile": "torch",
+  "schema": "shorthand.energy.state-of-practice.capture.v1",
+  "success": true,
+  "warmups": [
+    {
+      "runner": "shorthand",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.1113870000213,
+        "end_unix_seconds": 1790247554.4232225,
+        "returncode": 0,
+        "start_unix_seconds": 1790247554.3421097,
+        "stderr": "warmup-0-shorthand.stderr",
+        "stdout": "warmup-0-shorthand.stdout"
+      }
+    },
+    {
+      "runner": "numpy",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 139.58068400000911,
+        "end_unix_seconds": 1790247554.56396,
+        "returncode": 0,
+        "start_unix_seconds": 1790247554.4243784,
+        "stderr": "warmup-0-numpy.stderr",
+        "stdout": "warmup-0-numpy.stdout"
+      }
+    },
+    {
+      "runner": "cpp17-o3",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 85.24689399996532,
+        "end_unix_seconds": 1790247554.650166,
+        "returncode": 0,
+        "start_unix_seconds": 1790247554.5649183,
+        "stderr": "warmup-0-cpp17-o3.stderr",
+        "stdout": "warmup-0-cpp17-o3.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-eager",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1335.2957399999923,
+        "end_unix_seconds": 1790247555.98644,
+        "returncode": 0,
+        "start_unix_seconds": 1790247554.6511424,
+        "stderr": "warmup-0-pytorch-eager.stderr",
+        "stdout": "warmup-0-pytorch-eager.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-compile",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 9026.031922000016,
+        "end_unix_seconds": 1790247565.013644,
+        "returncode": 0,
+        "start_unix_seconds": 1790247555.9876106,
+        "stderr": "warmup-0-pytorch-compile.stderr",
+        "stdout": "warmup-0-pytorch-compile.stdout"
+      }
+    },
+    {
+      "runner": "shorthand",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 81.67976499998986,
+        "end_unix_seconds": 1790247565.0963635,
+        "returncode": 0,
+        "start_unix_seconds": 1790247565.0146825,
+        "stderr": "warmup-1-shorthand.stderr",
+        "stdout": "warmup-1-shorthand.stdout"
+      }
+    },
+    {
+      "runner": "numpy",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 140.2115529999719,
+        "end_unix_seconds": 1790247565.237611,
+        "returncode": 0,
+        "start_unix_seconds": 1790247565.097398,
+        "stderr": "warmup-1-numpy.stderr",
+        "stdout": "warmup-1-numpy.stdout"
+      }
+    },
+    {
+      "runner": "cpp17-o3",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 83.9121819999491,
+        "end_unix_seconds": 1790247565.3226955,
+        "returncode": 0,
+        "start_unix_seconds": 1790247565.2387824,
+        "stderr": "warmup-1-cpp17-o3.stderr",
+        "stdout": "warmup-1-cpp17-o3.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-eager",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1338.8578080000002,
+        "end_unix_seconds": 1790247566.6624076,
+        "returncode": 0,
+        "start_unix_seconds": 1790247565.3235483,
+        "stderr": "warmup-1-pytorch-eager.stderr",
+        "stdout": "warmup-1-pytorch-eager.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-compile",
+      "trial": {
+        "argv": [
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiment-output/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 5579.755085000044,
+        "end_unix_seconds": 1790247572.243204,
+        "returncode": 0,
+        "start_unix_seconds": 1790247566.6634474,
+        "stderr": "warmup-1-pytorch-compile.stderr",
+        "stdout": "warmup-1-pytorch-compile.stdout"
+      }
+    }
+  ]
+}
