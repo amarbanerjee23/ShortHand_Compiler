@@ -24,17 +24,25 @@ struct ClassificationBatch {
 };
 ApplicationConfiguration readApplicationConfiguration(const std::string &);
 LabeledDataset readLabeledDataset(const ApplicationConfiguration &);
+// Diagnostic clock partition, never energy or uninstrumented latency evidence.
+struct ClassificationProfile {
+    std::uint64_t preprocessing_ns=0, prepared_call_ns=0, output_validation_ns=0;
+    std::uint64_t postprocessing_ns=0, total_ns=0, completed=0;
+    bool success=false;
+};
 class ClassificationApplication {
 public:
     explicit ClassificationApplication(ApplicationConfiguration);
     // Concurrent calls use the same prepared session and local request buffers.
     ClassificationBatch classify(const std::vector<float> &) const;
+    ClassificationBatch classifyProfiled(const std::vector<float> &,ClassificationProfile &) const;
     serving::HandlerResult handle(const serving::Request &,const serving::CancellationToken &) const;
     std::string runtimeVersion() const;
 private:
     ApplicationConfiguration configuration_;
     std::unique_ptr<PreparedInference> session_;
 };
+shorthand::c3eco::Json profileApplication(const ApplicationConfiguration &);
 shorthand::c3eco::Json evaluateApplication(const ApplicationConfiguration &,bool serving);
 shorthand::c3eco::Json describeApplication(const ApplicationConfiguration &);
 void serveApplicationStream(const ApplicationConfiguration &,std::istream &,std::ostream &);

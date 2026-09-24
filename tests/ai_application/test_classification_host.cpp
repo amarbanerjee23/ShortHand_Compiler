@@ -49,8 +49,25 @@ int main() {
     fault=1;rejects([&]{app.classify({0,0});},"nonfinite_application_output");
     fault=2;rejects([&]{app.classify({0,0});},"application_output_count_mismatch");
     fault=3;rejects([&]{app.classify({0,0});},"application_inference_failed:test_failure");fault=0;
+    ClassificationProfile profile;
+    auto profiled=app.classifyProfiled({4,0,0,0},profile);
+    check(profile.success && profile.completed==2);
+    check(profile.total_ns==profile.preprocessing_ns+profile.prepared_call_ns+
+          profile.output_validation_ns+profile.postprocessing_ns);
+    check(profiled.scores==full.scores && profiled.predictions==full.predictions && profiled.top_k==full.top_k);
+    check(app.classifyProfiled({0,0},profile).scores.size()==3 && profile.completed==1);
+    rejects([&]{app.classifyProfiled({17,0},profile);},"application_input_outside_range");
+    check(!profile.success && !profile.completed && !profile.total_ns);
+    for (int mode:{1,2,3}) {
+        fault=mode; profile.success=true;profile.total_ns=123;
+        const std::string reason=mode==1?"nonfinite_application_output":
+            mode==2?"application_output_count_mismatch":"application_inference_failed:test_failure";
+        rejects([&]{app.classifyProfiled({0,0},profile);},reason);
+        check(!profile.success && !profile.completed && !profile.total_ns);
+    }
+    fault=0;
     std::vector<std::future<void>> workers;
-    for(int i=0;i<4;++i) workers.push_back(std::async(std::launch::async,[&]{for(int n=0;n<100;++n) check(app.classify({4,0,0,0}).scores==full.scores);}));
+    for(int i=0;i<4;++i) workers.push_back(std::async(std::launch::async,[&]{for(int n=0;n<100;++n) {ClassificationProfile local;check(app.classifyProfiled({4,0,0,0},local).scores==full.scores && local.success);}}));
     for(auto &worker:workers) worker.get();
     std::cout<<"PASS host classification: full/partial batches, ties, error preservation, padding validation, concurrent calls (test backend; not ONNX or energy evidence)\n";
 }
