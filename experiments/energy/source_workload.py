@@ -105,7 +105,9 @@ def worker(model_path, baseline):
         def classify(batch):
             return torch.argmax((batch / 16.0) @ torch_weights + torch_bias, dim=1)
 
-        classify_impl = torch.compile(classify, fullgraph=True, dynamic=False) if baseline == 'torch-compile' else classify
+        # Cyclic rotation changes the two segment lengths on each repetition.
+        # Dynamic shapes avoid exhausting Dynamo's static-shape recompile limit.
+        classify_impl = torch.compile(classify, fullgraph=True, dynamic=True) if baseline == 'torch-compile' else classify
         for iteration in range(repetitions):
             shift = iteration % len(raw)
             segments = (values[shift:], values[:shift]) if shift else (values,)

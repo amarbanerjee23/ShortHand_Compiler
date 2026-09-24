@@ -16,6 +16,30 @@ from source_workload import prepare
 
 
 class Experiments(unittest.TestCase):
+    def test_cpp_onnx_validation_rejects_score_and_topk_regressions(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = pathlib.Path(temp) / 'trials.csv'
+            reference = dict(predictions=[9], scores=list(range(10)))
+            good = dict(scores=list(range(10)), top_k=[9, 8, 7])
+            campaign.write(str(path) + '.validation.json', good)
+            runtime_state_of_practice.check_cpp_validation(path, reference)
+            for bad in (dict(scores=list(range(10)), top_k=[9, 7, 8]),
+                        dict(scores=[0] * 9 + [9], top_k=[9, 8, 7])):
+                campaign.write(str(path) + '.validation.json', bad)
+                with self.assertRaises(ValueError):
+                    runtime_state_of_practice.check_cpp_validation(path, reference)
+
+    def test_command_failure_and_watchdog_are_not_observations(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out = pathlib.Path(temp)
+            with self.assertRaises(ValueError):
+                campaign.command([sys.executable, '-c', 'raise SystemExit(3)'], out, 'bad')
+            with self.assertRaises(subprocess.TimeoutExpired):
+                campaign.command([sys.executable, '-c', 'import time; time.sleep(10)'],
+                                 out, 'timeout', timeout=.05)
+            self.assertEqual(campaign.load(out / 'timeout.failure.json')['error'], 'timeout')
+            self.assertFalse((out / 'timeout.json').exists())
+
     def test_signed_results_and_compilation_amortization(self):
         compare = campaign.energy_statistics.compare
         a = compare([1., 2., 3., 4.], [2., 4., 6., 8.])
@@ -78,6 +102,16 @@ class Experiments(unittest.TestCase):
             with self.assertRaises(ValueError):
                 campaign.prepare(args)
 
+    def test_runtime_plan_rejects_application_batch_limit_before_capture(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out = pathlib.Path(temp) / 'plan'
+            args = argparse.Namespace(output=out, source_repetitions=1, runtime_repetitions=20,
+                source_pairs=4, runtime_pairs=4, compile_repetitions=1, source_baseline='numpy',
+                mode='execution_only', instrument=None, meter_csv=None)
+            with self.assertRaisesRegex(ValueError, 'application_report_size_limit'):
+                campaign.prepare(args)
+            self.assertFalse(out.exists())
+
     def test_external_state_of_practice_version_is_verified(self):
         with tempfile.TemporaryDirectory() as temp:
             runner = pathlib.Path(temp) / 'peer-runner'
@@ -102,6 +136,12 @@ class Experiments(unittest.TestCase):
             incomplete['profile'] = 'full'
             with self.assertRaises(ValueError):
                 state_of_practice.validate_plan(incomplete)
+            torch_plan = copy.deepcopy(plan)
+            torch_plan.update(profile='torch', baselines=list(state_of_practice.PROFILES['torch']), torch={'frozen': True})
+            state_of_practice.validate_plan(torch_plan)
+            torch_plan['baselines'].pop()
+            with self.assertRaises(ValueError):
+                state_of_practice.validate_plan(torch_plan)
             measured = copy.deepcopy(plan)
             measured.update(mode='calibrated_energy', pairs=30, meter_csv=None)
             with self.assertRaises(ValueError):

@@ -1,0 +1,60 @@
+{
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "comparative_energy_claim": false,
+  "completed_utc": "2026-09-22T15:26:08.628637+00:00",
+  "design": {
+    "runtime_pairs": 10,
+    "runtime_repetitions": 20,
+    "runtime_trials": 3,
+    "source_pairs": 30,
+    "source_repetitions": [
+      10,
+      100
+    ]
+  },
+  "energy_savings_percent": null,
+  "lowest_carbon_language_claim": false,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "revision": "90952fa79209f02e2996a0769017db344657d921",
+  "run_attempt": "1",
+  "run_id": "35746158570",
+  "schema": "shorthand.energy.verified-run.v1",
+  "stages": [
+    {
+      "name": "source-r10",
+      "success": true
+    },
+    {
+      "name": "source-r100",
+      "success": true
+    },
+    {
+      "name": "runtime-plan",
+      "success": true
+    },
+    {
+      "error": "runner failed (1): Traceback (most recent call last):\n  File \"/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py\", line 287, in <module>\n    main()\n  File \"/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py\", line 231, in main\n    execute([args.tool, 'application', args.config, paths[key]])\n  File \"/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py\", line 59, in execute\n    raise RuntimeError(f'runner failed ({result.returncode}): {result.stderr[-4000:]}')\nRuntimeError: runner failed (2): qualification error: application_report_size_limit\n\n",
+      "name": "python-runtime",
+      "success": false
+    },
+    {
+      "error": "failed command or discontinuous clock: preflight-native, exit=2\nqualification error: application_report_size_limit\n\n",
+      "name": "cpp-runtime",
+      "success": false
+    }
+  ],
+  "started_utc": "2026-09-22T15:19:53.587157+00:00",
+  "success": false,
+  "unavailable_baselines": {
+    "mojo-max": "repository supplies a runner contract, no implementation",
+    "rust-candle": "repository supplies a runner contract, no implementation"
+  }
+}

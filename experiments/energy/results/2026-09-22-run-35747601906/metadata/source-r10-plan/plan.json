@@ -1,0 +1,43 @@
+{
+  "baselines": [
+    "numpy",
+    "cpp17-o3",
+    "pytorch-eager",
+    "pytorch-compile"
+  ],
+  "comparative_energy_claim": false,
+  "external": {},
+  "hashes": {
+    "policy.json": "7065547a385ab4514249547db1c38bcb7abc0d57aecc674dffcce9c4701a2262",
+    "source/classifier.short": "b966a237441bf827bf5d6c50fa5058b098f061717087d052707a2800ad98f0ea",
+    "source/expected.json": "121b6bb285c83adc9debbcb35da9585fe3b9a2c5997276686e7a681a77be1e31",
+    "source/input.txt": "6b4331a27a81e6e0af0646480368103f04bae24bcb02c5b9b16aabf4d4d6fb85",
+    "source/model.json": "7b01987979b64b8f864aa1b9dff8475c4342348d304c217042502714075e85ff"
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_csv": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "pairs": 30,
+  "profile": "torch",
+  "repetitions": 10,
+  "schema": "shorthand.energy.state-of-practice.plan.v1",
+  "scope": "UCI Optdigits FP64 nearest-centroid source workload on Linux x64 CPU",
+  "seed": 104,
+  "torch": {
+    "compile_cache": "warm-after-two-predeclared-warmups",
+    "python": "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/build-energy/venv/bin/python",
+    "sha256": "a92f0f95e883390c7256b2e441484aac06b1002dbe1d924141a77c8d82f96223",
+    "versions": {
+      "numpy": "2.3.5",
+      "numpy_record_sha256": "371c38bf6228704292eb07ad71d5ef6e600170ede65eb8555124dd6464faf019",
+      "python": "3.12.3",
+      "torch": "2.9.1+cpu",
+      "torch_config_sha256": "0b2694eb63e8d944105cdabfcf86df99dd554888bb9201f7df9b9f72ad5e35a4",
+      "torch_cuda_version": null,
+      "torch_git_version": "5811a8d7da873dd699ff6687092c225caffcf1bb",
+      "torch_record_sha256": "7b05aa79593dc69b5b35b6d40e9903785059fd4c1f6d4562b2068462c03c42b1"
+    }
+  },
+  "warmups": 2
+}

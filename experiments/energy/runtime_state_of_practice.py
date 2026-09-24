@@ -117,6 +117,23 @@ def load_cpp_trials(path, q):
     return rows
 
 
+def check_cpp_validation(path, native):
+    """Compare logits and stable top-3 across implementations outside timing."""
+    report = campaign.load(str(path) + '.validation.json')
+    scores = report.get('scores', [])
+    reference = native.get('scores', [])
+    if len(scores) != len(native['predictions']) * 10 or len(scores) != len(reference):
+        raise ValueError('independent C++ score shape mismatch')
+    if any(not math.isfinite(a) or not math.isfinite(b) or abs(a - b) > 1e-5 + 1e-4 * abs(b)
+           for a, b in zip(scores, reference)):
+        raise ValueError('independent C++ score mismatch')
+    ranked = []
+    for offset in range(0, len(reference), 10):
+        ranked.extend(sorted(range(10), key=lambda label: (-reference[offset + label], label))[:3])
+    if report.get('top_k') != ranked:
+        raise ValueError('independent C++ top-3 mismatch')
+
+
 def case_inputs(case):
     app = campaign.load(case['application'])
     q = campaign.load(app['qualification_config'])
@@ -147,7 +164,8 @@ def run_case(plan, case, out, tool, cpp_binary):
     native_preflight = out / 'preflight-native-report.json'
     campaign.command([tool, 'application', case['application'], native_preflight],
                      out, 'preflight-native', completed_per_process)
-    expected = validate_native_report(native_preflight)['predictions']
+    reference = validate_native_report(native_preflight)
+    expected = reference['predictions']
     checksum = int(sum(expected) * q['repetitions'] * q['trials'])
 
     cpp_base = [
@@ -157,6 +175,7 @@ def run_case(plan, case, out, tool, cpp_binary):
     preflight_trials = out / 'preflight-cpp-trials.csv'
     cpp_preflight = campaign.command(cpp_base + [preflight_trials], out, 'preflight-cpp', completed_per_process)
     check_cpp_output(out / cpp_preflight['stdout'], expected, checksum)
+    check_cpp_validation(preflight_trials, reference)
     load_cpp_trials(preflight_trials, q)
 
     orders = [['native', 'cpp_onnx'], ['cpp_onnx', 'native']] * (plan['runtime_pairs'] // 2)
@@ -183,6 +202,7 @@ def run_case(plan, case, out, tool, cpp_binary):
                 process = campaign.command(
                     cpp_base + [trial_path], out, f'pair-{index}-cpp_onnx', completed_per_process)
                 check_cpp_output(out / process['stdout'], expected, checksum)
+                check_cpp_validation(trial_path, reference)
                 process['trial_report'] = trial_path.name
                 pair['cpp_onnx'] = process
                 pair['cpp_trials'] = load_cpp_trials(trial_path, q)
@@ -431,13 +451,16 @@ def analyze(out, expected_sha, tool=None):
             orders = [p['order'] for p in report['pairs']]
             if orders.count(['native', 'cpp_onnx']) != plan['runtime_pairs'] // 2 or orders.count(['cpp_onnx', 'native']) != plan['runtime_pairs'] // 2:
                 raise ValueError('unbalanced C++/ONNX runner order: ' + case['id'])
-            expected = validate_native_report(directory / 'preflight-native-report.json')['predictions']
+            reference = validate_native_report(directory / 'preflight-native-report.json')
+            expected = reference['predictions']
+            check_cpp_validation(directory / 'preflight-cpp-trials.csv', reference)
             checksum = int(sum(expected) * report['repetitions'] * report['trials'])
             for pair in report['pairs']:
                 native_process = pair['native']
                 cpp_process = pair['cpp_onnx']
                 native = validate_native_report(directory / native_process['application_report'], expected)
                 check_cpp_output(directory / cpp_process['stdout'], expected, checksum)
+                check_cpp_validation(directory / cpp_process['trial_report'], native)
                 if len(native['trials']) != len(pair['native_trials']):
                     raise ValueError('retained native inner trial count changed')
                 for original, retained in zip(native['trials'], pair['native_trials']):
@@ -492,6 +515,7 @@ def smoke(clang, tool, onnx_root):
         check_cpp_output(
             root / trial['stdout'], expected,
             int(sum(expected) * q['repetitions'] * q['trials']))
+        check_cpp_validation(trial_report, campaign.load(native_path))
         observed = load_cpp_trials(trial_report, q)
         if len(observed) != q['trials'] or any(
                 item['completed'] != per_trial_completed for item in observed):

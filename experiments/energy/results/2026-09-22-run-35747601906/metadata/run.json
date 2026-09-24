@@ -1,0 +1,58 @@
+{
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "comparative_energy_claim": false,
+  "completed_utc": "2026-09-22T15:38:35.979141+00:00",
+  "design": {
+    "runtime_pairs": 10,
+    "runtime_repetitions": 10,
+    "runtime_trials": 3,
+    "source_pairs": 30,
+    "source_repetitions": [
+      10,
+      100
+    ]
+  },
+  "energy_savings_percent": null,
+  "lowest_carbon_language_claim": false,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "python": "3.12.3 (main, Jul 15 2026, 23:46:41) [GCC 13.3.0]",
+  "revision": "d3f1c6d3fc98357c44689504daae15204de56b3f",
+  "run_attempt": "1",
+  "run_id": "35747601906",
+  "schema": "shorthand.energy.verified-run.v1",
+  "stages": [
+    {
+      "name": "source-r10",
+      "success": true
+    },
+    {
+      "name": "source-r100",
+      "success": true
+    },
+    {
+      "name": "runtime-plan",
+      "success": true
+    },
+    {
+      "name": "python-runtime",
+      "success": true
+    },
+    {
+      "name": "cpp-runtime",
+      "success": true
+    }
+  ],
+  "started_utc": "2026-09-22T15:31:57.224135+00:00",
+  "success": true,
+  "unavailable_baselines": {
+    "mojo-max": "repository supplies a runner contract, no implementation",
+    "rust-candle": "repository supplies a runner contract, no implementation"
+  }
+}

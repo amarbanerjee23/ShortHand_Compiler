@@ -170,6 +170,25 @@ void write_trials(const std::string &path, const std::vector<Trial> &trials) {
   if (!out) throw std::runtime_error("failed to finalize trial report");
 }
 
+void write_validation(const std::string &path, const Classification &result) {
+  if (path.empty()) return;
+  std::ofstream out(path + ".validation.json", std::ios::trunc);
+  if (!out) throw std::runtime_error("cannot create validation report");
+  out << std::setprecision(9) << "{\"scores\":[";
+  for (size_t i = 0; i < result.scores.size(); ++i) {
+    if (i) out << ',';
+    out << result.scores[i];
+  }
+  out << "],\"top_k\":[";
+  for (size_t i = 0; i < result.top_k.size(); ++i) {
+    if (i) out << ',';
+    out << result.top_k[i];
+  }
+  out << "]}\n";
+  out.flush();
+  if (!out) throw std::runtime_error("failed to finalize validation report");
+}
+
 }  // namespace
 
 int main(int argc, char **argv) {
@@ -214,8 +233,13 @@ int main(int argc, char **argv) {
     const std::string out_name = output_name(session, allocator);
     if (in_name.empty() || out_name.empty()) throw std::runtime_error("missing ONNX names");
 
+    // Match AIRuntime/Python: two first-batch warmups, not full-dataset passes.
+    Dataset warmup_data;
+    const size_t warmup_rows = std::min(static_cast<size_t>(batch), data.labels.size());
+    warmup_data.values.assign(data.values.begin(), data.values.begin() + warmup_rows * 64);
+    warmup_data.labels.assign(data.labels.begin(), data.labels.begin() + warmup_rows);
     for (int n = 0; n < warmups; ++n)
-      (void)classify(session, in_name, out_name, data, static_cast<size_t>(batch));
+      (void)classify(session, in_name, out_name, warmup_data, static_cast<size_t>(batch));
 
     Classification reference;
     Classification current;
@@ -263,6 +287,7 @@ int main(int argc, char **argv) {
         std::accumulate(current.predictions.begin(), current.predictions.end(), int64_t{0});
     const int64_t checksum = prediction_sum * repetitions * trials;
     write_trials(trial_report, trial_records);
+    write_validation(trial_report, current);
     for (auto value : current.predictions) std::cout << value << '\n';
     std::cout << checksum << '\n';
     return 0;

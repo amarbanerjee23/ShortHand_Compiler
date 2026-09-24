@@ -28,6 +28,7 @@ CLAIMS = dict(comparative_energy_claim=False, lowest_carbon_language_claim=False
               official_certification_granted=False)
 CORE_BASELINES = ('numpy', 'cpp17-o3')
 FULL_BASELINES = ('numpy', 'cpp17-o3', 'pytorch-eager', 'pytorch-compile', 'rust-candle', 'mojo-max')
+PROFILES = dict(core=CORE_BASELINES, torch=FULL_BASELINES[:4], full=FULL_BASELINES)
 
 
 def _bounded(value, low, high, name):
@@ -54,13 +55,13 @@ def _tool_version(python):
     result = subprocess.run([str(python), '-c', probe],
         text=True, capture_output=True, timeout=60)
     if result.returncode:
-        raise ValueError('full profile requires an importable PyTorch environment: ' + result.stderr[-1000:])
+        raise ValueError('PyTorch profile requires an importable PyTorch environment: ' + result.stderr[-1000:])
     import json
     value = json.loads(result.stdout)
     if value['python'] != '3.12' and not value['python'].startswith('3.12.'):
-        raise ValueError('full profile requires CPython 3.12 for the pinned workload')
+        raise ValueError('PyTorch profile requires CPython 3.12 for the pinned workload')
     if value['numpy'] != '2.3.5':
-        raise ValueError('full profile requires pinned NumPy 2.3.5 in the PyTorch environment')
+        raise ValueError('PyTorch profile requires pinned NumPy 2.3.5 in the PyTorch environment')
     return value
 
 
@@ -81,15 +82,19 @@ def _external(path, version, name):
 def validate_plan(plan):
     if plan.get('schema') != 'shorthand.energy.state-of-practice.plan.v1':
         raise ValueError('invalid state-of-practice plan')
-    if plan.get('mode') not in ('execution_only', 'calibrated_energy') or plan.get('profile') not in ('core', 'full'):
+    if plan.get('mode') not in ('execution_only', 'calibrated_energy') or plan.get('profile') not in PROFILES:
         raise ValueError('invalid state-of-practice mode/profile')
     _bounded(plan.get('pairs'), 4, 100, 'pairs')
     _bounded(plan.get('repetitions'), 1, 10000, 'repetitions')
     if plan['pairs'] % 2 or plan.get('warmups') != 2:
         raise ValueError('balanced even pairs and exactly two warmups are required')
-    expected = CORE_BASELINES if plan['profile'] == 'core' else FULL_BASELINES
+    expected = PROFILES[plan['profile']]
     if tuple(plan.get('baselines', ())) != expected:
         raise ValueError('baseline matrix is incomplete or reordered')
+    if plan['profile'] in ('torch', 'full') and not plan.get('torch'):
+        raise ValueError('PyTorch profiles require a frozen PyTorch environment')
+    if plan['profile'] == 'torch' and plan.get('external'):
+        raise ValueError('torch profile cannot imply external runner coverage')
     if plan['profile'] == 'full':
         if set(plan.get('external', {})) != {'rust-candle', 'mojo-max'} or not plan.get('torch'):
             raise ValueError('full profile requires PyTorch, Rust/Candle and Mojo/MAX declarations')
@@ -121,16 +126,17 @@ def prepare(args):
         campaign.snapshot(args.instrument, out / 'instrument.json')
     plan = dict(schema='shorthand.energy.state-of-practice.plan.v1', mode=args.mode,
                 profile=args.profile, pairs=args.pairs, repetitions=args.repetitions,
-                warmups=2, seed=104, baselines=list(CORE_BASELINES if args.profile == 'core' else FULL_BASELINES),
+                warmups=2, seed=104, baselines=list(PROFILES[args.profile]),
                 meter_csv=str(args.meter_csv.resolve()) if measured else None,
                 scope='UCI Optdigits FP64 nearest-centroid source workload on Linux x64 CPU',
                 external={}, torch=None, **CLAIMS)
-    if args.profile == 'full':
+    if args.profile in ('torch', 'full'):
         torch_python = pathlib.Path(os.path.abspath(os.path.expanduser(args.pytorch_python or sys.executable)))
         if not torch_python.is_file():
             raise ValueError('invalid PyTorch Python executable')
         plan['torch'] = dict(python=str(torch_python), sha256=campaign.sha(torch_python), versions=_tool_version(torch_python),
                              compile_cache='warm-after-two-predeclared-warmups')
+    if args.profile == 'full':
         plan['external'] = {
             'rust-candle': _external(args.rust_command, args.rust_version, 'rust'),
             'mojo-max': _external(args.mojo_command, args.mojo_version, 'mojo'),
@@ -150,7 +156,7 @@ def _write_cpp_source(model_path, target):
         raise ValueError('invalid FP64 model for C++ control')
     w = ','.join(format(float(v), '.17g') for v in weights)
     b = ','.join(format(float(v), '.17g') for v in bias)
-    target.write_text(f'''#include <array>\n#include <cmath>\n#include <iostream>\n#include <stdexcept>\n#include <vector>\n\nstatic constexpr std::array<double, 640> weights = {{{w}}};\nstatic constexpr std::array<double, 10> bias = {{{b}}};\n\nint main() {{\n  try {{\n    long long repeats_ll = 0;\n    if (!(std::cin >> repeats_ll) || repeats_ll < 1 || repeats_ll > 10000) throw std::runtime_error("invalid repetitions");\n    const int repeats = static_cast<int>(repeats_ll);\n    constexpr int rows = 1797, features = 64, classes = 10;\n    std::vector<double> raw(static_cast<std::size_t>(rows) * features);\n    for (double& value : raw) if (!(std::cin >> value) || !std::isfinite(value)) throw std::runtime_error("invalid input");\n    double extra = 0.0;\n    if (std::cin >> extra) throw std::runtime_error("trailing input");\n    std::array<int, rows> predictions{{}};\n    long long checksum = 0;\n    for (int iteration = 0; iteration < repeats; ++iteration) {{\n      const int shift = iteration % rows;\n      for (int row = 0; row < rows; ++row) {{\n        int input_row = row + shift;\n        if (input_row >= rows) input_row -= rows;\n        int best = 0; double maximum = -1000000.0;\n        for (int label = 0; label < classes; ++label) {{\n          double score = bias[static_cast<std::size_t>(label)];\n          for (int feature = 0; feature < features; ++feature) {{\n            const double value = raw[static_cast<std::size_t>(input_row) * features + feature] / 16.0;\n            score += value * weights[static_cast<std::size_t>(feature) * classes + label];\n          }}\n          if (score > maximum) {{ maximum = score; best = label; }}\n        }}\n        predictions[static_cast<std::size_t>(row)] = best; checksum += best;\n      }}\n    }}\n    for (int value : predictions) std::cout << value << '\\n';\n    std::cout << checksum << '\\n';\n    return 0;\n  }} catch (const std::exception& error) {{ std::cerr << error.what() << '\\n'; return 1; }}\n}}\n''')
+    target.write_text(f'''#include <array>\n#include <cmath>\n#include <iostream>\n#include <stdexcept>\n#include <vector>\n\nstatic constexpr std::array<double, 640> weights = {{{w}}};\nstatic constexpr std::array<double, 10> bias = {{{b}}};\n\nint main() {{\n  try {{\n    std::ios_base::sync_with_stdio(false); std::cin.tie(nullptr);\n    long long repeats_ll = 0;\n    if (!(std::cin >> repeats_ll) || repeats_ll < 1 || repeats_ll > 10000) throw std::runtime_error("invalid repetitions");\n    const int repeats = static_cast<int>(repeats_ll);\n    constexpr int rows = 1797, features = 64, classes = 10;\n    std::vector<double> raw(static_cast<std::size_t>(rows) * features);\n    for (double& value : raw) if (!(std::cin >> value) || !std::isfinite(value)) throw std::runtime_error("invalid input");\n    double extra = 0.0;\n    if (std::cin >> extra) throw std::runtime_error("trailing input");\n    std::array<int, rows> predictions{{}};\n    long long checksum = 0;\n    for (int iteration = 0; iteration < repeats; ++iteration) {{\n      const int shift = iteration % rows;\n      for (int row = 0; row < rows; ++row) {{\n        int input_row = row + shift;\n        if (input_row >= rows) input_row -= rows;\n        std::array<double, features> normalized{{}};\n        for (int feature = 0; feature < features; ++feature)\n          normalized[static_cast<std::size_t>(feature)] = raw[static_cast<std::size_t>(input_row) * features + feature] / 16.0;\n        int best = 0; double maximum = -1000000.0;\n        for (int label = 0; label < classes; ++label) {{\n          double score = bias[static_cast<std::size_t>(label)];\n          for (int feature = 0; feature < features; ++feature) {{\n            const double value = normalized[static_cast<std::size_t>(feature)];\n            score += value * weights[static_cast<std::size_t>(feature) * classes + label];\n          }}\n          if (score > maximum) {{ maximum = score; best = label; }}\n        }}\n        predictions[static_cast<std::size_t>(row)] = best; checksum += best;\n      }}\n    }}\n    for (int value : predictions) std::cout << value << '\\n';\n    std::cout << checksum << '\\n';\n    return 0;\n  }} catch (const std::exception& error) {{ std::cerr << error.what() << '\\n'; return 1; }}\n}}\n''')
 
 
 def _build_commands(plan, inputs, out, compiler, clang):
@@ -171,17 +177,18 @@ def _build_commands(plan, inputs, out, compiler, clang):
         'numpy': [sys.executable, HERE / 'source_workload.py', '--model', source / 'model.json', '--baseline', 'numpy'],
         'cpp17-o3': [cpp],
     }
-    if plan['profile'] == 'full':
+    if plan['profile'] in ('torch', 'full'):
         torch_python = plan['torch']['python']
         commands['pytorch-eager'] = [torch_python, HERE / 'source_workload.py', '--model', source / 'model.json', '--baseline', 'torch-eager']
         commands['pytorch-compile'] = [torch_python, HERE / 'source_workload.py', '--model', source / 'model.json', '--baseline', 'torch-compile']
+    if plan['profile'] == 'full':
         for name in ('rust-candle', 'mojo-max'):
             commands[name] = [plan['external'][name]['path'], '--model', source / 'model.json']
     return commands, build_reports, shorthand, cpp
 
 
 def _verify_external_identities(plan):
-    if plan['profile'] != 'full':
+    if plan['profile'] not in ('torch', 'full'):
         return
     torch_python = pathlib.Path(plan['torch']['python'])
     if campaign.sha(torch_python) != plan['torch']['sha256'] or _tool_version(torch_python) != plan['torch']['versions']:
@@ -226,7 +233,7 @@ def run(args):
         if (policy['mode'] == 'calibrated_energy') != measured:
             raise ValueError('policy mode mismatch')
         torch_cache = out / 'torch-inductor-cache'
-        if plan['profile'] == 'full':
+        if plan['profile'] in ('torch', 'full'):
             torch_cache.mkdir()
             os.environ['TORCHINDUCTOR_CACHE_DIR'] = str(torch_cache)
         commands, build_reports, shorthand, cpp = _build_commands(plan, inputs, out, compiler, clang)
@@ -271,7 +278,7 @@ def run(args):
             clang_version=subprocess.check_output([clang, '--version'], text=True),
             executable_sha256=identities, source_binary_sha256=campaign.sha(shorthand), cpp_binary_sha256=campaign.sha(cpp),
             torch=plan.get('torch'), external=plan.get('external'),
-            torchinductor_cache=str(torch_cache) if plan['profile'] == 'full' else None,
+            torchinductor_cache=str(torch_cache) if plan['profile'] in ('torch', 'full') else None,
             started_utc=datetime.datetime.now(datetime.timezone.utc).isoformat())
         campaign.write(out / 'environment.json', environment)
         report = dict(schema='shorthand.energy.state-of-practice.capture.v1', success=True,
@@ -284,9 +291,9 @@ def run(args):
         campaign.verify_files(plan_path.parent, plan['hashes'])
         if campaign.sha(plan_path) != args.plan_sha256 or any(campaign.sha(pathlib.Path(p)) != digest for p, digest in identities.items()):
             raise ValueError('plan or experiment executable changed during capture')
-        code_files = [HERE / 'state_of_practice.py', HERE / 'source_workload.py', HERE / 'analysis.py']
+        code_files = [HERE / 'state_of_practice.py', HERE / 'source_workload.py', HERE / 'analysis.py', HERE / 'campaign.py']
         campaign.write(out / 'code.json', {str(p.relative_to(ROOT)): campaign.sha(p) for p in code_files})
-        if plan['profile'] == 'full' and torch_cache.exists():
+        if plan['profile'] in ('torch', 'full') and torch_cache.exists():
             shutil.rmtree(torch_cache)
         hashes = {str(p.relative_to(out)): campaign.sha(p) for p in sorted(out.rglob('*')) if p.is_file()}
         manifest = dict(schema='shorthand.energy.state-of-practice.bundle.v1', success=True,
@@ -382,7 +389,7 @@ def main():
     prep = commands.add_parser('prepare')
     prep.add_argument('--output', type=pathlib.Path, required=True)
     prep.add_argument('--mode', choices=['execution_only', 'calibrated_energy'], required=True)
-    prep.add_argument('--profile', choices=['core', 'full'], default='core')
+    prep.add_argument('--profile', choices=list(PROFILES), default='core')
     prep.add_argument('--repetitions', type=int, default=10)
     prep.add_argument('--pairs', type=int, default=30)
     prep.add_argument('--instrument', type=pathlib.Path)

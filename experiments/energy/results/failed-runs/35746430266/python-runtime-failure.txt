@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/run_verified.py", line 48, in stage
+    function()
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/run_verified.py", line 83, in python_runtime
+    campaign.run(argparse.Namespace(plan=plan, plan_sha256=campaign.sha(plan),
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/experiments/energy/campaign.py", line 310, in run
+    execute(argv)
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py", line 59, in execute
+    raise RuntimeError(f'runner failed ({result.returncode}): {result.stderr[-4000:]}')
+RuntimeError: runner failed (1): Traceback (most recent call last):
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py", line 287, in <module>
+    main()
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py", line 231, in main
+    execute([args.tool, 'application', args.config, paths[key]])
+  File "/home/runner/work/ShortHand_Compiler/ShortHand_Compiler/scripts/compare_ai_application_baselines.py", line 59, in execute
+    raise RuntimeError(f'runner failed ({result.returncode}): {result.stderr[-4000:]}')
+RuntimeError: runner failed (2): qualification error: application_report_size_limit
+
+
