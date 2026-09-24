@@ -1,7 +1,6 @@
 #pragma once
 #include "AI_Types.h"
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -19,7 +18,11 @@ public:
     virtual InferenceResult run(const TensorBuffer &) = 0;
     virtual InferenceResult runProfiled(const TensorBuffer &,PreparedInferenceProfile &profile) {
         profile={};
-        throw std::runtime_error("prepared_profiling_unavailable");
+        // This header is also included by the exception-disabled compiler.
+        InferenceResult result;
+        result.status=InferenceStatus::BackendUnavailable;
+        result.reason="prepared_profiling_unavailable";
+        return result;
     }
     virtual TensorSpec inputSpec() const = 0;
     virtual TensorSpec outputSpec() const = 0;

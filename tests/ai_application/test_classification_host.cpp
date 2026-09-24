@@ -77,7 +77,7 @@ int main() {
     }
     fault=4;
     check(app.classify({0,0}).scores.size()==3); // Ordinary calls never invoke profiling.
-    rejects([&]{app.classifyProfiled({0,0},profile);},"prepared_profiling_unavailable");
+    rejects([&]{app.classifyProfiled({0,0},profile);},"application_inference_failed:prepared_profiling_unavailable");
     check(!profile.success && !profile.backend.success);
     fault=5;
     rejects([&]{app.classifyProfiled({0,0},profile);},"invalid_prepared_profile");
