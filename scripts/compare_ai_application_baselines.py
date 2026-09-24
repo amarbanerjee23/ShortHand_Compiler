@@ -128,7 +128,7 @@ def worker(config_path, output, tool):
             scores, predicted, ranked = np.concatenate(score_parts), np.concatenate(label_parts), np.concatenate(ranked_parts)
             if reference is None:
                 reference, prediction, topk = scores.copy(), predicted.copy(), ranked.copy()
-            if not np.array_equal(predicted, prediction) or not np.allclose(scores, reference, atol=q.get('absolute_tolerance', 1e-5), rtol=q.get('relative_tolerance', 1e-4)):
+            if not np.array_equal(predicted, prediction) or not np.array_equal(ranked, topk) or not np.allclose(scores, reference, atol=q.get('absolute_tolerance', 1e-5), rtol=q.get('relative_tolerance', 1e-4)):
                 raise ValueError('Python numerical regression')
         elapsed, unix_end = (time.perf_counter() - start) * 1000, time.time()
         accuracy = float(np.mean(predicted == labels))
@@ -139,7 +139,7 @@ def worker(config_path, output, tool):
     report.update(runner='python_numpy_onnxruntime_cpu', backend_version=ort.__version__, python_version=sys.version.split()[0],
                   numpy_version=np.__version__, baseline_source_sha256=sha(__file__), success=True, rows=len(raw),
                   accuracy=float(np.mean(prediction == labels)), top_k_accuracy=float(np.mean(np.any(topk == labels[:, None], axis=1))),
-                  scores=reference.flatten().tolist(), predictions=prediction.tolist(), preparation_ms=prep_ms,
+                  scores=reference.flatten().tolist(), predictions=prediction.tolist(), top_k=topk.flatten().tolist(), preparation_ms=prep_ms,
                   warmup_ms=warmup_ms, trials=trials, comparative_energy_claim=False)
     write(output, report)
 

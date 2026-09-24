@@ -2,6 +2,7 @@
 // Private implementation, included only by OnnxRuntimeBackend.cpp.
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 #include <filesystem>
 #include <stdexcept>
 #include <thread>
@@ -30,23 +31,54 @@ public:
     TensorSpec outputSpec() const override { return out_; }
     std::string runtimeVersion() const override { return OrtGetApiBase()->GetVersionString(); }
     InferenceResult run(const TensorBuffer &input) override {
+        return runImpl<false>(input,nullptr);
+    }
+    InferenceResult runProfiled(const TensorBuffer &input,PreparedInferenceProfile &profile) override {
+        profile={};
+        return runImpl<true>(input,&profile);
+    }
+private:
+    template<bool Profiled>
+    InferenceResult runImpl(const TensorBuffer &input,PreparedInferenceProfile *profile) {
+        using Clock=std::chrono::steady_clock;
+        Clock::time_point begin{},validation{},tensor_setup{},invoke{},copy{},telemetry{};
+        if constexpr (Profiled) begin=Clock::now();
         InferenceResult r; r.backend=BackendKind::OnnxRuntimeCPU; r.backend_name=r.provider_name="onnxruntime_cpu";
         r.selected_device_class="cpu"; r.selected_device_id="cpu:0"; TelemetryTimer timer("onnxruntime_cpu","prepared_inference");
         try {
+            if constexpr (Profiled) validation=Clock::now();
             if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape || input.f32_data.size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
             for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
+            if constexpr (Profiled) tensor_setup=Clock::now();
             auto memory=Ort::MemoryInfo::CreateCpu(OrtArenaAllocator,OrtMemTypeDefault);
             auto tensor=Ort::Value::CreateTensor<float>(memory,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
+            if constexpr (Profiled) invoke=Clock::now();
             auto values=session_->Run(Ort::RunOptions{nullptr},inputs,&tensor,1,outputs,1);
+            if constexpr (Profiled) copy=Clock::now();
             if (values.size()!=1 || !values.front().IsTensor()) throw std::runtime_error("prepared_output_not_tensor");
             auto info=values.front().GetTensorTypeAndShapeInfo();
             if (info.GetElementType()!=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT || info.GetShape()!=out_.shape || info.GetElementCount()!=out_.element_count)
                 throw std::runtime_error("prepared_output_shape_or_dtype_mismatch");
             const auto *data=values.front().GetTensorData<float>(); r.output_f32.assign(data,data+out_.element_count);
             r.status=InferenceStatus::Success; r.reason="executed";
+            if constexpr (Profiled) telemetry=Clock::now();
             attachTelemetry(r,timer.finish("success",r.reason,input.f32_data.size(),r.output_f32.size()));
+            if constexpr (Profiled) {
+                const auto end=Clock::now();
+                auto ns=[](Clock::time_point a,Clock::time_point b) {
+                    return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(b-a).count());
+                };
+                profile->setup_ns=ns(begin,validation);
+                profile->input_validation_ns=ns(validation,tensor_setup);
+                profile->tensor_setup_ns=ns(tensor_setup,invoke);
+                profile->session_run_ns=ns(invoke,copy);
+                profile->output_copy_ns=ns(copy,telemetry);
+                profile->telemetry_ns=ns(telemetry,end);
+                profile->total_ns=ns(begin,end);
+                profile->success=true;
+            }
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
             attachTelemetry(r,timer.finish("runtime_error",r.reason,input.f32_data.size(),0));

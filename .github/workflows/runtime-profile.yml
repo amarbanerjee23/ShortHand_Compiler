@@ -1,0 +1,116 @@
+name: runtime-profile
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/runtime-profile.yml'
+      - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
+      - 'experiments/energy/**'
+      - 'scripts/compare_ai_application_baselines.py'
+      - 'tests/ai_application/**'
+  pull_request:
+    paths:
+      - '.github/workflows/runtime-profile.yml'
+      - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
+      - 'experiments/energy/**'
+      - 'scripts/compare_ai_application_baselines.py'
+      - 'tests/ai_application/**'
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      ORT_DISABLE_TELEMETRY: '1'
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Install build dependencies
+        run: |
+          set -euo pipefail
+          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
+          sudo apt-get "${APT_SOURCES[@]}" update
+          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev cmake ninja-build python3 python3-venv time flex bison libfl-dev libssl-dev curl
+      - name: Install locked Python baseline
+        run: |
+          set -euo pipefail
+          python3 -m venv baseline-venv
+          baseline-venv/bin/python -m pip install --require-hashes --only-binary=:all: --no-deps \
+            -r tests/ai_application/requirements-ai-baseline-linux-x64-py312.txt
+      - name: Build optimized real ONNX host
+        run: |
+          set -euo pipefail
+          mkdir profile-output
+          bash scripts/install_ci_onnxruntime_cpu.sh "$PWD/build-profile/onnxruntime-1.30.0"
+          cmake -S . -B build-profile -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 \
+            -DSHORTHAND_BUILD_TESTING=OFF -DSHORTHAND_BUILD_MLIR=OFF \
+            -DLLVM_CONFIG=/usr/bin/llvm-config-18 \
+            -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
+            -DONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0"
+          cmake --build build-profile --parallel 2 --target shorthand_ai_qualify
+          cp build-profile/CMakeCache.txt profile-output/
+          git rev-parse HEAD > profile-output/revision.txt
+          sha256sum build-profile/shorthand_ai_qualify > profile-output/executable.sha256
+          clang++-18 --version > profile-output/compiler.txt
+          lscpu --json > profile-output/lscpu.json
+      - name: Verify profiling and application boundaries
+        run: |
+          set -euo pipefail
+          python3 experiments/energy/test_profile_report.py
+          python3 experiments/energy/test_resident_baselines.py
+          baseline-venv/bin/python experiments/energy/test_experiments.py
+          python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1
+      - name: Verify real backend profiling and build independent C++ control
+        run: |
+          set -euo pipefail
+          python3 scripts/create_digit_application_fixture.py profile-output/backend-test --batch 16 --threads 1
+          SDK="$PWD/build-profile/onnxruntime-1.30.0"
+          SRC=Compiler_new_ws/Short_Hand/src/ai_runtime
+          clang++-18 -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror -pthread -I. -I"$SDK/include" \
+            -DSHORTHAND_HAS_ONNXRUNTIME=1 tests/ai_application/test_prepared_profile.cpp \
+            "$SRC/backends/OnnxRuntimeBackend.cpp" "$SRC/AI_Types.cpp" "$SRC/AI_Telemetry.cpp" \
+            -L"$SDK/lib" -Wl,-rpath,"$SDK/lib" -lonnxruntime -o build-profile/test-prepared-profile
+          build-profile/test-prepared-profile profile-output/backend-test/digits.onnx
+          PYTHONPATH=experiments/energy python3 - <<'PY'
+          import pathlib
+          from runtime_state_of_practice import compile_cpp_baseline
+          compile_cpp_baseline(pathlib.Path('profile-output/cpp-build'), 'clang++-18',
+                               pathlib.Path('build-profile/onnxruntime-1.30.0'))
+          PY
+      - name: Capture all five diagnostic cells
+        run: |
+          set -euo pipefail
+          for cell in 1:1 16:1 32:1 16:2 16:4; do
+            batch="${cell%:*}"
+            threads="${cell#*:}"
+            target="profile-output/b${batch}-t${threads}"
+            python3 scripts/create_digit_application_fixture.py "$target" --batch "$batch" --threads "$threads"
+            build-profile/shorthand_ai_qualify application-profile "$target/application.json" "$target/raw-profile.json"
+            digest="$(sha256sum "$target/raw-profile.json" | cut -d' ' -f1)"
+            python3 experiments/energy/profile_report.py --input "$target/raw-profile.json" --input-sha256 "$digest" --output "$target/report"
+            cat "$target/report/PROFILE.md" >> "$GITHUB_STEP_SUMMARY"
+          done
+      - name: Capture and replay balanced resident baselines
+        run: |
+          set -euo pipefail
+          baseline-venv/bin/python experiments/energy/resident_baselines.py run \
+            --tool "$PWD/build-profile/shorthand_ai_qualify" \
+            --cpp "$PWD/profile-output/cpp-build/cpp-onnx-baseline" \
+            --output "$PWD/profile-output/resident-baselines"
+          digest="$(sha256sum profile-output/resident-baselines/manifest.json | cut -d' ' -f1)"
+          python3 experiments/energy/resident_baselines.py analyze \
+            --bundle profile-output/resident-baselines --manifest-sha256 "$digest"
+          cat profile-output/resident-baselines/BASELINES.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: runtime-profile-${{ github.run_id }}
+          retention-days: 90
+          path: profile-output/
