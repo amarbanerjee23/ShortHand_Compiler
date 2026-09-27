@@ -155,15 +155,24 @@ void classifyBatchAppend(const std::vector<float> &raw,const ApplicationConfigur
     if constexpr (Profiled) postprocess=Clock::now();
     const auto count=raw.size()/c.features;
     const auto score_base=scores.size(), prediction_base=predictions.size(), top_base=top_k.size();
+    require(score_base==prediction_base*std::size_t(c.classes) &&
+            top_base==prediction_base*std::size_t(c.top_k),"misaligned_application_output_buffers");
     const auto real_score_count=count*std::size_t(c.classes);
+    const auto real_top_count=count*std::size_t(c.top_k);
     require(score_base<=262144 && real_score_count<=262144-score_base,"application_score_output_limit");
     require(prediction_base<=100000 && count<=100000-prediction_base,"application_prediction_output_limit");
-    require(top_base<=262144 && count*std::size_t(c.top_k)<=262144-top_base,"application_topk_output_limit");
+    require(top_base<=262144 && real_top_count<=262144-top_base,"application_topk_output_limit");
+    // Establish all capacities before mutating sizes. With trivial element
+    // types, subsequent insert/resize operations cannot allocate, so callers do
+    // not observe mismatched aggregate vectors if capacity growth fails.
+    scores.reserve(score_base+real_score_count);
+    predictions.reserve(prediction_base+count);
+    top_k.reserve(top_base+real_top_count);
     // All backend scores, including padded rows, were validated above. Append
     // only real rows directly into the caller-owned resident output buffers.
     scores.insert(scores.end(),result.output_f32.begin(),result.output_f32.begin()+real_score_count);
     predictions.resize(prediction_base+count);
-    top_k.resize(top_base+count*c.top_k);
+    top_k.resize(top_base+real_top_count);
     // ApplicationConfiguration caps classes at 256. Keep ordering scratch on
     // the stack instead of allocating it once per batch.
     std::array<unsigned,256> order{};
