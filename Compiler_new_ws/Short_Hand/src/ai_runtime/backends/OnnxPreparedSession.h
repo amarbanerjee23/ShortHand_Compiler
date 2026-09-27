@@ -74,7 +74,9 @@ private:
             const auto *data=values.front().GetTensorData<float>(); r.output_f32.assign(data,data+out_.element_count);
             r.status=InferenceStatus::Success; r.reason="executed";
             if constexpr (Profiled) telemetry=Clock::now();
-            attachTelemetry(r,timer.finish("success",r.reason,input.f32_data.size(),r.output_f32.size()));
+            const auto record=timer.finish("success",r.reason,input.f32_data.size(),r.output_f32.size());
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
             if constexpr (Profiled) {
                 const auto end=Clock::now();
                 auto ns=[](Clock::time_point a,Clock::time_point b) {
@@ -91,7 +93,9 @@ private:
             }
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
-            attachTelemetry(r,timer.finish("runtime_error",r.reason,input.f32_data.size(),0));
+            const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
         }
         return r;
     }
