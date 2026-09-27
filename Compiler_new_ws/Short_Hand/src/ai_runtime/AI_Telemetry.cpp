@@ -2,6 +2,7 @@
 
 #include <charconv>
 #include <sstream>
+#include <stdexcept>
 #include <system_error>
 #include <utility>
 
