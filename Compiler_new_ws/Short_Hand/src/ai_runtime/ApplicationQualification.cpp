@@ -133,19 +133,13 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
     if constexpr (Profiled) start=Clock::now();
     const auto b=c.qualification.protocol.batch_size;
     require(!raw.empty() && raw.size()%c.features==0 && raw.size()<=std::size_t(b)*c.features,"invalid_application_batch");
-    TensorBuffer input; input.spec=session.inputSpec();
-    const auto padded_elements=std::size_t(b)*c.features;
-    input.f32_data.reserve(padded_elements);
-    for (float raw_value:raw) {
-        if (!std::isfinite(raw_value) || raw_value<c.input_min || raw_value>c.input_max)
+    TensorBuffer input; input.spec=session.inputSpec(); input.f32_data.assign(std::size_t(b)*c.features,0);
+    for (std::size_t i=0;i<raw.size();++i) {
+        if (!std::isfinite(raw[i]) || raw[i]<c.input_min || raw[i]>c.input_max)
             throw std::runtime_error("application_input_outside_range");
-        const auto normalized=static_cast<float>((double(raw_value)-c.offset)*c.scale);
-        if (!std::isfinite(normalized)) throw std::runtime_error("application_preprocessing_overflow");
-        input.f32_data.push_back(normalized);
+        input.f32_data[i]=static_cast<float>((double(raw[i])-c.offset)*c.scale);
+        if (!std::isfinite(input.f32_data[i])) throw std::runtime_error("application_preprocessing_overflow");
     }
-    // Only the final partial batch needs padding. reserve()+push_back avoids
-    // zero-initializing a full batch and then overwriting every element.
-    input.f32_data.resize(padded_elements,0.0f);
     if constexpr (Profiled) prepared=Clock::now();
     PreparedInferenceProfile backend;
     auto result=[&] {
