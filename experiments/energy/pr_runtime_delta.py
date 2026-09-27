@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import pathlib
 import platform
 import random
@@ -65,7 +66,7 @@ def run_process(argv, stdout_path: pathlib.Path, stderr_path: pathlib.Path) -> f
             stdin=subprocess.DEVNULL,
             stdout=stdout,
             stderr=stderr,
-            env=dict(campaign.ENV),
+            env=dict(os.environ, **campaign.ENV),
             timeout=300,
             check=False,
         )
