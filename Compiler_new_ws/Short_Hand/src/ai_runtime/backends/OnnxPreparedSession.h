@@ -11,7 +11,9 @@ namespace shorthand::ai {
 namespace {
 class OnnxPreparedSession final : public PreparedInference {
 public:
-    OnnxPreparedSession(const ModelSpec &m,const InferenceConfiguration &c):maximum_(c.maximum_tensor_elements) {
+    OnnxPreparedSession(const ModelSpec &m,const InferenceConfiguration &c)
+        : maximum_(c.maximum_tensor_elements),
+          memory_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator,OrtMemTypeDefault)) {
         if (m.format!=ModelFormat::Onnx || m.precision!="float32") throw std::runtime_error("prepared_execution_requires_onnx_float32");
         if (!c.threads || c.threads>std::max(1U,std::thread::hardware_concurrency()) || c.threads>256 ||
             !maximum_ || maximum_>16U*1024U*1024U) throw std::runtime_error("invalid_prepared_configuration");
@@ -51,8 +53,7 @@ private:
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
             for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
-            auto memory=Ort::MemoryInfo::CreateCpu(OrtArenaAllocator,OrtMemTypeDefault);
-            auto tensor=Ort::Value::CreateTensor<float>(memory,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
+            auto tensor=Ort::Value::CreateTensor<float>(memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
             if constexpr (Profiled) invoke=Clock::now();
             auto values=session_->Run(Ort::RunOptions{nullptr},inputs,&tensor,1,outputs,1);
@@ -101,7 +102,8 @@ private:
         }
         s.element_count=count; return s;
     }
-    std::unique_ptr<Ort::Session> session_; std::size_t maximum_; TensorSpec in_,out_; std::string in_name_,out_name_;
+    std::unique_ptr<Ort::Session> session_; std::size_t maximum_; Ort::MemoryInfo memory_;
+    TensorSpec in_,out_; std::string in_name_,out_name_;
 };
 }
 #endif
