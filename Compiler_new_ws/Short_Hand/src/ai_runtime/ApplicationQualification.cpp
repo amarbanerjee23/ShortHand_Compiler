@@ -133,66 +133,100 @@ void classifyBatchAppend(const std::vector<float> &raw,const ApplicationConfigur
     Clock::time_point start{},prepared{},validated{},postprocess{};
     if constexpr (Profiled) start=Clock::now();
     const auto b=c.qualification.protocol.batch_size;
-    require(!raw.empty() && raw.size()%c.features==0 && raw.size()<=std::size_t(b)*c.features,"invalid_application_batch");
-    TensorBuffer input; input.spec=session.inputSpec(); input.f32_data.assign(std::size_t(b)*c.features,0);
+    require(!raw.empty() && raw.size()%c.features==0 && raw.size()<=std::size_t(b)*c.features,
+            "invalid_application_batch");
+    const auto count=raw.size()/c.features;
+
+    TensorBuffer input; input.spec=session.inputSpec();
+    input.f32_data.assign(std::size_t(b)*c.features,0);
     for (std::size_t i=0;i<raw.size();++i) {
         if (!std::isfinite(raw[i]) || raw[i]<c.input_min || raw[i]>c.input_max)
             throw std::runtime_error("application_input_outside_range");
         input.f32_data[i]=static_cast<float>((double(raw[i])-c.offset)*c.scale);
-        if (!std::isfinite(input.f32_data[i])) throw std::runtime_error("application_preprocessing_overflow");
+        if (!std::isfinite(input.f32_data[i]))
+            throw std::runtime_error("application_preprocessing_overflow");
     }
-    if constexpr (Profiled) prepared=Clock::now();
-    PreparedInferenceProfile backend;
-    auto result=[&] {
-        if constexpr (Profiled) return session.runApplicationValidatedProfiled(input,validated_input,backend);
-        else return session.runApplicationValidated(input,validated_input);
-    }();
-    if constexpr (Profiled) validated=Clock::now();
-    if (result.status!=InferenceStatus::Success) throw std::runtime_error("application_inference_failed:"+result.reason);
-    require(result.output_f32.size()==std::size_t(b)*c.classes,"application_output_count_mismatch");
-    for (float v:result.output_f32)
-        if (!std::isfinite(v)) throw std::runtime_error("nonfinite_application_output");
-    if constexpr (Profiled) postprocess=Clock::now();
-    const auto count=raw.size()/c.features;
+
     const auto score_base=scores.size(), prediction_base=predictions.size(), top_base=top_k.size();
     require(score_base==prediction_base*std::size_t(c.classes) &&
             top_base==prediction_base*std::size_t(c.top_k),"misaligned_application_output_buffers");
     const auto real_score_count=count*std::size_t(c.classes);
+    const auto padded_score_count=std::size_t(b)*c.classes;
     const auto real_top_count=count*std::size_t(c.top_k);
     require(score_base<=262144 && real_score_count<=262144-score_base,"application_score_output_limit");
     require(prediction_base<=100000 && count<=100000-prediction_base,"application_prediction_output_limit");
     require(top_base<=262144 && real_top_count<=262144-top_base,"application_topk_output_limit");
-    // Establish all capacities before mutating sizes. With trivial element
-    // types, subsequent insert/resize operations cannot allocate, so callers do
-    // not observe mismatched aggregate vectors if capacity growth fails.
-    scores.reserve(score_base+real_score_count);
+    constexpr std::size_t workspace_limit=16U*1024U*1024U;
+    require(score_base<=workspace_limit && padded_score_count<=workspace_limit-score_base,
+            "application_output_workspace_limit");
+
+    // Grow all capacities before changing any size. The temporary score extent
+    // includes padded tail rows because ORT owns the full static output shape.
+    scores.reserve(score_base+padded_score_count);
     predictions.reserve(prediction_base+count);
     top_k.reserve(top_base+real_top_count);
-    // All backend scores, including padded rows, were validated above. Append
-    // only real rows directly into the caller-owned resident output buffers.
-    scores.insert(scores.end(),result.output_f32.begin(),result.output_f32.begin()+real_score_count);
+    struct Rollback {
+        std::vector<float> &scores;
+        std::vector<unsigned> &predictions,&top_k;
+        std::size_t scores_size,predictions_size,top_size;
+        bool committed=false;
+        ~Rollback() {
+            if (!committed) {
+                scores.resize(scores_size);
+                predictions.resize(predictions_size);
+                top_k.resize(top_size);
+            }
+        }
+    } rollback{scores,predictions,top_k,score_base,prediction_base,top_base};
+
+    scores.resize(score_base+padded_score_count);
+    if constexpr (Profiled) prepared=Clock::now();
+    PreparedInferenceProfile backend;
+    auto result=[&] {
+        float *destination=scores.data()+score_base;
+        if constexpr (Profiled)
+            return session.runApplicationValidatedIntoProfiled(
+                input,validated_input,destination,padded_score_count,backend);
+        else
+            return session.runApplicationValidatedInto(
+                input,validated_input,destination,padded_score_count);
+    }();
+    if constexpr (Profiled) validated=Clock::now();
+    if (result.status!=InferenceStatus::Success)
+        throw std::runtime_error("application_inference_failed:"+result.reason);
+    require(result.output_f32.empty() && result.output_elements==padded_score_count,
+            "application_output_count_mismatch");
+    for (std::size_t i=score_base;i<score_base+padded_score_count;++i)
+        if (!std::isfinite(scores[i])) throw std::runtime_error("nonfinite_application_output");
+
+    // Padded output was validated above but is not a functional unit and must
+    // not escape into the report/application result.
+    scores.resize(score_base+real_score_count);
+    if constexpr (Profiled) postprocess=Clock::now();
     predictions.resize(prediction_base+count);
     top_k.resize(top_base+real_top_count);
-    // ApplicationConfiguration caps classes at 256. Keep ordering scratch on
-    // the stack instead of allocating it once per batch.
     std::array<unsigned,256> order{};
     const auto order_end=order.begin()+c.classes;
     for (std::size_t row=0;row<count;++row) {
         std::iota(order.begin(),order_end,0);
-        std::partial_sort(order.begin(),order.begin()+c.top_k,order_end,[&](unsigned a,unsigned b){
-            const float x=result.output_f32[row*c.classes+a],y=result.output_f32[row*c.classes+b]; return x==y?a<b:x>y;
+        std::partial_sort(order.begin(),order.begin()+c.top_k,order_end,[&](unsigned a,unsigned b_label){
+            const float x=scores[score_base+row*c.classes+a];
+            const float y=scores[score_base+row*c.classes+b_label];
+            return x==y?a<b_label:x>y;
         });
         predictions[prediction_base+row]=order.front();
         std::copy_n(order.begin(),c.top_k,top_k.begin()+top_base+row*c.top_k);
     }
     if constexpr (Profiled) {
         const auto end=Clock::now();
-        auto ns=[](Clock::time_point a,Clock::time_point b) {
-            return static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(b-a).count());
+        auto ns=[](Clock::time_point a,Clock::time_point b_time) {
+            return static_cast<std::uint64_t>(
+                std::chrono::duration_cast<std::chrono::nanoseconds>(b_time-a).count());
         };
         require(backend.success && backend.total_ns<=ns(prepared,validated) &&
                 backend.total_ns==backend.setup_ns+backend.input_validation_ns+backend.tensor_setup_ns+
-                backend.session_run_ns+backend.output_copy_ns+backend.telemetry_ns,"invalid_prepared_profile");
+                backend.session_run_ns+backend.output_copy_ns+backend.telemetry_ns,
+                "invalid_prepared_profile");
         profile->backend=backend;
         profile->preprocessing_ns=ns(start,prepared);
         profile->prepared_call_ns=ns(prepared,validated);
@@ -202,6 +236,7 @@ void classifyBatchAppend(const std::vector<float> &raw,const ApplicationConfigur
         profile->completed=count;
         profile->success=true;
     }
+    rollback.committed=true;
     return;
 }
 } // namespace
@@ -323,7 +358,7 @@ J profileApplication(const ApplicationConfiguration &c) {
     report.object["schema"]=str("shorthand.ai.application.profile.v2");
     report.object["boundary"]=str("instrumented classify calls only; dataset slicing, reference comparisons and accumulation excluded; clock overhead included");
     report.object["prepared_call_boundary"]=str("includes backend input validation, ONNX invocation, output copy and telemetry; not pure model-kernel time");
-    report.object["backend_boundary"]=str("opt-in nested wall clocks; session_run is the entire ORT Run API including its allocation/scheduling; tensor_setup wraps resident input without copying; output_copy includes metadata validation; telemetry includes finish and serialization; residual includes dispatch, return/destruction and observer overhead");
+    report.object["backend_boundary"]=str("opt-in nested wall clocks; session_run is the entire ORT Run API including its allocation/scheduling; tensor_setup wraps resident input without copying; output_copy stage includes output binding/materialization and metadata validation; the preallocated application path performs no output copy; telemetry includes finish and serialization; residual includes dispatch, return/destruction and observer overhead");
     report.object["success"]=flag(true); report.object["diagnostic_only"]=flag(true);
     report.object["measured_energy_available"]=flag(false); report.object["latency_claim_eligible"]=flag(false);
     report.object["rows"]=num(data.labels.size()); report.object["repetitions"]=num(p.repetitions);
