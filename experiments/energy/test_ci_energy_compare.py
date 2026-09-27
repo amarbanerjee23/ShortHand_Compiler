@@ -16,6 +16,8 @@ class CiEnergyCompareTest(unittest.TestCase):
             return {
                 "joules_per_completed_correct_task": value,
                 "hardware_measured_joules": value * compare.COMPLETED,
+                "method": "rapl_powercap_package",
+                "boundary": "whole_process_cpu_package",
             }
         raw = {
             "b16-t1": {
