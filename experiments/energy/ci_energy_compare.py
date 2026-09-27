@@ -2,9 +2,10 @@
 """Five-cell CI component-energy comparison for ShortHand, C++/ORT and Python/ORT.
 
 This is a separate instrumented pass from latency measurement. When readable
-Linux RAPL package counters are unavailable it writes an explicit unavailable
-artifact and exits successfully. E1 values are CPU-package component energy for
-the whole process window; they are not whole-system AC energy and are not
+Linux CPU component-energy counters are unavailable it writes an explicit
+unavailable artifact and exits successfully. E1 values may come from Linux
+powercap/RAPL package counters or AMD amd_energy HWMON socket counters. They
+cover the whole process window; they are not whole-system AC energy and are not
 process-attributed.
 """
 from __future__ import annotations
@@ -68,7 +69,7 @@ def validate_classification(report):
 def measured_process(argv, directory: pathlib.Path, name: str) -> Dict[str, object]:
     stdout_path = directory / (name + ".stdout")
     stderr_path = directory / (name + ".stderr")
-    sampler = evidence.RaplSampler(interval_seconds=0.01)
+    sampler = evidence.ComponentEnergySampler(interval_seconds=0.01)
     start_wall = time.time()
     start = time.perf_counter()
     sampler.start()
@@ -91,17 +92,17 @@ def measured_process(argv, directory: pathlib.Path, name: str) -> Dict[str, obje
         stderr = stderr_path.read_text(errors="replace")
         raise ValueError(f"energy runner failed: {name}, exit={proc.returncode}: {stderr[-4000:]}")
     if not math.isfinite(joules) or joules <= 0:
-        raise ValueError("nonpositive RAPL package energy")
+        raise ValueError("nonpositive CPU component energy")
     if abs((end_wall - start_wall) - elapsed) > 0.05:
         raise ValueError("wall/monotonic clock discontinuity")
     result = {
         "schema": evidence.SCHEMA,
         "kind": "measurement",
         "evidence_class": "E1",
-        "method": "rapl_package_polled",
+        "method": sampler.method,
         "available": True,
-        "boundary": "whole_process_cpu_package",
-        "reason": "package_energy_not_process_attributed",
+        "boundary": "whole_process_" + sampler.boundary,
+        "reason": "component_energy_not_process_attributed",
         "physical_system_energy_measured": False,
         "component_energy_measured": True,
         "hardware_measured_joules": joules,
@@ -110,7 +111,7 @@ def measured_process(argv, directory: pathlib.Path, name: str) -> Dict[str, obje
         "joules_per_completed_correct_task": joules / COMPLETED,
         "completed_correct_tasks": COMPLETED,
         "elapsed_seconds": elapsed,
-        "rapl_sample_count": samples,
+        "component_energy_sample_count": samples,
         "measurement_uncertainty_percent": None,
         "claim_authorized": False,
     }
@@ -187,6 +188,13 @@ def median_rows(observations: List[Dict[str, object]]) -> Dict[str, object]:
 
 
 def summarize(raw: Dict[str, Dict[str, List[Dict[str, object]]]], hardware) -> Dict[str, object]:
+    all_observations = [obs for by_runner in raw.values() for values in by_runner.values() for obs in values]
+    methods = {str(obs["method"]) for obs in all_observations}
+    boundaries = {str(obs["boundary"]) for obs in all_observations}
+    if len(methods) != 1 or len(boundaries) != 1:
+        raise ValueError("component-energy method/boundary changed within comparison")
+    method = next(iter(methods))
+    boundary = next(iter(boundaries))
     cells = []
     for cell, by_runner in raw.items():
         rows = {name: median_rows(by_runner[name]) for name in RUNNERS}
@@ -206,8 +214,8 @@ def summarize(raw: Dict[str, Dict[str, List[Dict[str, object]]]], hardware) -> D
         "schema": SCHEMA,
         "available": True,
         "evidence_class": "E1",
-        "method": "rapl_package_polled",
-        "boundary": "whole_process_cpu_package",
+        "method": method,
+        "boundary": boundary,
         "physical_system_energy_measured": False,
         "component_energy_measured": True,
         "measurement_quality": "diagnostic",
@@ -215,7 +223,7 @@ def summarize(raw: Dict[str, Dict[str, List[Dict[str, object]]]], hardware) -> D
         "hardware": hardware,
         "cells": cells,
         "interpretation": (
-            "Package energy includes host activity during each process window and is not "
+            "CPU component energy includes host activity during each process window and is not "
             "process-attributed. Balanced runner order reduces temporal bias but does not "
             "turn hosted CI into a calibrated whole-system measurement."
         ),
@@ -234,7 +242,7 @@ def markdown(summary: Dict[str, object]) -> str:
     lines = [
         "# CI component-energy comparison",
         "",
-        "**Evidence class E1:** hardware-reported CPU package energy. "
+        "**Evidence class E1:** hardware-reported CPU package/socket energy. "
         "This is not whole-system AC energy and is diagnostic on hosted CI.",
         "",
         "| Cell | ShortHand J/task | C++/ORT J/task | Python/ORT J/task | "
@@ -274,7 +282,7 @@ def run(args) -> int:
             "evidence_class": None,
             "highest_available_evidence_class": capability.get("highest_available_evidence_class"),
             "reason": (
-                "readable RAPL package counters unavailable; E2/E3 profiles are not "
+                "readable CPU package/socket energy counters unavailable; E2/E3 profiles are not "
                 "silently applied without the matching required runtime features"
             ),
             "physical_system_energy_measured": False,
