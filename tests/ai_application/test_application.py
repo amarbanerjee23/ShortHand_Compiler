@@ -72,6 +72,9 @@ if live:
     assert len(native['predictions']) == 1797 and sum(native['confusion_matrix_row_major']) == 1797
     assert native['top_k_accuracy'] >= native['accuracy'] and not native['comparative_energy_claim']
     assert all(t['completed'] == 3594 and not t['energy']['claim_eligible'] for t in native['trials'])
+    # No per-batch observer is needed when the protocol has no latency SLO.
+    # The field remains present/null for schema stability.
+    assert all(t['latency_ms_per_fu'] is None for t in native['trials'])
     assert len(native['trials']) == 3 and len(native['scores']) == 17970
     profile_path = work / 'profile.json'
     run('application-profile', config, profile_path)
@@ -113,7 +116,9 @@ if live:
     assert json.loads((work / 'quality-failure.json').read_text())['reason'] == 'application_accuracy_below_threshold'
     q = copy.deepcopy(original_q); q['maximum_latency_ms'] = 1e-12; reset(qualification=q)
     run('application', config, work / 'latency-failure.json', good=False)
-    assert json.loads((work / 'latency-failure.json').read_text())['reason'] == 'application_p95_latency_limit'
+    latency_failure = json.loads((work / 'latency-failure.json').read_text())
+    assert latency_failure['reason'] == 'application_p95_latency_limit'
+    assert latency_failure['trials'][0]['latency_ms_per_fu'] is not None
     q = copy.deepcopy(original_q); q['require_measured_energy'] = True; reset(qualification=q)
     run('application', config, work / 'energy-failure.json', good=False)
     reset()
