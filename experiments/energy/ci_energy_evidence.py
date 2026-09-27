@@ -280,10 +280,12 @@ def select_profile(profiles: Iterable[Dict[str, object]], hardware: Dict[str, ob
     return matches[0] if matches else None
 
 
-def probe(profile_dir: Optional[pathlib.Path] = None, powercap_root: Optional[pathlib.Path] = None) -> Dict[str, object]:
+def probe(profile_dir: Optional[pathlib.Path] = None,
+          powercap_root: Optional[pathlib.Path] = None,
+          hwmon_root: Optional[pathlib.Path] = None) -> Dict[str, object]:
     hardware = cpu_identity()
     rapl = discover_rapl(powercap_root)
-    amd_hwmon = discover_amd_hwmon_energy()
+    amd_hwmon = discover_amd_hwmon_energy(hwmon_root)
     profiles = load_profiles(profile_dir) if profile_dir else []
     e2 = select_profile(profiles, hardware, "E2") if profiles else None
     e3 = select_profile(profiles, hardware, "E3") if profiles else None
