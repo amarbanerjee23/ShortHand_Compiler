@@ -119,10 +119,27 @@ class EnergyEvidenceTest(unittest.TestCase):
             self.assertTrue(domains[0]["contributes"])
             self.assertEqual(domains[0]["max_energy_range_uj"], 100)
 
+    def test_amd_hwmon_discovers_socket_without_double_counting_cores(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = pathlib.Path(d)
+            hwmon = root / "hwmon0"
+            hwmon.mkdir()
+            (hwmon / "name").write_text("amd_energy\n")
+            (hwmon / "energy1_input").write_text("1000\n")
+            (hwmon / "energy1_label").write_text("Ecore0\n")
+            (hwmon / "energy2_input").write_text("5000\n")
+            (hwmon / "energy2_label").write_text("Esocket0\n")
+            domains = energy.discover_amd_hwmon_energy(root)
+            self.assertEqual(len(domains), 2)
+            contributing = [x for x in domains if x["contributes"]]
+            self.assertEqual(len(contributing), 1)
+            self.assertEqual(contributing[0]["name"], "Esocket0")
+            self.assertEqual(contributing[0]["unit"], "microjoule")
+
     def test_probe_does_not_invent_evidence(self):
         with tempfile.TemporaryDirectory() as d:
             root = pathlib.Path(d)
-            value = energy.probe(powercap_root=root)
+            value = energy.probe(powercap_root=root, hwmon_root=root)
             self.assertIsNone(value["highest_available_evidence_class"])
             self.assertFalse(value["physical_system_energy_measured"])
             self.assertFalse(value["claim_authorized"])
