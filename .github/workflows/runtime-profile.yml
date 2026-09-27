@@ -3,7 +3,9 @@ name: runtime-profile
 on:
   workflow_dispatch:
   push:
-    branches: [master]
+    branches:
+      - master
+      - 'agent/**'
     paths:
       - '.github/workflows/runtime-profile.yml'
       - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
@@ -20,6 +22,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: runtime-profile-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   profile:
@@ -65,6 +71,8 @@ jobs:
           set -euo pipefail
           python3 experiments/energy/test_profile_report.py
           python3 experiments/energy/test_resident_baselines.py
+          python3 experiments/energy/test_ci_energy_evidence.py
+          python3 experiments/energy/test_energy_status.py
           baseline-venv/bin/python experiments/energy/test_experiments.py
           python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1
       - name: Verify real backend profiling and build independent C++ control
@@ -84,6 +92,12 @@ jobs:
           compile_cpp_baseline(pathlib.Path('profile-output/cpp-build'), 'clang++-18',
                                pathlib.Path('build-profile/onnxruntime-1.30.0'))
           PY
+      - name: Probe CI energy evidence capabilities
+        run: |
+          python3 experiments/energy/ci_energy_evidence.py probe \
+            --profiles experiments/energy/calibration_profiles \
+            --output profile-output/ci-energy-probe.json
+          cat profile-output/ci-energy-probe.json >> "$GITHUB_STEP_SUMMARY"
       - name: Capture all five diagnostic cells
         run: |
           set -euo pipefail
