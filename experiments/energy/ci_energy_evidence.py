@@ -152,6 +152,54 @@ def discover_rapl(root: Optional[pathlib.Path] = None) -> List[Dict[str, object]
     return domains
 
 
+def discover_amd_hwmon_energy(root: Optional[pathlib.Path] = None) -> List[Dict[str, object]]:
+    """Discover AMD amd_energy HWMON cumulative energy counters.
+
+    Only Esocket* channels contribute to package totals. Ecore* channels remain
+    visible for diagnostics but are never added to their parent socket.
+    """
+    base = root or pathlib.Path("/sys/class/hwmon")
+    if not base.exists() or not base.is_dir():
+        return []
+    domains: List[Dict[str, object]] = []
+    try:
+        entries = sorted(base.glob("hwmon*"))
+    except OSError:
+        return []
+    for hwmon in entries:
+        try:
+            if hwmon.is_symlink() and root is not None:
+                continue
+            name_path = hwmon / "name"
+            if not name_path.is_file() or name_path.is_symlink():
+                continue
+            if _read_text(name_path, 128).strip() != "amd_energy":
+                continue
+            for energy_path in sorted(hwmon.glob("energy*_input")):
+                if energy_path.is_symlink() or not energy_path.is_file():
+                    continue
+                match = re.fullmatch(r"energy([0-9]+)_input", energy_path.name)
+                if not match:
+                    continue
+                index = match.group(1)
+                label_path = hwmon / f"energy{index}_label"
+                label = (_read_text(label_path, 256).strip()
+                         if label_path.is_file() and not label_path.is_symlink()
+                         else f"energy{index}")
+                domains.append({
+                    "path": str(energy_path),
+                    "name": label,
+                    "readable": os.access(energy_path, os.R_OK),
+                    "contributes": label.startswith("Esocket"),
+                    "unit": "microjoule",
+                    "source": "amd_energy_hwmon",
+                })
+        except (OSError, ValueError):
+            continue
+    domains.sort(key=lambda item: str(item["path"]))
+    return domains
+
+
 def perf_probe() -> Dict[str, object]:
     perf = shutil.which("perf")
     paranoid = None
@@ -235,17 +283,20 @@ def select_profile(profiles: Iterable[Dict[str, object]], hardware: Dict[str, ob
 def probe(profile_dir: Optional[pathlib.Path] = None, powercap_root: Optional[pathlib.Path] = None) -> Dict[str, object]:
     hardware = cpu_identity()
     rapl = discover_rapl(powercap_root)
+    amd_hwmon = discover_amd_hwmon_energy()
     profiles = load_profiles(profile_dir) if profile_dir else []
     e2 = select_profile(profiles, hardware, "E2") if profiles else None
     e3 = select_profile(profiles, hardware, "E3") if profiles else None
     readable_packages = [d for d in rapl if d["contributes"] and d["readable"]]
-    highest = "E1" if readable_packages else ("E2" if e2 else ("E3" if e3 else None))
+    readable_amd_sockets = [d for d in amd_hwmon if d["contributes"] and d["readable"]]
+    highest = "E1" if (readable_packages or readable_amd_sockets) else ("E2" if e2 else ("E3" if e3 else None))
     return {
         "schema": SCHEMA,
         "kind": "probe",
         "recorded_utc": _utc(),
         "hardware": hardware,
         "rapl_domains": rapl,
+        "amd_hwmon_domains": amd_hwmon,
         "perf": perf_probe(),
         "matching_profiles": {
             "E2": None if e2 is None else {"profile_id": e2["profile_id"], "sha256": e2["_sha256"]},
@@ -424,6 +475,106 @@ class RaplSampler:
         return self._total_uj / 1e6, self._samples
 
 
+class AmdHwmonEnergySampler:
+    """Poll AMD amd_energy socket counters exposed through HWMON."""
+
+    def __init__(self, root: Optional[pathlib.Path] = None, interval_seconds: float = 0.01,
+                 maximum_socket_power_w: float = 2000.0):
+        if not 0.001 <= interval_seconds <= 0.25:
+            raise ValueError("invalid HWMON sample interval")
+        if not 100 <= maximum_socket_power_w <= 10000:
+            raise ValueError("invalid conservative socket-power bound")
+        domains = [d for d in discover_amd_hwmon_energy(root) if d["contributes"] and d["readable"]]
+        if not domains:
+            raise RuntimeError("amd_hwmon_socket_energy_unavailable")
+        self.domains = domains
+        self.interval = interval_seconds
+        self.max_power = maximum_socket_power_w
+        self._stop = threading.Event()
+        self._thread = None
+        self._error: Optional[BaseException] = None
+        self._total_uj = 0
+        self._samples = 0
+        self._last_time: Optional[float] = None
+        self._previous: Optional[Dict[str, int]] = None
+
+    def _values(self) -> Tuple[float, Dict[str, int]]:
+        return time.monotonic(), {
+            str(d["path"]): _read_counter(pathlib.Path(str(d["path"]))) for d in self.domains
+        }
+
+    def _sample_once(self) -> None:
+        now, current = self._values()
+        if self._last_time is None or self._previous is None:
+            self._last_time, self._previous = now, current
+            self._samples = 1
+            return
+        dt = now - self._last_time
+        if dt <= 0:
+            raise RuntimeError("non_monotonic_hwmon_sampling")
+        for d in self.domains:
+            key = str(d["path"])
+            old, new = self._previous[key], current[key]
+            # amd_energy exposes accumulated uJ. Without a validated range,
+            # counter reset/wrap is rejected rather than guessed.
+            if new < old:
+                raise RuntimeError("amd_hwmon_counter_reset_or_wrap_unqualified")
+            delta = new - old
+            if delta / 1e6 > dt * self.max_power:
+                raise RuntimeError("amd_hwmon_delta_exceeds_conservative_power_bound")
+            self._total_uj += delta
+        self._previous, self._last_time = current, now
+        self._samples += 1
+
+    def start(self) -> None:
+        self._sample_once()
+
+        def run():
+            try:
+                while not self._stop.wait(self.interval):
+                    self._sample_once()
+            except BaseException as exc:
+                self._error = exc
+                self._stop.set()
+
+        self._thread = threading.Thread(target=run, name="shorthand-amd-energy-sampler", daemon=True)
+        self._thread.start()
+
+    def stop(self) -> Tuple[float, int]:
+        if self._thread is None:
+            raise RuntimeError("sampler_not_started")
+        self._stop.set()
+        self._thread.join(timeout=2)
+        if self._thread.is_alive():
+            raise RuntimeError("amd_energy_sampler_did_not_stop")
+        if self._error:
+            raise RuntimeError(str(self._error))
+        self._sample_once()
+        return self._total_uj / 1e6, self._samples
+
+
+class ComponentEnergySampler:
+    """Select the strongest supported CPU component-energy counter."""
+
+    def __init__(self, interval_seconds: float = 0.01,
+                 powercap_root: Optional[pathlib.Path] = None,
+                 hwmon_root: Optional[pathlib.Path] = None):
+        try:
+            self.impl = RaplSampler(powercap_root, interval_seconds=interval_seconds)
+            self.method = "rapl_powercap_package"
+            self.boundary = "cpu_package"
+        except RuntimeError:
+            self.impl = AmdHwmonEnergySampler(hwmon_root, interval_seconds=interval_seconds)
+            self.method = "amd_energy_hwmon_socket"
+            self.boundary = "cpu_socket"
+
+    def start(self) -> None:
+        self.impl.start()
+
+    def stop(self) -> Tuple[float, int]:
+        return self.impl.stop()
+
+
 def measure_command(argv: List[str], completed: int, output: pathlib.Path,
                     powercap_root: Optional[pathlib.Path] = None,
                     sample_interval: float = 0.01) -> int:
@@ -433,13 +584,13 @@ def measure_command(argv: List[str], completed: int, output: pathlib.Path,
         raise ValueError("missing command")
     hardware = cpu_identity()
     try:
-        sampler = RaplSampler(powercap_root, interval_seconds=sample_interval)
+        sampler = ComponentEnergySampler(sample_interval, powercap_root=powercap_root)
     except RuntimeError as exc:
         write_json(output, {
             "schema": SCHEMA,
             "kind": "measurement",
             "evidence_class": None,
-            "method": "rapl_package",
+            "method": "cpu_component_energy",
             "available": False,
             "reason": str(exc),
             "physical_system_energy_measured": False,
@@ -463,9 +614,10 @@ def measure_command(argv: List[str], completed: int, output: pathlib.Path,
         "schema": SCHEMA,
         "kind": "measurement",
         "evidence_class": "E1" if available else None,
-        "method": "rapl_package",
+        "method": sampler.method,
         "available": available,
-        "reason": "package_energy_not_process_attributed" if available else "command_failed",
+        "reason": "component_energy_not_process_attributed" if available else "command_failed",
+        "boundary": sampler.boundary,
         "physical_system_energy_measured": False,
         "component_energy_measured": available,
         "hardware_measured_joules": joules if available else None,
