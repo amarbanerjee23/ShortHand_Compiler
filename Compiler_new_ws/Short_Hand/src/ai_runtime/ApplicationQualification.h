@@ -36,13 +36,7 @@ public:
     explicit ClassificationApplication(ApplicationConfiguration);
     // Concurrent calls use the same prepared session and local request buffers.
     ClassificationBatch classify(const std::vector<float> &) const;
-    // Bounds-checked non-copying view into an owned resident vector. This keeps
-    // the vector alive for the synchronous inference call while avoiding a
-    // separate raw-batch allocation/copy in native dataset execution.
-    ClassificationBatch classifyRange(const std::vector<float> &,std::size_t offset,std::size_t elements) const;
     ClassificationBatch classifyProfiled(const std::vector<float> &,ClassificationProfile &) const;
-    ClassificationBatch classifyRangeProfiled(const std::vector<float> &,std::size_t offset,std::size_t elements,
-                                               ClassificationProfile &) const;
     serving::HandlerResult handle(const serving::Request &,const serving::CancellationToken &) const;
     std::string runtimeVersion() const;
 private:
