@@ -239,10 +239,12 @@ Add a dedicated PR110 diagnostic job that:
 1. builds an uninstrumented release binary;
 2. runs the fixed five-cell AIRuntime/C++-ORT comparison;
 3. runs the attribution profiler separately;
-4. records raw observations and environment metadata;
-5. compares the current head against the frozen PR109 baseline;
-6. emits per-cell ratios and deltas;
-7. uploads all observations whether improved, neutral or regressed.
+4. probes RAPL/NVML and required PMCs without failing correctness CI when unavailable;
+5. produces the highest-qualified E1/E2/E3 energy evidence;
+6. records raw observations, calibration identity and environment metadata;
+7. compares the current head against the frozen PR109 baseline;
+8. emits per-cell latency and energy ratios/deltas with uncertainty;
+9. uploads all observations whether improved, neutral, regressed or unsupported.
 
 Hosted CI timing remains diagnostic because runner noise can create false failures.
 
@@ -269,23 +271,210 @@ Secondary guardrail:
 
 This is a prospective engineering acceptance target, not a current result and not an energy claim.
 
-## 5. Physical-energy readiness
+## 5. Continuous calibrated energy-evidence pipeline
 
-PR110 should make the runtime ready for the physical campaign but must not invent a power claim.
+PR110 must add energy-related evidence to every relevant optimization run without misrepresenting modeled energy as physically measured whole-system energy.
 
-After the optimized software is frozen:
-- retain compiler/runtime/model/dataset hashes;
-- use a dedicated isolated Linux host;
-- use an independently logging calibrated whole-host AC meter;
-- keep RAPL as secondary CPU-package diagnostics;
-- use randomized AB/BA paired execution;
-- collect at least 30 pairs per declared configuration/session where practical;
-- repeat at least three independent sessions;
-- retain raw power traces, failed trials and meter uncertainty;
-- report watts, elapsed time, total joules, joules/completed-correct-task, throughput, p95 latency and quality;
-- never derive joules from elapsed time or TDP.
+### 5.1 Evidence classes
 
-Physical superiority is outside PR110's merge criterion unless real calibrated evidence is available. The software optimization PR must remain valid even when physical measurement is pending.
+Every energy result must carry exactly one highest-supported evidence class:
+
+- **E0 — physical whole-system measurement**: externally calibrated AC measurement around the complete host. This is the gold-standard system-energy class but is not required for ordinary PR110 CI.
+- **E1 — hardware component measurement**: hardware-reported accumulated energy such as Linux RAPL `energy_uj` for CPU package/domain energy or NVML total-energy counters for supported GPUs.
+- **E2 — calibrated counter model**: joules estimated from runtime performance counters using an architecture-specific, versioned calibration model with retained uncertainty and calibration provenance.
+- **E3 — analytical Energy-Roofline estimate**: joules estimated from compiler/runtime operation counts plus memory-traffic estimates using versioned architecture coefficients.
+
+The pipeline must never relabel E1/E2/E3 as E0. Reports must use distinct fields such as:
+- `physical_system_joules`;
+- `hardware_measured_joules`;
+- `calibrated_joules_estimate`;
+- `analytical_joules_estimate`.
+
+### 5.2 Preferred evidence selection
+
+For each benchmark cell, probe in this order:
+
+1. use E1 when a supported hardware energy counter is readable and stable;
+2. otherwise use E2 when all required PMCs are available and the runner CPU matches a validated calibration profile;
+3. otherwise use E3 when a compatible analytical profile exists;
+4. otherwise emit `energy_status=unsupported_hardware_model` and retain latency/correctness evidence only.
+
+Missing counters, permission failures, unsupported CPUs, or incomplete coefficient sets must downgrade the evidence class instead of producing a guessed number.
+
+### 5.3 Calibrated PMC model
+
+The initial CPU model should support a form such as:
+
+```text
+E_est =
+  beta_time * elapsed_time
++ beta_instr * instructions_retired
++ beta_cycles * cycles
++ beta_branch * branch_events
++ beta_llc * llc_misses
++ beta_mem * estimated_or_measured_memory_bytes
++ intercept
+```
+
+The exact feature set is calibration-profile specific. Coefficients must never be silently reused across incompatible CPU families or frequency regimes.
+
+Each calibration profile must record:
+- model version and SHA-256;
+- CPU vendor/family/model/stepping or an explicitly broader validated class;
+- operating-frequency/DVFS validity range;
+- required PMCs;
+- coefficient units;
+- calibration dataset/source;
+- fit/validation error;
+- confidence/uncertainty bound;
+- publication or retained calibration provenance;
+- date and tool version.
+
+A CI result is E2 only if its hardware identity and required counters satisfy the profile contract.
+
+### 5.4 Compiler Energy-Roofline evidence
+
+Independently of PMCs, the compiler/runtime should emit energy-relevant structural counters where derivable:
+
+- FP/MAC operation counts;
+- integer/vector operation counts where available;
+- tensor bytes read/written;
+- temporary tensor count and lifetime;
+- estimated L1/L2/LLC/DRAM traffic when a validated model exists;
+- allocation count/bytes;
+- copies eliminated;
+- operational intensity;
+- static execution-plan identity.
+
+The analytical model should follow the energy-roofline structure:
+
+```text
+E_analytical =
+  sum(operation_count_i * energy_per_operation_i)
++ sum(bytes_at_memory_level_j * energy_per_byte_j)
++ static_power_term * elapsed_time
+```
+
+Published coefficients are priors/reference points, not universal constants. A historical process-node value such as a pJ/FLOP number must not be applied to unrelated modern CPUs without an explicit compatibility/calibration justification.
+
+### 5.5 Relative energy efficiency
+
+The primary continuous-CI energy statistic is a same-runner paired ratio:
+
+```text
+R_energy = ShortHand_joules_per_correct_task / baseline_joules_per_correct_task
+```
+
+and:
+
+```text
+energy_delta_percent = 100 * (1 - R_energy)
+```
+
+Report absolute modeled/measured joules with evidence class and uncertainty, but emphasize same-host paired ratios because common calibration/systematic error can cancel partially.
+
+Comparisons must use:
+- same runner;
+- same model and dataset;
+- same precision;
+- same functional-unit definition;
+- same quality threshold;
+- same batch/thread/SLO cell;
+- same measurement/model version.
+
+### 5.6 CI output schema
+
+Every relevant PR/push experiment should retain a machine-readable record containing at least:
+
+```json
+{
+  "evidence_class": "E2",
+  "method": "calibrated_pmc_v1",
+  "physical_system_energy_measured": false,
+  "component_energy_measured": false,
+  "calibrated_joules_estimate": 0.0,
+  "joules_per_completed_correct_task": 0.0,
+  "model_uncertainty_percent": 0.0,
+  "short_hand_to_cpp_energy_ratio": 0.0,
+  "short_hand_to_python_energy_ratio": 0.0,
+  "hardware_profile": "",
+  "calibration_profile_sha256": "",
+  "completed_correct_tasks": 0
+}
+```
+
+Unavailable fields must be `null`, not zero or synthesized.
+
+### 5.7 Continuous workflow policy
+
+PR110 implementation must make the experiment pipeline run continuously:
+
+**Relevant branch push (`agent/**`) and pull-request update**
+- core correctness CI;
+- tooling;
+- fast five-cell uninstrumented latency comparison;
+- runtime attribution/profile pass;
+- hardware-energy-counter probe;
+- PMC collection when permitted;
+- E2/E3 energy estimate when qualified;
+- ShortHand vs C++ and Python ratios;
+- raw JSON/CSV + Markdown artifact upload.
+
+**Push/merge to `master`**
+- all of the above;
+- exhaustive PR109-style paired software benchmark;
+- retained historical comparison against the previous accepted master result;
+- confidence intervals;
+- durable energy-evidence summary.
+
+The workflow definitions should be updated so runtime/energy experiments are not limited to pull-request path events only. Expensive duplicate runs should use GitHub concurrency cancellation, but the latest commit for every relevant PR must retain a complete evidence artifact.
+
+### 5.8 Optimization effectiveness report
+
+Every optimization stage should report, where the platform supports it:
+
+- latency/task;
+- throughput;
+- cycles/task;
+- instructions/task;
+- LLC/cache events;
+- allocation bytes/task;
+- tensor/memory bytes/task;
+- E1 hardware-measured J/task if available;
+- E2 calibrated estimated J/task if qualified;
+- E3 analytical estimated J/task if qualified;
+- energy ratio to C++/ORT;
+- energy ratio to Python/ORT;
+- evidence class;
+- uncertainty;
+- correctness/quality result.
+
+This lets PR110 demonstrate whether an optimization reduces host work and modeled/measured energy rather than relying on latency alone.
+
+### 5.9 Scientific references and interpretation
+
+The implementation should cite and align its methodology with established sources, including:
+
+- Choi et al., **A Roofline Model of Energy**, IEEE IPDPS 2013 — operations, communication/memory traffic, concurrency, time and machine energy characteristics as the basis of an energy roofline;
+- Horowitz, **Computing's Energy Problem (and what we can do about it)**, ISSCC 2014 — illustrative evidence that data movement can cost substantially more energy than arithmetic; values are historical reference points, not universal modern-CPU coefficients;
+- Linux kernel **powercap/RAPL** interface documentation — accumulated hardware energy exposed through `energy_uj` where supported;
+- NVIDIA **NVML** device-query API — accumulated total GPU energy on supported devices;
+- peer-reviewed/validated PMC-based CPU energy-model literature used by the selected calibration profile.
+
+The plan must preserve source/version metadata for any coefficients used so experimental results remain reproducible.
+
+### 5.10 Physical-energy interpretation
+
+PR110 does not require a dedicated physical meter runner. Continuous CI may therefore produce E1, E2 or E3 evidence depending on runner capabilities.
+
+Only E0 is described as whole-system physical energy. E1 is component-level hardware measurement. E2/E3 are estimates.
+
+The absence of E0 must not block software optimization work, but it continues to block unconditional claims such as:
+- "lowest-power AI language";
+- "X% lower whole-system energy" without a matching E0 study;
+- universal hardware-independent energy superiority.
+
+Workload/hardware-specific E1 results or explicitly labeled E2/E3 results may be reported according to their evidence class and uncertainty.
 
 ## 6. Fair baseline policy
 
@@ -352,8 +541,10 @@ Recommended atomic sequence:
 11. LTO/PGO build experiment;
 12. bounded AOT model path;
 13. tensor optimization/ablation framework;
-14. final five-cell uninstrumented comparison;
-15. claims/readiness documentation update based only on executed evidence.
+14. calibrated energy-evidence pipeline (E1/E2/E3) + architecture profiles;
+15. continuous PR/push experiment workflows and retained artifacts;
+16. final five-cell uninstrumented latency/energy comparison;
+17. claims/readiness documentation update based only on executed evidence.
 
 Every commit is expected to be buildable and testable.
 
@@ -367,7 +558,10 @@ PR110 remains draft until implementation begins. It may be marked ready only whe
 - [ ] independent C++ baseline remains fair and executable;
 - [ ] all five runtime cells have retained before/after observations;
 - [ ] every enabled optimization has an attributable or justified benefit;
-- [ ] no optimization depends on a synthetic energy estimate;
+- [ ] energy results carry explicit E0/E1/E2/E3 evidence class and uncertainty;
+- [ ] unsupported hardware/counters downgrade evidence instead of fabricating joules;
+- [ ] relevant PR/push CI retains latency plus highest-qualified energy evidence artifacts;
+- [ ] no physical-energy claim depends on a modeled E2/E3 value;
 - [ ] AIRuntime parity target is met or remaining gap is explicitly retained as a blocker;
 - [ ] production/energy claims remain false unless supported by separate qualified evidence;
 - [ ] documentation matches the exact tested revision.
@@ -384,4 +578,8 @@ PR110 will not:
 
 ## 12. Follow-on after PR110
 
-Once the optimized implementation is frozen and native parity/improvement is demonstrated, run the calibrated physical-energy campaign using the repository's existing measurement framework. Only that retained physical evidence can support workload/hardware-specific joules-per-task claims.
+After PR110, every relevant optimization PR should inherit the continuous latency + energy-evidence pipeline.
+
+Where CI exposes RAPL/NVML, retain E1 hardware component joules/task. Where it does not, retain only qualified E2/E3 estimates with calibration/model uncertainty and provenance.
+
+A later externally metered E0 study remains optional validation for whole-system energy claims, not a prerequisite for continuously tracking compiler/runtime energy efficiency.
