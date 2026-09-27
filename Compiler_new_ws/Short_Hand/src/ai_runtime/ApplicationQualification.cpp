@@ -315,24 +315,36 @@ J evaluateApplication(const ApplicationConfiguration &c,bool serve) {
     const auto warmup_ms=milliseconds(wt); const auto warmup_energy=meter->end(w,p.warmups);
     J report=describeApplication(c), trials=arr(); std::vector<double> timings; std::vector<float> reference;
     std::vector<unsigned> predictions, topk; bool all_valid=true; std::string failure; unsigned long long sequence=0;
+    const bool sample_batch_latency=serve || p.maximum_latency_ms>0;
+    const auto batches_per_repeat=(data.labels.size()+p.batch_size-1)/p.batch_size;
     for (unsigned trial=0;trial<p.trials;++trial) {
         const auto start=meter->begin(); const double unix_start=energy::unixSeconds(); const auto clock=Clock::now();
-        std::vector<double> batch_latency; std::uint64_t completed=0; bool ok=true; std::string reason="executed";
-        std::vector<unsigned> trial_predictions;
+        std::vector<double> batch_latency;
+        if (sample_batch_latency) batch_latency.reserve(batches_per_repeat*std::size_t(p.repetitions));
+        std::uint64_t completed=0; bool ok=true; std::string reason="executed";
+        std::vector<unsigned> trial_predictions; trial_predictions.reserve(data.labels.size());
         try {
             for (unsigned repeat=0;repeat<p.repetitions;++repeat) {
                 std::vector<float> scores; std::vector<unsigned> labels, ranked;
+                scores.reserve(data.labels.size()*std::size_t(c.classes));
+                labels.reserve(data.labels.size());
+                ranked.reserve(data.labels.size()*std::size_t(c.top_k));
                 for (std::size_t offset=0;offset<data.labels.size();) {
                     const auto width=serve?c.workers:1U; std::vector<std::pair<std::string,Clock::time_point>> pending;
                     for (unsigned n=0;n<width && offset<data.labels.size();++n) {
-                        auto raw=rows(offset); offset+=raw.size()/c.features; const auto batch_clock=Clock::now();
+                        auto raw=rows(offset); offset+=raw.size()/c.features;
+                        const auto batch_clock=sample_batch_latency?Clock::now():Clock::time_point{};
                         if (serve) {
                             const std::string id="batch-"+std::to_string(sequence++); const auto payload=qualificationJson(obj({{"values",numbers(raw)}}));
                             auto admission=service->submit({id,"qualification",payload,std::chrono::milliseconds(c.request_timeout_ms)});
                             require(admission.accepted(),"application_admission_failed:"+admission.reason); pending.emplace_back(id,batch_clock);
                         } else {
-                            auto out=app.classify(raw); batch_latency.push_back(milliseconds(batch_clock)/out.predictions.size()); completed+=out.predictions.size();
-                            scores.insert(scores.end(),out.scores.begin(),out.scores.end()); labels.insert(labels.end(),out.predictions.begin(),out.predictions.end()); ranked.insert(ranked.end(),out.top_k.begin(),out.top_k.end());
+                            auto out=app.classify(raw);
+                            if (sample_batch_latency) batch_latency.push_back(milliseconds(batch_clock)/out.predictions.size());
+                            completed+=out.predictions.size();
+                            scores.insert(scores.end(),out.scores.begin(),out.scores.end());
+                            labels.insert(labels.end(),out.predictions.begin(),out.predictions.end());
+                            ranked.insert(ranked.end(),out.top_k.begin(),out.top_k.end());
                         }
                     }
                     for (const auto &request:pending) {
