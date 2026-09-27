@@ -2,6 +2,7 @@
 #include "energy/ExternalMeterCollector.h"
 #include "../module/Sha256.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -132,13 +133,19 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
     if constexpr (Profiled) start=Clock::now();
     const auto b=c.qualification.protocol.batch_size;
     require(!raw.empty() && raw.size()%c.features==0 && raw.size()<=std::size_t(b)*c.features,"invalid_application_batch");
-    TensorBuffer input; input.spec=session.inputSpec(); input.f32_data.assign(std::size_t(b)*c.features,0);
-    for (std::size_t i=0;i<raw.size();++i) {
-        if (!std::isfinite(raw[i]) || raw[i]<c.input_min || raw[i]>c.input_max)
+    TensorBuffer input; input.spec=session.inputSpec();
+    const auto padded_elements=std::size_t(b)*c.features;
+    input.f32_data.reserve(padded_elements);
+    for (float raw_value:raw) {
+        if (!std::isfinite(raw_value) || raw_value<c.input_min || raw_value>c.input_max)
             throw std::runtime_error("application_input_outside_range");
-        input.f32_data[i]=static_cast<float>((double(raw[i])-c.offset)*c.scale);
-        if (!std::isfinite(input.f32_data[i])) throw std::runtime_error("application_preprocessing_overflow");
+        const auto normalized=static_cast<float>((double(raw_value)-c.offset)*c.scale);
+        if (!std::isfinite(normalized)) throw std::runtime_error("application_preprocessing_overflow");
+        input.f32_data.push_back(normalized);
     }
+    // Only the final partial batch needs padding. reserve()+push_back avoids
+    // zero-initializing a full batch and then overwriting every element.
+    input.f32_data.resize(padded_elements,0.0f);
     if constexpr (Profiled) prepared=Clock::now();
     PreparedInferenceProfile backend;
     auto result=[&] {
@@ -156,14 +163,18 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
     // All backend scores, including padding, were validated above.
     out.scores=std::move(result.output_f32);
     out.scores.resize(count*c.classes);
-    out.predictions.reserve(count); out.top_k.reserve(count*c.top_k);
-    std::vector<unsigned> order(c.classes);
+    out.predictions.resize(count); out.top_k.resize(count*c.top_k);
+    // ApplicationConfiguration caps classes at 256. Keep ordering scratch on
+    // the stack instead of allocating it once per batch.
+    std::array<unsigned,256> order{};
+    const auto order_end=order.begin()+c.classes;
     for (std::size_t row=0;row<count;++row) {
-        std::iota(order.begin(),order.end(),0);
-        std::partial_sort(order.begin(),order.begin()+c.top_k,order.end(),[&](unsigned a,unsigned b){
+        std::iota(order.begin(),order_end,0);
+        std::partial_sort(order.begin(),order.begin()+c.top_k,order_end,[&](unsigned a,unsigned b){
             const float x=out.scores[row*c.classes+a],y=out.scores[row*c.classes+b]; return x==y?a<b:x>y;
         });
-        out.predictions.push_back(order.front()); out.top_k.insert(out.top_k.end(),order.begin(),order.begin()+c.top_k);
+        out.predictions[row]=order.front();
+        std::copy_n(order.begin(),c.top_k,out.top_k.begin()+row*c.top_k);
     }
     if constexpr (Profiled) {
         const auto end=Clock::now();
