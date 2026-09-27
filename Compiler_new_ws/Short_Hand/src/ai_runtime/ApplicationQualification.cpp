@@ -126,9 +126,10 @@ ClassificationApplication::ClassificationApplication(ApplicationConfiguration c)
 std::string ClassificationApplication::runtimeVersion() const { return session_->runtimeVersion(); }
 namespace {
 template<bool Profiled>
-ClassificationBatch classifyBatch(const std::vector<float> &raw,const ApplicationConfiguration &c,
-                                  PreparedInference &session,const ApplicationValidatedInput &validated_input,
-                                  ClassificationProfile *profile) {
+void classifyBatchAppend(const std::vector<float> &raw,const ApplicationConfiguration &c,
+                         PreparedInference &session,const ApplicationValidatedInput &validated_input,
+                         std::vector<float> &scores,std::vector<unsigned> &predictions,
+                         std::vector<unsigned> &top_k,ClassificationProfile *profile) {
     Clock::time_point start{},prepared{},validated{},postprocess{};
     if constexpr (Profiled) start=Clock::now();
     const auto b=c.qualification.protocol.batch_size;
@@ -152,12 +153,17 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
     for (float v:result.output_f32)
         if (!std::isfinite(v)) throw std::runtime_error("nonfinite_application_output");
     if constexpr (Profiled) postprocess=Clock::now();
-    ClassificationBatch out; const auto count=raw.size()/c.features;
-    // The result owns these scores. Transfer ownership, then trim padded rows.
-    // All backend scores, including padding, were validated above.
-    out.scores=std::move(result.output_f32);
-    out.scores.resize(count*c.classes);
-    out.predictions.resize(count); out.top_k.resize(count*c.top_k);
+    const auto count=raw.size()/c.features;
+    const auto score_base=scores.size(), prediction_base=predictions.size(), top_base=top_k.size();
+    const auto real_score_count=count*std::size_t(c.classes);
+    require(score_base<=262144 && real_score_count<=262144-score_base,"application_score_output_limit");
+    require(prediction_base<=100000 && count<=100000-prediction_base,"application_prediction_output_limit");
+    require(top_base<=262144 && count*std::size_t(c.top_k)<=262144-top_base,"application_topk_output_limit");
+    // All backend scores, including padded rows, were validated above. Append
+    // only real rows directly into the caller-owned resident output buffers.
+    scores.insert(scores.end(),result.output_f32.begin(),result.output_f32.begin()+real_score_count);
+    predictions.resize(prediction_base+count);
+    top_k.resize(top_base+count*c.top_k);
     // ApplicationConfiguration caps classes at 256. Keep ordering scratch on
     // the stack instead of allocating it once per batch.
     std::array<unsigned,256> order{};
@@ -165,10 +171,10 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
     for (std::size_t row=0;row<count;++row) {
         std::iota(order.begin(),order_end,0);
         std::partial_sort(order.begin(),order.begin()+c.top_k,order_end,[&](unsigned a,unsigned b){
-            const float x=out.scores[row*c.classes+a],y=out.scores[row*c.classes+b]; return x==y?a<b:x>y;
+            const float x=result.output_f32[row*c.classes+a],y=result.output_f32[row*c.classes+b]; return x==y?a<b:x>y;
         });
-        out.predictions[row]=order.front();
-        std::copy_n(order.begin(),c.top_k,out.top_k.begin()+row*c.top_k);
+        predictions[prediction_base+row]=order.front();
+        std::copy_n(order.begin(),c.top_k,top_k.begin()+top_base+row*c.top_k);
     }
     if constexpr (Profiled) {
         const auto end=Clock::now();
@@ -187,17 +193,35 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
         profile->completed=count;
         profile->success=true;
     }
-    return out;
+    return;
 }
 } // namespace
 ClassificationBatch ClassificationApplication::classify(const std::vector<float> &raw) const {
+    ClassificationBatch out;
+    const auto count=raw.size()/configuration_.features;
+    out.scores.reserve(count*configuration_.classes);
+    out.predictions.reserve(count);
+    out.top_k.reserve(count*configuration_.top_k);
+    classifyAppend(raw,out.scores,out.predictions,out.top_k);
+    return out;
+}
+void ClassificationApplication::classifyAppend(const std::vector<float> &raw,std::vector<float> &scores,
+                                               std::vector<unsigned> &predictions,
+                                               std::vector<unsigned> &top_k) const {
     const ApplicationValidatedInput validated_input;
-    return classifyBatch<false>(raw,configuration_,*session_,validated_input,nullptr);
+    classifyBatchAppend<false>(raw,configuration_,*session_,validated_input,scores,predictions,top_k,nullptr);
 }
 ClassificationBatch ClassificationApplication::classifyProfiled(const std::vector<float> &raw,ClassificationProfile &profile) const {
     profile={}; // A failed call must never leave an earlier successful observation.
+    ClassificationBatch out;
+    const auto count=raw.size()/configuration_.features;
+    out.scores.reserve(count*configuration_.classes);
+    out.predictions.reserve(count);
+    out.top_k.reserve(count*configuration_.top_k);
     const ApplicationValidatedInput validated_input;
-    return classifyBatch<true>(raw,configuration_,*session_,validated_input,&profile);
+    classifyBatchAppend<true>(raw,configuration_,*session_,validated_input,
+                              out.scores,out.predictions,out.top_k,&profile);
+    return out;
 }
 serving::HandlerResult ClassificationApplication::handle(const serving::Request &r,const serving::CancellationToken &token) const {
     try {
@@ -339,12 +363,12 @@ J evaluateApplication(const ApplicationConfiguration &c,bool serve) {
                             auto admission=service->submit({id,"qualification",payload,std::chrono::milliseconds(c.request_timeout_ms)});
                             require(admission.accepted(),"application_admission_failed:"+admission.reason); pending.emplace_back(id,batch_clock);
                         } else {
-                            auto out=app.classify(raw);
-                            if (sample_batch_latency) batch_latency.push_back(milliseconds(batch_clock)/out.predictions.size());
-                            completed+=out.predictions.size();
-                            scores.insert(scores.end(),out.scores.begin(),out.scores.end());
-                            labels.insert(labels.end(),out.predictions.begin(),out.predictions.end());
-                            ranked.insert(ranked.end(),out.top_k.begin(),out.top_k.end());
+                            const auto before=labels.size();
+                            app.classifyAppend(raw,scores,labels,ranked);
+                            const auto added=labels.size()-before;
+                            require(added>0,"empty_application_batch");
+                            if (sample_batch_latency) batch_latency.push_back(milliseconds(batch_clock)/added);
+                            completed+=added;
                         }
                     }
                     for (const auto &request:pending) {
