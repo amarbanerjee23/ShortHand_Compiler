@@ -68,6 +68,7 @@ def status(profile_dir=None):
             'platform': platform.platform(),
             'hardware': capability.get('hardware'),
             'rapl_domains': capability.get('rapl_domains'),
+            'amd_hwmon_domains': capability.get('amd_hwmon_domains'),
             'perf': capability.get('perf'),
             'matching_profiles': capability.get('matching_profiles'),
         },
