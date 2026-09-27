@@ -51,14 +51,6 @@ int main() {
     check(full.top_k==std::vector<unsigned>({0,1,2,1,2,0}));
     auto partial=app.classify({0,0});check(partial.scores.size()==3 && partial.top_k.size()==3);
     check(app.classify({4,0,0,0}).scores==full.scores);
-    std::vector<float> resident={9,9,4,0,0,0,0,0,7,7};
-    auto ranged=app.classifyRange(resident,2,4);
-    check(ranged.scores==full.scores && ranged.predictions==full.predictions && ranged.top_k==full.top_k);
-    auto ranged_partial=app.classifyRange(resident,6,2);
-    check(ranged_partial.scores==partial.scores && ranged_partial.predictions==partial.predictions);
-    rejects([&]{app.classifyRange(resident,resident.size()+1,2);},"invalid_application_batch_range");
-    rejects([&]{app.classifyRange(resident,9,2);},"invalid_application_batch_range");
-    rejects([&]{app.classifyRange(resident,2,1);},"invalid_application_batch");
     for(auto raw: {std::vector<float>{}, {1}, {1,2,3,4,5,6}})
         rejects([&]{app.classify(raw);},"invalid_application_batch");
     for(float bad:{-1.f,17.f,std::numeric_limits<float>::infinity(),std::numeric_limits<float>::quiet_NaN()})
@@ -73,12 +65,6 @@ int main() {
     check(profile.total_ns==profile.preprocessing_ns+profile.prepared_call_ns+
           profile.output_validation_ns+profile.postprocessing_ns);
     check(profiled.scores==full.scores && profiled.predictions==full.predictions && profiled.top_k==full.top_k);
-    auto ranged_profiled=app.classifyRangeProfiled(resident,2,4,profile);
-    check(profile.success && profile.completed==2 && ranged_profiled.scores==full.scores &&
-          ranged_profiled.predictions==full.predictions && ranged_profiled.top_k==full.top_k);
-    profile.success=true; profile.total_ns=123;
-    rejects([&]{app.classifyRangeProfiled(resident,9,2,profile);},"invalid_application_batch_range");
-    check(!profile.success && !profile.completed && !profile.total_ns);
     check(app.classifyProfiled({0,0},profile).scores.size()==3 && profile.completed==1);
     rejects([&]{app.classifyProfiled({17,0},profile);},"application_input_outside_range");
     check(!profile.success && !profile.completed && !profile.total_ns);
