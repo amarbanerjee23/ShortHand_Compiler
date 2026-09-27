@@ -30,7 +30,7 @@ concurrency:
 jobs:
   profile:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       ORT_DISABLE_TELEMETRY: '1'
       OMP_NUM_THREADS: '1'
@@ -72,6 +72,7 @@ jobs:
           python3 experiments/energy/test_profile_report.py
           python3 experiments/energy/test_resident_baselines.py
           python3 experiments/energy/test_ci_energy_evidence.py
+          python3 experiments/energy/test_ci_energy_compare.py
           python3 experiments/energy/test_energy_status.py
           baseline-venv/bin/python experiments/energy/test_experiments.py
           python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1
@@ -122,6 +123,16 @@ jobs:
           python3 experiments/energy/resident_baselines.py analyze \
             --bundle profile-output/resident-baselines --manifest-sha256 "$digest"
           cat profile-output/resident-baselines/BASELINES.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Capture separate CI component-energy comparison
+        run: |
+          set -euo pipefail
+          python3 experiments/energy/ci_energy_compare.py \
+            --tool "$PWD/build-profile/shorthand_ai_qualify" \
+            --cpp "$PWD/profile-output/cpp-build/cpp-onnx-baseline" \
+            --python "$PWD/baseline-venv/bin/python" \
+            --profiles experiments/energy/calibration_profiles \
+            --output "$PWD/profile-output/ci-energy"
+          cat profile-output/ci-energy/ENERGY.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
