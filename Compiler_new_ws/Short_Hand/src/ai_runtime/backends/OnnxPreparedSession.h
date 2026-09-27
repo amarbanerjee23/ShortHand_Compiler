@@ -33,14 +33,22 @@ public:
     TensorSpec outputSpec() const override { return out_; }
     std::string runtimeVersion() const override { return OrtGetApiBase()->GetVersionString(); }
     InferenceResult run(const TensorBuffer &input) override {
-        return runImpl<false>(input,nullptr);
+        return runImpl<false,false>(input,nullptr);
     }
     InferenceResult runProfiled(const TensorBuffer &input,PreparedInferenceProfile &profile) override {
         profile={};
-        return runImpl<true>(input,&profile);
+        return runImpl<true,false>(input,&profile);
+    }
+    InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) override {
+        return runImpl<false,true>(input,nullptr);
+    }
+    InferenceResult runApplicationValidatedProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
+                                                    PreparedInferenceProfile &profile) override {
+        profile={};
+        return runImpl<true,true>(input,&profile);
     }
 private:
-    template<bool Profiled>
+    template<bool Profiled,bool ApplicationValidated>
     InferenceResult runImpl(const TensorBuffer &input,PreparedInferenceProfile *profile) {
         using Clock=std::chrono::steady_clock;
         Clock::time_point begin{},validation{},tensor_setup{},invoke{},copy{},telemetry{};
@@ -51,7 +59,8 @@ private:
             if constexpr (Profiled) validation=Clock::now();
             if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape || input.f32_data.size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
-            for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
+            if constexpr (!ApplicationValidated)
+                for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
             auto tensor=Ort::Value::CreateTensor<float>(memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
