@@ -69,6 +69,7 @@ jobs:
           build-energy/venv/bin/python experiments/energy/test_experiments.py --tool "$PWD/build-energy/shorthand_ai_qualify"
           build-energy/venv/bin/python experiments/energy/test_energy_status.py
           build-energy/venv/bin/python experiments/energy/test_ci_energy_evidence.py
+          build-energy/venv/bin/python experiments/energy/test_ci_energy_compare.py
       - name: Probe CI energy evidence capabilities
         run: |
           build-energy/venv/bin/python experiments/energy/ci_energy_evidence.py probe \
