@@ -2,8 +2,7 @@
 
 #include <charconv>
 #include <sstream>
-#include <stdexcept>
-#include <system_error>
+#include <type_traits>
 #include <utility>
 
 namespace shorthand::ai {
@@ -24,11 +23,14 @@ void appendEscaped(std::string &out, const std::string &value) {
 
 template <class Integer>
 void appendInteger(std::string &out, Integer value) {
-    char buffer[64];
+    static_assert(std::is_integral<Integer>::value, "telemetry integer required");
+    static_assert(sizeof(Integer) <= 8, "telemetry integer buffer contract");
+    // 32 bytes is larger than the decimal representation of every signed or
+    // unsigned 64-bit integer. Integral to_chars has no failure mode here once
+    // buffer capacity is guaranteed, so this remains compatible with the
+    // compiler's -fno-exceptions build.
+    char buffer[32];
     const auto result = std::to_chars(buffer, buffer + sizeof(buffer), value);
-    if (result.ec != std::errc{}) {
-        throw std::runtime_error("telemetry_integer_serialization_failed");
-    }
     out.append(buffer, result.ptr);
 }
 
