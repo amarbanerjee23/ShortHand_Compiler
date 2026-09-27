@@ -1,5 +1,6 @@
 #pragma once
 #include "AI_Types.h"
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -42,6 +43,54 @@ public:
     virtual InferenceResult runApplicationValidatedProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
                                                               PreparedInferenceProfile &profile) {
         return runProfiled(input,profile);
+    }
+    // Internal application-only output-buffer path. Backends without native
+    // preallocated-output support preserve semantics through the existing
+    // validated path. Invalid destinations fail closed without writing.
+    virtual InferenceResult runApplicationValidatedInto(const TensorBuffer &input,const ApplicationValidatedInput &validated,
+                                                        float *output,std::size_t output_elements) {
+        if (!output || !output_elements) {
+            InferenceResult result;
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="invalid_preallocated_output";
+            return result;
+        }
+        auto result=runApplicationValidated(input,validated);
+        if (result.status!=InferenceStatus::Success) return result;
+        if (result.output_f32.size()!=output_elements) {
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="preallocated_output_size_mismatch";
+            result.output_f32.clear();
+            return result;
+        }
+        std::copy(result.output_f32.begin(),result.output_f32.end(),output);
+        result.output_f32.clear();
+        result.output_elements=output_elements;
+        return result;
+    }
+    virtual InferenceResult runApplicationValidatedIntoProfiled(const TensorBuffer &input,const ApplicationValidatedInput &validated,
+                                                                 float *output,std::size_t output_elements,
+                                                                 PreparedInferenceProfile &profile) {
+        if (!output || !output_elements) {
+            profile={};
+            InferenceResult result;
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="invalid_preallocated_output";
+            return result;
+        }
+        auto result=runApplicationValidatedProfiled(input,validated,profile);
+        if (result.status!=InferenceStatus::Success) return result;
+        if (result.output_f32.size()!=output_elements) {
+            profile={};
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="preallocated_output_size_mismatch";
+            result.output_f32.clear();
+            return result;
+        }
+        std::copy(result.output_f32.begin(),result.output_f32.end(),output);
+        result.output_f32.clear();
+        result.output_elements=output_elements;
+        return result;
     }
     virtual TensorSpec inputSpec() const = 0;
     virtual TensorSpec outputSpec() const = 0;
