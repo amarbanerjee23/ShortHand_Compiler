@@ -5,6 +5,15 @@
 #include <vector>
 
 namespace shorthand::ai {
+class ClassificationApplication;
+// Capability token for the application host's already-finite normalized input.
+// The constructor is private so external callers cannot opt out of backend
+// finite validation. Shape/dtype/size checks remain mandatory in every path.
+class ApplicationValidatedInput final {
+private:
+    ApplicationValidatedInput() = default;
+    friend class ClassificationApplication;
+};
 struct InferenceConfiguration { unsigned threads=1; std::size_t maximum_tensor_elements=16U*1024U*1024U; };
 // Opt-in diagnostics. These clocks never authorize latency or energy claims.
 struct PreparedInferenceProfile {
@@ -23,6 +32,16 @@ public:
         result.status=InferenceStatus::BackendUnavailable;
         result.reason="prepared_profiling_unavailable";
         return result;
+    }
+    // Internal application-only fast path. The token cannot be constructed by
+    // ordinary callers; backends may skip only checks already guaranteed by the
+    // application host. Default implementations retain the full validation path.
+    virtual InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) {
+        return run(input);
+    }
+    virtual InferenceResult runApplicationValidatedProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
+                                                              PreparedInferenceProfile &profile) {
+        return runProfiled(input,profile);
     }
     virtual TensorSpec inputSpec() const = 0;
     virtual TensorSpec outputSpec() const = 0;
