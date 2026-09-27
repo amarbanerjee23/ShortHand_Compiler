@@ -126,7 +126,8 @@ std::string ClassificationApplication::runtimeVersion() const { return session_-
 namespace {
 template<bool Profiled>
 ClassificationBatch classifyBatch(const std::vector<float> &raw,const ApplicationConfiguration &c,
-                                  PreparedInference &session,ClassificationProfile *profile) {
+                                  PreparedInference &session,const ApplicationValidatedInput &validated_input,
+                                  ClassificationProfile *profile) {
     Clock::time_point start{},prepared{},validated{},postprocess{};
     if constexpr (Profiled) start=Clock::now();
     const auto b=c.qualification.protocol.batch_size;
@@ -141,8 +142,8 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
     if constexpr (Profiled) prepared=Clock::now();
     PreparedInferenceProfile backend;
     auto result=[&] {
-        if constexpr (Profiled) return session.runProfiled(input,backend);
-        else return session.run(input);
+        if constexpr (Profiled) return session.runApplicationValidatedProfiled(input,validated_input,backend);
+        else return session.runApplicationValidated(input,validated_input);
     }();
     if constexpr (Profiled) validated=Clock::now();
     if (result.status!=InferenceStatus::Success) throw std::runtime_error("application_inference_failed:"+result.reason);
@@ -185,11 +186,13 @@ ClassificationBatch classifyBatch(const std::vector<float> &raw,const Applicatio
 }
 } // namespace
 ClassificationBatch ClassificationApplication::classify(const std::vector<float> &raw) const {
-    return classifyBatch<false>(raw,configuration_,*session_,nullptr);
+    const ApplicationValidatedInput validated_input;
+    return classifyBatch<false>(raw,configuration_,*session_,validated_input,nullptr);
 }
 ClassificationBatch ClassificationApplication::classifyProfiled(const std::vector<float> &raw,ClassificationProfile &profile) const {
     profile={}; // A failed call must never leave an earlier successful observation.
-    return classifyBatch<true>(raw,configuration_,*session_,&profile);
+    const ApplicationValidatedInput validated_input;
+    return classifyBatch<true>(raw,configuration_,*session_,validated_input,&profile);
 }
 serving::HandlerResult ClassificationApplication::handle(const serving::Request &r,const serving::CancellationToken &token) const {
     try {
