@@ -370,32 +370,39 @@ class RaplSampler:
         self._error: Optional[BaseException] = None
         self._total_uj = 0
         self._samples = 0
+        self._last_time: Optional[float] = None
+        self._previous: Optional[Dict[str, int]] = None
 
     def _values(self) -> Tuple[float, Dict[str, int]]:
         return time.monotonic(), {str(d["path"]): _read_counter(pathlib.Path(str(d["path"]))) for d in self.domains}
 
+    def _sample_once(self) -> None:
+        now, current = self._values()
+        if self._last_time is None or self._previous is None:
+            self._last_time, self._previous = now, current
+            self._samples = 1
+            return
+        dt = now - self._last_time
+        if dt <= 0:
+            raise RuntimeError("non_monotonic_rapl_sampling")
+        for d in self.domains:
+            key = str(d["path"])
+            old, new = self._previous[key], current[key]
+            rng = int(d["max_energy_range_uj"])
+            delta = new - old if new >= old else rng - old + new
+            if delta < 0 or delta / 1e6 > dt * self.max_power:
+                raise RuntimeError("rapl_delta_exceeds_conservative_power_bound")
+            self._total_uj += delta
+        self._previous, self._last_time = current, now
+        self._samples += 1
+
     def start(self) -> None:
-        t0, previous = self._values()
-        self._samples = 1
+        self._sample_once()
 
         def run():
-            nonlocal t0, previous
             try:
                 while not self._stop.wait(self.interval):
-                    now, current = self._values()
-                    dt = now - t0
-                    if dt <= 0:
-                        raise RuntimeError("non_monotonic_rapl_sampling")
-                    for d in self.domains:
-                        key = str(d["path"])
-                        old, new = previous[key], current[key]
-                        rng = int(d["max_energy_range_uj"])
-                        delta = new - old if new >= old else rng - old + new
-                        if delta < 0 or delta / 1e6 > dt * self.max_power:
-                            raise RuntimeError("rapl_delta_exceeds_conservative_power_bound")
-                        self._total_uj += delta
-                    previous, t0 = current, now
-                    self._samples += 1
+                    self._sample_once()
             except BaseException as exc:
                 self._error = exc
                 self._stop.set()
@@ -412,6 +419,8 @@ class RaplSampler:
             raise RuntimeError("rapl_sampler_did_not_stop")
         if self._error:
             raise RuntimeError(str(self._error))
+        # Capture the final interval after the measured process has exited.
+        self._sample_once()
         return self._total_uj / 1e6, self._samples
 
 
