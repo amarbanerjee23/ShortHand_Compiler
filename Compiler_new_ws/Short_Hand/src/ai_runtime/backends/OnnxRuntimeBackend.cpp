@@ -32,12 +32,16 @@ std::string shapeToString(const std::vector<int64_t> &shape) {
 }
 #endif
 
-void attachTelemetry(InferenceResult &result, const TelemetryRecord &record) {
+void attachTelemetryScalars(InferenceResult &result, const TelemetryRecord &record) {
     result.latency_ns = record.latency_ns;
     result.input_elements = record.input_elements;
     result.output_elements = record.output_elements;
     result.measured_energy_kwh = record.measured_energy_kwh;
     result.measured_energy_available = record.measured_energy_available;
+}
+
+void attachTelemetry(InferenceResult &result, const TelemetryRecord &record) {
+    attachTelemetryScalars(result, record);
     result.telemetry_json_fragment = telemetryToJson(record);
 }
 

@@ -103,9 +103,25 @@ Classification classify(Ort::Session &session,
   Ort::MemoryInfo memory = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
   const char *inputs[] = {in_name.c_str()};
   const char *outputs[] = {out_name.c_str()};
+
+  // Best-tuned native control: keep static buffers and tensor wrappers resident
+  // across every batch in this classification pass. ORT writes output directly
+  // into caller-owned storage, matching the optimization opportunity offered to
+  // ShortHand rather than comparing against an allocator-heavy control.
+  std::vector<float> buffer(batch * 64, 0.0f);
+  std::vector<float> output_buffer(batch * 10, 0.0f);
+  const std::array<int64_t, 2> input_shape = {
+      static_cast<int64_t>(batch), int64_t{64}};
+  const std::array<int64_t, 2> output_shape = {
+      static_cast<int64_t>(batch), int64_t{10}};
+  auto input_tensor = Ort::Value::CreateTensor<float>(
+      memory, buffer.data(), buffer.size(), input_shape.data(), input_shape.size());
+  auto output_tensor = Ort::Value::CreateTensor<float>(
+      memory, output_buffer.data(), output_buffer.size(),
+      output_shape.data(), output_shape.size());
+
   for (size_t offset = 0; offset < data.labels.size(); offset += batch) {
     const size_t count = std::min(batch, data.labels.size() - offset);
-    std::vector<float> buffer(batch * 64, 0.0f);
     for (size_t i = 0; i < count * 64; ++i) {
       const float raw = data.values[offset * 64 + i];
       if (!std::isfinite(raw) || raw < 0.0f || raw > 16.0f)
@@ -114,18 +130,21 @@ Classification classify(Ort::Session &session,
       if (!std::isfinite(buffer[i]))
         throw std::runtime_error("preprocessing produced nonfinite value");
     }
-    std::vector<int64_t> shape = {static_cast<int64_t>(batch), 64};
-    auto tensor = Ort::Value::CreateTensor<float>(
-        memory, buffer.data(), buffer.size(), shape.data(), shape.size());
-    auto result = session.Run(Ort::RunOptions{nullptr}, inputs, &tensor, 1, outputs, 1);
-    if (result.size() != 1 || !result[0].IsTensor())
+    // Prevent stale values from a previous full batch entering padded tail rows.
+    if (count < batch)
+      std::fill(buffer.begin() + static_cast<std::ptrdiff_t>(count * 64),
+                buffer.end(), 0.0f);
+
+    session.Run(Ort::RunOptions{nullptr}, inputs, &input_tensor, 1,
+                outputs, &output_tensor, 1);
+    if (!output_tensor.IsTensor())
       throw std::runtime_error("invalid ONNX output");
-    auto info = result[0].GetTensorTypeAndShapeInfo();
-    const std::vector<int64_t> expected_shape = {static_cast<int64_t>(batch), 10};
+    auto info = output_tensor.GetTensorTypeAndShapeInfo();
     if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT ||
-        info.GetShape() != expected_shape || info.GetElementCount() != batch * 10)
+        info.GetShape() != std::vector<int64_t>(output_shape.begin(), output_shape.end()) ||
+        info.GetElementCount() != batch * 10)
       throw std::runtime_error("unexpected ONNX output shape");
-    const float *scores = result[0].GetTensorData<float>();
+    const float *scores = output_buffer.data();
     for (size_t i = 0; i < batch * 10; ++i)
       if (!std::isfinite(scores[i])) throw std::runtime_error("nonfinite ONNX output");
     out.scores.insert(out.scores.end(), scores, scores + count * 10);

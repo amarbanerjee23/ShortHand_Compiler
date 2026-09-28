@@ -1,5 +1,6 @@
 // Real ONNX regression, invoked by runtime-profile with the pinned CPU SDK.
 #include "Compiler_new_ws/Short_Hand/src/ai_runtime/backends/OnnxRuntimeBackend.h"
+#include "Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Telemetry.h"
 #include <future>
 #include <iostream>
 #include <limits>
@@ -16,6 +17,24 @@ int main(int argc,char **argv) {
     TensorBuffer input; input.spec=session->inputSpec(); input.f32_data.assign(16*64,.25f);
     const auto reference=session->run(input);
     check(reference.status==InferenceStatus::Success);
+
+    // Serialization is externally visible evidence. The faster implementation
+    // must remain byte-compatible with the historical JSON contract.
+    TelemetryRecord telemetry;
+    telemetry.component="comp\"x";
+    telemetry.backend="back\\end";
+    telemetry.model="line\nmodel";
+    telemetry.status="success";
+    telemetry.reason="why";
+    telemetry.latency_ns=17;
+    telemetry.input_elements=2;
+    telemetry.output_elements=3;
+    telemetry.measured_energy_available=true;
+    telemetry.measured_energy_kwh=.125;
+    check(telemetryToJson(telemetry)==
+        R"({"component":"comp\"x","backend":"back\\end","model":"line\nmodel","status":"success","reason":"why","latency_ns":17,"input_elements":2,"output_elements":3,"measured_energy_available":true,"measured_energy_kwh":0.125})");
+    check(telemetryToOtlpLikeSpanJson(telemetry)==
+        R"({"name":"shorthand.ai.infer","kind":"SPAN_KIND_INTERNAL","attributes":{"ai.system":"shorthand","ai.backend":"back\\end","ai.model.name":"line\nmodel","ai.inference.status":"success","ai.inference.reason":"why","ai.input.elements":2,"ai.output.elements":3,"ai.latency.ns":17,"ai.energy.measured":true,"ai.energy.kwh":0.125}})");
     auto run=[&] {
         PreparedInferenceProfile p;
         const auto result=session->runProfiled(input,p);

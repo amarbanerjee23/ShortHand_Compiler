@@ -3,7 +3,9 @@ name: runtime-profile
 on:
   workflow_dispatch:
   push:
-    branches: [master]
+    branches:
+      - master
+      - 'agent/**'
     paths:
       - '.github/workflows/runtime-profile.yml'
       - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
@@ -21,16 +23,23 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: runtime-profile-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   profile:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       ORT_DISABLE_TELEMETRY: '1'
       OMP_NUM_THREADS: '1'
       OPENBLAS_NUM_THREADS: '1'
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       - name: Install build dependencies
         run: |
           set -euo pipefail
@@ -65,6 +74,10 @@ jobs:
           set -euo pipefail
           python3 experiments/energy/test_profile_report.py
           python3 experiments/energy/test_resident_baselines.py
+          python3 experiments/energy/test_ci_energy_evidence.py
+          python3 experiments/energy/test_ci_energy_compare.py
+          python3 experiments/energy/test_pr_runtime_delta.py
+          python3 experiments/energy/test_energy_status.py
           baseline-venv/bin/python experiments/energy/test_experiments.py
           python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1
       - name: Verify real backend profiling and build independent C++ control
@@ -84,6 +97,47 @@ jobs:
           compile_cpp_baseline(pathlib.Path('profile-output/cpp-build'), 'clang++-18',
                                pathlib.Path('build-profile/onnxruntime-1.30.0'))
           PY
+      - name: Probe CI energy evidence capabilities
+        run: |
+          python3 experiments/energy/ci_energy_evidence.py probe \
+            --profiles experiments/energy/calibration_profiles \
+            --output profile-output/ci-energy-probe.json
+          cat profile-output/ci-energy-probe.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Build exact PR base runtime control
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$PR_HEAD_SHA"
+          git worktree add --detach control-worktree "$PR_BASE_SHA"
+          SDK="$PWD/build-profile/onnxruntime-1.30.0"
+          cmake -S control-worktree -B build-profile-base -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 \
+            -DSHORTHAND_BUILD_TESTING=OFF -DSHORTHAND_BUILD_MLIR=OFF \
+            -DLLVM_CONFIG=/usr/bin/llvm-config-18 \
+            -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
+            -DONNXRUNTIME_ROOT="$SDK"
+          cmake --build build-profile-base --parallel 2 --target shorthand_ai_qualify
+          test "$(git -C control-worktree rev-parse HEAD)" = "$PR_BASE_SHA"
+          sha256sum build-profile-base/shorthand_ai_qualify > profile-output/base-executable.sha256
+          printf '%s\n' "$PR_HEAD_SHA" > profile-output/pr-head-sha.txt
+          printf '%s\n' "$PR_BASE_SHA" > profile-output/pr-base-sha.txt
+      - name: Capture same-runner PR head/base runtime delta
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          baseline-venv/bin/python experiments/energy/pr_runtime_delta.py \
+            --head-tool "$PWD/build-profile/shorthand_ai_qualify" \
+            --base-tool "$PWD/build-profile-base/shorthand_ai_qualify" \
+            --head-sha "$PR_HEAD_SHA" \
+            --base-sha "$PR_BASE_SHA" \
+            --output "$PWD/profile-output/pr-runtime-delta"
+          cat profile-output/pr-runtime-delta/PR_DELTA.md >> "$GITHUB_STEP_SUMMARY"
       - name: Capture all five diagnostic cells
         run: |
           set -euo pipefail
@@ -108,6 +162,16 @@ jobs:
           python3 experiments/energy/resident_baselines.py analyze \
             --bundle profile-output/resident-baselines --manifest-sha256 "$digest"
           cat profile-output/resident-baselines/BASELINES.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Capture separate CI component-energy comparison
+        run: |
+          set -euo pipefail
+          python3 experiments/energy/ci_energy_compare.py \
+            --tool "$PWD/build-profile/shorthand_ai_qualify" \
+            --cpp "$PWD/profile-output/cpp-build/cpp-onnx-baseline" \
+            --python "$PWD/baseline-venv/bin/python" \
+            --profiles experiments/energy/calibration_profiles \
+            --output "$PWD/profile-output/ci-energy"
+          cat profile-output/ci-energy/ENERGY.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

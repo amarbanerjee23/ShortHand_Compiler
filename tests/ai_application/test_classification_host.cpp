@@ -51,6 +51,25 @@ int main() {
     check(full.top_k==std::vector<unsigned>({0,1,2,1,2,0}));
     auto partial=app.classify({0,0});check(partial.scores.size()==3 && partial.top_k.size()==3);
     check(app.classify({4,0,0,0}).scores==full.scores);
+    // Caller-owned resident aggregates append atomically. Failures must roll all
+    // output vectors back to their exact prior state.
+    std::vector<float> aggregate_scores=full.scores;
+    std::vector<unsigned> aggregate_predictions=full.predictions,aggregate_top=full.top_k;
+    app.classifyAppend({0,0},aggregate_scores,aggregate_predictions,aggregate_top);
+    check(aggregate_scores.size()==full.scores.size()+3);
+    check(aggregate_predictions.size()==full.predictions.size()+1);
+    check(aggregate_top.size()==full.top_k.size()+3);
+    const auto stable_scores=aggregate_scores;
+    const auto stable_predictions=aggregate_predictions;
+    const auto stable_top=aggregate_top;
+    for(int mode:{1,2,3}) {
+        fault=mode;
+        const std::string reason=mode==1?"nonfinite_application_output":
+            mode==2?"application_output_count_mismatch":"application_inference_failed:test_failure";
+        rejects([&]{app.classifyAppend({0,0},aggregate_scores,aggregate_predictions,aggregate_top);},reason);
+        check(aggregate_scores==stable_scores && aggregate_predictions==stable_predictions && aggregate_top==stable_top);
+    }
+    fault=0;
     for(auto raw: {std::vector<float>{}, {1}, {1,2,3,4,5,6}})
         rejects([&]{app.classify(raw);},"invalid_application_batch");
     for(float bad:{-1.f,17.f,std::numeric_limits<float>::infinity(),std::numeric_limits<float>::quiet_NaN()})

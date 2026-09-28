@@ -1,10 +1,20 @@
 #pragma once
 #include "AI_Types.h"
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace shorthand::ai {
+class ClassificationApplication;
+// Capability token for the application host's already-finite normalized input.
+// The constructor is private so external callers cannot opt out of backend
+// finite validation. Shape/dtype/size checks remain mandatory in every path.
+class ApplicationValidatedInput final {
+private:
+    ApplicationValidatedInput() = default;
+    friend class ClassificationApplication;
+};
 struct InferenceConfiguration { unsigned threads=1; std::size_t maximum_tensor_elements=16U*1024U*1024U; };
 // Opt-in diagnostics. These clocks never authorize latency or energy claims.
 struct PreparedInferenceProfile {
@@ -22,6 +32,55 @@ public:
         InferenceResult result;
         result.status=InferenceStatus::BackendUnavailable;
         result.reason="prepared_profiling_unavailable";
+        return result;
+    }
+    // Internal application-only fast path. The token cannot be constructed by
+    // ordinary callers; backends may skip only checks already guaranteed by the
+    // application host. Default implementations retain the full validation path.
+    virtual InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) {
+        return run(input);
+    }
+    virtual InferenceResult runApplicationValidatedProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
+                                                              PreparedInferenceProfile &profile) {
+        return runProfiled(input,profile);
+    }
+    // Internal application-only output-buffer path. Backends without native
+    // preallocated-output support preserve semantics through the existing
+    // validated path. Invalid destinations fail closed without writing.
+    virtual InferenceResult runApplicationValidatedInto(const TensorBuffer &input,const ApplicationValidatedInput &validated,
+                                                        float *output,std::size_t output_elements) {
+        if (!output || !output_elements) {
+            InferenceResult result;
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="invalid_preallocated_output";
+            return result;
+        }
+        auto result=runApplicationValidated(input,validated);
+        if (result.status!=InferenceStatus::Success) return result;
+        if (result.output_f32.size()!=output_elements)
+            return result; // Preserve the caller's historical output-count error.
+        std::copy(result.output_f32.begin(),result.output_f32.end(),output);
+        result.output_f32.clear();
+        result.output_elements=output_elements;
+        return result;
+    }
+    virtual InferenceResult runApplicationValidatedIntoProfiled(const TensorBuffer &input,const ApplicationValidatedInput &validated,
+                                                                 float *output,std::size_t output_elements,
+                                                                 PreparedInferenceProfile &profile) {
+        if (!output || !output_elements) {
+            profile={};
+            InferenceResult result;
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="invalid_preallocated_output";
+            return result;
+        }
+        auto result=runApplicationValidatedProfiled(input,validated,profile);
+        if (result.status!=InferenceStatus::Success) return result;
+        if (result.output_f32.size()!=output_elements)
+            return result; // Preserve the caller's historical output-count error.
+        std::copy(result.output_f32.begin(),result.output_f32.end(),output);
+        result.output_f32.clear();
+        result.output_elements=output_elements;
         return result;
     }
     virtual TensorSpec inputSpec() const = 0;

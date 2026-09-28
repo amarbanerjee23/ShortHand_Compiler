@@ -2,6 +2,16 @@ name: experiment-results
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'agent/**'
+    paths:
+      - '.github/workflows/experiment-results.yml'
+      - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
+      - 'experiments/energy/**'
+      - 'scripts/install_ci_onnxruntime_cpu.sh'
+      - 'tests/ai_application/**'
   pull_request:
     paths:
       - '.github/workflows/experiment-results.yml'
@@ -12,6 +22,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: experiment-results-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   capture:
@@ -54,6 +68,14 @@ jobs:
         run: |
           build-energy/venv/bin/python experiments/energy/test_experiments.py --tool "$PWD/build-energy/shorthand_ai_qualify"
           build-energy/venv/bin/python experiments/energy/test_energy_status.py
+          build-energy/venv/bin/python experiments/energy/test_ci_energy_evidence.py
+          build-energy/venv/bin/python experiments/energy/test_ci_energy_compare.py
+      - name: Probe CI energy evidence capabilities
+        run: |
+          build-energy/venv/bin/python experiments/energy/ci_energy_evidence.py probe \
+            --profiles experiments/energy/calibration_profiles \
+            --output experiment-output/ci-energy-probe.json
+          cat experiment-output/ci-energy-probe.json >> "$GITHUB_STEP_SUMMARY"
       - name: Capture the predefined paired comparisons
         env:
           ONNXRUNTIME_ROOT: ${{ github.workspace }}/build-energy/onnxruntime-1.30.0
@@ -62,9 +84,12 @@ jobs:
             --output experiment-output --compiler "$PWD/build-energy/short_hand" \
             --clang /usr/bin/clang++-18 --tool "$PWD/build-energy/shorthand_ai_qualify" \
             --onnxruntime-root "$ONNXRUNTIME_ROOT"
-      - name: Record physical-energy availability
+      - name: Record CI energy evidence availability
         if: always()
-        run: python3 experiments/energy/energy_status.py --output experiment-output/energy-status.json
+        run: |
+          python3 experiments/energy/energy_status.py \
+            --profiles experiments/energy/calibration_profiles \
+            --output experiment-output/energy-status.json
       - name: Export durable observations and Markdown
         if: always()
         run: python3 experiments/energy/report_results.py --input experiment-output --output experiment-report

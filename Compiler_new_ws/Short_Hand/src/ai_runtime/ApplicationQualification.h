@@ -36,6 +36,11 @@ public:
     explicit ClassificationApplication(ApplicationConfiguration);
     // Concurrent calls use the same prepared session and local request buffers.
     ClassificationBatch classify(const std::vector<float> &) const;
+    // Resident host path: append directly into caller-owned aggregate buffers.
+    // This avoids per-batch result-vector allocation/copy while preserving the
+    // same validation, numerical and top-k semantics as classify().
+    void classifyAppend(const std::vector<float> &,std::vector<float> &scores,
+                        std::vector<unsigned> &predictions,std::vector<unsigned> &top_k) const;
     ClassificationBatch classifyProfiled(const std::vector<float> &,ClassificationProfile &) const;
     serving::HandlerResult handle(const serving::Request &,const serving::CancellationToken &) const;
     std::string runtimeVersion() const;

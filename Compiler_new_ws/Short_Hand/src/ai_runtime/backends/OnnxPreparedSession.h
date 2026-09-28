@@ -11,7 +11,9 @@ namespace shorthand::ai {
 namespace {
 class OnnxPreparedSession final : public PreparedInference {
 public:
-    OnnxPreparedSession(const ModelSpec &m,const InferenceConfiguration &c):maximum_(c.maximum_tensor_elements) {
+    OnnxPreparedSession(const ModelSpec &m,const InferenceConfiguration &c)
+        : maximum_(c.maximum_tensor_elements),
+          memory_(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator,OrtMemTypeDefault)) {
         if (m.format!=ModelFormat::Onnx || m.precision!="float32") throw std::runtime_error("prepared_execution_requires_onnx_float32");
         if (!c.threads || c.threads>std::max(1U,std::thread::hardware_concurrency()) || c.threads>256 ||
             !maximum_ || maximum_>16U*1024U*1024U) throw std::runtime_error("invalid_prepared_configuration");
@@ -31,14 +33,91 @@ public:
     TensorSpec outputSpec() const override { return out_; }
     std::string runtimeVersion() const override { return OrtGetApiBase()->GetVersionString(); }
     InferenceResult run(const TensorBuffer &input) override {
-        return runImpl<false>(input,nullptr);
+        return runImpl<false,false>(input,nullptr);
     }
     InferenceResult runProfiled(const TensorBuffer &input,PreparedInferenceProfile &profile) override {
         profile={};
-        return runImpl<true>(input,&profile);
+        return runImpl<true,false>(input,&profile);
+    }
+    InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) override {
+        return runImpl<false,true>(input,nullptr);
+    }
+    InferenceResult runApplicationValidatedProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
+                                                    PreparedInferenceProfile &profile) override {
+        profile={};
+        return runImpl<true,true>(input,&profile);
+    }
+    InferenceResult runApplicationValidatedInto(const TensorBuffer &input,const ApplicationValidatedInput &,
+                                                float *output,std::size_t output_elements) override {
+        return runIntoImpl<false>(input,output,output_elements,nullptr);
+    }
+    InferenceResult runApplicationValidatedIntoProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
+                                                         float *output,std::size_t output_elements,
+                                                         PreparedInferenceProfile &profile) override {
+        profile={};
+        return runIntoImpl<true>(input,output,output_elements,&profile);
     }
 private:
     template<bool Profiled>
+    InferenceResult runIntoImpl(const TensorBuffer &input,float *output,std::size_t output_elements,
+                                PreparedInferenceProfile *profile) {
+        using Clock=std::chrono::steady_clock;
+        Clock::time_point begin{},validation{},tensor_setup{},invoke{},copy{},telemetry{};
+        if constexpr (Profiled) begin=Clock::now();
+        InferenceResult r; r.backend=BackendKind::OnnxRuntimeCPU; r.backend_name=r.provider_name="onnxruntime_cpu";
+        r.selected_device_class="cpu"; r.selected_device_id="cpu:0"; TelemetryTimer timer("onnxruntime_cpu","prepared_inference");
+        try {
+            if constexpr (Profiled) validation=Clock::now();
+            if (!output || output_elements!=out_.element_count)
+                throw std::runtime_error("invalid_preallocated_output");
+            if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape ||
+                input.f32_data.size()!=in_.element_count)
+                throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
+            if constexpr (Profiled) tensor_setup=Clock::now();
+            auto input_tensor=Ort::Value::CreateTensor<float>(
+                memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),
+                in_.shape.data(),in_.shape.size());
+            auto output_tensor=Ort::Value::CreateTensor<float>(
+                memory_,output,output_elements,out_.shape.data(),out_.shape.size());
+            const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
+            if constexpr (Profiled) invoke=Clock::now();
+            session_->Run(Ort::RunOptions{nullptr},inputs,&input_tensor,1,outputs,&output_tensor,1);
+            if constexpr (Profiled) copy=Clock::now();
+            if (!output_tensor.IsTensor()) throw std::runtime_error("prepared_output_not_tensor");
+            auto info=output_tensor.GetTensorTypeAndShapeInfo();
+            if (info.GetElementType()!=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT ||
+                info.GetShape()!=out_.shape || info.GetElementCount()!=out_.element_count)
+                throw std::runtime_error("prepared_output_shape_or_dtype_mismatch");
+            r.status=InferenceStatus::Success; r.reason="executed";
+            if constexpr (Profiled) telemetry=Clock::now();
+            const auto record=timer.finish("success",r.reason,input.f32_data.size(),output_elements);
+            attachTelemetryScalars(r,record);
+            if constexpr (Profiled) {
+                const auto end=Clock::now();
+                auto ns=[](Clock::time_point a,Clock::time_point b) {
+                    return static_cast<std::uint64_t>(
+                        std::chrono::duration_cast<std::chrono::nanoseconds>(b-a).count());
+                };
+                profile->setup_ns=ns(begin,validation);
+                profile->input_validation_ns=ns(validation,tensor_setup);
+                profile->tensor_setup_ns=ns(tensor_setup,invoke);
+                profile->session_run_ns=ns(invoke,copy);
+                // Retain the historical field name. On this path the stage is
+                // output binding/metadata validation; there is no output copy.
+                profile->output_copy_ns=ns(copy,telemetry);
+                profile->telemetry_ns=ns(telemetry,end);
+                profile->total_ns=ns(begin,end);
+                profile->success=true;
+            }
+        } catch (const std::exception &e) {
+            r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
+            const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
+            attachTelemetryScalars(r,record);
+        }
+        return r;
+    }
+
+    template<bool Profiled,bool ApplicationValidated>
     InferenceResult runImpl(const TensorBuffer &input,PreparedInferenceProfile *profile) {
         using Clock=std::chrono::steady_clock;
         Clock::time_point begin{},validation{},tensor_setup{},invoke{},copy{},telemetry{};
@@ -49,10 +128,10 @@ private:
             if constexpr (Profiled) validation=Clock::now();
             if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape || input.f32_data.size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
-            for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
+            if constexpr (!ApplicationValidated)
+                for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
-            auto memory=Ort::MemoryInfo::CreateCpu(OrtArenaAllocator,OrtMemTypeDefault);
-            auto tensor=Ort::Value::CreateTensor<float>(memory,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
+            auto tensor=Ort::Value::CreateTensor<float>(memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
             if constexpr (Profiled) invoke=Clock::now();
             auto values=session_->Run(Ort::RunOptions{nullptr},inputs,&tensor,1,outputs,1);
@@ -64,7 +143,9 @@ private:
             const auto *data=values.front().GetTensorData<float>(); r.output_f32.assign(data,data+out_.element_count);
             r.status=InferenceStatus::Success; r.reason="executed";
             if constexpr (Profiled) telemetry=Clock::now();
-            attachTelemetry(r,timer.finish("success",r.reason,input.f32_data.size(),r.output_f32.size()));
+            const auto record=timer.finish("success",r.reason,input.f32_data.size(),r.output_f32.size());
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
             if constexpr (Profiled) {
                 const auto end=Clock::now();
                 auto ns=[](Clock::time_point a,Clock::time_point b) {
@@ -81,7 +162,9 @@ private:
             }
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
-            attachTelemetry(r,timer.finish("runtime_error",r.reason,input.f32_data.size(),0));
+            const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
         }
         return r;
     }
@@ -101,7 +184,8 @@ private:
         }
         s.element_count=count; return s;
     }
-    std::unique_ptr<Ort::Session> session_; std::size_t maximum_; TensorSpec in_,out_; std::string in_name_,out_name_;
+    std::unique_ptr<Ort::Session> session_; std::size_t maximum_; Ort::MemoryInfo memory_;
+    TensorSpec in_,out_; std::string in_name_,out_name_;
 };
 }
 #endif
