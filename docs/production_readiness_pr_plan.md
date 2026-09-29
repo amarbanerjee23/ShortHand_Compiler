@@ -25,6 +25,13 @@ The active post-implementation roadmap is [the enterprise GA and C3-ECO evidence
 
 ## Current baseline
 
+The closed PR83–PR102 release sequence and its counts below are distinct from
+the separately requested post-PR111 optimization program. Its
+[latency and energy PR plan](latency_energy_optimization_pr_plan.md) tracks four
+prospective implementation batches and the actual merged runtime baseline.
+Planning those batches does not reopen the historical release sequence, advance
+production truth or close any calibrated-energy/certification evidence blocker.
+
 GitHub PR89 through PR102 are merged. GitHub PR92 delivered the generated dialect; GitHub PR93 separately added the enterprise AI/C3-ECO gap assessment. Merged GitHub PR94 implements the original roadmap PR93 lowering scope. Subsequent PR labels below are stable roadmap IDs. PR91 added signed candidate auditor lineage, assessment replay, lifecycle verification and redacted reports. PR89 established instrument-backed energy measurement, allocation, PUE, carbon accounting, uncertainty and tariff provenance on top of the PR88 typed C3-ECO profile. PR90 added deterministic eligibility, scoring, claims and eco-regression assessment. PR95-PR98 added native CPU qualification, a real held-out classification application, equivalent application baselines, trace replay, conservative regression policy and bounded realistic AI-family execution. None of these grants certification or a universal energy-superiority claim.
 
 ShortHand remains `controlled_beta` with `production_claim: false`. The declared production backend scope remains `linux-x64-cpu-v1`. GPU, TPU and NPU are inventory-only until separately live-qualified. TST017 remains partial until the protected `production-release` environment executes and verifies a real version-tag attestation.

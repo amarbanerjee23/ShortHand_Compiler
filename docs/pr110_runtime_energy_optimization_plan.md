@@ -1,8 +1,17 @@
 # PR110 — Native Runtime and Generated-Code Energy Optimization Plan
 
-Status: implementation-ready plan only  
+Status: historical proposal; remaining work superseded by the post-PR111 plan
+
 Target branch: `master`  
 PR intent: optimize ShortHand generated/runtime execution without weakening correctness, safety, determinism, observability, evidence integrity, or the currently qualified `linux-x64-cpu-v1` scope.
+
+As of 2026-09-29, PR110 is merged and PR111 has delivered a consolidated subset
+of the runtime and energy-evidence work, incorporating the retained PR112/113
+changes. The future-tense stages and checklist below are preserved as the
+original proposal, not a statement that all stages were implemented. Follow the
+[current latency and energy PR plan](latency_energy_optimization_pr_plan.md) for
+verified completion boundaries, the generated-program execution gap, and the
+remaining four implementation batches. The PR109 timing ratio below is historical.
 
 ## 1. Objective
 
