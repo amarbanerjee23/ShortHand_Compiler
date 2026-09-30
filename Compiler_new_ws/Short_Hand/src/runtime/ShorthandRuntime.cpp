@@ -14,6 +14,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace {
@@ -26,6 +27,10 @@ struct ModelRecord {
     std::string input_shape;
     std::string output_shape;
     std::string backend_preference;
+    bool operator==(const ModelRecord &b) const {
+        return std::tie(name,format,path,task,precision,input_shape,output_shape,backend_preference)==
+               std::tie(b.name,b.format,b.path,b.task,b.precision,b.input_shape,b.output_shape,b.backend_preference);
+    }
 };
 
 struct TensorRecord {
@@ -34,6 +39,10 @@ struct TensorRecord {
     std::string shape;
     std::string rank;
     std::string total_elements;
+    bool operator==(const TensorRecord &b) const {
+        return std::tie(name,element_type,shape,rank,total_elements)==
+               std::tie(b.name,b.element_type,b.shape,b.rank,b.total_elements);
+    }
 };
 
 struct ContractRecord {
@@ -68,6 +77,12 @@ std::map<std::string, TensorRecord> tensors;
 std::map<std::string, ContractRecord> contracts;
 std::vector<MeasurementRecord> measurements;
 RuntimeStats stats;
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+// The public facade serializes access. One resident session and one request
+// buffer bound growth across model/shape churn without shared worker scratch.
+shorthand::ai::PreparedInferenceCache prepared_cache;
+shorthand::ai::TensorBuffer bridge_buffer;
+#endif
 
 int last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
 std::string last_infer_backend = "none";
@@ -288,7 +303,12 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
     const auto bridge_output = bridge_tensor_input(output);
 
     auto model_spec = shorthand::runtime_bridge::buildModelSpec(bridge_model, bridge_input, bridge_output);
-    auto input_buffer = shorthand::runtime_bridge::buildInputTensorBuffer(bridge_input, input_values, input_count);
+    shorthand::ai::TensorBuffer local_input;
+    // Generated tensors are capped at 65536 elements. Larger legacy ABI
+    // requests retain temporary storage instead of growing resident scratch.
+    auto &input_buffer=input_count<=65536?bridge_buffer:local_input;
+    input_buffer.spec=model_spec.input;
+    input_buffer.f32_data.assign(input_values,input_values+input_count);
     const std::string requested_backend = model.backend_preference.empty() ? "fallback" : model.backend_preference;
 
     if (!shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, output_capacity)) {
@@ -304,7 +324,7 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
     }
 
     shorthand::ai::AIRuntime runtime;
-    auto result = runtime.infer(model_spec, input_buffer);
+    auto result = runtime.inferCached(model_spec, input_buffer, prepared_cache);
     int status = shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status);
     std::string backend = result.backend_name.empty() ? shorthand::ai::backendKindToString(result.backend) : result.backend_name;
     std::string reason = result.reason.empty() ? shorthand::ai::inferenceStatusToString(result.status) : result.reason;
@@ -338,6 +358,10 @@ void log_status(const char *operation, int status, const std::string &message) {
 } // namespace
 
 extern "C" int short_runtime_reset(void) {
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+    prepared_cache=shorthand::ai::PreparedInferenceCache{};
+    bridge_buffer=shorthand::ai::TensorBuffer{};
+#endif
     models.clear();
     tensors.clear();
     contracts.clear();
@@ -459,6 +483,11 @@ extern "C" int short_ai_register_model(const char *name,
     }
 
     ModelRecord record{s(name), s(format), s(path), s(task), s(precision), s(input_shape), s(output_shape), s(backend_preference)};
+    const auto existing=models.find(record.name);
+    if (existing!=models.end() && existing->second==record) return SHORTHAND_RUNTIME_OK;
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+    prepared_cache.clear();
+#endif
     models[record.name] = record;
     std::fprintf(stderr,
                  "[shorthand-runtime] model name=%s format=%s path=%s task=%s precision=%s input_shape=%s output_shape=%s backend_preference=%s status=registered\n",
@@ -477,6 +506,11 @@ extern "C" int short_ai_register_tensor(const char *name,
     }
 
     TensorRecord record{s(name), s(element_type), s(shape), s(rank), s(total_elements)};
+    const auto existing=tensors.find(record.name);
+    if (existing!=tensors.end() && existing->second==record) return SHORTHAND_RUNTIME_OK;
+#if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
+    prepared_cache.clear();
+#endif
     tensors[record.name] = record;
     std::fprintf(stderr,
                  "[shorthand-runtime] tensor name=%s element_type=%s shape=%s rank=%s total_elements=%s status=registered\n",

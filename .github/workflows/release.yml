@@ -19,6 +19,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  latency-energy-evidence:
+    uses: ./.github/workflows/runtime-profile.yml
+
   policy:
     runs-on: ubuntu-24.04
     outputs:
@@ -251,7 +254,7 @@ jobs:
           bash scripts/check_protected_release_environment.sh /tmp/production-release.environment.json /tmp/production-release.policies.json
 
   publish:
-    needs: [policy, candidate, release-policy-preflight]
+    needs: [policy, candidate, release-policy-preflight, latency-energy-evidence]
     if: ${{ needs.policy.outputs.publish == 'true' }}
     runs-on: ubuntu-24.04
     environment: production-release

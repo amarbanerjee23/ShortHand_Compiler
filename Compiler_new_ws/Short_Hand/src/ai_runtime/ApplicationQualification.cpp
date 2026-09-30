@@ -126,26 +126,28 @@ ClassificationApplication::ClassificationApplication(ApplicationConfiguration c)
 std::string ClassificationApplication::runtimeVersion() const { return session_->runtimeVersion(); }
 namespace {
 template<bool Profiled>
-void classifyBatchAppend(const std::vector<float> &raw,const ApplicationConfiguration &c,
+void classifyBatchAppend(const float *raw,std::size_t raw_size,TensorBuffer &input,const ApplicationConfiguration &c,
                          PreparedInference &session,const ApplicationValidatedInput &validated_input,
                          std::vector<float> &scores,std::vector<unsigned> &predictions,
                          std::vector<unsigned> &top_k,ClassificationProfile *profile) {
     Clock::time_point start{},prepared{},validated{},postprocess{};
     if constexpr (Profiled) start=Clock::now();
     const auto b=c.qualification.protocol.batch_size;
-    require(!raw.empty() && raw.size()%c.features==0 && raw.size()<=std::size_t(b)*c.features,
+    require(raw && raw_size && raw_size%c.features==0 && raw_size<=std::size_t(b)*c.features,
             "invalid_application_batch");
-    const auto count=raw.size()/c.features;
+    const auto count=raw_size/c.features;
 
-    TensorBuffer input; input.spec=session.inputSpec();
-    input.f32_data.assign(std::size_t(b)*c.features,0);
-    for (std::size_t i=0;i<raw.size();++i) {
+    input.spec=session.inputSpec();
+    input.f32_data.resize(std::size_t(b)*c.features);
+    for (std::size_t i=0;i<raw_size;++i) {
         if (!std::isfinite(raw[i]) || raw[i]<c.input_min || raw[i]>c.input_max)
             throw std::runtime_error("application_input_outside_range");
         input.f32_data[i]=static_cast<float>((double(raw[i])-c.offset)*c.scale);
         if (!std::isfinite(input.f32_data[i]))
             throw std::runtime_error("application_preprocessing_overflow");
     }
+    // A partial batch must never see a previous request's normalized tail.
+    std::fill(input.f32_data.begin()+raw_size,input.f32_data.end(),0.0f);
 
     const auto score_base=scores.size(), prediction_base=predictions.size(), top_base=top_k.size();
     require(score_base==prediction_base*std::size_t(c.classes) &&
@@ -252,10 +254,21 @@ ClassificationBatch ClassificationApplication::classify(const std::vector<float>
 void ClassificationApplication::classifyAppend(const std::vector<float> &raw,std::vector<float> &scores,
                                                std::vector<unsigned> &predictions,
                                                std::vector<unsigned> &top_k) const {
+    ClassificationWorkspace workspace;
+    classifyAppend(raw.data(),raw.size(),workspace,scores,predictions,top_k);
+}
+void ClassificationApplication::classifyAppend(const float *raw,std::size_t size,ClassificationWorkspace &workspace,
+                                               std::vector<float> &scores,std::vector<unsigned> &predictions,
+                                               std::vector<unsigned> &top_k) const {
     const ApplicationValidatedInput validated_input;
-    classifyBatchAppend<false>(raw,configuration_,*session_,validated_input,scores,predictions,top_k,nullptr);
+    classifyBatchAppend<false>(raw,size,workspace.input_,configuration_,*session_,validated_input,scores,predictions,top_k,nullptr);
 }
 ClassificationBatch ClassificationApplication::classifyProfiled(const std::vector<float> &raw,ClassificationProfile &profile) const {
+    ClassificationWorkspace workspace;
+    return classifyProfiled(raw,profile,workspace);
+}
+ClassificationBatch ClassificationApplication::classifyProfiled(const std::vector<float> &raw,ClassificationProfile &profile,
+                                                                 ClassificationWorkspace &workspace) const {
     profile={}; // A failed call must never leave an earlier successful observation.
     ClassificationBatch out;
     const auto count=raw.size()/configuration_.features;
@@ -263,7 +276,7 @@ ClassificationBatch ClassificationApplication::classifyProfiled(const std::vecto
     out.predictions.reserve(count);
     out.top_k.reserve(count*configuration_.top_k);
     const ApplicationValidatedInput validated_input;
-    classifyBatchAppend<true>(raw,configuration_,*session_,validated_input,
+    classifyBatchAppend<true>(raw.data(),raw.size(),workspace.input_,configuration_,*session_,validated_input,
                               out.scores,out.predictions,out.top_k,&profile);
     return out;
 }
@@ -310,6 +323,7 @@ J profileApplication(const ApplicationConfiguration &c) {
     }
     const double accuracy=double(correct)/data.labels.size();
     require(accuracy>=c.minimum_accuracy,"profile_accuracy_below_threshold");
+    ClassificationWorkspace workspace;
     J trials=arr();
     for (unsigned trial=0;trial<p.trials;++trial) {
         ClassificationProfile sum; std::uint64_t batches=0;
@@ -318,7 +332,7 @@ J profileApplication(const ApplicationConfiguration &c) {
             std::size_t index=0;
             for (std::size_t offset=0;offset<data.labels.size();offset+=p.batch_size,++index) {
                 ClassificationProfile sample;
-                const auto out=app.classifyProfiled(rows(offset),sample);
+                const auto out=app.classifyProfiled(rows(offset),sample,workspace);
                 const auto &expected=reference[index];
                 require(sample.success && sample.completed==expected.predictions.size(),"incomplete_profile_batch");
                 require(out.predictions==expected.predictions && out.top_k==expected.top_k &&
@@ -371,6 +385,7 @@ J evaluateApplication(const ApplicationConfiguration &c,bool serve) {
     const auto &q=c.qualification; const auto &p=q.protocol; const auto data=readLabeledDataset(c);
     auto meter=qualificationCollector(q); const auto preparation_start=meter->begin(); const auto prep_clock=Clock::now();
     ClassificationApplication app(c); const auto preparation_ms=milliseconds(prep_clock); const auto prep_energy=meter->end(preparation_start,1);
+    ClassificationWorkspace workspace;
     std::unique_ptr<serving::ServingRuntime> service;
     if (serve) {
         serving::RuntimeLimits limits; limits.tenant_scope="qualification"; limits.worker_threads=c.workers;
@@ -400,15 +415,18 @@ J evaluateApplication(const ApplicationConfiguration &c,bool serve) {
                 for (std::size_t offset=0;offset<data.labels.size();) {
                     const auto width=serve?c.workers:1U; std::vector<std::pair<std::string,Clock::time_point>> pending;
                     for (unsigned n=0;n<width && offset<data.labels.size();++n) {
-                        auto raw=rows(offset); offset+=raw.size()/c.features;
+                        const auto row_count=std::min<std::size_t>(p.batch_size,data.labels.size()-offset);
+                        const float *raw_values=data.values.data()+offset*c.features;
+                        offset+=row_count;
                         const auto batch_clock=sample_batch_latency?Clock::now():Clock::time_point{};
                         if (serve) {
+                            const std::vector<float> raw(raw_values,raw_values+row_count*c.features);
                             const std::string id="batch-"+std::to_string(sequence++); const auto payload=qualificationJson(obj({{"values",numbers(raw)}}));
                             auto admission=service->submit({id,"qualification",payload,std::chrono::milliseconds(c.request_timeout_ms)});
                             require(admission.accepted(),"application_admission_failed:"+admission.reason); pending.emplace_back(id,batch_clock);
                         } else {
                             const auto before=labels.size();
-                            app.classifyAppend(raw,scores,labels,ranked);
+                            app.classifyAppend(raw_values,row_count*c.features,workspace,scores,labels,ranked);
                             const auto added=labels.size()-before;
                             require(added>0,"empty_application_batch");
                             if (sample_batch_latency) batch_latency.push_back(milliseconds(batch_clock)/added);

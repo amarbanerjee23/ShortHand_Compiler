@@ -9,10 +9,13 @@ permissions:
   statuses: write
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
 
 jobs:
+  latency-energy-evidence:
+    uses: ./.github/workflows/runtime-profile.yml
+
   ubuntu-core:
     runs-on: ubuntu-24.04
     timeout-minutes: 70
@@ -692,6 +695,7 @@ jobs:
       - reproducible
       - security
       - mlir
+      - latency-energy-evidence
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -709,6 +713,7 @@ jobs:
           test "${{ needs.reproducible.result }}" = "success"
           test "${{ needs.security.result }}" = "success"
           test "${{ needs.mlir.result }}" = "success"
+          test "${{ needs.latency-energy-evidence.result }}" = "success"
 
       - name: Publish event-specific CI status
         if: ${{ always() && !cancelled() }}

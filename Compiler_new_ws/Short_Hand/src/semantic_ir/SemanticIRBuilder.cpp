@@ -33,7 +33,9 @@ sir::TensorShape shape(const std::string &text) {
     return result;
 }
 sir::ElementType element(const std::string &s) {
-    if (s == "float32" || s == "f32" || s == "fp32") return sir::ElementType::Float32;
+    // Tensor/model `float` is the runtime's FP32 spelling. Scalar language
+    // floats remain Float64; this mapping applies only to AI tensor elements.
+    if (s == "float" || s == "float32" || s == "f32" || s == "fp32") return sir::ElementType::Float32;
     if (s == "float16" || s == "f16" || s == "fp16") return sir::ElementType::Float16;
     if (s == "bfloat16" || s == "bf16") return sir::ElementType::BFloat16;
     if (s == "int8" || s == "i8") return sir::ElementType::Int8;

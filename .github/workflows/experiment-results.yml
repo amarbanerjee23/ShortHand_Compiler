@@ -38,6 +38,9 @@ jobs:
       ORT_DISABLE_TELEMETRY: '1'
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       - name: Install LLVM 18 build dependencies
         run: |
           set -euo pipefail

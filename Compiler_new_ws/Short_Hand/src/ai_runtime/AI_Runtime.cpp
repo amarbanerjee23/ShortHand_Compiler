@@ -8,10 +8,34 @@
 #include "backends/TensorRTBackend.h"
 
 #include <sstream>
+#include <fstream>
 #include <utility>
 
 namespace shorthand::ai {
 namespace {
+
+bool sameTensor(const TensorSpec &a,const TensorSpec &b) {
+    return a.name==b.name && a.element_type==b.element_type && a.shape==b.shape &&
+           a.dynamic==b.dynamic && a.element_count==b.element_count;
+}
+bool sameModel(const ModelSpec &a,const ModelSpec &b) {
+    return a.name==b.name && a.path==b.path && a.format==b.format && a.task==b.task &&
+           a.precision==b.precision && sameTensor(a.input,b.input) && sameTensor(a.output,b.output) &&
+           a.backend_preference==b.backend_preference && a.compact==b.compact &&
+           a.allow_fallback==b.allow_fallback && a.quality_metric==b.quality_metric &&
+           a.quality_op==b.quality_op && a.quality_threshold==b.quality_threshold;
+}
+bool readCacheableSnapshot(const ModelSpec &model,std::vector<unsigned char> &bytes) {
+    if (model.format!=ModelFormat::Onnx || model.precision!="float32") return false;
+    std::ifstream file(model.path,std::ios::binary|std::ios::ate);
+    if (!file) return false;
+    const auto size=file.tellg();
+    if (size<=0 || size>16*1024*1024) return false;
+    bytes.resize(static_cast<std::size_t>(size));
+    file.seekg(0);
+    file.read(reinterpret_cast<char *>(bytes.data()),static_cast<std::streamsize>(bytes.size()));
+    return bool(file) && file.peek()==std::char_traits<char>::eof();
+}
 
 void registerBackends(BackendRegistry &registry) {
     registry.registerBackend(std::make_unique<TensorRTBackend>());
@@ -35,6 +59,8 @@ InferenceResult attachHardwareEvidence(InferenceResult result, const HardwareRou
     if (!result.telemetry_json_fragment.empty() && result.telemetry_json_fragment != "{}") {
         telemetry << ",\"backend_telemetry\":" << result.telemetry_json_fragment;
     }
+    if (!result.evidence_json_fragment.empty())
+        telemetry << ",\"execution_evidence\":" << result.evidence_json_fragment;
     telemetry << "}";
     result.telemetry_json_fragment = telemetry.str();
     return result;
@@ -78,6 +104,14 @@ std::unique_ptr<PreparedInference> AIRuntime::prepare(const ModelSpec &model,
 }
 
 InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input) {
+    return inferImpl(model,input,nullptr);
+}
+
+InferenceResult AIRuntime::inferCached(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache &cache) {
+    return inferImpl(model,input,&cache);
+}
+
+InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache *cache) {
     const auto devices = hardware_probe_->probe();
     const auto route = enforceProductionBackendQualification(
         selectHardwareRoute(devices, registry.capabilities(), model, hardware_policy_));
@@ -98,10 +132,39 @@ InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &inp
         routed_model.allow_fallback = false;
         auto *backend = registry.select(routed_model);
         if (backend) {
+            if (cache && route.backend==BackendKind::OnnxRuntimeCPU) {
+                InferenceConfiguration configuration;
+                if (readCacheableSnapshot(routed_model,configuration.model_bytes)) {
+                    const bool hit=cache->session_ && sameModel(cache->model_,routed_model) &&
+                                   cache->snapshot_==configuration.model_bytes;
+                    if (!hit) {
+                        cache->clear();
+                        std::string error;
+                        cache->session_=backend->prepare(routed_model,configuration,error);
+                        if (cache->session_) {
+                            cache->model_=routed_model;
+                            cache->snapshot_=std::move(configuration.model_bytes);
+                            ++cache->preparations_;
+                        }
+                    }
+                    if (cache->session_) {
+                        auto result=cache->session_->run(input); // Public finite/shape checks remain mandatory.
+                        result.evidence_json_fragment=std::string("{\"schema\":\"shorthand.prepared_cache.v1\",\"hit\":")+
+                            (hit?"true":"false")+",\"preparations\":"+std::to_string(cache->preparations_)+"}";
+                        if (result.status!=InferenceStatus::Success) cache->clear();
+                        return attachHardwareEvidence(std::move(result),route);
+                    }
+                    // Memory loading rejects external-data models. They retain
+                    // path-based inference, so changes to external weights are
+                    // never hidden behind a stale prepared session.
+                } else cache->clear();
+            } else if (cache) cache->clear();
             auto result = backend->infer(routed_model, input);
             return attachHardwareEvidence(std::move(result), route);
         }
     }
+
+    if (cache) cache->clear();
 
     if (model.allow_fallback) {
         ModelSpec fallback_model = model;
