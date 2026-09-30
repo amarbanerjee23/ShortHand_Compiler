@@ -11,6 +11,11 @@ see [the experiment protocol and runner](experiments/energy/README.md). It cover
 compiled-source execution, batch/thread sweeps and compilation amortization;
 physical measurements are still required before reporting energy savings.
 
+The [latency and energy optimization PR plan](docs/latency_energy_optimization_pr_plan.md)
+builds on merged PR111 with four sequential implementation batches: prepared
+execution in generated programs, runtime tuning and energy evidence, AOT/tensor
+optimization, and quality-constrained deployment selection.
+
 ## What this repository is
 
 - A compiled-language artifact centered on C++17, Flex, Bison, Make/CMake, and LLVM.
