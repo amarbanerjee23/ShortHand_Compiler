@@ -22,7 +22,8 @@ public:
         o.SetExecutionMode(ExecutionMode::ORT_SEQUENTIAL); o.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_BASIC);
         o.AddConfigEntry("session.intra_op.allow_spinning","0"); o.AddConfigEntry("session.inter_op.allow_spinning","0");
         const std::filesystem::path path(m.path);
-        session_=std::make_unique<Ort::Session>(ortEnv(),path.c_str(),o);
+        if (c.model_bytes.empty()) session_=std::make_unique<Ort::Session>(ortEnv(),path.c_str(),o);
+        else session_=std::make_unique<Ort::Session>(ortEnv(),c.model_bytes.data(),c.model_bytes.size(),o);
         if (session_->GetInputCount()!=1 || session_->GetOutputCount()!=1) throw std::runtime_error("prepared_execution_requires_single_input_and_output");
         Ort::AllocatorWithDefaultOptions allocator;
         in_name_=firstInputName(*session_,allocator); out_name_=firstOutputName(*session_,allocator);

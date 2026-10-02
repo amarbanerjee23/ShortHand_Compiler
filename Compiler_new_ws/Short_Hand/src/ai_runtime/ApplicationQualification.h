@@ -22,6 +22,12 @@ struct ClassificationBatch {
     std::vector<float> scores;
     std::vector<unsigned> predictions, top_k;
 };
+// One workspace per concurrent caller/worker. Reusable storage is bounded by
+// the validated application shape; never shared implicitly or kept in TLS.
+class ClassificationWorkspace {
+    friend class ClassificationApplication;
+    TensorBuffer input_;
+};
 ApplicationConfiguration readApplicationConfiguration(const std::string &);
 LabeledDataset readLabeledDataset(const ApplicationConfiguration &);
 // Diagnostic clock partition, never energy or uninstrumented latency evidence.
@@ -41,7 +47,11 @@ public:
     // same validation, numerical and top-k semantics as classify().
     void classifyAppend(const std::vector<float> &,std::vector<float> &scores,
                         std::vector<unsigned> &predictions,std::vector<unsigned> &top_k) const;
+    void classifyAppend(const float *,std::size_t,ClassificationWorkspace &,
+                        std::vector<float> &scores,std::vector<unsigned> &predictions,
+                        std::vector<unsigned> &top_k) const;
     ClassificationBatch classifyProfiled(const std::vector<float> &,ClassificationProfile &) const;
+    ClassificationBatch classifyProfiled(const std::vector<float> &,ClassificationProfile &,ClassificationWorkspace &) const;
     serving::HandlerResult handle(const serving::Request &,const serving::CancellationToken &) const;
     std::string runtimeVersion() const;
 private:

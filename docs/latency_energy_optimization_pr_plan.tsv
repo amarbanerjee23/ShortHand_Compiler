@@ -1,5 +1,5 @@
 work_id	priority	status	depends_on	owner_role	branch	github_pr_url	evidence_location	plan_section	accepted_focus
-LE1	P0	planned	merged_PR111	runtime_compiler_engineer	agent/latency-energy-runtime-reuse	unassigned	pending	4	FP32_generated_infer_session_reuse;idempotent_registration;worker_scratch
+LE1	P0	in_progress	merged_PR114	runtime_compiler_engineer	agent/latency-energy-runtime-reuse	https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115	runtime-profile_run_artifacts	4	FP32_generated_infer_session_reuse;idempotent_registration;caller_owned_input_workspace;mandatory_CI_evidence
 LE2	P0	planned	LE1	runtime_performance_engineer	agent/latency-energy-runtime-tuning	unassigned	pending	5	ORT_serving_tuning;energy_profile_validity;shared_budgeted_tuner
 LE3	P1	planned	LE1,LE2	compiler_engineer	agent/latency-energy-aot-tensor	unassigned	pending	6	verified_semantic_facts;MatMul_Add_AOT;static_arena;bounded_fusion;CPU_variants
 LE4	P1	planned	LE2,LE3	compiler_performance_engineer	agent/latency-energy-quality-search	unassigned	pending	7	mixed_precision_groups;conditional_exact_zero_sparsity;Pareto_policy;replayable_evidence

@@ -1,12 +1,14 @@
 # Latency and energy optimization PR plan
 
-Plan version: 2026-09-29, revision 2 — feasibility review of the earlier 15 proposals
+Plan version: 2026-10-02, revision 4 — LE1 implementation and verified hosted evidence
 
-Implementation baseline: `master` at `9140e12d6495237e8a4daface805f556a137d126`
+Implementation baseline: merged PR114, `master` at `0860938d384259102ef3bb8474f2b2472a561a05`
 
-Status: planning deliverable; all four implementation batches below are planned
+Status: LE1 implementation in progress; LE2–LE4 remain planned. See [implementation scope and evidence](latency_energy_implementation_le1.md).
 
 Planning PR: [GitHub PR114](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/114)
+
+Active implementation PR: [GitHub PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115). Its first runtime/evidence slice passed hosted CI; exact-revision observations and retained bundles are recorded in [the implementation note](latency_energy_implementation_le1.md#first-hosted-observations-verified-2026-10-02). LE1 exit criteria remain open, and energy/power savings remain unproven.
 
 Scope: compiled ShortHand applications, the native runtime, CPU model execution, and reproducible evidence
 
@@ -94,6 +96,8 @@ The revised estimates include the bounded additions below, not a general tensor 
 ## 4. LE1 — prepared generated execution and reusable host memory
 
 Suggested branch: `agent/latency-energy-runtime-reuse`.
+
+**Implementation update, 2026-09-30.** The first implementation adds a single-entry content-validated prepared cache to the generated C ABI path, idempotent registration, caller-owned resident input workspaces, and mandatory per-run CI/release evidence. The compiled-source experiment covers three supported one-thread FP32 zero-input cells. The existing resident application covers all five real-digit cells. Source tensor population, compiled multi-thread configuration, deferred reporting, detailed allocation/lock instrumentation and independent optimization ablations remain open; this is not an LE1 closeout or a latency/energy parity claim. Detailed boundaries and reproduction commands are in [the implementation note](latency_energy_implementation_le1.md).
 
 **Problem and hypothesis.** Prepared resident inference and compiled-language inference currently use different paths. Session construction, metadata rebuilding, buffer allocation/copying and synchronous reporting can overwhelm small models. Reusing validated state should reduce repeated work; the size of the benefit must be measured.
 

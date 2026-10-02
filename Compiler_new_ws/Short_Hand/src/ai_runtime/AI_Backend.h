@@ -15,7 +15,13 @@ private:
     ApplicationValidatedInput() = default;
     friend class ClassificationApplication;
 };
-struct InferenceConfiguration { unsigned threads=1; std::size_t maximum_tensor_elements=16U*1024U*1024U; };
+struct InferenceConfiguration {
+    unsigned threads=1;
+    std::size_t maximum_tensor_elements=16U*1024U*1024U;
+    // Optional immutable, self-contained ONNX snapshot. Session construction
+    // consumes these exact bytes; it must not reopen a potentially changed path.
+    std::vector<unsigned char> model_bytes;
+};
 // Opt-in diagnostics. These clocks never authorize latency or energy claims.
 struct PreparedInferenceProfile {
     std::uint64_t setup_ns=0, input_validation_ns=0, tensor_setup_ns=0;

@@ -6,6 +6,8 @@
 #include <stdexcept>
 using namespace shorthand::ai;
 thread_local int fault=0;
+thread_local const float *input_address=nullptr;
+thread_local std::vector<float> observed_input;
 namespace shorthand::c3eco {
 void require(bool ok,const std::string &message) { if (!ok) throw std::runtime_error(message); }
 }
@@ -15,6 +17,7 @@ TensorSpec inputSpec() const override { TensorSpec s; s.shape={2,2}; s.element_c
 TensorSpec outputSpec() const override { TensorSpec s; s.shape={2,3}; s.element_count=6; return s; }
 std::string runtimeVersion() const override { return "test-double"; }
 InferenceResult run(const TensorBuffer &input) override {
+    input_address=input.f32_data.data(); observed_input=input.f32_data;
     InferenceResult r; r.status=InferenceStatus::Success;
     r.output_f32={input.f32_data[0],1,1,input.f32_data[2],1,1};
     if(fault==1) r.output_f32.back()=std::numeric_limits<float>::quiet_NaN();
@@ -70,6 +73,27 @@ int main() {
         check(aggregate_scores==stable_scores && aggregate_predictions==stable_predictions && aggregate_top==stable_top);
     }
     fault=0;
+    ClassificationWorkspace workspace;
+    std::vector<float> raw={4,0,8,0}, reused_scores;
+    std::vector<unsigned> reused_predictions,reused_top;
+    app.classifyAppend(raw.data(),raw.size(),workspace,reused_scores,reused_predictions,reused_top);
+    const auto *allocated=input_address;
+    raw={0,0};
+    app.classifyAppend(raw.data(),raw.size(),workspace,reused_scores,reused_predictions,reused_top);
+    check(input_address==allocated && observed_input==std::vector<float>({0,0,0,0}));
+    const auto saved_scores=reused_scores;
+    const auto saved_predictions=reused_predictions,saved_top=reused_top;
+    for (int mode:{1,2,3}) {
+        fault=mode;
+        rejects([&]{app.classifyAppend(raw.data(),raw.size(),workspace,reused_scores,reused_predictions,reused_top);},
+            mode==1?"nonfinite_application_output":mode==2?"application_output_count_mismatch":"application_inference_failed:test_failure");
+        check(reused_scores==saved_scores && reused_predictions==saved_predictions && reused_top==saved_top);
+    }
+    fault=0;
+    rejects([&]{app.classifyAppend(nullptr,2,workspace,reused_scores,reused_predictions,reused_top);},"invalid_application_batch");
+    raw={4,0,0,0};
+    app.classifyAppend(raw.data(),raw.size(),workspace,reused_scores,reused_predictions,reused_top);
+    check(input_address==allocated && reused_predictions.back()==1);
     for(auto raw: {std::vector<float>{}, {1}, {1,2,3,4,5,6}})
         rejects([&]{app.classify(raw);},"invalid_application_batch");
     for(float bad:{-1.f,17.f,std::numeric_limits<float>::infinity(),std::numeric_limits<float>::quiet_NaN()})
@@ -103,7 +127,7 @@ int main() {
     check(!profile.success && !profile.backend.success);
     fault=0;
     std::vector<std::future<void>> workers;
-    for(int i=0;i<4;++i) workers.push_back(std::async(std::launch::async,[&]{for(int n=0;n<100;++n) {ClassificationProfile local;check(app.classifyProfiled({4,0,0,0},local).scores==full.scores && local.success);}}));
+    for(int i=0;i<4;++i) workers.push_back(std::async(std::launch::async,[&]{ClassificationWorkspace own;for(int n=0;n<100;++n) {ClassificationProfile local;check(app.classifyProfiled({4,0,0,0},local,own).scores==full.scores && local.success);}}));
     for(auto &worker:workers) worker.get();
     std::cout<<"PASS host classification: full/partial batches, ties, error preservation, padding validation, concurrent calls (test backend; not ONNX or energy evidence)\n";
 }

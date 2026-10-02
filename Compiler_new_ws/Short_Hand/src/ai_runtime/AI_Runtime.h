@@ -11,15 +11,33 @@
 struct TensorData { std::vector<int64_t> shape; std::vector<float> data; };
 
 namespace shorthand::ai {
+// Caller-owned, single-entry cache. Access must be serialized by the caller.
+// Only self-contained ONNX FP32 models <=16 MiB are cached. Each call rereads
+// and compares the complete model bytes, including in-place file replacements.
+class PreparedInferenceCache {
+public:
+    void clear() { session_.reset(); snapshot_.clear(); model_=ModelSpec{}; }
+    std::uint64_t preparations() const { return preparations_; }
+private:
+    friend class AIRuntime;
+    ModelSpec model_;
+    std::vector<unsigned char> snapshot_;
+    std::unique_ptr<PreparedInference> session_;
+    std::uint64_t preparations_=0;
+};
 class AIRuntime {
 public:
     AIRuntime();
     AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy);
     InferenceResult infer(const ModelSpec &model, const TensorBuffer &input);
+    // Preserves per-call hardware routing and qualification. Unsupported models
+    // use the existing uncached backend, with its original failure semantics.
+    InferenceResult inferCached(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &);
     std::unique_ptr<PreparedInference> prepare(const ModelSpec &,const InferenceConfiguration &,std::string &error);
     std::vector<BackendCapabilities> capabilities() const;
 
 private:
+    InferenceResult inferImpl(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache *);
     BackendRegistry registry;
     std::shared_ptr<HardwareProbe> hardware_probe_;
     HardwareRoutingPolicy hardware_policy_;
