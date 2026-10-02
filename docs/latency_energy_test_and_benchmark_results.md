@@ -1,6 +1,6 @@
 # ShortHand testing, experimentation and benchmark results
 
-This report records the testing expansion and the latest retained benchmark evidence for the first prepared-runtime slice. It is tied to the implementation merged in [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115) and the exact hosted revision `f7b1524072d2f350609f5be7fa615e1af8f940e0`, compared with baseline `0860938d384259102ef3bb8474f2b2472a561a05`.
+This report records the testing expansion and retained benchmark evidence for the first prepared-runtime slice. It includes the original PR115 measurement and the latest PR116 validation run so runner variance remains visible. The implementation is from [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115), with the testing/reporting expansion in [PR116](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/116).
 
 The authoritative pre-expansion hosted bundle is [runtime-profile-36963499649-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36963499649/artifacts/11209171583). Its ZIP SHA-256 is `4c0c86316bc608f77f2ca6b437583e2af87b3de012cb9978543e1965858792bd`. Under the evidence schema used by that run, `run-evidence.json` reported `status=complete`, `missing=[]`, and 1,180 indexed files. Every indexed file hash was verified after download. The expanded checks in this change are required for subsequent runs and are reported separately below.
 
@@ -79,6 +79,28 @@ claim_authorized=false
 ```
 
 The evidence pipeline records this as an unavailable measurement. It does not infer joules from latency, report zero joules, or authorize lower-power or lower-energy language. A future runner with a valid counter or matched calibration profile can populate the same schema without changing the benchmark protocol.
+
+## Latest expanded hosted validation
+
+The expanded checks passed in [PR116's required CI run](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36970175339) at revision `996550347dbd9bbfae4f79e55340ebf697ea2295`. The retained [runtime-profile artifact](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36970175339/artifacts/11211791482) has ZIP SHA-256 `a7493b45edba7a046c744138c0d6a5fbb21210eed9f66df4f9187a75c29e7edb`. Its finalized evidence index reports `status=complete`, `missing=[]`, and 1,183 indexed files; every indexed file hash was verified after download.
+
+The expanded hosted run recorded the following additional pass evidence:
+
+- Real ONNX cache tests passed with 2,000 sequential calls, 4,000 concurrent calls during 64 resets/registrations, both bridge boundaries, both snapshot limits, invalid-argument/output-canary checks, and external-weight recovery.
+- The prepared cache and workspace ASan/UBSan step passed. LeakSanitizer was enabled by the hosted runner, so the local `/proc` restriction did not apply to this retained run.
+- Evidence regression tests, report generation, application correctness, resident workspace checks and energy availability validation all passed.
+
+The latest compiled probe was materially different from the earlier PR115 run on the shared hosted environment:
+
+| Cell | Head mean ms/vector | Head/base | Head/direct prepared C++/ORT |
+|---|---:|---:|---:|
+| b1-t1 | 0.081271 | 0.9971 | 49.841× |
+| b16-t1 | 0.005221 | 0.9940 | 31.649× |
+| b32-t1 | 0.002642 | 0.9911 | 22.338× |
+
+This run corresponds to 0.3–0.9% lower head latency than its same-run repeated-session baseline, while remaining 22.3–49.8 times slower than direct prepared C++/ORT. The earlier 80.5–82.9% observation is retained above as historical data from a different hosted run. The spread demonstrates why the plan requires repeated matched runs and does not authorize a speedup claim from either run.
+
+The latest resident paired median reductions were 0.21% (`b1-t1`), 0.44% (`b16-t1`), 3.06% (`b32-t1`), 0.27% (`b16-t2`) and −0.07% (`b16-t4`). Individual paired blocks included regressions. Energy remained unavailable with null joules and watts.
 
 ## Reproduction
 
