@@ -2,6 +2,8 @@
 
 Implementation baseline: merged PR114 (`0860938d384259102ef3bb8474f2b2472a561a05`).
 
+Implementation PR: [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115).
+
 This change implements the first runtime and evidence portion of LE1. It does not establish a language-wide latency, energy or power saving. CI now supplies measurements and explicit gaps for each revision so subsequent optimization decisions can use retained evidence.
 
 ## Implemented behavior
@@ -63,6 +65,41 @@ python3 experiments/energy/generated_infer_evidence.py --output generated-eviden
 ```
 
 The workflow is the authoritative full recipe. Local smoke runs validate mechanics; quantitative conclusions should reference a clean, exact-revision retained run.
+
+## First hosted observations, verified 2026-10-02
+
+These observations belong to implementation commit `55a9843bd58569a2a2aa68dcbcaf17841d28f732`, compared with baseline `0860938d384259102ef3bb8474f2b2472a561a05`. Both the [pull-request CI run](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36745333166) and the [push CI run](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36745334248) passed, including the required evidence job. The corresponding tooling and experiment-results workflows also passed. Later documentation commits do not change the revision to which these measurements apply.
+
+| Verified bundle | Artifact | ZIP SHA-256 |
+|---|---|---|
+| Pull request | [runtime-profile-36745333166-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36745333166/artifacts/11111384752) | `77173342aa5caa371069c4df491b4d45423605d64d55022945b369e593ed4113` |
+| Push | [runtime-profile-36745334248-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36745334248/artifacts/11112561875) | `46647c5f53aa94216758c5673b358858d9c0a8ca8d3ac17fa5ba1319f9176e66` |
+
+Both downloaded ZIP digests matched GitHub's artifact metadata. All 1,180 files indexed by each `run-evidence.json` matched their recorded hashes; both indices reported complete evidence with no missing items. Compiled and resident-control analysis replayed successfully from both bundles.
+
+The compiled synthetic lane reports the ratio of mean head latency to mean baseline/direct latency from 16 measured blocks per implementation and cell. Smaller ratios are better. Values below are rounded from `generated-infer/report.json`; do not pool the two runner environments.
+
+| Cell | Head/base, PR | Head/base, push | Head/direct C++ ORT, PR | Head/direct C++ ORT, push |
+|---|---:|---:|---:|---:|
+| b1-t1 | 0.170 | 0.202 | 28.162 | 31.840 |
+| b16-t1 | 0.190 | 0.205 | 16.456 | 18.670 |
+| b32-t1 | 0.190 | 0.211 | 10.445 | 13.392 |
+
+For this zero-input workload and measured boundary, mean latency was 78.9–83.0% lower than the old repeated-session runtime (`100 * (1 - head_base_ratio)`). It remained 10.4–31.8 times the direct prepared C++/ORT latency. These observations neither establish source-level digit quality nor meet the plan's direct-control parity targets.
+
+The real-digit resident lane uses six paired blocks per cell. The following positive reductions are the median of paired reductions, not the ratio of separately calculated latency medians. Raw paired ratios, including individual regressions, remain in the `pr-runtime-delta/` report.
+
+| Cell | Paired median reduction, PR | Paired median reduction, push |
+|---|---:|---:|
+| b1-t1 | 1.32% | 0.39% |
+| b16-t1 | 4.46% | 7.20% |
+| b32-t1 | 4.67% | 6.08% |
+| b16-t2 | 3.69% | 6.53% |
+| b16-t4 | 5.16% | 8.08% |
+
+These are descriptive shared-runner results, with no confidence bound establishing a repeatable reduction. Some individual paired blocks were slower at head. No latency claim is automatically authorized.
+
+**Energy and power remain unproven.** Neither runner exposed usable package/socket energy counters or a matching calibration profile. Resident and compiled energy reports recorded unavailable energy with null joules and watts. No measured or estimated energy saving, lower-power claim, or whole-language performance claim follows from these runs. Preserve the cited bundles before the 90-day retention period expires if these observations will be used beyond that period.
 
 ## Remaining LE1 work
 

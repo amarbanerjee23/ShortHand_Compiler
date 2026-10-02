@@ -1,12 +1,14 @@
 # Latency and energy optimization PR plan
 
-Plan version: 2026-09-30, revision 3 — LE1 implementation and continuous evidence
+Plan version: 2026-10-02, revision 4 — LE1 implementation and verified hosted evidence
 
 Implementation baseline: merged PR114, `master` at `0860938d384259102ef3bb8474f2b2472a561a05`
 
 Status: LE1 implementation in progress; LE2–LE4 remain planned. See [implementation scope and evidence](latency_energy_implementation_le1.md).
 
 Planning PR: [GitHub PR114](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/114)
+
+Active implementation PR: [GitHub PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115). Its first runtime/evidence slice passed hosted CI; exact-revision observations and retained bundles are recorded in [the implementation note](latency_energy_implementation_le1.md#first-hosted-observations-verified-2026-10-02). LE1 exit criteria remain open, and energy/power savings remain unproven.
 
 Scope: compiled ShortHand applications, the native runtime, CPU model execution, and reproducible evidence
 
