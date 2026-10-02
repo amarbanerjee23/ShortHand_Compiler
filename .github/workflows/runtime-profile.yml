@@ -201,6 +201,21 @@ jobs:
           python3 experiments/energy/ci_run_evidence.py --output profile-output --job-status '${{ job.status }}' || status=$?
           cat profile-output/EVIDENCE.md >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+      - name: Refresh finalized benchmark report and evidence hashes
+        if: always()
+        run: |
+          set +e
+          report_status=0
+          python3 experiments/energy/render_benchmark_markdown.py \
+            --profile-dir profile-output \
+            --output profile-output/BENCHMARKS.md \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          report_status=$?
+          finalize_status=0
+          python3 experiments/energy/ci_run_evidence.py --output profile-output --job-status '${{ job.status }}' || finalize_status=$?
+          cat profile-output/BENCHMARKS.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          if (( report_status != 0 )); then exit "$report_status"; fi
+          exit "$finalize_status"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
