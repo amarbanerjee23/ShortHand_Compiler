@@ -4,6 +4,8 @@ Implementation baseline: merged PR114 (`0860938d384259102ef3bb8474f2b2472a561a05
 
 Implementation PR: [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115).
 
+Testing and benchmark report: [latency_energy_test_and_benchmark_results.md](latency_energy_test_and_benchmark_results.md).
+
 This change implements the first runtime and evidence portion of LE1. It does not establish a language-wide latency, energy or power saving. CI now supplies measurements and explicit gaps for each revision so subsequent optimization decisions can use retained evidence.
 
 ## Implemented behavior

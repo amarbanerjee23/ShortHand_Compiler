@@ -72,6 +72,7 @@ jobs:
       - name: Verify profiling and application boundaries
         run: |
           set -euo pipefail
+          {
           python3 experiments/energy/test_profile_report.py
           python3 experiments/energy/test_resident_baselines.py
           python3 experiments/energy/test_ci_energy_evidence.py
@@ -80,11 +81,20 @@ jobs:
           python3 experiments/energy/test_energy_status.py
           python3 experiments/energy/test_generated_infer_evidence.py
           python3 experiments/energy/test_ci_run_evidence.py
+          python3 experiments/energy/test_render_benchmark_markdown.py
           baseline-venv/bin/python experiments/energy/test_experiments.py
+          echo 'PASS evidence regression suites'
+          } | tee profile-output/evidence-tests.txt
           python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1 | tee profile-output/application-tests.txt
           CXX=clang++-18 python3 tests/ai_application/test_compiled_cache.py build-profile build-profile/onnxruntime-1.30.0 2>&1 | tee profile-output/cache-tests.txt
           CXX=clang++-18 SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1 ONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0" \
             bash scripts/check_ai_energy_qualification.sh 2>&1 | tee profile-output/workspace-tests.txt
+      - name: Run prepared cache and workspace sanitizers
+        run: |
+          set -euo pipefail
+          scripts/check_prepared_cache_sanitizers.sh \
+            "$PWD/build-profile/onnxruntime-1.30.0" "$PWD/build-profile-sanitized" \
+            2>&1 | tee profile-output/prepared-sanitizers.txt
       - name: Verify real backend profiling and build independent C++ control
         run: |
           set -euo pipefail
@@ -177,6 +187,13 @@ jobs:
             --profiles experiments/energy/calibration_profiles \
             --output "$PWD/profile-output/ci-energy"
           cat profile-output/ci-energy/ENERGY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Render repository benchmark report
+        run: |
+          set -euo pipefail
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          python3 experiments/energy/render_benchmark_markdown.py \
+            --profile-dir profile-output --output profile-output/BENCHMARKS.md --run-url "$run_url"
+          cat profile-output/BENCHMARKS.md >> "$GITHUB_STEP_SUMMARY"
       - name: Finalize evidence index and reject missing evidence
         if: always()
         run: |
