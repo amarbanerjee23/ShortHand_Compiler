@@ -126,6 +126,24 @@ int main() {
     rejects([&]{app.classifyProfiled({0,0},profile);},"invalid_prepared_profile");
     check(!profile.success && !profile.backend.success);
     fault=0;
+    // A long alternating full/tail sequence catches retained input pollution.
+    // Caller result vectors are bounded independently from workspace storage.
+    for(int n=0;n<2000;++n) {
+        raw={float(n%17),0,float((n+1)%17),0};
+        if(n%2) raw.resize(2);
+        reused_scores.clear(); reused_predictions.clear(); reused_top.clear();
+        app.classifyAppend(raw.data(),raw.size(),workspace,reused_scores,reused_predictions,reused_top);
+        check(input_address==allocated);
+        check(observed_input==std::vector<float>({raw[0]*.5f,0,raw.size()==4?raw[2]*.5f:0,0}));
+        check(reused_scores.size()==raw.size()/2*3 && reused_predictions.size()==raw.size()/2);
+        const auto scores=reused_scores; const auto predictions=reused_predictions,top=reused_top;
+        if(n%25==0) {
+            raw[0]=17;
+            rejects([&]{app.classifyAppend(raw.data(),raw.size(),workspace,reused_scores,reused_predictions,reused_top);},"application_input_outside_range");
+            check(reused_scores==scores && reused_predictions==predictions && reused_top==top);
+        }
+    }
+    std::cout<<"PASS workspace soak: 2000 alternating full/tail calls, 80 rejected-input rollbacks\n";
     std::vector<std::future<void>> workers;
     for(int i=0;i<4;++i) workers.push_back(std::async(std::launch::async,[&]{ClassificationWorkspace own;for(int n=0;n<100;++n) {ClassificationProfile local;check(app.classifyProfiled({4,0,0,0},local,own).scores==full.scores && local.success);}}));
     for(auto &worker:workers) worker.get();

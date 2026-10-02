@@ -10,7 +10,12 @@ import subprocess
 
 REQUIRED = {
     'compiled_session_reuse_and_invalidation': 'cache-tests.txt',
+    'compiled_cache_boundary_and_lifecycle_stress': 'cache-tests.txt',
     'resident_workspace_correctness': 'workspace-tests.txt',
+    'resident_workspace_soak': 'workspace-tests.txt',
+    'prepared_cache_and_workspace_sanitizers': 'prepared-sanitizers.txt',
+    'evidence_regression_tests': 'evidence-tests.txt',
+    'benchmark_markdown': 'BENCHMARKS.md',
     'real_digit_application_correctness': 'application-tests.txt',
     'compiled_fp32_observations': 'generated-infer/report.json',
     'same_runner_head_base_observations': 'pr-runtime-delta/summary.json',
@@ -27,7 +32,12 @@ SCHEMAS = {
 }
 PASS_MARKERS = {
     'compiled_session_reuse_and_invalidation': 'PASS real ONNX cache reuse',
+    'compiled_cache_boundary_and_lifecycle_stress': 'PASS extended ONNX cache boundaries and lifecycle stress',
     'resident_workspace_correctness': 'PASS host classification:',
+    'resident_workspace_soak': 'PASS workspace soak:',
+    'prepared_cache_and_workspace_sanitizers': 'PASS prepared cache and workspace ASan/UBSan',
+    'evidence_regression_tests': 'PASS evidence regression suites',
+    'benchmark_markdown': '# Testing and benchmark results',
     'real_digit_application_correctness': 'live_onnx=1',
 }
 
@@ -57,7 +67,9 @@ def finalize(out, job_status):
     evidence, missing = {}, []
     for claim, relative in REQUIRED.items():
         artifact = out / relative
-        present = artifact.is_file() and artifact.stat().st_size > 0
+        present = (artifact.is_file() and artifact.stat().st_size > 0
+                   and not any((out / pathlib.Path(*pathlib.Path(relative).parts[:i])).is_symlink()
+                               for i in range(1, len(pathlib.Path(relative).parts) + 1)))
         if present and artifact.suffix == '.json':
             try:
                 value = json.loads(artifact.read_text())
@@ -67,9 +79,18 @@ def finalize(out, job_status):
                     present = present and value.get('success') is True
                 if value.get('available') is False and 'energy' not in claim:
                     present = False
+                if any(v is not False for k, v in value.items()
+                       if k.endswith(('_claim', '_claim_authorized', '_claim_eligible')) or k == 'claim_authorized'):
+                    present = False
+                if claim == 'resident_component_energy_or_unavailable':
+                    present = present and type(value.get('available')) is bool
+                    if value.get('available') is False:
+                        present = (present and value.get('evidence_class') is None
+                                   and value.get('component_energy_measured') is False
+                                   and bool(value.get('reason')))
             except (ValueError, OSError):
                 present = False
-        if present and artifact.suffix == '.txt':
+        if present and artifact.suffix in ('.txt', '.md'):
             present = PASS_MARKERS[claim] in artifact.read_text()
         evidence[claim] = dict(path=relative, status='captured' if present else 'missing_or_failed')
         if not present:
@@ -82,8 +103,12 @@ def finalize(out, job_status):
                     raw_artifact_retention_days=90,
                     limitation='shared-runner timings are descriptive; no reduction claim is authorized; '
                                'manual cancellation or runner loss can prevent finalization')
+    for kind in ('latency', 'energy', 'power'):
+        metadata[kind + '_reduction_claim_authorized'] = False
     metadata['hashes'] = {str(p.relative_to(out)): hashlib.sha256(p.read_bytes()).hexdigest()
-                          for p in sorted(out.rglob('*')) if p.is_file() and p.name not in ('run-evidence.json', 'EVIDENCE.md')}
+                          for p in sorted(out.rglob('*')) if p.is_file() and not p.is_symlink()
+                          and p.resolve().is_relative_to(out.resolve())
+                          and p.name not in ('run-evidence.json', 'EVIDENCE.md')}
     write(path, metadata)
     lines = ['# Per-run latency and energy evidence', '',
              f"Revision: `{metadata['revision']}`. Collection: **{metadata['status']}**.", '',

@@ -13,9 +13,21 @@ class RunEvidenceTest(unittest.TestCase):
             path = out / name
             path.parent.mkdir(parents=True, exist_ok=True)
             if name.endswith('.json'):
-                evidence.write(path, dict(schema=evidence.SCHEMAS[claim], success=True))
+                value = dict(schema=evidence.SCHEMAS[claim], success=True,
+                             latency_claim_authorized=False,
+                             energy_claim_authorized=False,
+                             power_claim_authorized=False,
+                             claim_authorized=False)
+                if claim == 'resident_component_energy_or_unavailable':
+                    value.update(success=True, available=False,
+                                 component_energy_measured=False,
+                                 evidence_class=None,
+                                 reason='test_meter_unavailable',
+                                 hardware_measured_joules=None)
+                evidence.write(path, value)
             else:
-                path.write_text(evidence.PASS_MARKERS[claim])
+                with path.open('a') as stream:
+                    stream.write(evidence.PASS_MARKERS[claim] + '\n')
 
     def test_missing_or_failed_work_cannot_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -35,7 +47,15 @@ class RunEvidenceTest(unittest.TestCase):
             self.fixture(out)
             path = out / evidence.REQUIRED['resident_component_energy_or_unavailable']
             evidence.write(path, dict(schema=evidence.SCHEMAS['resident_component_energy_or_unavailable'],
-                                      available=False, hardware_measured_joules=None))
+                                      success=True, available=False,
+                                      component_energy_measured=False,
+                                      evidence_class=None,
+                                      reason='test_meter_unavailable',
+                                      hardware_measured_joules=None,
+                                      latency_claim_authorized=False,
+                                      energy_claim_authorized=False,
+                                      power_claim_authorized=False,
+                                      claim_authorized=False))
             result = evidence.finalize(out, 'success')
             self.assertEqual(result['status'], 'complete')
             for key in ('latency', 'energy', 'power'):

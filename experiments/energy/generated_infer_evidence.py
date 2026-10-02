@@ -42,16 +42,18 @@ def command(argv, out, stem):
 
 
 def validate_sample(sample, batch, iterations, blocks):
-    if (sample.get('schema') != 'shorthand.generated_infer.sample.v1' or sample.get('success') is not True
+    counts = ('batch', 'threads', 'iterations', 'warmups', 'completed_calls', 'completed_vectors')
+    if (not isinstance(sample, dict) or any(type(sample.get(k)) is not int for k in counts)
+            or sample.get('schema') != 'shorthand.generated_infer.sample.v1' or sample.get('success') is not True
             or sample.get('batch') != batch or sample.get('threads') != 1
             or sample.get('iterations') != iterations or sample.get('warmups') != 8
             or sample.get('completed_calls') != iterations * blocks
             or sample.get('completed_vectors') != iterations * blocks * batch):
         raise ValueError('incomplete or mismatched generated sample')
     times = sample.get('block_elapsed_ms', [])
-    if len(times) != blocks or any(type(t) not in (float, int) or not math.isfinite(t) or t <= 0 for t in times):
+    if not isinstance(times, list) or len(times) != blocks or any(type(t) not in (float, int) or not math.isfinite(t) or t <= 0 for t in times):
         raise ValueError('invalid generated timings')
-    if not isinstance(sample.get('cold_session_ms'), (int, float)) or not math.isfinite(sample['cold_session_ms']) or sample['cold_session_ms'] <= 0:
+    if type(sample.get('cold_session_ms')) not in (int, float) or not math.isfinite(sample['cold_session_ms']) or sample['cold_session_ms'] <= 0:
         raise ValueError('invalid cold-session timing')
 
 
@@ -79,7 +81,10 @@ def sample_run(argv, out, stem, batch, iterations, blocks, energy=False):
         # The process window includes cold preparation, eight warmups, timed
         # blocks, validation and teardown. All calls must pass before counting.
         completed = (1 + 8 + iterations * blocks) * batch
-        available = joules is not None and math.isfinite(joules) and joules > 0
+        available = (type(joules) in (int, float) and math.isfinite(joules) and joules > 0
+                     and math.isfinite(elapsed) and elapsed > 0)
+        if joules is not None and not available:
+            reason = 'invalid_component_energy_observation'
         evidence = dict(available=available, evidence_class='E1' if available else None,
                         hardware_measured_joules=joules if available else None,
                         joules_per_verified_vector=joules / completed if available else None,
@@ -199,12 +204,35 @@ def replay(out, expected_digest):
     if sha(out / 'manifest.json') != expected_digest:
         raise ValueError('manifest hash mismatch')
     manifest = json.loads((out / 'manifest.json').read_text())
-    if manifest.get('schema') != 'shorthand.generated_infer.bundle.v1':
+    if not isinstance(manifest, dict) or manifest.get('schema') != 'shorthand.generated_infer.bundle.v1':
         raise ValueError('invalid generated manifest')
+    if manifest.get('runners') not in (['head', 'direct'], ['head', 'base', 'direct']):
+        raise ValueError('invalid generated runners')
+    for name, low, high in [('rounds', 1, 8), ('iterations', 1, 4096), ('blocks', 2, 20)]:
+        if type(manifest.get(name)) is not int or not low <= manifest[name] <= high:
+            raise ValueError('invalid generated protocol: ' + name)
+    if any(manifest.get(k, False) is not False for k in ('latency_claim_authorized', 'energy_claim_authorized')):
+        raise ValueError('generated manifest cannot authorize reduction claims')
+    if not isinstance(manifest.get('hashes'), dict) or not manifest['hashes']:
+        raise ValueError('missing artifact hashes')
     for name, digest in manifest['hashes'].items():
+        relative = pathlib.PurePosixPath(name)
+        if (relative.is_absolute() or '..' in relative.parts or str(relative) != name
+                or not isinstance(digest, str) or len(digest) != 64
+                or any(c not in '0123456789abcdef' for c in digest)):
+            raise ValueError('invalid artifact path or digest')
         path = out / name
-        if path.is_symlink() or not path.resolve().is_relative_to(out.resolve()) or sha(path) != digest:
+        if (any(p.is_symlink() for p in [path, *path.parents] if p != out.parent)
+                or not path.resolve().is_relative_to(out.resolve()) or not path.is_file() or sha(path) != digest):
             raise ValueError('artifact hash mismatch: ' + name)
+    observations = manifest.get('observations')
+    if (not isinstance(observations, list) or len(observations) != 3 * len(manifest['runners']) * 2 * manifest['rounds']
+            or any(not isinstance(r, dict) or r.get('cell') not in ('b1-t1', 'b16-t1', 'b32-t1')
+                   or r.get('runner') not in manifest['runners'] or type(r.get('path')) is not str
+                   or r['path'] not in manifest['hashes'] for r in observations)):
+        raise ValueError('invalid generated observation matrix')
+    if len({r['path'] for r in observations}) != len(observations):
+        raise ValueError('duplicate generated observation paths')
     rows = []
     for batch in (1, 16, 32):
         groups = {}
