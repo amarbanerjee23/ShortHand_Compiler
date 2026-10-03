@@ -33,8 +33,10 @@ require_file docs/ai_runtime_execution_adapter.md
 
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE'
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'execute_typed_buffer_through_ai_runtime'
-require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'AIRuntime runtime;'
-require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'runtime.inferCached(model_spec, input_buffer, prepared_cache)'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'std::make_unique<shorthand::ai::AIRuntime>()'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'bridge_runtime->refreshPolicyFromEnvironment()'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'bridge_runtime->inferCached(model_spec, input_buffer, prepared_cache)'
+require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'bridge_runtime.reset()'
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai_runtime_execution_attempted'
 require_contains Compiler_new_ws/Short_Hand/src/runtime/ShorthandRuntime.cpp 'ai_runtime_execution_succeeded'
 require_contains tests/codegen/test_runtime_ai_bridge_execution_path.sh 'SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1'

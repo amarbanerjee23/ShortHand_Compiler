@@ -17,10 +17,59 @@ The public C ABI, finite checks, output ownership and failure rollback remain in
 | Native runtime and qualification build | Passed locally with Clang 18 and the real ORT SDK |
 | Real ONNX application | 42 boundary cases passed locally; all 1,797 real dataset rows checked (`live_onnx=1`) |
 | Extended native cache and sanitizer tests | Passed locally: all cache boundaries, registration/policy regressions, lifecycle and workspace checks; ASan/UBSan passed. Local LSan could not inspect `/proc` and the script explicitly reran with leak detection disabled; hosted LSan remains required when supported |
-| Same-run head/base and direct C++/ORT measurements | Pending this PR's retained CI run; historical tables below are not measurements of this change |
+| Same-run head/base and direct C++/ORT measurements | Captured in both hosted runs below; compiled ratios 0.9250–0.9440, with mixed resident results |
 | Energy/power improvement | Unproven; local probe found no RAPL/AMD domains and no matching E2/E3 profile, so the highest available evidence class is `null` |
 
 The new native regression alternates 100 calls across model/input/output names, independently tests mismatched input/output ranks with a fixed model name, rejects changed input shapes without touching the output, and repeats eight deny/recover policy cycles on the retained runtime. The rank test exposed a pre-existing uncached-fallback gap: an incompatible concrete output shape could still return success after preparation failed. This PR rejects that mismatch before copying any output. The test is retained in native and sanitizer CI. CI now requires this Markdown document to change in every PR and to identify that PR's exact base commit. The generated per-run report uses the selected base revision rather than assuming it reconstructs the session on every call.
+
+### PR117 retained hosted evidence
+
+Tested implementation: `0112838166cc62542d008a226498946e127dd11c`. Both runs compare it against the base above, which already includes prepared-session reuse. Each artifact's finalized index reports `status=complete` and `missing=[]`; every indexed file hash and the ZIP SHA-256 were verified after download.
+
+| Run | Retained artifact | Verified indexed files | ZIP SHA-256 |
+|---|---|---:|---|
+| [PR CI 37137644532](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37137644532) | [runtime-profile-37137644532-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37137644532/artifacts/11279420752) | 1,184 | `b3ba6e59562a17ed59d754fc91c25dd94124713965b518fcec6b2f704dd38950` |
+| [Push CI 37137642095](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37137642095) | [runtime-profile-37137642095-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37137642095/artifacts/11279176676) | 1,183 | `b5b7e78076d0fb6cdf5daaaf0cd9680d3bac061c0afe53d476f8ca772967feec` |
+
+The evidence job passed in both runs, including native cache/descriptor tests, real-digit quality checks, generated-source oracle validation, evidence replay, and the instrumented cache/workspace ASan/LSan/UBSan tests. Hosted LeakSanitizer ran without the local `/proc` restriction. The PR run also passed the committed-report check. The one-file difference between the indexes is its `committed-report-check.txt` log.
+
+Overall CI initially failed its enterprise source guards: two scripts still required `AIRuntime runtime;` and `runtime.inferCached(...)`, the obsolete per-call construction path. The follow-up updates those guards to require retained runtime construction, policy refresh, cached inference and reset. Its real missing-SDK and real-ONNX execution tests remain mandatory and passed locally after the correction. This guard/report follow-up changes no compiler or runtime implementation. The [PR checks](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/117/checks) show validation of the final follow-up revision; these measurements remain attributed to the tested implementation SHA above.
+
+Compiled synthetic FP32 probes (one thread, 16 timed blocks per runner/cell):
+
+| Cell | PR head ms/vector | PR head/base | PR head/direct C++/ORT | Push head ms/vector | Push head/base | Push head/direct C++/ORT |
+|---|---:|---:|---:|---:|---:|---:|
+| b1-t1 | 0.075471 | 0.9320 | 45.993× | 0.076594 | 0.9323 | 44.974× |
+| b16-t1 | 0.004871 | 0.9418 | 28.869× | 0.004874 | 0.9250 | 28.382× |
+| b32-t1 | 0.002484 | 0.9424 | 20.376× | 0.002493 | 0.9440 | 20.383× |
+
+These observations correspond to 5.6–7.5% lower compiled-boundary mean latency than the already-cached baseline across the two runs. Each head/base comparison is within its own runner; the separate hosted runs are not paired with each other. The compiled path still takes 20.4–46.0 times the direct prepared C++/ORT time. This is descriptive evidence for reducing bridge overhead, not a confidence-bound speedup or superiority claim.
+
+Resident real-digit comparison (all 1,797 images, six paired blocks per cell):
+
+| Cell | PR head µs/image | PR base µs/image | PR paired median reduction | PR paired ratio range | Push paired median reduction | Push paired ratio range |
+|---|---:|---:|---:|---|---:|---|
+| b1-t1 | 3.112231 | 3.142349 | 1.13% | 0.8885–0.9993 | −0.11% | 0.9985–1.1045 |
+| b16-t1 | 0.557288 | 0.555911 | −0.26% | 0.9949–1.0318 | −0.87% | 0.9924–1.0171 |
+| b32-t1 | 0.469934 | 0.466901 | −0.53% | 0.9824–1.0111 | 0.60% | 0.9701–1.0163 |
+| b16-t2 | 0.560034 | 0.555951 | −0.74% | 0.9949–1.1360 | 0.80% | 0.9887–1.0231 |
+| b16-t4 | 0.559836 | 0.561574 | 0.31% | 0.9914–1.0357 | 0.14% | 0.9829–1.0108 |
+
+Negative reductions are regressions. Some individual blocks exceed 5% regression; these diagnostics do not satisfy the plan's confidence-bound acceptance campaign. The resident path does not use the optimized compiled C bridge, and no consistent resident improvement is established.
+
+Independent resident controls from the PR run (median µs/image, six blocks each):
+
+| Cell | ShortHand native | C++/ORT | Python/ORT |
+|---|---:|---:|---:|
+| b1-t1 | 3.117480 | 2.230510 | 41.651034 |
+| b16-t1 | 0.553882 | 0.386260 | 3.143956 |
+| b32-t1 | 0.471010 | 0.323351 | 1.789468 |
+| b16-t2 | 0.554538 | 0.383577 | 3.208634 |
+| b16-t4 | 0.560229 | 0.387532 | 3.178721 |
+
+Both runs reported energy unavailable: no readable CPU package/socket counters and no applicable E2/E3 runtime-feature calibration. There is no measured joules/task or watts result and no lower-energy or lower-power claim. The comparison buffer's increased retained memory is also not an energy measurement. The next practical experiments remain phase attribution, a separately identified tuned `ORT_ENABLE_ALL` control, and bounded fixed-shape AOT fusion under equal-quality checks.
+
+### Earlier prepared-runtime evidence
 
 The authoritative pre-expansion hosted bundle is [runtime-profile-36963499649-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36963499649/artifacts/11209171583). Its ZIP SHA-256 is `4c0c86316bc608f77f2ca6b437583e2af87b3de012cb9978543e1965858792bd`. Under the evidence schema used by that run, `run-evidence.json` reported `status=complete`, `missing=[]`, and 1,180 indexed files. Every indexed file hash was verified after download. The expanded checks in this change are required for subsequent runs and are reported separately below.
 
