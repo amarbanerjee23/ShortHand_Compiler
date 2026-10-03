@@ -1,6 +1,26 @@
 # ShortHand testing, experimentation and benchmark results
 
-This report records the testing expansion and retained benchmark evidence for the first prepared-runtime slice. It includes the original PR115 measurement and the latest PR116 validation run so runner variance remains visible. The implementation is from [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115), with the testing/reporting expansion in [PR116](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/116).
+This report records the testing expansion and retained benchmark evidence for the prepared-runtime work. The historical PR115 and PR116 measurements use different comparison baselines. Their ratios must not be treated as repeats of the same experiment. The initial implementation is from [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115), with the testing/reporting expansion in [PR116](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/116).
+
+## Current PR evidence
+
+Comparison base: `a5a3e020943ef2f9005b6a44f4c8024a8b58ef25`
+
+This follow-up reuses the C bridge's runtime/backend registry and a single parsed declaration descriptor. The descriptor key includes model, input and output names; changed registrations and reset invalidate it. Environment policy is refreshed and hardware routing is still evaluated on every call. The prepared cache reuses its model-comparison storage but still reads and compares every model byte, including replacements with unchanged timestamps. Two bounded model buffers retain up to 32 MiB; reset releases them. This trades retained scratch memory for avoiding repeated comparison-buffer allocation and initialization.
+
+The public C ABI, finite checks, output ownership and failure rollback remain intact. This slice does not implement borrowed tensor pointers or bind ONNX outputs directly into the caller's buffer. Such binding would require a transactional runtime-owned workspace to preserve the current failure guarantee.
+
+| Validation | Current result |
+|---|---|
+| Python energy/evidence regression discovery | 54 tests passed locally |
+| Committed-report CI contract | 6 tests passed locally: committed update, missing/worktree-only report, stale base, symlink, truncated report and invalid revision |
+| Native runtime and qualification build | Passed locally with Clang 18 and the real ORT SDK |
+| Real ONNX application | 42 boundary cases passed locally; all 1,797 real dataset rows checked (`live_onnx=1`) |
+| Extended native cache and sanitizer tests | Passed locally: all cache boundaries, registration/policy regressions, lifecycle and workspace checks; ASan/UBSan passed. Local LSan could not inspect `/proc` and the script explicitly reran with leak detection disabled; hosted LSan remains required when supported |
+| Same-run head/base and direct C++/ORT measurements | Pending this PR's retained CI run; historical tables below are not measurements of this change |
+| Energy/power improvement | Unproven; local probe found no RAPL/AMD domains and no matching E2/E3 profile, so the highest available evidence class is `null` |
+
+The new native regression alternates 100 calls across model/input/output names, independently tests mismatched input/output ranks with a fixed model name, rejects changed input shapes without touching the output, and repeats eight deny/recover policy cycles on the retained runtime. The rank test exposed a pre-existing uncached-fallback gap: an incompatible concrete output shape could still return success after preparation failed. This PR rejects that mismatch before copying any output. The test is retained in native and sanitizer CI. CI now requires this Markdown document to change in every PR and to identify that PR's exact base commit. The generated per-run report uses the selected base revision rather than assuming it reconstructs the session on every call.
 
 The authoritative pre-expansion hosted bundle is [runtime-profile-36963499649-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36963499649/artifacts/11209171583). Its ZIP SHA-256 is `4c0c86316bc608f77f2ca6b437583e2af87b3de012cb9978543e1965858792bd`. Under the evidence schema used by that run, `run-evidence.json` reported `status=complete`, `missing=[]`, and 1,180 indexed files. Every indexed file hash was verified after download. The expanded checks in this change are required for subsequent runs and are reported separately below.
 
@@ -98,7 +118,7 @@ The latest compiled probe was materially different from the earlier PR115 run on
 | b16-t1 | 0.005221 | 0.9940 | 31.649× |
 | b32-t1 | 0.002642 | 0.9911 | 22.338× |
 
-This run corresponds to 0.3–0.9% lower head latency than its same-run repeated-session baseline, while remaining 22.3–49.8 times slower than direct prepared C++/ORT. The earlier 80.5–82.9% observation is retained above as historical data from a different hosted run. The spread demonstrates why the plan requires repeated matched runs and does not authorize a speedup claim from either run.
+This PR116 run corresponds to 0.3–0.9% lower head latency than its selected base, `72cd42e91509aed4ad79d29fbc1a5bb9acd25c25`, while remaining 22.3–49.8 times slower than direct prepared C++/ORT. That base already includes PR115's session reuse. The earlier 80.5–82.9% observation compares against the pre-reuse implementation and measures a different change. The difference between these ratios must not be attributed solely to hosted-runner variance. Neither run authorizes a general speedup claim.
 
 The latest resident paired median reductions were 0.21% (`b1-t1`), 0.44% (`b16-t1`), 3.06% (`b32-t1`), 0.27% (`b16-t2`) and −0.07% (`b16-t4`). Individual paired blocks included regressions. Energy remained unavailable with null joules and watts.
 

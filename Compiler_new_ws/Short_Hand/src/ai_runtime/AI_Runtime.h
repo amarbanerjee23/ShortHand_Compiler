@@ -16,12 +16,15 @@ namespace shorthand::ai {
 // and compares the complete model bytes, including in-place file replacements.
 class PreparedInferenceCache {
 public:
-    void clear() { session_.reset(); snapshot_.clear(); model_=ModelSpec{}; }
+    void clear() { session_.reset(); snapshot_.clear(); candidate_snapshot_.clear(); model_=ModelSpec{}; }
     std::uint64_t preparations() const { return preparations_; }
 private:
     friend class AIRuntime;
     ModelSpec model_;
     std::vector<unsigned char> snapshot_;
+    // Reuse comparison storage, but reread all bytes on every request. Together
+    // with snapshot_ this retains at most two 16 MiB model buffers.
+    std::vector<unsigned char> candidate_snapshot_;
     std::unique_ptr<PreparedInference> session_;
     std::uint64_t preparations_=0;
 };
@@ -33,6 +36,9 @@ public:
     // Preserves per-call hardware routing and qualification. Unsupported models
     // use the existing uncached backend, with its original failure semantics.
     InferenceResult inferCached(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &);
+    // The serialized C bridge retains this runtime, while environment policy
+    // remains request-scoped. Explicit-policy application runtimes opt in only.
+    void refreshPolicyFromEnvironment();
     std::unique_ptr<PreparedInference> prepare(const ModelSpec &,const InferenceConfiguration &,std::string &error);
     std::vector<BackendCapabilities> capabilities() const;
 

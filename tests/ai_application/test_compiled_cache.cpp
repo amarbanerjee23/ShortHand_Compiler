@@ -89,6 +89,40 @@ void snapshotBoundary(const std::filesystem::path &dir) {
     std::cout<<"PASS cache snapshot limit at 16 MiB and uncached 16 MiB plus one byte\n";
 }
 
+void alternatingRegistrations(const char *identity,const char *negative) {
+    short_runtime_reset(); registerModel(identity);
+    check(!short_ai_register_model("n","onnx",negative,"negative","float32","1,1","1,1","onnxruntime_cpu"),"second_model");
+    check(!short_ai_register_tensor("x2","float32","1,1","2","1"),"second_input");
+    check(!short_ai_register_tensor("y2","float32","1,1","2","1"),"second_output");
+    check(!short_ai_register_tensor("x_rank","float32","1","1","1"),"different_input_rank");
+    check(!short_ai_register_tensor("y_rank","float32","1","1","1"),"different_output_rank");
+    for(int turn=0;turn<100;++turn) {
+        const float input=float(turn+1); float output[3]={-111,-999,-222}; int count=-1;
+        const char *model=turn%2?"n":"m", *in=turn%3?"x":"x2", *out=turn%5?"y":"y2";
+        check(!short_ai_infer_f32(model,in,&input,1,out,output+1,2,&count),"alternating_infer");
+        check(count==1 && output[1]==(turn%2?-input:input) && output[0]==-111 && output[2]==-222,"stale_descriptor_or_output");
+    }
+    // Exercise each tensor key independently while model identity stays fixed.
+    for(bool changeInput:{true,false}) {
+        infer(5,5);
+        float input=5, output=-999; int count=-1;
+        check(short_ai_infer_f32("m",changeInput?"x_rank":"x",&input,1,
+                                changeInput?"y":"y_rank",&output,1,&count)!=0 &&
+              count==0 && output==-999,"descriptor_tensor_identity_ignored");
+    }
+    // Changing a tensor under an existing name must invalidate the descriptor.
+    check(!short_ai_register_tensor("x","float32","1,2","2","2"),"change_input_shape");
+    float input[2]={3,4}, output=-999; int count=-1;
+    check(short_ai_infer_f32("m","x",input,2,"y",&output,1,&count)!=0 && count==0 && output==-999,"changed_input_accepted");
+    registerModel(identity); infer(3,3);
+    // Policy must be reloaded on a warm runtime, not just at its construction.
+    for(int n=0;n<8;++n) {
+        check(!setenv("SHORTHAND_DEVICE_DENY","cpu",1),"deny_warm_runtime"); infer(3,0,false);
+        check(!unsetenv("SHORTHAND_DEVICE_DENY"),"restore_warm_runtime"); infer(3,3);
+    }
+    std::cout<<"PASS cached descriptor alternating names, changed input and warm policy refresh\n";
+}
+
 void lifecycleStress(const char *identity,const char *negative) {
     short_runtime_reset(); registerModel(identity);
     std::promise<void> ready; auto start=ready.get_future().share();
@@ -173,6 +207,7 @@ int main(int argc,char **argv) {
         infer(3,15); check(!telemetry("shorthand.prepared_cache"),"external_recovery_cached");
         std::cout<<"PASS cache external-weight deletion and recovery\n";
         lifecycleStress(argv[1],argv[2]);
+        alternatingRegistrations(argv[1],argv[2]);
         const auto fixtures=std::filesystem::path(argv[1]).parent_path();
         vectorBoundary(fixtures,65536); vectorBoundary(fixtures,65537);
         snapshotBoundary(fixtures);

@@ -20,7 +20,7 @@ class BenchmarkMarkdownTest(unittest.TestCase):
                 rows=[dict(cell="b1-t1", head_base_ratio=.2, head_direct_ratio=10,
                            observations=dict(head=dict(mean_ms_per_vector=.1)))])))
             (root / "pr-runtime-delta/summary.json").write_text(json.dumps(dict(
-                success=True, production_claim=False, comparative_energy_claim=False,
+                success=True, base_sha="b" * 40, production_claim=False, comparative_energy_claim=False,
                 latency_claim_eligible=False, measured_energy_available=False,
                 cells=[dict(cell="b1-t1", head_median_us_per_image=1,
                             base_median_us_per_image=2, paired_delta_percent_median=50,
@@ -36,6 +36,9 @@ class BenchmarkMarkdownTest(unittest.TestCase):
             self.assertIn("# Testing and benchmark results", value)
             self.assertIn("0.2000", value)
             self.assertIn("meter unavailable", value)
+            self.assertIn("Comparison base: `" + "b" * 40 + "`", value)
+            self.assertIn("selected base revision", value)
+            self.assertNotIn("faster than the repeated-session baseline", value)
             self.assertIn("Joules, joules per task and watts are therefore `null`/unavailable", value)
 
     def test_rejects_energy_numbers_when_meter_is_unavailable(self):

@@ -22,6 +22,7 @@ Mark every applicable layer and link the evidence. For a non-applicable layer, e
 - [ ] Security or misuse tests
 - [ ] Portability or toolchain tests
 - [ ] Performance or energy regression evidence
+- [ ] Commit an update to `docs/latency_energy_test_and_benchmark_results.md` in this PR, identify the exact comparison base, link retained test/benchmark runs, and record unavailable energy explicitly
 - [ ] Documentation and coverage-matrix guard
 
 ## Required validation

@@ -11,6 +11,7 @@ import subprocess
 REQUIRED = {
     'compiled_session_reuse_and_invalidation': 'cache-tests.txt',
     'compiled_cache_boundary_and_lifecycle_stress': 'cache-tests.txt',
+    'compiled_descriptor_identity_and_policy': 'cache-tests.txt',
     'resident_workspace_correctness': 'workspace-tests.txt',
     'resident_workspace_soak': 'workspace-tests.txt',
     'prepared_cache_and_workspace_sanitizers': 'prepared-sanitizers.txt',
@@ -33,6 +34,7 @@ SCHEMAS = {
 PASS_MARKERS = {
     'compiled_session_reuse_and_invalidation': 'PASS real ONNX cache reuse',
     'compiled_cache_boundary_and_lifecycle_stress': 'PASS extended ONNX cache boundaries and lifecycle stress',
+    'compiled_descriptor_identity_and_policy': 'PASS cached descriptor alternating names, changed input and warm policy refresh',
     'resident_workspace_correctness': 'PASS host classification:',
     'resident_workspace_soak': 'PASS workspace soak:',
     'prepared_cache_and_workspace_sanitizers': 'PASS prepared cache and workspace ASan/UBSan',
