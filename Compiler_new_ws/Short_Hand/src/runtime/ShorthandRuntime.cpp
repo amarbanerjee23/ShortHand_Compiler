@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -82,6 +83,17 @@ RuntimeStats stats;
 // buffer bound growth across model/shape churn without shared worker scratch.
 shorthand::ai::PreparedInferenceCache prepared_cache;
 shorthand::ai::TensorBuffer bridge_buffer;
+std::unique_ptr<shorthand::ai::AIRuntime> bridge_runtime;
+struct BridgeDescriptor {
+    std::string model_name, input_name, output_name;
+    shorthand::ai::ModelSpec spec;
+};
+std::optional<BridgeDescriptor> bridge_descriptor;
+
+void invalidate_bridge_registration() {
+    prepared_cache.clear();
+    bridge_descriptor.reset();
+}
 #endif
 
 int last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
@@ -298,11 +310,15 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
                                             int *output_count,
                                             long long expected_input,
                                             long long expected_output) {
-    const auto bridge_model = bridge_model_input(model);
-    const auto bridge_input = bridge_tensor_input(input);
-    const auto bridge_output = bridge_tensor_input(output);
-
-    auto model_spec = shorthand::runtime_bridge::buildModelSpec(bridge_model, bridge_input, bridge_output);
+    // Every changed registration invalidates this single-entry descriptor.
+    // Names also form the key: alternating existing registrations is not a hit.
+    if (!bridge_descriptor || bridge_descriptor->model_name!=model.name ||
+        bridge_descriptor->input_name!=input.name || bridge_descriptor->output_name!=output.name) {
+        bridge_descriptor=BridgeDescriptor{model.name,input.name,output.name,
+            shorthand::runtime_bridge::buildModelSpec(bridge_model_input(model),
+                bridge_tensor_input(input),bridge_tensor_input(output))};
+    }
+    const auto &model_spec=bridge_descriptor->spec;
     shorthand::ai::TensorBuffer local_input;
     // Generated tensors are capped at 65536 elements. Larger legacy ABI
     // requests retain temporary storage instead of growing resident scratch.
@@ -323,8 +339,9 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
         return status;
     }
 
-    shorthand::ai::AIRuntime runtime;
-    auto result = runtime.inferCached(model_spec, input_buffer, prepared_cache);
+    if (!bridge_runtime) bridge_runtime=std::make_unique<shorthand::ai::AIRuntime>();
+    bridge_runtime->refreshPolicyFromEnvironment();
+    auto result = bridge_runtime->inferCached(model_spec, input_buffer, prepared_cache);
     int status = shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status);
     std::string backend = result.backend_name.empty() ? shorthand::ai::backendKindToString(result.backend) : result.backend_name;
     std::string reason = result.reason.empty() ? shorthand::ai::inferenceStatusToString(result.status) : result.reason;
@@ -361,6 +378,8 @@ extern "C" int short_runtime_reset(void) {
 #if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
     prepared_cache=shorthand::ai::PreparedInferenceCache{};
     bridge_buffer=shorthand::ai::TensorBuffer{};
+    bridge_descriptor.reset();
+    bridge_runtime.reset();
 #endif
     models.clear();
     tensors.clear();
@@ -486,7 +505,7 @@ extern "C" int short_ai_register_model(const char *name,
     const auto existing=models.find(record.name);
     if (existing!=models.end() && existing->second==record) return SHORTHAND_RUNTIME_OK;
 #if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
-    prepared_cache.clear();
+    invalidate_bridge_registration();
 #endif
     models[record.name] = record;
     std::fprintf(stderr,
@@ -509,7 +528,7 @@ extern "C" int short_ai_register_tensor(const char *name,
     const auto existing=tensors.find(record.name);
     if (existing!=tensors.end() && existing->second==record) return SHORTHAND_RUNTIME_OK;
 #if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
-    prepared_cache.clear();
+    invalidate_bridge_registration();
 #endif
     tensors[record.name] = record;
     std::fprintf(stderr,

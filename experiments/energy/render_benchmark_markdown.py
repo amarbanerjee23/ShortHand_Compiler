@@ -63,6 +63,7 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
         "It is descriptive evidence; it does not authorize a language-wide latency, power, or energy claim.",
         "",
         f"- Revision: `{evidence.get('revision', 'unknown')}`",
+        f"- Comparison base: `{resident.get('base_sha', 'unknown')}` (the exact selected Git revision; it may already include session reuse)",
         f"- Collection status: **{evidence.get('status', 'unknown')}**",
         f"- Missing evidence at render time: `{', '.join(evidence.get('missing', [])) or 'none'}`",
     ]
@@ -94,7 +95,7 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
                      f"{fmt(row.get('head_base_ratio'), 4)} | {fmt(row.get('head_direct_ratio'), 3)} |")
     lines += [
         "",
-        "A head/base ratio below 1 means the prepared head runtime was faster than the repeated-session baseline for that probe. A head/direct ratio above 1 means it remained slower than the direct prepared C++/ORT control.",
+        "A head/base ratio below 1 means the head runtime was faster than the selected base revision for that probe. The base is not necessarily a repeated-session implementation. A head/direct ratio above 1 means it remained slower than the direct prepared C++/ORT control.",
         "",
         "## Resident real-digit workload",
         "",

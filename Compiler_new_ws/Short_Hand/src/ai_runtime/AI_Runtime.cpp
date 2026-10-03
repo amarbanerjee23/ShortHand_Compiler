@@ -31,7 +31,10 @@ bool readCacheableSnapshot(const ModelSpec &model,std::vector<unsigned char> &by
     if (!file) return false;
     const auto size=file.tellg();
     if (size<=0 || size>16*1024*1024) return false;
-    bytes.resize(static_cast<std::size_t>(size));
+    const auto count=static_cast<std::size_t>(size);
+    // Avoid geometric growth past the 16 MiB retention limit on file churn.
+    if (bytes.capacity()<count) std::vector<unsigned char>(count).swap(bytes);
+    else bytes.resize(count);
     file.seekg(0);
     file.read(reinterpret_cast<char *>(bytes.data()),static_cast<std::streamsize>(bytes.size()));
     return bool(file) && file.peek()==std::char_traits<char>::eof();
@@ -111,6 +114,10 @@ InferenceResult AIRuntime::inferCached(const ModelSpec &model,const TensorBuffer
     return inferImpl(model,input,&cache);
 }
 
+void AIRuntime::refreshPolicyFromEnvironment() {
+    hardware_policy_=hardwareRoutingPolicyFromEnvironment();
+}
+
 InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache *cache) {
     const auto devices = hardware_probe_->probe();
     const auto route = enforceProductionBackendQualification(
@@ -133,11 +140,12 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
         auto *backend = registry.select(routed_model);
         if (backend) {
             if (cache && route.backend==BackendKind::OnnxRuntimeCPU) {
-                InferenceConfiguration configuration;
-                if (readCacheableSnapshot(routed_model,configuration.model_bytes)) {
+                if (readCacheableSnapshot(routed_model,cache->candidate_snapshot_)) {
                     const bool hit=cache->session_ && sameModel(cache->model_,routed_model) &&
-                                   cache->snapshot_==configuration.model_bytes;
+                                   cache->snapshot_==cache->candidate_snapshot_;
                     if (!hit) {
+                        InferenceConfiguration configuration;
+                        configuration.model_bytes.swap(cache->candidate_snapshot_);
                         cache->clear();
                         std::string error;
                         cache->session_=backend->prepare(routed_model,configuration,error);

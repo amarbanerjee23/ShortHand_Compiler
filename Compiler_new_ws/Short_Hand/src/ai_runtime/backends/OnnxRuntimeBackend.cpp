@@ -213,6 +213,14 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         }
 
         const size_t count = type_info.GetElementCount();
+        // A failed preparation can fall back to this path. Concrete output
+        // declarations must keep the same shape contract as prepared sessions.
+        if (validateShape(model.output.shape) && type_info.GetShape()!=model.output.shape) {
+            r.status = InferenceStatus::RuntimeError;
+            r.reason = "onnxruntime_output_shape_mismatch";
+            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+            return r;
+        }
         float *output_data = output_tensors.front().GetTensorMutableData<float>();
         r.output_f32.assign(output_data, output_data + count);
         r.status = InferenceStatus::Success;

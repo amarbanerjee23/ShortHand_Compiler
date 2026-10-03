@@ -6,6 +6,8 @@ Implementation PR: [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/
 
 Testing and benchmark report: [latency_energy_test_and_benchmark_results.md](latency_energy_test_and_benchmark_results.md).
 
+Follow-up after PR116: the serialized C bridge retains its runtime/backend registry and one declaration descriptor keyed by all three registration names. Non-idempotent registrations invalidate the descriptor and prepared session; reset releases all retained state. Every call refreshes environment policy, probes and qualifies the current hardware route, checks input/output contracts, and rereads the entire model. The model comparison buffer is reused with a 16 MiB limit alongside the immutable 16 MiB session snapshot. No external tensor pointer is retained. New alternating-registration and repeated policy-change tests are mandatory in both native and sanitizer CI. The committed benchmark report is now required in every PR, with the exact base SHA.
+
 This change implements the first runtime and evidence portion of LE1. It does not establish a language-wide latency, energy or power saving. CI now supplies measurements and explicit gaps for each revision so subsequent optimization decisions can use retained evidence.
 
 ## Implemented behavior
