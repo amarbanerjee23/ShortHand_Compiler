@@ -46,8 +46,8 @@ public:
     // Generic preallocated-output path. Unlike the application-only overload,
     // this retains every public input validation performed by run(). Backends
     // may override it to bind the destination directly and avoid a temporary
-    // output vector. The destination is modified only after successful shape
-    // and dtype validation.
+    // output vector. Callers that require transactional rollback must provide
+    // runtime-owned scratch and commit it only after a successful result.
     virtual InferenceResult runInto(const TensorBuffer &input,float *output,std::size_t output_elements) {
         if (!output || !output_elements) {
             InferenceResult result;
