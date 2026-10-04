@@ -53,6 +53,10 @@ class HardwareProbe {
 public:
     virtual ~HardwareProbe() = default;
     virtual std::vector<HardwareDeviceCapability> probe() const = 0;
+    // A cheap token for signals that can change routing. AIRuntime probes the
+    // full inventory only when this token changes. Custom mutable probes should
+    // override it; an empty token denotes a stable probe for the runtime lifetime.
+    virtual std::string generationToken() const { return {}; }
 };
 
 namespace hardware_detail {
@@ -225,6 +229,24 @@ inline DeviceClass parseDeviceClass(const std::string &value) {
 
 class SystemHardwareProbe final : public HardwareProbe {
 public:
+    std::string generationToken() const override {
+        // Deliberately excludes /proc/meminfo: MemTotal is effectively stable
+        // for a process lifetime and is expensive to parse on every inference.
+        // Device-node presence and routing-relevant detection/access signals are
+        // sufficient to invalidate the cached inventory.
+        std::ostringstream out;
+        for (const char *path : {"/dev/nvidia0","/dev/nvidiactl","/dev/kfd",
+                                 "/dev/dri/renderD128","/dev/accel0",
+                                 "/dev/accel/accel0","/dev/apex_0"})
+            out << (hardware_detail::pathExists(path) ? '1' : '0');
+        for (const char *name : {"NVIDIA_VISIBLE_DEVICES","CUDA_VISIBLE_DEVICES",
+                                 "SHORTHAND_GPU_DETECTED","SHORTHAND_GPU_ACCESSIBLE",
+                                 "TPU_NAME","COLAB_TPU_ADDR","XRT_TPU_CONFIG",
+                                 "SHORTHAND_TPU_DETECTED","SHORTHAND_TPU_ACCESSIBLE",
+                                 "SHORTHAND_NPU_DETECTED","SHORTHAND_NPU_ACCESSIBLE"})
+            out << '|' << hardware_detail::environment(name);
+        return out.str();
+    }
     std::vector<HardwareDeviceCapability> probe() const override {
         std::vector<HardwareDeviceCapability> devices;
         devices.push_back({DeviceClass::CPU, "cpu:0", "host", true, true, hardware_detail::hostMemoryMb(), "host_cpu_available"});
@@ -273,10 +295,20 @@ class StaticHardwareProbe final : public HardwareProbe {
 public:
     explicit StaticHardwareProbe(std::vector<HardwareDeviceCapability> devices) : devices_(std::move(devices)) {}
     std::vector<HardwareDeviceCapability> probe() const override { return devices_; }
+    std::string generationToken() const override { return "static_hardware_inventory_v1"; }
 
 private:
     std::vector<HardwareDeviceCapability> devices_;
 };
+
+inline std::string hardwareRoutingPolicyEnvironmentSignature() {
+    std::ostringstream out;
+    for (const char *name : {"SHORTHAND_DEVICE_PREFERENCE","SHORTHAND_DEVICE_OVERRIDE",
+                             "SHORTHAND_DEVICE_DENY","SHORTHAND_ALLOW_CPU_FALLBACK",
+                             "SHORTHAND_MIN_DEVICE_MEMORY_MB"})
+        out << name << '=' << hardware_detail::environment(name) << ';';
+    return out.str();
+}
 
 inline HardwareRoutingPolicy hardwareRoutingPolicyFromEnvironment() {
     HardwareRoutingPolicy policy;
