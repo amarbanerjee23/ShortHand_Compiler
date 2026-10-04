@@ -36,6 +36,11 @@ public:
     // Preserves per-call hardware routing and qualification. Unsupported models
     // use the existing uncached backend, with its original failure semantics.
     InferenceResult inferCached(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &);
+    // Same public validation and model-content checks as inferCached, but writes
+    // successful prepared output into caller-owned scratch. The destination is
+    // never modified on validation/backend failure.
+    InferenceResult inferCachedInto(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &,
+                                    float *output,std::size_t output_elements);
     // The serialized C bridge retains this runtime, while environment policy
     // remains request-scoped. Explicit-policy application runtimes opt in only.
     void refreshPolicyFromEnvironment();
@@ -43,10 +48,22 @@ public:
     std::vector<BackendCapabilities> capabilities() const;
 
 private:
-    InferenceResult inferImpl(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache *);
+    InferenceResult inferImpl(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache *,
+                              float *output,std::size_t output_elements);
+    void refreshHardwareInventoryIfNeeded();
+    const HardwareRoute &routeForModel(const ModelSpec &);
     BackendRegistry registry;
     std::shared_ptr<HardwareProbe> hardware_probe_;
     HardwareRoutingPolicy hardware_policy_;
+    std::string policy_environment_signature_;
+    std::string hardware_generation_token_;
+    std::vector<HardwareDeviceCapability> hardware_devices_;
+    bool hardware_inventory_valid_=false;
+    ModelSpec route_model_;
+    HardwareRoute route_cache_;
+    bool route_cache_valid_=false;
+    bool last_route_cache_hit_=false;
+    std::uint64_t hardware_probe_count_=0;
 };
 }
 
