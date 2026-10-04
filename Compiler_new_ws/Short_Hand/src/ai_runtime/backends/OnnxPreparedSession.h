@@ -93,7 +93,10 @@ private:
                 memory_,output,output_elements,out_.shape.data(),out_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
             if constexpr (Profiled) invoke=Clock::now();
-            session_->Run(Ort::RunOptions{nullptr},inputs,&input_tensor,1,outputs,&output_tensor,1);
+            {
+                SHORTHAND_PHASE_SCOPE(ort_run);
+                session_->Run(Ort::RunOptions{nullptr},inputs,&input_tensor,1,outputs,&output_tensor,1);
+            }
             if constexpr (Profiled) copy=Clock::now();
             if (!output_tensor.IsTensor()) throw std::runtime_error("prepared_output_not_tensor");
             auto info=output_tensor.GetTensorTypeAndShapeInfo();
