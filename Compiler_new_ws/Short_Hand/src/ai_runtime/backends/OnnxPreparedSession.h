@@ -106,7 +106,8 @@ private:
             r.status=InferenceStatus::Success; r.reason="executed"; r.output_elements=output_elements;
             if constexpr (Profiled) telemetry=Clock::now();
             const auto record=timer.finish("success",r.reason,input.f32_data.size(),output_elements);
-            attachTelemetryScalars(r,record);
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
             if constexpr (Profiled) {
                 const auto end=Clock::now();
                 auto ns=[](Clock::time_point a,Clock::time_point b) {
@@ -127,7 +128,8 @@ private:
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
             const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
-            attachTelemetryScalars(r,record);
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
         }
         return r;
     }
