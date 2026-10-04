@@ -23,6 +23,7 @@ int main(int argc,char **argv) {
     const auto bound_result=session->runInto(input,bound.data(),bound.size());
     check(bound_result.status==InferenceStatus::Success &&
           bound_result.output_elements==bound.size() && bound_result.output_f32.empty() &&
+          !bound_result.telemetry_json_fragment.empty() &&
           bound==reference.output_f32);
     std::vector<float> rollback(bound.size(),-777.0f);
     auto nonfinite=input; nonfinite.f32_data.back()=std::numeric_limits<float>::quiet_NaN();
