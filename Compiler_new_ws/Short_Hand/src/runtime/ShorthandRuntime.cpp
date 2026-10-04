@@ -356,9 +356,14 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
     if (!bridge_runtime) bridge_runtime=std::make_unique<shorthand::ai::AIRuntime>();
     bridge_runtime->refreshPolicyFromEnvironment();
     const auto scratch_count=static_cast<std::size_t>(expected_output);
-    if (bridge_output_buffer.size()<scratch_count) bridge_output_buffer.resize(scratch_count);
+    std::vector<float> local_output;
+    // Match input retention: generated tensors are bounded to 65536 elements.
+    // Larger legacy ABI calls remain supported but do not permanently grow the
+    // process-scoped transactional scratch buffer.
+    auto &output_buffer=scratch_count<=65536?bridge_output_buffer:local_output;
+    if (output_buffer.size()<scratch_count) output_buffer.resize(scratch_count);
     auto result = bridge_runtime->inferCachedInto(
-        model_spec,input_buffer,prepared_cache,bridge_output_buffer.data(),scratch_count);
+        model_spec,input_buffer,prepared_cache,output_buffer.data(),scratch_count);
     SHORTHAND_PHASE_NEXT(bridge_output);
     int status = shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status);
     std::string backend = result.backend_name.empty() ? shorthand::ai::backendKindToString(result.backend) : result.backend_name;
@@ -370,7 +375,7 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
             status = SHORTHAND_RUNTIME_RUNTIME_ERROR;
             reason = "ai_runtime_output_exceeds_registered_capacity";
         } else {
-            for (std::size_t i=0;i<result.output_elements;++i) output_values[i]=bridge_output_buffer[i];
+            for (std::size_t i=0;i<result.output_elements;++i) output_values[i]=output_buffer[i];
             *output_count=static_cast<int>(result.output_elements);
         }
     }
