@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -232,6 +233,7 @@ inline DeviceClass parseDeviceClass(const std::string &value) {
 class SystemHardwareProbe final : public HardwareProbe {
 public:
     std::uint64_t generationToken() const override {
+        std::lock_guard<std::mutex> guard(generation_mutex_);
         // Deliberately excludes /proc/meminfo: MemTotal is effectively stable
         // for a process lifetime and is expensive to parse on every inference.
         // Compare routing-relevant signals exactly; allocate only when a signal
@@ -309,6 +311,7 @@ public:
     }
 
 private:
+    mutable std::mutex generation_mutex_;
     mutable bool generation_initialized_=false;
     mutable unsigned device_signal_bits_=0;
     mutable std::array<std::string,11> generation_environment_{};
