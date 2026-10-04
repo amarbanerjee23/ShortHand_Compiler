@@ -233,7 +233,8 @@ inline DeviceClass parseDeviceClass(const std::string &value) {
 class SystemHardwareProbe final : public HardwareProbe {
 public:
     std::uint64_t generationToken() const override {
-        std::lock_guard<std::mutex> guard(generation_mutex_);
+        auto &state=*generation_state_;
+        std::lock_guard<std::mutex> guard(state.mutex);
         // Deliberately excludes /proc/meminfo: MemTotal is effectively stable
         // for a process lifetime and is expensive to parse on every inference.
         // Compare routing-relevant signals exactly; allocate only when a signal
@@ -252,20 +253,20 @@ public:
         unsigned bits=0;
         for (std::size_t i=0;i<paths.size();++i)
             if (hardware_detail::pathExists(paths[i])) bits|=(1U<<i);
-        bool changed=!generation_initialized_ || bits!=device_signal_bits_;
+        bool changed=!state.initialized || bits!=state.device_signal_bits;
         for (std::size_t i=0;i<names.size();++i)
-            changed=changed || generation_environment_[i]!=hardware_detail::environment(names[i]);
+            changed=changed || state.environment[i]!=hardware_detail::environment(names[i]);
         if (changed) {
-            device_signal_bits_=bits;
+            state.device_signal_bits=bits;
             for (std::size_t i=0;i<names.size();++i)
-                generation_environment_[i]=hardware_detail::environment(names[i]);
-            if (generation_initialized_) {
-                ++generation_;
-                if (generation_==0) generation_=1;
+                state.environment[i]=hardware_detail::environment(names[i]);
+            if (state.initialized) {
+                ++state.generation;
+                if (state.generation==0) state.generation=1;
             }
-            generation_initialized_=true;
+            state.initialized=true;
         }
-        return generation_;
+        return state.generation;
     }
     std::vector<HardwareDeviceCapability> probe() const override {
         std::vector<HardwareDeviceCapability> devices;
@@ -311,11 +312,17 @@ public:
     }
 
 private:
-    mutable std::mutex generation_mutex_;
-    mutable bool generation_initialized_=false;
-    mutable unsigned device_signal_bits_=0;
-    mutable std::array<std::string,11> generation_environment_{};
-    mutable std::uint64_t generation_=1;
+    struct GenerationState {
+        std::mutex mutex;
+        bool initialized=false;
+        unsigned device_signal_bits=0;
+        std::array<std::string,11> environment{};
+        std::uint64_t generation=1;
+    };
+    // Preserve source compatibility: SystemHardwareProbe remains copyable, and
+    // copies share one synchronized generation view instead of duplicating
+    // mutable routing observations.
+    std::shared_ptr<GenerationState> generation_state_=std::make_shared<GenerationState>();
 };
 
 class StaticHardwareProbe final : public HardwareProbe {
