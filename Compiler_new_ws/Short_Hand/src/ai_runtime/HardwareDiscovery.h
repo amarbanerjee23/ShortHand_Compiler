@@ -54,8 +54,9 @@ public:
     virtual ~HardwareProbe() = default;
     virtual std::vector<HardwareDeviceCapability> probe() const = 0;
     // A cheap token for signals that can change routing. AIRuntime probes the
-    // full inventory only when this token changes. Custom mutable probes should
-    // override it; an empty token denotes a stable probe for the runtime lifetime.
+    // full inventory only while a nonzero token remains unchanged. Zero means
+    // "uncacheable" so custom probes that do not opt in preserve the historical
+    // per-request probing semantics.
     virtual std::uint64_t generationToken() const { return 0; }
 };
 
