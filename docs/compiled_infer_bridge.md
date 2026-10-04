@@ -151,3 +151,8 @@ The bridge-enabled compiled path now retains the `AIRuntime` hardware inventory 
 For prepared ONNX execution, `short_ai_infer_f32` supplies runtime-owned transactional output scratch through `AIRuntime::inferCachedInto`. The backend binds that output directly, validates the result, and only then does the bridge copy successful values into caller-owned memory. This removes the prepared path's intermediate output vector without weakening caller rollback semantics.
 
 Routine inference `stderr` formatting is disabled unless `SHORTHAND_RUNTIME_INFER_LOG=1` is set. Structured last-inference telemetry, bridge-request JSON, counters and evidence remain available.
+
+
+### Bounded transactional output scratch
+
+The prepared compiled path binds ONNX output into runtime-owned transactional scratch and commits to caller memory only after successful validation. Retained transactional output scratch is capped at 65,536 floats; larger legacy ABI requests use request-local scratch so a single large request cannot permanently inflate process memory.
