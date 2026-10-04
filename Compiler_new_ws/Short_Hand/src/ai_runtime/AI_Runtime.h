@@ -5,6 +5,7 @@
 #include "HardwareDiscovery.h"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -49,10 +50,14 @@ public:
     std::vector<BackendCapabilities> capabilities() const;
 
 private:
+    struct ResolvedRoute {
+        std::shared_ptr<const HardwareRoute> route;
+        bool cache_hit=false;
+        std::uint64_t hardware_probes=0;
+    };
     InferenceResult inferImpl(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache *,
                               float *output,std::size_t output_elements);
-    void refreshHardwareInventoryIfNeeded();
-    const HardwareRoute &routeForModel(const ModelSpec &);
+    ResolvedRoute routeForModel(const ModelSpec &);
     BackendRegistry registry;
     std::shared_ptr<HardwareProbe> hardware_probe_;
     HardwareRoutingPolicy hardware_policy_;
@@ -62,10 +67,9 @@ private:
     std::vector<HardwareDeviceCapability> hardware_devices_;
     bool hardware_inventory_valid_=false;
     ModelSpec route_model_;
-    HardwareRoute route_cache_;
-    bool route_cache_valid_=false;
-    bool last_route_cache_hit_=false;
+    std::shared_ptr<const HardwareRoute> route_cache_;
     std::uint64_t hardware_probe_count_=0;
+    mutable std::mutex state_mutex_;
 };
 }
 
