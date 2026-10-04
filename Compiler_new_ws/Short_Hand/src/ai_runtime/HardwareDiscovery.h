@@ -3,6 +3,7 @@
 #include "AI_Types.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
@@ -103,17 +104,6 @@ inline bool environmentTrue(const char *name) {
 inline bool environmentHasDeviceValue(const char *name) {
     const std::string value = normalize(environment(name));
     return !value.empty() && value != "-1" && value != "none" && value != "void" && value != "false";
-}
-
-inline std::uint64_t hashBytes(std::uint64_t state,const char *value) {
-    constexpr std::uint64_t prime=1099511628211ULL;
-    for (const unsigned char *p=reinterpret_cast<const unsigned char *>(value); p && *p; ++p) {
-        state^=*p;
-        state*=prime;
-    }
-    state^=0xffU;
-    state*=prime;
-    return state;
 }
 
 inline std::size_t hostMemoryMb() {
@@ -244,21 +234,36 @@ public:
     std::uint64_t generationToken() const override {
         // Deliberately excludes /proc/meminfo: MemTotal is effectively stable
         // for a process lifetime and is expensive to parse on every inference.
-        // Hash the cheap routing signals directly without constructing strings.
-        std::uint64_t token=1469598103934665603ULL;
-        for (const char *path : {"/dev/nvidia0","/dev/nvidiactl","/dev/kfd",
-                                 "/dev/dri/renderD128","/dev/accel0",
-                                 "/dev/accel/accel0","/dev/apex_0"}) {
-            token^=hardware_detail::pathExists(path)?1U:0U;
-            token*=1099511628211ULL;
+        // Compare routing-relevant signals exactly; allocate only when a signal
+        // actually changes. Zero remains reserved for "uncacheable".
+        constexpr std::array<const char *,7> paths = {
+            "/dev/nvidia0","/dev/nvidiactl","/dev/kfd","/dev/dri/renderD128",
+            "/dev/accel0","/dev/accel/accel0","/dev/apex_0"
+        };
+        constexpr std::array<const char *,11> names = {
+            "NVIDIA_VISIBLE_DEVICES","CUDA_VISIBLE_DEVICES",
+            "SHORTHAND_GPU_DETECTED","SHORTHAND_GPU_ACCESSIBLE",
+            "TPU_NAME","COLAB_TPU_ADDR","XRT_TPU_CONFIG",
+            "SHORTHAND_TPU_DETECTED","SHORTHAND_TPU_ACCESSIBLE",
+            "SHORTHAND_NPU_DETECTED","SHORTHAND_NPU_ACCESSIBLE"
+        };
+        unsigned bits=0;
+        for (std::size_t i=0;i<paths.size();++i)
+            if (hardware_detail::pathExists(paths[i])) bits|=(1U<<i);
+        bool changed=!generation_initialized_ || bits!=device_signal_bits_;
+        for (std::size_t i=0;i<names.size();++i)
+            changed=changed || generation_environment_[i]!=hardware_detail::environment(names[i]);
+        if (changed) {
+            device_signal_bits_=bits;
+            for (std::size_t i=0;i<names.size();++i)
+                generation_environment_[i]=hardware_detail::environment(names[i]);
+            if (generation_initialized_) {
+                ++generation_;
+                if (generation_==0) generation_=1;
+            }
+            generation_initialized_=true;
         }
-        for (const char *name : {"NVIDIA_VISIBLE_DEVICES","CUDA_VISIBLE_DEVICES",
-                                 "SHORTHAND_GPU_DETECTED","SHORTHAND_GPU_ACCESSIBLE",
-                                 "TPU_NAME","COLAB_TPU_ADDR","XRT_TPU_CONFIG",
-                                 "SHORTHAND_TPU_DETECTED","SHORTHAND_TPU_ACCESSIBLE",
-                                 "SHORTHAND_NPU_DETECTED","SHORTHAND_NPU_ACCESSIBLE"})
-            token=hardware_detail::hashBytes(token,hardware_detail::environment(name));
-        return token;
+        return generation_;
     }
     std::vector<HardwareDeviceCapability> probe() const override {
         std::vector<HardwareDeviceCapability> devices;
@@ -302,6 +307,12 @@ public:
                            (npu_detected ? "npu_detected_but_backend_access_not_confirmed" : "no_npu_signal_detected")});
         return devices;
     }
+
+private:
+    mutable bool generation_initialized_=false;
+    mutable unsigned device_signal_bits_=0;
+    mutable std::array<std::string,11> generation_environment_{};
+    mutable std::uint64_t generation_=1;
 };
 
 class StaticHardwareProbe final : public HardwareProbe {
@@ -314,15 +325,24 @@ private:
     std::vector<HardwareDeviceCapability> devices_;
 };
 
-inline std::uint64_t hardwareRoutingPolicyEnvironmentSignature() {
-    std::uint64_t token=1469598103934665603ULL;
-    for (const char *name : {"SHORTHAND_DEVICE_PREFERENCE","SHORTHAND_DEVICE_OVERRIDE",
-                             "SHORTHAND_DEVICE_DENY","SHORTHAND_ALLOW_CPU_FALLBACK",
-                             "SHORTHAND_MIN_DEVICE_MEMORY_MB"}) {
-        token=hardware_detail::hashBytes(token,name);
-        token=hardware_detail::hashBytes(token,hardware_detail::environment(name));
-    }
-    return token;
+using HardwareRoutingPolicyEnvironmentState = std::array<std::string,5>;
+
+inline constexpr std::array<const char *,5> hardwareRoutingPolicyEnvironmentNames() {
+    return {"SHORTHAND_DEVICE_PREFERENCE","SHORTHAND_DEVICE_OVERRIDE",
+            "SHORTHAND_DEVICE_DENY","SHORTHAND_ALLOW_CPU_FALLBACK",
+            "SHORTHAND_MIN_DEVICE_MEMORY_MB"};
+}
+
+inline bool hardwareRoutingPolicyEnvironmentMatches(const HardwareRoutingPolicyEnvironmentState &state) {
+    const auto names=hardwareRoutingPolicyEnvironmentNames();
+    for (std::size_t i=0;i<names.size();++i)
+        if (state[i]!=hardware_detail::environment(names[i])) return false;
+    return true;
+}
+
+inline void captureHardwareRoutingPolicyEnvironment(HardwareRoutingPolicyEnvironmentState &state) {
+    const auto names=hardwareRoutingPolicyEnvironmentNames();
+    for (std::size_t i=0;i<names.size();++i) state[i]=hardware_detail::environment(names[i]);
 }
 
 inline HardwareRoutingPolicy hardwareRoutingPolicyFromEnvironment() {
