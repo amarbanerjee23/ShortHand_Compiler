@@ -61,12 +61,12 @@ class CountingProbe final : public HardwareProbe {
 public:
     explicit CountingProbe(std::vector<HardwareDeviceCapability> devices) : devices_(std::move(devices)) {}
     std::vector<HardwareDeviceCapability> probe() const override { ++probes_; return devices_; }
-    std::string generationToken() const override { return generation_; }
-    void generation(std::string value) { generation_=std::move(value); }
+    std::uint64_t generationToken() const override { return generation_; }
+    void generation(std::uint64_t value) { generation_=value; }
     unsigned probes() const { return probes_; }
 private:
     std::vector<HardwareDeviceCapability> devices_;
-    std::string generation_="generation-a";
+    std::uint64_t generation_=1;
     mutable unsigned probes_=0;
 };
 }
@@ -148,7 +148,7 @@ int main() {
     const auto second_cached=cached_runtime.infer(unavailable_model,input);
     if (first_cached.status!=InferenceStatus::NotExecuted || second_cached.status!=InferenceStatus::NotExecuted ||
         counting_probe->probes()!=1) return 23;
-    counting_probe->generation("generation-b");
+    counting_probe->generation(2);
     const auto invalidated=cached_runtime.infer(unavailable_model,input);
     if (invalidated.status!=InferenceStatus::NotExecuted || counting_probe->probes()!=2) return 24;
 
