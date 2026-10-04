@@ -27,10 +27,13 @@ publish_block="$(awk '
 
 require_text "${workflow_text}" 'group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}' \
   "CI concurrency must remain isolated by event and ref"
-require_text "${workflow_text}" '${{ github.run_id }}' \
-  "each revision needs its own evidence run"
-require_text "${workflow_text}" 'cancel-in-progress: false' \
-  "new pushes must not cancel an earlier revision's evidence collection"
+require_text "${workflow_text}" 'cancel-in-progress: true' \
+  "superseded revisions must not accumulate full CI matrices"
+
+if grep -Fq -- '${{ github.run_id }}' <<<"${workflow_text}"; then
+  echo "error: CI concurrency must not include run_id; that prevents stale revisions from cancelling" >&2
+  exit 1
+fi
 require_text "${publish_block}" 'if: ${{ always() && !cancelled() }}' \
   "cancelled runs must not publish a terminal commit status"
 require_text "${publish_block}" 'TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}' \
