@@ -65,11 +65,12 @@ jobs:
           cmake -S . -B build-profile -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 \
             -DSHORTHAND_BUILD_TESTING=OFF -DSHORTHAND_BUILD_MLIR=ON -DSHORTHAND_MLIR_TESTING=OFF \
+            -DSHORTHAND_BUILD_RUNTIME_PHASE_PROFILE=ON \
             -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir \
             -DLLVM_CONFIG=/usr/bin/llvm-config-18 \
             -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
             -DONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0"
-          cmake --build build-profile --parallel 2 --target short_hand shorthand_ai_qualify shorthand_runtime 2>&1 | tee profile-output/build.log
+          cmake --build build-profile --parallel 2 --target short_hand shorthand_ai_qualify shorthand_runtime shorthand_runtime_profiled 2>&1 | tee profile-output/build.log
           cp build-profile/CMakeCache.txt profile-output/
           git rev-parse HEAD > profile-output/revision.txt
           sha256sum build-profile/shorthand_ai_qualify > profile-output/executable.sha256
@@ -94,6 +95,7 @@ jobs:
           } | tee profile-output/evidence-tests.txt
           python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1 | tee profile-output/application-tests.txt
           CXX=clang++-18 python3 tests/ai_application/test_compiled_cache.py build-profile build-profile/onnxruntime-1.30.0 2>&1 | tee profile-output/cache-tests.txt
+          CXX=clang++-18 python3 tests/ai_application/test_runtime_phase_profile.py build-profile build-profile/onnxruntime-1.30.0 2>&1 | tee profile-output/phase-tests.txt
           CXX=clang++-18 SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1 ONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0" \
             bash scripts/check_ai_energy_qualification.sh 2>&1 | tee profile-output/workspace-tests.txt
       - name: Run prepared cache and workspace sanitizers

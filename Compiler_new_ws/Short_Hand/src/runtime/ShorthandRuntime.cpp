@@ -1,4 +1,5 @@
 #include "ShorthandRuntime.h"
+#include "RuntimePhaseProfile.h"
 
 #ifndef SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
 #define SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE 0
@@ -310,6 +311,7 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
                                             int *output_count,
                                             long long expected_input,
                                             long long expected_output) {
+    SHORTHAND_PHASE_SCOPE(descriptor_input);
     // Every changed registration invalidates this single-entry descriptor.
     // Names also form the key: alternating existing registrations is not a hit.
     if (!bridge_descriptor || bridge_descriptor->model_name!=model.name ||
@@ -339,9 +341,11 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
         return status;
     }
 
+    SHORTHAND_PHASE_NEXT(policy_refresh);
     if (!bridge_runtime) bridge_runtime=std::make_unique<shorthand::ai::AIRuntime>();
     bridge_runtime->refreshPolicyFromEnvironment();
     auto result = bridge_runtime->inferCached(model_spec, input_buffer, prepared_cache);
+    SHORTHAND_PHASE_NEXT(bridge_output);
     int status = shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status);
     std::string backend = result.backend_name.empty() ? shorthand::ai::backendKindToString(result.backend) : result.backend_name;
     std::string reason = result.reason.empty() ? shorthand::ai::inferenceStatusToString(result.status) : result.reason;
@@ -359,6 +363,7 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
         }
     }
 
+    SHORTHAND_PHASE_NEXT(bridge_telemetry_log);
     set_last_infer(status, backend, reason);
     attach_ai_runtime_telemetry_if_available(status, backend, reason, result);
     infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
@@ -496,6 +501,7 @@ extern "C" int short_ai_register_model(const char *name,
                                         const char *input_shape,
                                         const char *output_shape,
                                         const char *backend_preference) {
+    SHORTHAND_PHASE_SCOPE(registration);
     if (blank(name)) {
         log_status("model", SHORTHAND_RUNTIME_INVALID_ARGUMENT, "reason=missing_name");
         return SHORTHAND_RUNTIME_INVALID_ARGUMENT;
@@ -519,6 +525,7 @@ extern "C" int short_ai_register_tensor(const char *name,
                                          const char *shape,
                                          const char *rank,
                                          const char *total_elements) {
+    SHORTHAND_PHASE_SCOPE(registration);
     if (blank(name)) {
         log_status("tensor", SHORTHAND_RUNTIME_INVALID_ARGUMENT, "reason=missing_name");
         return SHORTHAND_RUNTIME_INVALID_ARGUMENT;
@@ -647,6 +654,7 @@ extern "C" int short_ai_infer_f32(const char *model_name,
                                   float *output_values,
                                   int output_capacity,
                                   int *output_count) {
+    SHORTHAND_PHASE_SCOPE(bridge_validation);
     if (output_count) *output_count = 0;
 
     if (blank(model_name) || blank(input_name) || blank(output_name) ||

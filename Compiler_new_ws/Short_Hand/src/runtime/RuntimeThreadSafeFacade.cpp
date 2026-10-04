@@ -1,4 +1,5 @@
 #include "ShorthandRuntime.h"
+#include "RuntimePhaseProfile.h"
 
 #include <mutex>
 #include <string>
@@ -72,7 +73,9 @@ std::recursive_mutex &runtimeMutex() {
 
 template <typename Fn>
 int lockedInt(Fn &&fn) {
+    SHORTHAND_PHASE_SCOPE(facade_lock);
     std::lock_guard<std::recursive_mutex> guard(runtimeMutex());
+    SHORTHAND_PHASE_NEXT(entry_residual);
     return fn();
 }
 

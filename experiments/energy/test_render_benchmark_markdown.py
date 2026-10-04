@@ -19,6 +19,14 @@ class BenchmarkMarkdownTest(unittest.TestCase):
                 success=True, latency_claim_authorized=False, energy_claim_authorized=False,
                 rows=[dict(cell="b1-t1", head_base_ratio=.2, head_direct_ratio=10,
                            observations=dict(head=dict(mean_ms_per_vector=.1)))])))
+            generated_path = root / 'generated-infer/report.json'
+            generated = json.loads(generated_path.read_text())
+            generated['rows'][0].update(head_direct_all_ratio=11, direct_all_basic_ratio=10/11)
+            generated_path.write_text(json.dumps(generated))
+            (root / 'generated-infer/phases.json').write_text(json.dumps(dict(
+                success=True, instrumented=True, latency_claim_authorized=False, energy_claim_authorized=False,
+                rows=[dict(cell='b1-t1', mean_instrumented_ns_per_call=100, clock_pair_median_ns=20,
+                           phases=dict(routing=dict(mean_ns_per_call=50, fraction_of_instrumented_total=.5)))])))
             (root / "pr-runtime-delta/summary.json").write_text(json.dumps(dict(
                 success=True, base_sha="b" * 40, production_claim=False, comparative_energy_claim=False,
                 latency_claim_eligible=False, measured_energy_available=False,
@@ -30,7 +38,7 @@ class BenchmarkMarkdownTest(unittest.TestCase):
                 joules_per_task=None, average_component_watts=None,
                 reason="meter unavailable")))
             for name in ("cache-tests.txt", "workspace-tests.txt", "application-tests.txt",
-                         "prepared-sanitizers.txt", "evidence-tests.txt"):
+                         "prepared-sanitizers.txt", "evidence-tests.txt", "phase-tests.txt"):
                 (root / name).write_text("PASS " + name)
             value = report.render(root, "https://example.test/run")
             self.assertIn("# Testing and benchmark results", value)
@@ -38,6 +46,9 @@ class BenchmarkMarkdownTest(unittest.TestCase):
             self.assertIn("meter unavailable", value)
             self.assertIn("Comparison base: `" + "b" * 40 + "`", value)
             self.assertIn("selected base revision", value)
+            self.assertIn("Head/ORT ALL", value)
+            self.assertIn("routing: 50.0%", value)
+            self.assertIn("excluded from all latency ratios and energy runs", value)
             self.assertNotIn("faster than the repeated-session baseline", value)
             self.assertIn("Joules, joules per task and watts are therefore `null`/unavailable", value)
 
@@ -48,9 +59,10 @@ class BenchmarkMarkdownTest(unittest.TestCase):
                 (root / directory).mkdir()
             (root / "run-evidence.json").write_text(json.dumps(dict(revision="abc", status="complete", missing=[])))
             (root / "generated-infer/report.json").write_text(json.dumps(dict(success=True, latency_claim_authorized=False, energy_claim_authorized=False, rows=[])))
+            (root / 'generated-infer/phases.json').write_text(json.dumps(dict(success=True, instrumented=True, latency_claim_authorized=False, energy_claim_authorized=False, rows=[])))
             (root / "pr-runtime-delta/summary.json").write_text(json.dumps(dict(success=True, production_claim=False, comparative_energy_claim=False, latency_claim_eligible=False, measured_energy_available=False, cells=[])))
             (root / "ci-energy/summary.json").write_text(json.dumps(dict(available=False, hardware_measured_joules=1.0, average_component_watts=None)))
-            for name in ("cache-tests.txt", "workspace-tests.txt", "application-tests.txt", "prepared-sanitizers.txt", "evidence-tests.txt"):
+            for name in ("cache-tests.txt", "workspace-tests.txt", "application-tests.txt", "prepared-sanitizers.txt", "evidence-tests.txt", "phase-tests.txt"):
                 (root / name).write_text("PASS " + name)
             with self.assertRaises(ValueError): report.render(root)
 

@@ -19,13 +19,17 @@ REQUIRED = {
     'benchmark_markdown': 'BENCHMARKS.md',
     'real_digit_application_correctness': 'application-tests.txt',
     'compiled_fp32_observations': 'generated-infer/report.json',
+    'compiled_phase_attribution': 'generated-infer/phases.json',
+    'compiled_phase_execution_tests': 'phase-tests.txt',
+    'compiled_phase_production_isolation': 'phase-tests.txt',
     'same_runner_head_base_observations': 'pr-runtime-delta/summary.json',
     'resident_native_and_python_controls': 'resident-baselines/summary.json',
     'energy_capabilities': 'ci-energy-probe.json',
     'resident_component_energy_or_unavailable': 'ci-energy/summary.json',
 }
 SCHEMAS = {
-    'compiled_fp32_observations': 'shorthand.generated_infer.report.v1',
+    'compiled_fp32_observations': 'shorthand.generated_infer.report.v2',
+    'compiled_phase_attribution': 'shorthand.generated_infer.phases.v1',
     'same_runner_head_base_observations': 'shorthand.energy.pr_runtime_delta.v1',
     'resident_native_and_python_controls': 'shorthand.energy.resident_baselines.v1',
     'energy_capabilities': 'shorthand.energy.ci_evidence.v1',
@@ -41,6 +45,8 @@ PASS_MARKERS = {
     'evidence_regression_tests': 'PASS evidence regression suites',
     'benchmark_markdown': '# Testing and benchmark results',
     'real_digit_application_correctness': 'live_onnx=1',
+    'compiled_phase_execution_tests': 'PASS compiled phase profiling:',
+    'compiled_phase_production_isolation': 'PASS phase profile isolation: production archive has no diagnostic symbols',
 }
 
 

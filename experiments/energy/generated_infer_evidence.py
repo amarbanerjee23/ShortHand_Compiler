@@ -20,6 +20,16 @@ from ci_energy_evidence import ComponentEnergySampler, cpu_identity
 BOUNDARY = ('compiled .short entry including zero tensor initialization, registration, inference, '
             'runtime validation/telemetry/logging and independent output verification; direct ORT '
             'includes its prepared invocation and identical output verification; block wall clocks')
+PHASES = ('entry_residual', 'facade_lock', 'registration', 'bridge_validation', 'descriptor_input',
+          'policy_refresh', 'hardware_probe', 'routing', 'runtime_validation', 'snapshot',
+          'session_prepare', 'backend_other', 'ort_run', 'runtime_telemetry', 'bridge_output',
+          'bridge_telemetry_log', 'oracle')
+PROFILE_ITERATIONS, PROFILE_BLOCKS = 32, 2
+
+
+def configuration(runner):
+    return dict(graph_optimization='all' if runner == 'direct_all' else 'basic',
+                execution_mode='sequential', spinning=False, intra_threads=1, inter_threads=1)
 
 
 def sha(path):
@@ -41,10 +51,10 @@ def command(argv, out, stem):
     return elapsed
 
 
-def validate_sample(sample, batch, iterations, blocks):
+def validate_sample(sample, batch, iterations, blocks, runner='head', instrumented=False):
     counts = ('batch', 'threads', 'iterations', 'warmups', 'completed_calls', 'completed_vectors')
     if (not isinstance(sample, dict) or any(type(sample.get(k)) is not int for k in counts)
-            or sample.get('schema') != 'shorthand.generated_infer.sample.v1' or sample.get('success') is not True
+            or sample.get('schema') != 'shorthand.generated_infer.sample.v2' or sample.get('success') is not True
             or sample.get('batch') != batch or sample.get('threads') != 1
             or sample.get('iterations') != iterations or sample.get('warmups') != 8
             or sample.get('completed_calls') != iterations * blocks
@@ -55,9 +65,54 @@ def validate_sample(sample, batch, iterations, blocks):
         raise ValueError('invalid generated timings')
     if type(sample.get('cold_session_ms')) not in (int, float) or not math.isfinite(sample['cold_session_ms']) or sample['cold_session_ms'] <= 0:
         raise ValueError('invalid cold-session timing')
+    config = sample.get('configuration')
+    if (config != configuration(runner) or type(config.get('spinning')) is not bool
+            or any(type(config.get(k)) is not int for k in ('intra_threads', 'inter_threads'))):
+        raise ValueError('mismatched ORT control configuration')
+    if sample.get('instrumented') is not instrumented:
+        raise ValueError('instrumentation cannot enter latency or energy controls')
+    if not instrumented and any(k in sample for k in ('phase_samples', 'clock_pair_median_ns')):
+        raise ValueError('unexpected profiling data in uninstrumented sample')
+    if runner in ('head', 'profiled'):
+        cache = sample.get('last_runtime_telemetry', {}).get('ai_runtime_telemetry', {}).get('execution_evidence', {})
+        if cache.get('hit') is not True or type(cache.get('preparations')) is not int or cache['preparations'] != 1:
+            raise ValueError('generated path did not retain one prepared session')
 
 
-def sample_run(argv, out, stem, batch, iterations, blocks, energy=False):
+def validate_profile(sample, batch):
+    validate_sample(sample, batch, PROFILE_ITERATIONS, PROFILE_BLOCKS, 'profiled', True)
+    pairs = sample.get('clock_pair_median_ns')
+    rows = sample.get('phase_samples')
+    if (type(pairs) not in (int, float) or not math.isfinite(pairs) or pairs < 0
+            or not isinstance(rows, list) or len(rows) != PROFILE_ITERATIONS * PROFILE_BLOCKS):
+        raise ValueError('invalid profile samples or clock calibration')
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError('invalid phase row')
+        times, visits = row.get('phases'), row.get('visits')
+        if any(not isinstance(v, dict) or set(v) != set(PHASES)
+               or any(type(n) is not int or n < 0 for n in v.values()) for v in (times, visits)):
+            raise ValueError('invalid phase fields')
+        if (type(row.get('total_ns')) is not int or row['total_ns'] <= 0
+                or sum(times.values()) != row['total_ns']
+                or type(row.get('clock_reads')) is not int or row['clock_reads'] < 2):
+            raise ValueError('invalid exclusive phase partition')
+        required = set(PHASES) - {'entry_residual', 'session_prepare'}
+        if (any(visits[p] < 1 for p in required) or visits['registration'] != 3
+                or visits['facade_lock'] != 4 or visits['ort_run'] != 1 or visits['oracle'] != 1
+                or visits['session_prepare'] != 0 or times['session_prepare'] != 0):
+            raise ValueError('profile did not follow the warm compiled path')
+    totals = {p: sum(r['phases'][p] for r in rows) for p in PHASES}
+    total = sum(r['total_ns'] for r in rows)
+    return dict(cell=f'b{batch}-t1', completed_calls=len(rows),
+                mean_instrumented_ns_per_call=total / len(rows),
+                clock_pair_median_ns=pairs,
+                mean_clock_reads_per_call=statistics.mean(r['clock_reads'] for r in rows),
+                phases={p: dict(mean_ns_per_call=totals[p] / len(rows),
+                                fraction_of_instrumented_total=totals[p] / total) for p in PHASES})
+
+
+def sample_run(argv, out, stem, batch, iterations, blocks, energy=False, runner='head'):
     sampler, joules, reason, samples = None, None, 'energy_run_not_requested', 0
     if energy:
         try:
@@ -76,7 +131,7 @@ def sample_run(argv, out, stem, batch, iterations, blocks, energy=False):
             except (RuntimeError, OSError) as exc:
                 reason, joules = str(exc), None
     sample = json.loads((out / (stem + '.stdout')).read_text())
-    validate_sample(sample, batch, iterations, blocks)
+    validate_sample(sample, batch, iterations, blocks, runner)
     if energy:
         # The process window includes cold preparation, eight warmups, timed
         # blocks, validation and teardown. All calls must pass before counting.
@@ -111,7 +166,7 @@ def capture(args):
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     if args.head_sha and revision != args.head_sha:
         raise ValueError('head revision mismatch')
-    manifest = dict(schema='shorthand.generated_infer.bundle.v1', head_sha=revision,
+    manifest = dict(schema='shorthand.generated_infer.bundle.v2', head_sha=revision,
                     base_sha=args.base_sha, compiler_revision=revision,
                     comparison_scope='same generated object, different runtime archives; compiler changes not compared',
                     working_tree_diff_sha256=hashlib.sha256(subprocess.check_output(['git', 'diff', 'HEAD'], cwd=ROOT)).hexdigest(),
@@ -121,13 +176,16 @@ def capture(args):
                     iterations=args.iterations, blocks=args.blocks, rounds=args.rounds,
                     latency_claim_authorized=False, energy_claim_authorized=False,
                     unsupported_compiled_cells=['b16-t2', 'b16-t4'],
-                    unsupported_reason='compiled C ABI currently uses one ORT intra-op thread', observations=[])
+                    unsupported_reason='compiled C ABI currently uses one ORT intra-op thread', observations=[], profiles=[])
     # No launch/cold/setup times are mixed into the resident block ratios.
-    runners = ['head', 'base', 'direct'] if base else ['head', 'direct']
+    runners = ['head', 'base', 'direct', 'direct_all'] if base else ['head', 'direct', 'direct_all']
     manifest['runners'] = runners
+    manifest['configurations'] = {runner: configuration(runner) for runner in runners}
     manifest['executables'] = {str(build / 'short_hand'): sha(build / 'short_hand'),
                               str(build / 'libshorthand_runtime.a'): sha(build / 'libshorthand_runtime.a'),
                               str(sdk / 'lib/libonnxruntime.so'): sha(sdk / 'lib/libonnxruntime.so')}
+    profiled_library = build / 'libshorthand_runtime_profiled.a'
+    manifest['executables'][str(profiled_library)] = sha(profiled_library)
     if base:
         manifest['executables'][str(base / 'libshorthand_runtime.a')] = sha(base / 'libshorthand_runtime.a')
     for batch in (1, 16, 32):
@@ -161,15 +219,22 @@ infer classifier(input) -> output;
         command([args.clang, '-O2', '-fno-fast-math', '-c', cell / 'inference.ll', '-o', cell / 'inference.o'], cell, 'compile-ir')
         command(['objcopy', '--redefine-sym', 'main=shorthand_entry', cell / 'inference.o'], cell, 'rename-entry')
         binaries = {}
-        for runner in runners:
+        for runner in [*runners, 'profiled']:
             binary = cell / runner
             argv = [args.clang, '-std=c++17', '-O2', '-fno-fast-math', '-pthread',
-                    '-DSHORTHAND_GENERATED=' + str(int(runner != 'direct')),
+                    '-DSHORTHAND_GENERATED=' + str(int(not runner.startswith('direct'))),
+                    '-DSHORTHAND_ORT_ALL=' + str(int(runner == 'direct_all')),
+                    '-DSHORTHAND_RUNTIME_PHASE_PROFILE=' + str(int(runner == 'profiled')),
                     '-I' + str(ROOT / 'Compiler_new_ws/Short_Hand/src'), '-I' + str(sdk / 'include'),
                     ROOT / 'experiments/energy/generated_infer_probe.cpp']
-            if runner != 'direct':
-                argv += [cell / 'inference.o', (base if runner == 'base' else build) / 'libshorthand_runtime.a',
+            if not runner.startswith('direct'):
+                archive = profiled_library if runner == 'profiled' else (base if runner == 'base' else build) / 'libshorthand_runtime.a'
+                argv += [cell / 'inference.o', archive,
                          '-Wl,--wrap=short_ai_infer_f32']
+            if runner == 'profiled':
+                # Retain executable code and symbols, without duplicating the
+                # large archive's DWARF in every diagnostic artifact binary.
+                argv += ['-Wl,--strip-debug']
             argv += ['-L' + str(sdk / 'lib'), '-Wl,-rpath,' + str(sdk / 'lib'), '-lonnxruntime', '-o', binary]
             command(argv, cell, 'link-' + runner)
             binaries[runner] = binary
@@ -180,16 +245,17 @@ infer classifier(input) -> output;
         for index, runner in enumerate(sequence):
             stem = f'latency-{index:02}-{runner}'
             sample = sample_run([binaries[runner], model, str(batch), cell / 'expected.bin', str(args.iterations), str(args.blocks)],
-                                cell, stem, batch, args.iterations, args.blocks)
-            if runner == 'head':
-                evidence = sample['last_runtime_telemetry'].get('ai_runtime_telemetry', {}).get('execution_evidence', {})
-                if evidence.get('hit') is not True or evidence.get('preparations') != 1:
-                    raise ValueError('generated path did not retain one prepared session')
+                                cell, stem, batch, args.iterations, args.blocks, runner=runner)
             manifest['observations'].append(dict(cell=cell.name, runner=runner, sequence=index, path=f'{cell.name}/{stem}.stdout'))
         # Component metering runs are separate from the latency sample series.
         for runner in runners:
             sample_run([binaries[runner], model, str(batch), cell / 'expected.bin', str(args.iterations), str(args.blocks)],
-                       cell, 'energy-' + runner, batch, args.iterations, args.blocks, energy=True)
+                       cell, 'energy-' + runner, batch, args.iterations, args.blocks, energy=True, runner=runner)
+        # No instrumented binary participates in latency ratios or energy runs.
+        command([binaries['profiled'], model, str(batch), cell / 'expected.bin',
+                 str(PROFILE_ITERATIONS), str(PROFILE_BLOCKS)], cell, 'phases')
+        validate_profile(json.loads((cell / 'phases.stdout').read_text()), batch)
+        manifest['profiles'].append(dict(cell=cell.name, path=f'{cell.name}/phases.stdout'))
         if any(sha(path) != digest for path, digest in frozen.items()):
             raise ValueError('workload or executable changed during capture')
     if any(sha(pathlib.Path(path)) != digest for path, digest in manifest['executables'].items()):
@@ -204,14 +270,16 @@ def replay(out, expected_digest):
     if sha(out / 'manifest.json') != expected_digest:
         raise ValueError('manifest hash mismatch')
     manifest = json.loads((out / 'manifest.json').read_text())
-    if not isinstance(manifest, dict) or manifest.get('schema') != 'shorthand.generated_infer.bundle.v1':
+    if not isinstance(manifest, dict) or manifest.get('schema') != 'shorthand.generated_infer.bundle.v2':
         raise ValueError('invalid generated manifest')
-    if manifest.get('runners') not in (['head', 'direct'], ['head', 'base', 'direct']):
+    if manifest.get('runners') not in (['head', 'direct', 'direct_all'], ['head', 'base', 'direct', 'direct_all']):
         raise ValueError('invalid generated runners')
+    if manifest.get('configurations') != {r: configuration(r) for r in manifest['runners']}:
+        raise ValueError('invalid manifest control configurations')
     for name, low, high in [('rounds', 1, 8), ('iterations', 1, 4096), ('blocks', 2, 20)]:
         if type(manifest.get(name)) is not int or not low <= manifest[name] <= high:
             raise ValueError('invalid generated protocol: ' + name)
-    if any(manifest.get(k, False) is not False for k in ('latency_claim_authorized', 'energy_claim_authorized')):
+    if any(manifest.get(k) is not False for k in ('latency_claim_authorized', 'energy_claim_authorized')):
         raise ValueError('generated manifest cannot authorize reduction claims')
     if not isinstance(manifest.get('hashes'), dict) or not manifest['hashes']:
         raise ValueError('missing artifact hashes')
@@ -245,7 +313,7 @@ def replay(out, expected_digest):
                 if record['path'] not in manifest['hashes']:
                     raise ValueError('unhashed sample')
                 sample = json.loads((out / record['path']).read_text())
-                validate_sample(sample, batch, manifest['iterations'], manifest['blocks'])
+                validate_sample(sample, batch, manifest['iterations'], manifest['blocks'], runner)
                 values.extend(t / (batch * sample['iterations']) for t in sample['block_elapsed_ms'])
             groups[runner] = dict(mean_ms_per_vector=statistics.mean(values),
                                   median_block_ms_per_vector=statistics.median(values),
@@ -253,17 +321,39 @@ def replay(out, expected_digest):
                                   sample_blocks=len(values))
         rows.append(dict(cell=f'b{batch}-t1', observations=groups,
                          head_base_ratio=groups['head']['mean_ms_per_vector'] / groups['base']['mean_ms_per_vector'] if 'base' in groups else None,
-                         head_direct_ratio=groups['head']['mean_ms_per_vector'] / groups['direct']['mean_ms_per_vector']))
-    report = dict(schema='shorthand.generated_infer.report.v1', success=True,
+                         head_direct_ratio=groups['head']['mean_ms_per_vector'] / groups['direct']['mean_ms_per_vector'],
+                         head_direct_all_ratio=groups['head']['mean_ms_per_vector'] / groups['direct_all']['mean_ms_per_vector'],
+                         direct_all_basic_ratio=groups['direct_all']['mean_ms_per_vector'] / groups['direct']['mean_ms_per_vector']))
+    profiles = manifest.get('profiles')
+    if (not isinstance(profiles, list) or len(profiles) != 3
+            or any(not isinstance(p, dict) or not isinstance(p.get('path'), str)
+                   or p['path'] not in manifest['hashes'] for p in profiles)
+            or {p.get('cell') for p in profiles} != {'b1-t1', 'b16-t1', 'b32-t1'}
+            or len({p['path'] for p in profiles}) != 3
+            or {p['path'] for p in profiles} & {r['path'] for r in observations}):
+        raise ValueError('invalid separate profiling matrix')
+    phase_rows = [validate_profile(json.loads((out / p['path']).read_text()), int(p['cell'][1:-3])) for p in profiles]
+    phase_report = dict(schema='shorthand.generated_infer.phases.v1', success=True, manifest_sha256=expected_digest,
+                        rows=phase_rows, instrumented=True, latency_claim_authorized=False, energy_claim_authorized=False,
+                        boundary='exclusive phases of one warm compiled entry including independent output verification; clock overhead included')
+    write(out / 'phases.json', phase_report)
+    report = dict(schema='shorthand.generated_infer.report.v2', success=True,
                   manifest_sha256=expected_digest, rows=rows, boundary=BOUNDARY,
                   latency_claim_authorized=False, energy_claim_authorized=False)
     write(out / 'report.json', report)
     lines = ['# Compiled FP32 observations', '', manifest['workload'], '', BOUNDARY, '',
              'Descriptive shared-runner observations; no latency or energy claim is authorized.', '',
-             '| Cell | Head ms/vector | Head/base | Head/direct ORT |', '|---|---:|---:|---:|']
+             'Both direct controls use one intra/inter thread, sequential execution, spinning disabled, and preallocated input/output. ALL is an explicit tuning candidate, not a claim of globally optimal tuning.', '',
+             '| Cell | Head ms/vector | Head/base | Head/ORT BASIC | Head/ORT ALL | ORT ALL/BASIC |', '|---|---:|---:|---:|---:|---:|']
     for row in rows:
         ratio = f"{row['head_base_ratio']:.4f}" if row['head_base_ratio'] is not None else 'unavailable'
-        lines.append(f"| {row['cell']} | {row['observations']['head']['mean_ms_per_vector']:.6f} | {ratio} | {row['head_direct_ratio']:.4f} |")
+        lines.append(f"| {row['cell']} | {row['observations']['head']['mean_ms_per_vector']:.6f} | {ratio} | {row['head_direct_ratio']:.4f} | {row['head_direct_all_ratio']:.4f} | {row['direct_all_basic_ratio']:.4f} |")
+    lines += ['', '## Diagnostic phase profile', '',
+              'Separate instrumented binary, 64 verified warm calls/cell. Exclusive phases sum to the instrumented total. Clock overhead is included, never subtracted. These are attribution observations, not latency or energy controls.', '',
+              '| Phase | b1 mean ns/call | b16 mean ns/call | b32 mean ns/call |', '|---|---:|---:|---:|']
+    for phase in PHASES:
+        by_cell = {r['cell']: r for r in phase_rows}
+        lines.append('| ' + phase + ' | ' + ' | '.join(f"{by_cell[f'b{b}-t1']['phases'][phase]['mean_ns_per_call']:.1f}" for b in (1, 16, 32)) + ' |')
     lines += ['', 'Energy is recorded separately in each `energy-*.energy.json`; unavailable counters produce null joules.',
               'b16-t2 and b16-t4 are unsupported for compiled hooks; all five real-digit cells remain in resident evidence.',
               'These are zero-input inference vectors, not held-out digit accuracy or end-to-end serving measurements.', '']

@@ -8,23 +8,44 @@ from unittest.mock import Mock, patch
 import generated_infer_evidence as evidence
 
 
-def sample(batch=1):
-    return dict(schema='shorthand.generated_infer.sample.v1', success=True, batch=batch,
+def sample(batch=1, runner='head'):
+    return dict(schema='shorthand.generated_infer.sample.v2', success=True, batch=batch,
                 threads=1, iterations=8, warmups=8, completed_calls=16,
-                completed_vectors=16*batch, block_elapsed_ms=[1.0, 1.1], cold_session_ms=2.0)
+                completed_vectors=16*batch, block_elapsed_ms=[1.0, 1.1], cold_session_ms=2.0,
+                instrumented=False, configuration=evidence.configuration(runner),
+                last_runtime_telemetry=dict(ai_runtime_telemetry=dict(execution_evidence=dict(hit=True, preparations=1))))
+
+
+def profile(batch=1):
+    result = sample(batch)
+    visits = {p: 1 for p in evidence.PHASES}
+    visits.update(registration=3, facade_lock=4, session_prepare=0, entry_residual=0)
+    phases = {p: 10 if visits[p] else 0 for p in evidence.PHASES}
+    result.update(instrumented=True, iterations=32, completed_calls=64, completed_vectors=64*batch,
+                  clock_pair_median_ns=20,
+                  phase_samples=[dict(total_ns=sum(phases.values()), clock_reads=40,
+                                      phases=phases.copy(), visits=visits.copy()) for _ in range(64)])
+    return result
 
 
 class GeneratedEvidenceTest(unittest.TestCase):
     def bundle(self, out):
-        manifest = dict(schema='shorthand.generated_infer.bundle.v1', runners=['head', 'direct'],
-                        rounds=1, iterations=8, blocks=2, workload='test fixture', observations=[], hashes={})
+        runners = ['head', 'direct', 'direct_all']
+        manifest = dict(schema='shorthand.generated_infer.bundle.v2', runners=runners,
+                        configurations={r: evidence.configuration(r) for r in runners},
+                        latency_claim_authorized=False, energy_claim_authorized=False,
+                        rounds=1, iterations=8, blocks=2, workload='test fixture', observations=[], profiles=[], hashes={})
         for batch in (1, 16, 32):
             for runner in manifest['runners']:
                 for block in range(2):
                     name = f'b{batch}-{runner}-{block}.json'
-                    evidence.write(out / name, sample(batch))
+                    evidence.write(out / name, sample(batch, runner))
                     manifest['hashes'][name] = evidence.sha(out / name)
                     manifest['observations'].append(dict(cell=f'b{batch}-t1', runner=runner, path=name))
+            name = f'profile-{batch}.json'
+            evidence.write(out / name, profile(batch))
+            manifest['hashes'][name] = evidence.sha(out / name)
+            manifest['profiles'].append(dict(cell=f'b{batch}-t1', path=name))
         return manifest
 
     def replay(self, out, manifest):
@@ -161,15 +182,7 @@ class GeneratedEvidenceTest(unittest.TestCase):
     def test_replay_rejects_tampering_and_missing_samples(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = pathlib.Path(tmp)
-            manifest = dict(schema='shorthand.generated_infer.bundle.v1', runners=['head', 'direct'],
-                            rounds=1, iterations=8, blocks=2, workload='test fixture', observations=[], hashes={})
-            for batch in (1, 16, 32):
-                for runner in manifest['runners']:
-                    for block in range(2):
-                        name = f'b{batch}-{runner}-{block}.json'
-                        evidence.write(out / name, sample(batch))
-                        manifest['hashes'][name] = evidence.sha(out / name)
-                        manifest['observations'].append(dict(cell=f'b{batch}-t1', runner=runner, path=name))
+            manifest = self.bundle(out)
             evidence.write(out / 'manifest.json', manifest)
             result = evidence.replay(out, evidence.sha(out / 'manifest.json'))
             self.assertEqual(len(result['rows']), 3)
@@ -179,10 +192,49 @@ class GeneratedEvidenceTest(unittest.TestCase):
             evidence.write(out / 'manifest.json', broken)
             with self.assertRaises(ValueError):
                 evidence.replay(out, evidence.sha(out / 'manifest.json'))
+
             evidence.write(out / 'manifest.json', manifest)
             (out / manifest['observations'][0]['path']).write_text('{}')
             with self.assertRaises(ValueError):
                 evidence.replay(out, evidence.sha(out / 'manifest.json'))
+
+    def test_rejects_mislabeled_tuning_and_instrumented_controls(self):
+        for field, value in [('configuration', evidence.configuration('direct_all')),
+                             ('instrumented', True), ('instrumented', 0), ('phase_samples', []),
+                             ('last_runtime_telemetry', {}), ('clock_pair_median_ns', 10)]:
+            corrupt = sample(); corrupt[field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                evidence.validate_sample(corrupt, 1, 8, 2)
+        tuned = sample(runner='direct_all')
+        evidence.validate_sample(tuned, 1, 8, 2, 'direct_all')
+        with self.assertRaises(ValueError): evidence.validate_sample(tuned, 1, 8, 2, 'direct')
+
+    def test_profile_partition_types_completeness_and_execution(self):
+        result = evidence.validate_profile(profile(), 1)
+        self.assertEqual(result['completed_calls'], 64)
+        self.assertAlmostEqual(sum(p['fraction_of_instrumented_total'] for p in result['phases'].values()), 1)
+        for field, value in [('total_ns', 1), ('total_ns', True), ('clock_reads', False),
+                             ('phases', {}), ('visits', {}), ('phases', []), ('visits', None)]:
+            corrupt = profile(); corrupt['phase_samples'][0][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError): evidence.validate_profile(corrupt, 1)
+        for field, value in [('ort_run', 0), ('session_prepare', 1), ('registration', 2), ('oracle', True)]:
+            corrupt = profile(); corrupt['phase_samples'][0]['visits'][field] = value
+            with self.subTest(visit=field), self.assertRaises(ValueError): evidence.validate_profile(corrupt, 1)
+        for field, value in [('phase_samples', []), ('clock_pair_median_ns', float('nan')),
+                             ('clock_pair_median_ns', True), ('instrumented', False)]:
+            corrupt = profile(); corrupt[field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError): evidence.validate_profile(corrupt, 1)
+
+    def test_replay_requires_separate_complete_profile_matrix(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp); manifest = self.bundle(out)
+            for profiles in ([], manifest['profiles'][:2], [manifest['profiles'][0]] * 3,
+                             [dict(cell='b1-t1', path=manifest['observations'][0]['path']), *manifest['profiles'][1:]]):
+                corrupt = copy.deepcopy(manifest); corrupt['profiles'] = profiles
+                with self.assertRaises(ValueError): self.replay(out, corrupt)
+            corrupt = copy.deepcopy(manifest)
+            corrupt['configurations']['direct_all']['graph_optimization'] = 'basic'
+            with self.assertRaises(ValueError): self.replay(out, corrupt)
 
 
 if __name__ == '__main__':

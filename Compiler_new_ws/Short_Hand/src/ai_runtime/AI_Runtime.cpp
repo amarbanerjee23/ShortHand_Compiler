@@ -1,4 +1,5 @@
 #include "AI_Runtime.h"
+#include "../runtime/RuntimePhaseProfile.h"
 #include "ProductionBackendQualification.h"
 #include "backends/FallbackBackend.h"
 #include "backends/LibTorchBackend.h"
@@ -50,6 +51,7 @@ void registerBackends(BackendRegistry &registry) {
 }
 
 InferenceResult attachHardwareEvidence(InferenceResult result, const HardwareRoute &route) {
+    SHORTHAND_PHASE_SCOPE(runtime_telemetry);
     result.hardware_inventory_json = route.inventory_json;
     result.hardware_selection_json = route.selection_json;
     result.selected_device_class = route.selected ? deviceClassToString(route.device_class) : "none";
@@ -119,10 +121,13 @@ void AIRuntime::refreshPolicyFromEnvironment() {
 }
 
 InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache *cache) {
+    SHORTHAND_PHASE_SCOPE(hardware_probe);
     const auto devices = hardware_probe_->probe();
+    SHORTHAND_PHASE_NEXT(routing);
     const auto route = enforceProductionBackendQualification(
         selectHardwareRoute(devices, registry.capabilities(), model, hardware_policy_));
 
+    SHORTHAND_PHASE_NEXT(runtime_validation);
     if (!validateInputMatchesShape(input)) {
         InferenceResult result;
         result.status = InferenceStatus::InvalidInput;
@@ -140,10 +145,12 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
         auto *backend = registry.select(routed_model);
         if (backend) {
             if (cache && route.backend==BackendKind::OnnxRuntimeCPU) {
+                SHORTHAND_PHASE_NEXT(snapshot);
                 if (readCacheableSnapshot(routed_model,cache->candidate_snapshot_)) {
                     const bool hit=cache->session_ && sameModel(cache->model_,routed_model) &&
                                    cache->snapshot_==cache->candidate_snapshot_;
                     if (!hit) {
+                        SHORTHAND_PHASE_SCOPE(session_prepare);
                         InferenceConfiguration configuration;
                         configuration.model_bytes.swap(cache->candidate_snapshot_);
                         cache->clear();
@@ -156,7 +163,9 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
                         }
                     }
                     if (cache->session_) {
+                        SHORTHAND_PHASE_NEXT(backend_other);
                         auto result=cache->session_->run(input); // Public finite/shape checks remain mandatory.
+                        SHORTHAND_PHASE_NEXT(runtime_telemetry);
                         result.evidence_json_fragment=std::string("{\"schema\":\"shorthand.prepared_cache.v1\",\"hit\":")+
                             (hit?"true":"false")+",\"preparations\":"+std::to_string(cache->preparations_)+"}";
                         if (result.status!=InferenceStatus::Success) cache->clear();
@@ -167,6 +176,7 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
                     // never hidden behind a stale prepared session.
                 } else cache->clear();
             } else if (cache) cache->clear();
+            SHORTHAND_PHASE_NEXT(backend_other);
             auto result = backend->infer(routed_model, input);
             return attachHardwareEvidence(std::move(result), route);
         }
