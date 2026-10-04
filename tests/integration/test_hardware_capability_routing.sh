@@ -56,6 +56,19 @@ ModelSpec model(ModelFormat format) {
 bool contains(const std::string &value, const std::string &needle) {
     return value.find(needle) != std::string::npos;
 }
+
+class CountingProbe final : public HardwareProbe {
+public:
+    explicit CountingProbe(std::vector<HardwareDeviceCapability> devices) : devices_(std::move(devices)) {}
+    std::vector<HardwareDeviceCapability> probe() const override { ++probes_; return devices_; }
+    std::string generationToken() const override { return generation_; }
+    void generation(std::string value) { generation_=std::move(value); }
+    unsigned probes() const { return probes_; }
+private:
+    std::vector<HardwareDeviceCapability> devices_;
+    std::string generation_="generation-a";
+    mutable unsigned probes_=0;
+};
 }
 
 int main() {
@@ -127,6 +140,18 @@ int main() {
     if (!contains(result.telemetry_json_fragment, "shorthand.hardware.selection.v1")) return 21;
     if (result.selected_device_class != "none") return 22;
 
+    // AIRuntime must reuse a stable inventory/route, but invalidate it as soon
+    // as the probe's cheap generation key changes.
+    auto counting_probe=std::make_shared<CountingProbe>(all_devices);
+    AIRuntime cached_runtime(counting_probe,policy);
+    const auto first_cached=cached_runtime.infer(unavailable_model,input);
+    const auto second_cached=cached_runtime.infer(unavailable_model,input);
+    if (first_cached.status!=InferenceStatus::NotExecuted || second_cached.status!=InferenceStatus::NotExecuted ||
+        counting_probe->probes()!=1) return 23;
+    counting_probe->generation("generation-b");
+    const auto invalidated=cached_runtime.infer(unavailable_model,input);
+    if (invalidated.status!=InferenceStatus::NotExecuted || counting_probe->probes()!=2) return 24;
+
     SystemHardwareProbe system_probe;
     const auto system_devices = system_probe.probe();
     bool cpu_found = false;
@@ -139,11 +164,12 @@ int main() {
         tpu_found = tpu_found || entry.device_class == DeviceClass::TPU;
         npu_found = npu_found || entry.device_class == DeviceClass::NPU;
     }
-    if (!cpu_found || !gpu_found || !tpu_found || !npu_found) return 23;
+    if (!cpu_found || !gpu_found || !tpu_found || !npu_found) return 25;
 
     std::cout << "HARDWARE_ROUTE selected=gpu backend=onnxruntime_cuda status=execution_ready\n";
     std::cout << "HARDWARE_ROUTE deny_gpu_selected=cpu cpu_fallback=true\n";
     std::cout << "HARDWARE_ROUTE npu_override=openvino tpu_without_backend=not_selected\n";
+    std::cout << "HARDWARE_ROUTE cache_probe_count=1 invalidated_probe_count=2\n";
     std::cout << "PASS hardware capability discovery and routing gate\n";
     return 0;
 }
@@ -179,4 +205,5 @@ grep -q 'PASS hardware capability discovery and routing gate' /tmp/shorthand_har
 grep -q 'selected=gpu backend=onnxruntime_cuda status=execution_ready' /tmp/shorthand_hardware_capability_routing.out
 grep -q 'deny_gpu_selected=cpu cpu_fallback=true' /tmp/shorthand_hardware_capability_routing.out
 grep -q 'npu_override=openvino tpu_without_backend=not_selected' /tmp/shorthand_hardware_capability_routing.out
+grep -q 'cache_probe_count=1 invalidated_probe_count=2' /tmp/shorthand_hardware_capability_routing.out
 cat /tmp/shorthand_hardware_capability_routing.out
