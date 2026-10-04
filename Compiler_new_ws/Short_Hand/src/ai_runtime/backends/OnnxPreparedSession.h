@@ -41,6 +41,14 @@ public:
         profile={};
         return runImpl<true,false>(input,&profile);
     }
+    InferenceResult runInto(const TensorBuffer &input,float *output,std::size_t output_elements) override {
+        return runIntoImpl<false,false>(input,output,output_elements,nullptr);
+    }
+    InferenceResult runIntoProfiled(const TensorBuffer &input,float *output,std::size_t output_elements,
+                                    PreparedInferenceProfile &profile) override {
+        profile={};
+        return runIntoImpl<true,false>(input,output,output_elements,&profile);
+    }
     InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) override {
         return runImpl<false,true>(input,nullptr);
     }
@@ -51,16 +59,16 @@ public:
     }
     InferenceResult runApplicationValidatedInto(const TensorBuffer &input,const ApplicationValidatedInput &,
                                                 float *output,std::size_t output_elements) override {
-        return runIntoImpl<false>(input,output,output_elements,nullptr);
+        return runIntoImpl<false,true>(input,output,output_elements,nullptr);
     }
     InferenceResult runApplicationValidatedIntoProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
                                                          float *output,std::size_t output_elements,
                                                          PreparedInferenceProfile &profile) override {
         profile={};
-        return runIntoImpl<true>(input,output,output_elements,&profile);
+        return runIntoImpl<true,true>(input,output,output_elements,&profile);
     }
 private:
-    template<bool Profiled>
+    template<bool Profiled,bool ApplicationValidated>
     InferenceResult runIntoImpl(const TensorBuffer &input,float *output,std::size_t output_elements,
                                 PreparedInferenceProfile *profile) {
         using Clock=std::chrono::steady_clock;
@@ -75,6 +83,8 @@ private:
             if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape ||
                 input.f32_data.size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
+            if constexpr (!ApplicationValidated)
+                for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
             auto input_tensor=Ort::Value::CreateTensor<float>(
                 memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),
