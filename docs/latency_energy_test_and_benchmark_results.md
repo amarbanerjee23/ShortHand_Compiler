@@ -1,8 +1,33 @@
 # ShortHand testing, experimentation and benchmark results
 
-This report records the testing expansion and retained benchmark evidence for the prepared-runtime work. The historical PR115 and PR116 measurements use different comparison baselines. Their ratios must not be treated as repeats of the same experiment. The initial implementation is from [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115), with the testing/reporting expansion in [PR116](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/116).
+Comparison base: `9ef794f172423cebb6a83bfa75c06368da04ec72`
 
 ## Current PR evidence
+
+GitHub PR119 implements the first optimization selected from PR118's measured phase attribution. The production runtime now caches the expensive hardware inventory and route behind a cheap hardware-generation token and a separate environment-policy signature. Repeated calls for the same model therefore reuse the qualified route; a changed policy invalidates routing immediately, and a changed hardware-generation token forces a fresh full probe. The model-content safety boundary is intentionally unchanged: self-contained cached ONNX models are still reread and byte-compared on every request, including replacements with preserved timestamps.
+
+The compiled C bridge now calls `AIRuntime::inferCachedInto` with runtime-owned transactional output scratch. The ONNX prepared session binds that destination directly while retaining public finite/shape/dtype checks. Caller output is copied only after successful backend and output validation. Generic/oversized/external-data fallback paths preserve their prior semantics. Routine per-inference `stderr` formatting is disabled by default and can be restored with `SHORTHAND_RUNTIME_INFER_LOG=1`; structured runtime telemetry and counters remain available.
+
+New/expanded regression coverage requires:
+- one full hardware probe across repeated stable-route calls and a second probe after an injected generation change;
+- a warm prepared call reporting `route_cache_hit=true`, `hardware_probes=1`, and `preallocated_output=true`;
+- unchanged exact-content replacement detection, policy deny/recover, reset, external-weight, finite/capacity, lifecycle/concurrency and rollback tests;
+- phase instrumentation on the new preallocated ORT path so optimized execution cannot disappear from diagnostic evidence;
+- source guards requiring the preallocated compiled bridge path.
+
+Hosted CI and same-run head/base measurements are pending for the final PR revision. No latency, power or energy reduction is claimed before those retained results exist.
+
+## Energy and power result
+
+No physical energy result is asserted by this source change. CI must continue to report the highest valid E1/E2/E3 class or explicit unavailability. A routing-cache or latency improvement is not converted into joules. Lower-energy or lower-power language remains blocked unless the existing comparison policy produces a supported result at equal quality and boundary.
+
+## Reproduction
+
+The required runtime-profile workflow builds the ordinary and diagnostic runtime archives with the pinned ONNX Runtime SDK, runs the extended compiled cache and hardware-routing tests, executes the generated three-cell comparison, replays phase/evidence bundles, and retains the generated Markdown/raw artifacts. The comparison base for this PR is the merged PR118 commit above. The final tested head SHA and hosted artifact links will be appended after required CI executes.
+
+This report records the testing expansion and retained benchmark evidence for the prepared-runtime work. The historical PR115 and PR116 measurements use different comparison baselines. Their ratios must not be treated as repeats of the same experiment. The initial implementation is from [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115), with the testing/reporting expansion in [PR116](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/116).
+
+## Historical PR118 phase-attribution evidence
 
 Comparison base: `6d12270c11bec28159fb38dca4e825c7dd7e2f8a`
 
