@@ -14,9 +14,15 @@ cat > "${WORK_DIR}/hardware_capability_routing_test.cpp" <<'CPP'
 #include <iostream>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 using namespace shorthand::ai;
+
+static_assert(std::is_copy_constructible<SystemHardwareProbe>::value,
+              "SystemHardwareProbe public copyability must remain source-compatible");
+static_assert(std::is_copy_assignable<SystemHardwareProbe>::value,
+              "SystemHardwareProbe public copy assignment must remain source-compatible");
 
 namespace {
 BackendCapabilities backend(BackendKind kind, const std::string &name, bool available, ModelFormat format) {
