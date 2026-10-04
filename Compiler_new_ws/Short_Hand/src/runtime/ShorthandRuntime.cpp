@@ -84,6 +84,9 @@ RuntimeStats stats;
 // buffer bound growth across model/shape churn without shared worker scratch.
 shorthand::ai::PreparedInferenceCache prepared_cache;
 shorthand::ai::TensorBuffer bridge_buffer;
+// Transactional destination for prepared inference. Backend execution writes
+// here first; caller memory is committed only after successful validation.
+std::vector<float> bridge_output_buffer;
 std::unique_ptr<shorthand::ai::AIRuntime> bridge_runtime;
 struct BridgeDescriptor {
     std::string model_name, input_name, output_name;
@@ -109,6 +112,13 @@ std::string otlp_spans_json_cache = "{}";
 const char *safe(const char *value) { return value ? value : ""; }
 std::string s(const char *value) { return std::string(safe(value)); }
 bool blank(const char *value) { return s(value).empty(); }
+
+bool infer_logging_enabled() {
+    const char *value=std::getenv("SHORTHAND_RUNTIME_INFER_LOG");
+    if (!value || !*value) return false;
+    const std::string enabled(value);
+    return enabled!="0" && enabled!="false" && enabled!="no" && enabled!="off";
+}
 
 std::string json_escape(const std::string &value) {
     std::string out;
@@ -335,16 +345,20 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
         set_last_infer(status, requested_backend, reason);
         *output_count = 0;
         infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, requested_backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
-        std::fprintf(stderr,
-                     "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=invalid_input backend_preference=%s reason=%s ai_runtime_bridge=rejected\n",
-                     model.name.c_str(), input.name.c_str(), output.name.c_str(), requested_backend.c_str(), reason.c_str());
+        if (infer_logging_enabled())
+            std::fprintf(stderr,
+                         "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=invalid_input backend_preference=%s reason=%s ai_runtime_bridge=rejected\n",
+                         model.name.c_str(), input.name.c_str(), output.name.c_str(), requested_backend.c_str(), reason.c_str());
         return status;
     }
 
     SHORTHAND_PHASE_NEXT(policy_refresh);
     if (!bridge_runtime) bridge_runtime=std::make_unique<shorthand::ai::AIRuntime>();
     bridge_runtime->refreshPolicyFromEnvironment();
-    auto result = bridge_runtime->inferCached(model_spec, input_buffer, prepared_cache);
+    const auto scratch_count=static_cast<std::size_t>(expected_output);
+    if (bridge_output_buffer.size()<scratch_count) bridge_output_buffer.resize(scratch_count);
+    auto result = bridge_runtime->inferCachedInto(
+        model_spec,input_buffer,prepared_cache,bridge_output_buffer.data(),scratch_count);
     SHORTHAND_PHASE_NEXT(bridge_output);
     int status = shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status);
     std::string backend = result.backend_name.empty() ? shorthand::ai::backendKindToString(result.backend) : result.backend_name;
@@ -352,14 +366,12 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
 
     *output_count = 0;
     if (status == SHORTHAND_RUNTIME_OK) {
-        if (result.output_f32.size() > static_cast<std::size_t>(output_capacity)) {
+        if (result.output_elements!=scratch_count || result.output_elements>static_cast<std::size_t>(output_capacity)) {
             status = SHORTHAND_RUNTIME_RUNTIME_ERROR;
             reason = "ai_runtime_output_exceeds_registered_capacity";
         } else {
-            for (std::size_t i = 0; i < result.output_f32.size(); ++i) {
-                output_values[i] = result.output_f32[i];
-            }
-            *output_count = static_cast<int>(result.output_f32.size());
+            for (std::size_t i=0;i<result.output_elements;++i) output_values[i]=bridge_output_buffer[i];
+            *output_count=static_cast<int>(result.output_elements);
         }
     }
 
@@ -367,9 +379,10 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
     set_last_infer(status, backend, reason);
     attach_ai_runtime_telemetry_if_available(status, backend, reason, result);
     infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
-    std::fprintf(stderr,
-                 "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=%s backend=%s reason=%s ai_runtime_bridge=attempted output_count=%d\n",
-                 model.name.c_str(), input.name.c_str(), output.name.c_str(), status_name(status).c_str(), backend.c_str(), reason.c_str(), *output_count);
+    if (infer_logging_enabled())
+        std::fprintf(stderr,
+                     "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=%s backend=%s reason=%s ai_runtime_bridge=attempted output_count=%d\n",
+                     model.name.c_str(), input.name.c_str(), output.name.c_str(), status_name(status).c_str(), backend.c_str(), reason.c_str(), *output_count);
     return status;
 }
 #endif
@@ -383,6 +396,7 @@ extern "C" int short_runtime_reset(void) {
 #if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
     prepared_cache=shorthand::ai::PreparedInferenceCache{};
     bridge_buffer=shorthand::ai::TensorBuffer{};
+    std::vector<float>().swap(bridge_output_buffer);
     bridge_descriptor.reset();
     bridge_runtime.reset();
 #endif
