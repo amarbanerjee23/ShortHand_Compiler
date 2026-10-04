@@ -69,6 +69,16 @@ private:
     std::uint64_t generation_=1;
     mutable unsigned probes_=0;
 };
+
+class UnversionedCountingProbe final : public HardwareProbe {
+public:
+    explicit UnversionedCountingProbe(std::vector<HardwareDeviceCapability> devices) : devices_(std::move(devices)) {}
+    std::vector<HardwareDeviceCapability> probe() const override { ++probes_; return devices_; }
+    unsigned probes() const { return probes_; }
+private:
+    std::vector<HardwareDeviceCapability> devices_;
+    mutable unsigned probes_=0;
+};
 }
 
 int main() {
@@ -152,6 +162,14 @@ int main() {
     const auto invalidated=cached_runtime.infer(unavailable_model,input);
     if (invalidated.status!=InferenceStatus::NotExecuted || counting_probe->probes()!=2) return 24;
 
+    // A custom probe that does not publish a nonzero generation must retain the
+    // historical conservative behavior: every request performs a fresh probe.
+    auto unversioned_probe=std::make_shared<UnversionedCountingProbe>(all_devices);
+    AIRuntime unversioned_runtime(unversioned_probe,policy);
+    unversioned_runtime.infer(unavailable_model,input);
+    unversioned_runtime.infer(unavailable_model,input);
+    if (unversioned_probe->probes()!=2) return 25;
+
     SystemHardwareProbe system_probe;
     const auto system_devices = system_probe.probe();
     bool cpu_found = false;
@@ -164,12 +182,12 @@ int main() {
         tpu_found = tpu_found || entry.device_class == DeviceClass::TPU;
         npu_found = npu_found || entry.device_class == DeviceClass::NPU;
     }
-    if (!cpu_found || !gpu_found || !tpu_found || !npu_found) return 25;
+    if (!cpu_found || !gpu_found || !tpu_found || !npu_found) return 26;
 
     std::cout << "HARDWARE_ROUTE selected=gpu backend=onnxruntime_cuda status=execution_ready\n";
     std::cout << "HARDWARE_ROUTE deny_gpu_selected=cpu cpu_fallback=true\n";
     std::cout << "HARDWARE_ROUTE npu_override=openvino tpu_without_backend=not_selected\n";
-    std::cout << "HARDWARE_ROUTE cache_probe_count=1 invalidated_probe_count=2\n";
+    std::cout << "HARDWARE_ROUTE cache_probe_count=1 invalidated_probe_count=2 unversioned_probe_count=2\n";
     std::cout << "PASS hardware capability discovery and routing gate\n";
     return 0;
 }
@@ -205,5 +223,5 @@ grep -q 'PASS hardware capability discovery and routing gate' /tmp/shorthand_har
 grep -q 'selected=gpu backend=onnxruntime_cuda status=execution_ready' /tmp/shorthand_hardware_capability_routing.out
 grep -q 'deny_gpu_selected=cpu cpu_fallback=true' /tmp/shorthand_hardware_capability_routing.out
 grep -q 'npu_override=openvino tpu_without_backend=not_selected' /tmp/shorthand_hardware_capability_routing.out
-grep -q 'cache_probe_count=1 invalidated_probe_count=2' /tmp/shorthand_hardware_capability_routing.out
+grep -q 'cache_probe_count=1 invalidated_probe_count=2 unversioned_probe_count=2' /tmp/shorthand_hardware_capability_routing.out
 cat /tmp/shorthand_hardware_capability_routing.out
