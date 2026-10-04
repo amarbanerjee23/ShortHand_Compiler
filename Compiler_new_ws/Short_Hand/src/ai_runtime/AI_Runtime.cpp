@@ -102,7 +102,8 @@ InferenceResult unavailableResult(const std::string &reason) {
 
 AIRuntime::AIRuntime()
     : AIRuntime(std::make_shared<SystemHardwareProbe>(), hardwareRoutingPolicyFromEnvironment()) {
-    policy_environment_signature_=hardwareRoutingPolicyEnvironmentSignature();
+    captureHardwareRoutingPolicyEnvironment(policy_environment_state_);
+    policy_environment_state_valid_=true;
 }
 
 AIRuntime::AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy)
@@ -146,10 +147,11 @@ InferenceResult AIRuntime::inferCachedInto(const ModelSpec &model,const TensorBu
 }
 
 void AIRuntime::refreshPolicyFromEnvironment() {
-    const auto signature=hardwareRoutingPolicyEnvironmentSignature();
-    if (signature==policy_environment_signature_) return;
+    if (policy_environment_state_valid_ &&
+        hardwareRoutingPolicyEnvironmentMatches(policy_environment_state_)) return;
     hardware_policy_=hardwareRoutingPolicyFromEnvironment();
-    policy_environment_signature_=signature;
+    captureHardwareRoutingPolicyEnvironment(policy_environment_state_);
+    policy_environment_state_valid_=true;
     route_cache_valid_=false;
 }
 
