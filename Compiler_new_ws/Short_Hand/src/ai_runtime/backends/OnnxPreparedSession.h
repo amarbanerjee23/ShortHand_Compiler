@@ -103,7 +103,7 @@ private:
             if (info.GetElementType()!=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT ||
                 info.GetShape()!=out_.shape || info.GetElementCount()!=out_.element_count)
                 throw std::runtime_error("prepared_output_shape_or_dtype_mismatch");
-            r.status=InferenceStatus::Success; r.reason="executed";
+            r.status=InferenceStatus::Success; r.reason="executed"; r.output_elements=output_elements;
             if constexpr (Profiled) telemetry=Clock::now();
             const auto record=timer.finish("success",r.reason,input.f32_data.size(),output_elements);
             attachTelemetryScalars(r,record);
