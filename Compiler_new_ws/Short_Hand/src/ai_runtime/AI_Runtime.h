@@ -33,12 +33,13 @@ public:
     AIRuntime();
     AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy);
     InferenceResult infer(const ModelSpec &model, const TensorBuffer &input);
-    // Preserves per-call hardware routing and qualification. Unsupported models
-    // use the existing uncached backend, with its original failure semantics.
+    // Preserves request-time routing qualification while reusing an unchanged
+    // inventory/route generation. Unsupported models use the existing uncached
+    // backend, with its original failure semantics.
     InferenceResult inferCached(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &);
-    // Same public validation and model-content checks as inferCached, but writes
-    // successful prepared output into caller-owned scratch. The destination is
-    // never modified on validation/backend failure.
+    // Same public validation and model-content checks as inferCached, but can
+    // bind backend output into caller-supplied scratch. Transactional callers
+    // must use private/runtime-owned scratch and commit only after success.
     InferenceResult inferCachedInto(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &,
                                     float *output,std::size_t output_elements);
     // The serialized C bridge retains this runtime, while environment policy
