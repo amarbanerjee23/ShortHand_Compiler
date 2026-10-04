@@ -56,7 +56,8 @@ private:
     BackendRegistry registry;
     std::shared_ptr<HardwareProbe> hardware_probe_;
     HardwareRoutingPolicy hardware_policy_;
-    std::uint64_t policy_environment_signature_=0;
+    HardwareRoutingPolicyEnvironmentState policy_environment_state_{};
+    bool policy_environment_state_valid_=false;
     std::uint64_t hardware_generation_token_=0;
     std::vector<HardwareDeviceCapability> hardware_devices_;
     bool hardware_inventory_valid_=false;
