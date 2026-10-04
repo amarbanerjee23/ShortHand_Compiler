@@ -118,8 +118,8 @@ std::vector<BackendCapabilities> AIRuntime::capabilities() const {
 
 std::unique_ptr<PreparedInference> AIRuntime::prepare(const ModelSpec &model,
     const InferenceConfiguration &configuration,std::string &error) {
-    refreshHardwareInventoryIfNeeded();
-    const auto &route=routeForModel(model);
+    const auto resolved=routeForModel(model);
+    const auto &route=*resolved.route;
     if (!route.selected) { error=route.reason; return nullptr; }
     auto routed=model; routed.backend_preference={route.backend}; routed.allow_fallback=false;
     auto *backend=registry.select(routed);
@@ -147,43 +147,41 @@ InferenceResult AIRuntime::inferCachedInto(const ModelSpec &model,const TensorBu
 }
 
 void AIRuntime::refreshPolicyFromEnvironment() {
+    std::lock_guard<std::mutex> guard(state_mutex_);
     if (policy_environment_state_valid_ &&
         hardwareRoutingPolicyEnvironmentMatches(policy_environment_state_)) return;
     hardware_policy_=hardwareRoutingPolicyFromEnvironment();
     captureHardwareRoutingPolicyEnvironment(policy_environment_state_);
     policy_environment_state_valid_=true;
-    route_cache_valid_=false;
+    route_cache_.reset();
 }
 
-void AIRuntime::refreshHardwareInventoryIfNeeded() {
+AIRuntime::ResolvedRoute AIRuntime::routeForModel(const ModelSpec &model) {
+    std::lock_guard<std::mutex> guard(state_mutex_);
     const auto generation=hardware_probe_->generationToken();
-    if (generation!=0 && hardware_inventory_valid_ && generation==hardware_generation_token_) return;
-    hardware_devices_=hardware_probe_->probe();
-    hardware_generation_token_=generation;
-    hardware_inventory_valid_=true;
-    route_cache_valid_=false;
-    ++hardware_probe_count_;
-}
-
-const HardwareRoute &AIRuntime::routeForModel(const ModelSpec &model) {
-    if (route_cache_valid_ && sameModel(route_model_,model)) {
-        last_route_cache_hit_=true;
-        return route_cache_;
+    if (generation==0 || !hardware_inventory_valid_ || generation!=hardware_generation_token_) {
+        hardware_devices_=hardware_probe_->probe();
+        hardware_generation_token_=generation;
+        hardware_inventory_valid_=true;
+        route_cache_.reset();
+        ++hardware_probe_count_;
     }
-    last_route_cache_hit_=false;
-    route_cache_=enforceProductionBackendQualification(
-        selectHardwareRoute(hardware_devices_,registry.capabilities(),model,hardware_policy_));
-    route_model_=model;
-    route_cache_valid_=true;
-    return route_cache_;
+
+    const bool hit=route_cache_ && sameModel(route_model_,model);
+    if (!hit) {
+        route_cache_=std::make_shared<HardwareRoute>(enforceProductionBackendQualification(
+            selectHardwareRoute(hardware_devices_,registry.capabilities(),model,hardware_policy_)));
+        route_model_=model;
+    }
+    return {route_cache_,hit,hardware_probe_count_};
 }
 
 InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache *cache,
                                      float *output,std::size_t output_elements) {
     SHORTHAND_PHASE_SCOPE(hardware_probe);
-    refreshHardwareInventoryIfNeeded();
+    const auto resolved=routeForModel(model);
     SHORTHAND_PHASE_NEXT(routing);
-    const auto &route=routeForModel(model);
+    const auto &route=*resolved.route;
 
     SHORTHAND_PHASE_NEXT(runtime_validation);
     if (!validateInputMatchesShape(input)) {
@@ -228,8 +226,8 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
                         SHORTHAND_PHASE_NEXT(runtime_telemetry);
                         result.evidence_json_fragment=std::string("{\"schema\":\"shorthand.prepared_cache.v1\",\"hit\":")+
                             (hit?"true":"false")+",\"preparations\":"+std::to_string(cache->preparations_)+
-                            ",\"route_cache_hit\":"+(last_route_cache_hit_?"true":"false")+
-                            ",\"hardware_probes\":"+std::to_string(hardware_probe_count_)+
+                            ",\"route_cache_hit\":"+(resolved.cache_hit?"true":"false")+
+                            ",\"hardware_probes\":"+std::to_string(resolved.hardware_probes)+
                             ",\"preallocated_output\":"+(output?"true":"false")+"}";
                         if (result.status!=InferenceStatus::Success) cache->clear();
                         return attachHardwareEvidence(std::move(result),route);
