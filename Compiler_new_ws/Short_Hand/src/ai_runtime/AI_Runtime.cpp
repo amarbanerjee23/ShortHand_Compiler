@@ -155,7 +155,7 @@ void AIRuntime::refreshPolicyFromEnvironment() {
 
 void AIRuntime::refreshHardwareInventoryIfNeeded() {
     const auto generation=hardware_probe_->generationToken();
-    if (hardware_inventory_valid_ && generation==hardware_generation_token_) return;
+    if (generation!=0 && hardware_inventory_valid_ && generation==hardware_generation_token_) return;
     hardware_devices_=hardware_probe_->probe();
     hardware_generation_token_=generation;
     hardware_inventory_valid_=true;
