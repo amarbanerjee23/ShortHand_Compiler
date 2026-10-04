@@ -1,4 +1,5 @@
 #pragma once
+#include "../../runtime/RuntimePhaseProfile.h"
 // Private implementation, included only by OnnxRuntimeBackend.cpp.
 #include <algorithm>
 #include <cmath>
@@ -135,7 +136,10 @@ private:
             auto tensor=Ort::Value::CreateTensor<float>(memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
             if constexpr (Profiled) invoke=Clock::now();
-            auto values=session_->Run(Ort::RunOptions{nullptr},inputs,&tensor,1,outputs,1);
+            std::vector<Ort::Value> values=[&]() -> std::vector<Ort::Value> {
+                SHORTHAND_PHASE_SCOPE(ort_run);
+                return session_->Run(Ort::RunOptions{nullptr},inputs,&tensor,1,outputs,1);
+            }();
             if constexpr (Profiled) copy=Clock::now();
             if (values.size()!=1 || !values.front().IsTensor()) throw std::runtime_error("prepared_output_not_tensor");
             auto info=values.front().GetTensorTypeAndShapeInfo();

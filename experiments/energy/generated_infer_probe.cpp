@@ -10,6 +10,10 @@
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include "runtime/RuntimePhaseProfile.h"
+#ifndef SHORTHAND_ORT_ALL
+#define SHORTHAND_ORT_ALL 0
+#endif
 #if SHORTHAND_GENERATED
 #include "runtime/ShorthandRuntime.h"
 extern "C" int shorthand_entry();
@@ -22,6 +26,7 @@ std::vector<float> expected;
 std::uint64_t calls=0;
 void check(bool ok,const char *reason) { if (!ok) throw std::runtime_error(reason); }
 bool valid(const float *input,std::size_t inputs,const float *output,std::size_t count) {
+    SHORTHAND_PHASE_SCOPE(oracle);
     if (inputs!=expected.size()/10*64 || count!=expected.size()) return false;
     for(std::size_t i=0;i<inputs;++i) if(input[i]!=0) return false;
     for(std::size_t i=0;i<count;++i)
@@ -41,7 +46,8 @@ class Direct {
 public:
     Direct(const char *model,int batch):input_(batch*64,0),output_(batch*10,0),in_shape_{batch,64},out_shape_{batch,10} {
         Ort::SessionOptions options; options.SetIntraOpNumThreads(1); options.SetInterOpNumThreads(1);
-        options.SetExecutionMode(ORT_SEQUENTIAL); options.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);
+        options.SetExecutionMode(ORT_SEQUENTIAL);
+        options.SetGraphOptimizationLevel(SHORTHAND_ORT_ALL ? ORT_ENABLE_ALL : ORT_ENABLE_BASIC);
         options.AddConfigEntry("session.intra_op.allow_spinning","0"); options.AddConfigEntry("session.inter_op.allow_spinning","0");
         session_=std::make_unique<Ort::Session>(env_,model,options);
         Ort::AllocatorWithDefaultOptions allocator;
@@ -85,13 +91,31 @@ int main(int argc,char **argv) {
         once(); const double cold=ms(cold_start);
         for(int i=0;i<8;++i) once();
         calls=0; std::vector<double> elapsed;
+#if SHORTHAND_RUNTIME_PHASE_PROFILE
+        std::vector<shorthand::runtime_profile::Sample> profiles;
+        profiles.reserve(iterations*blocks);
+        std::vector<double> clock_pairs;
+        for(int i=0;i<1000;++i) {
+            const auto begin=Clock::now(),end=Clock::now();
+            clock_pairs.push_back(std::chrono::duration<double,std::nano>(end-begin).count());
+        }
+        std::sort(clock_pairs.begin(),clock_pairs.end());
+#endif
         for(int block=0;block<blocks;++block) {
             const auto begin=Clock::now();
-            for(int i=0;i<iterations;++i) once();
+            for(int i=0;i<iterations;++i) {
+#if SHORTHAND_RUNTIME_PHASE_PROFILE
+                shorthand::runtime_profile::Recorder recorder;
+                once();
+                profiles.push_back(recorder.finish());
+#else
+                once();
+#endif
+            }
             elapsed.push_back(ms(begin));
         }
         check(calls==std::uint64_t(iterations)*blocks,"incomplete_execution");
-        std::cout<<std::setprecision(17)<<"{\"schema\":\"shorthand.generated_infer.sample.v1\",\"success\":true,\"cold_session_ms\":"<<cold
+        std::cout<<std::setprecision(17)<<"{\"schema\":\"shorthand.generated_infer.sample.v2\",\"success\":true,\"cold_session_ms\":"<<cold
                  <<",\"completed_calls\":"<<calls<<",\"completed_vectors\":"<<calls*batch
                  <<",\"iterations\":"<<iterations<<",\"batch\":"<<batch<<",\"threads\":1,\"warmups\":8,\"block_elapsed_ms\":[";
         for(std::size_t i=0;i<elapsed.size();++i) std::cout<<(i?",":"")<<elapsed[i];
@@ -100,6 +124,25 @@ int main(int argc,char **argv) {
         std::cout<<short_runtime_last_infer_telemetry_json();
 #else
         std::cout<<"null";
+#endif
+        std::cout<<",\"configuration\":{\"graph_optimization\":\""<<(SHORTHAND_ORT_ALL?"all":"basic")
+                 <<"\",\"execution_mode\":\"sequential\",\"spinning\":false,\"intra_threads\":1,\"inter_threads\":1}"
+                 <<",\"instrumented\":";
+#if SHORTHAND_RUNTIME_PHASE_PROFILE
+        std::cout<<"true,\"clock_pair_median_ns\":"<<clock_pairs[clock_pairs.size()/2]<<",\"phase_samples\":[";
+        for(std::size_t i=0;i<profiles.size();++i) {
+            const auto &p=profiles[i];
+            std::cout<<(i?",":"")<<"{\"total_ns\":"<<p.total_ns<<",\"clock_reads\":"<<p.clock_reads<<",\"phases\":{";
+            for(std::size_t k=0;k<p.ns.size();++k)
+                std::cout<<(k?",":"")<<'"'<<shorthand::runtime_profile::names[k]<<"\":"<<p.ns[k];
+            std::cout<<"},\"visits\":{";
+            for(std::size_t k=0;k<p.visits.size();++k)
+                std::cout<<(k?",":"")<<'"'<<shorthand::runtime_profile::names[k]<<"\":"<<p.visits[k];
+            std::cout<<"}}";
+        }
+        std::cout<<"]";
+#else
+        std::cout<<"false";
 #endif
         std::cout<<"}\n";
     } catch(const std::exception &e) { std::cerr<<e.what()<<"\n"; return 1; }

@@ -4,6 +4,32 @@ This report records the testing expansion and retained benchmark evidence for th
 
 ## Current PR evidence
 
+Comparison base: `6d12270c11bec28159fb38dca4e825c7dd7e2f8a`
+
+This slice adds diagnostic attribution and a stronger explicit ORT control. It does not yet introduce a new performance optimization or establish an energy saving. The next optimization must follow the measured bottleneck.
+
+The optional `shorthand_runtime_profiled` static archive records exclusive phases of the actual compiled `.short` entry: registration, facade lock acquisition, bridge validation and input copying, policy refresh, hardware probing/routing, complete model reread/comparison, preparation, backend work/ORT execution, output copying, runtime telemetry, bridge telemetry/logging, independent output verification and entry residual. It is a separate, non-installed target enabled with `SHORTHAND_BUILD_RUNTIME_PHASE_PROFILE=ON`. Normal targets preprocess the hooks away; the native isolation test checks that the ordinary runtime archive contains no diagnostic symbols. The public 25-symbol C ABI is unchanged.
+
+CI captures 64 numerically verified warm calls per compiled cell (b1, b16, b32). Every raw phase partition must sum exactly to its instrumented total, contain the expected registration/inference/verification visits, and show no warm session preparation. Clock-pair calibration and clock-read counts are retained. Clock overhead is included, never subtracted. Diagnostic timings are excluded from latency ratios and metering runs.
+
+The uninstrumented comparison retains ORT BASIC and adds separately named `direct_all` with `ORT_ENABLE_ALL`. Both use the same FP32 model and pinned SDK, one intra/inter thread, sequential execution, spinning disabled, prepared sessions and preallocated buffers, with identical independent output verification. ALL is one tuning candidate, not proof of globally optimal ORT tuning. Head/base still compare the same generated object linked to the exact two runtime revisions. The direct boundary omits ShortHand registration, routing, model rereads and telemetry; the report labels that difference. ORT documents these optimization levels and threading controls in its [graph optimization](https://onnxruntime.ai/docs/performance/model-optimizations/graph-optimizations.html) and [thread management](https://onnxruntime.ai/docs/performance/tune-performance/threading.html) documentation; their effects on this workload are measured, not assumed.
+
+| Validation | Result before hosted CI |
+|---|---|
+| Real SDK native runtime and diagnostic archive | Built locally with Clang 18 / ORT 1.30.0 |
+| Diagnostic execution | Passed cold/warm/reset, NaN rollback, deny/recover policy, 64 calls across two threads, nested-capture rejection and exception unwinding |
+| Production isolation | Passed: no `runtime_profile` symbols in the ordinary static archive |
+| Python evidence regression discovery | 57 tests passed locally, including mislabeled tuning, profile contamination, incomplete phases, incorrect partitions and tampered bundles |
+| Compiled capture and replay | Passed three cells, 16 uninstrumented blocks per runner/cell plus 64 separate diagnostic calls/cell; local head/base comparison not run |
+| Frozen ABI and thread-safety gate | Passed: 25 public symbols, consumer execution and serialized-state test |
+| Hosted latency/energy comparison | Pending first run for this source revision; no new reduction claim |
+
+All previous cache, sanitizer, application correctness and required CI gates remain. The evidence index now also requires the diagnostic execution/isolation log and replayed phase report. Every PR continues to include this committed document; each CI run additionally retains generated `BENCHMARKS.md`, `GENERATED.md`, raw profiles, settings, commands, sources, executable hashes and output-verification results.
+
+Local diagnostic smoke capture (uncommitted development build, not a head/base claim) found hardware probing plus routing accounted for 47.3–60.0% of instrumented time; ORT execution accounted for 5.9–9.2%. This suggests investigating redundant discovery and route/telemetry construction while preserving request-time policy and device qualification. It does not justify skipping those checks. Local ALL/BASIC latency ratios were 1.1777, 0.9907 and 1.0405 for batches 1, 16 and 32: no consistent benefit. All nine separate local energy runs reported `amd_hwmon_socket_energy_unavailable`, with joules and watts `null`. Hosted observations below will be the citable result for a committed source revision.
+
+## Historical PR117 implementation and evidence
+
 Comparison base: `a5a3e020943ef2f9005b6a44f4c8024a8b58ef25`
 
 This follow-up reuses the C bridge's runtime/backend registry and a single parsed declaration descriptor. The descriptor key includes model, input and output names; changed registrations and reset invalidate it. Environment policy is refreshed and hardware routing is still evaluated on every call. The prepared cache reuses its model-comparison storage but still reads and compares every model byte, including replacements with unchanged timestamps. Two bounded model buffers retain up to 32 MiB; reset releases them. This trades retained scratch memory for avoiding repeated comparison-buffer allocation and initialization.

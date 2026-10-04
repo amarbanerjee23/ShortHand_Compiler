@@ -38,13 +38,17 @@ def fmt(value: Any, digits: int = 3) -> str:
 def render(profile: pathlib.Path, run_url: str = "") -> str:
     evidence = read_json(profile / "run-evidence.json")
     generated = read_json(profile / "generated-infer/report.json")
+    phases = read_json(profile / "generated-infer/phases.json")
     resident = read_json(profile / "pr-runtime-delta/summary.json")
     energy = read_json(profile / "ci-energy/summary.json")
     required = ("cache-tests.txt", "workspace-tests.txt", "application-tests.txt",
-                "prepared-sanitizers.txt", "evidence-tests.txt")
+                "prepared-sanitizers.txt", "evidence-tests.txt", "phase-tests.txt")
     logs = {name: read_text(profile / name) for name in required}
     if generated.get("success") is not True or resident.get("success") is not True:
         raise ValueError("successful benchmark reports are required")
+    if (phases.get("success") is not True or phases.get("instrumented") is not True
+            or any(phases.get(k) is not False for k in ('latency_claim_authorized', 'energy_claim_authorized'))):
+        raise ValueError("separate diagnostic profile with claims disabled is required")
     if any(generated.get(key) is not False for key in ("latency_claim_authorized", "energy_claim_authorized")):
         raise ValueError("generated report must keep reduction claims disabled")
     if any(resident.get(key) is not False for key in
@@ -80,6 +84,7 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
         "| Real-digit application | `application-tests.txt` | held-out application correctness and quality gate |",
         "| Sanitizers | `prepared-sanitizers.txt` | instrumented prepared cache/workspace ASan/LSan/UBSan pass |",
         "| Evidence integrity | `evidence-tests.txt` | malformed samples, tampering, unsafe paths, meter failures and claim gating |",
+        "| Compiled phase diagnostics | `phase-tests.txt` | cold/warm/reset, rejected calls, output rollback, policy, thread isolation, exception unwind; production archive has no profiling symbols |",
         "",
         "The cache test includes 2,000 sequential calls, 4,000 concurrent calls while 64 resets/re-registrations run, 65,536 and 65,537-float bridge requests, 16 MiB and 16 MiB+1 model snapshots, external-weight deletion/recovery, invalid argument matrices, output canaries and aliasing checks.",
         "",
@@ -87,15 +92,24 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
         "",
         "Synthetic zero-input FP32 MatMul+Add probe; one thread; 16 timed blocks per runner/cell after warmup. It verifies output numerically against the pinned ORT oracle and does not measure digit accuracy.",
         "",
-        "| Cell | Head mean ms/vector | Head/base | Head/direct prepared C++ ORT |",
-        "|---|---:|---:|---:|",
+        "| Cell | Head mean ms/vector | Head/base | Head/ORT BASIC | Head/ORT ALL | ORT ALL/BASIC |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for row in generated["rows"]:
         lines.append(f"| {row['cell']} | {fmt(row['observations']['head']['mean_ms_per_vector'], 6)} | "
-                     f"{fmt(row.get('head_base_ratio'), 4)} | {fmt(row.get('head_direct_ratio'), 3)} |")
+                     f"{fmt(row.get('head_base_ratio'), 4)} | {fmt(row['head_direct_ratio'], 3)} | "
+                     f"{fmt(row['head_direct_all_ratio'], 3)} | {fmt(row['direct_all_basic_ratio'], 4)} |")
+    lines += ["", "A head/base ratio below 1 means the head runtime was faster than the selected base revision for that probe. The base may already reuse sessions. A head/direct ratio above 1 means it remained slower than that direct prepared C++/ORT control.",
+              "", "BASIC and ALL controls use the same FP32 model, one intra/inter thread, sequential execution, spinning disabled, preallocated buffers and independent numerical verification. ALL is one tuning candidate; it is not an assertion of optimal tuning.",
+              "", "## Compiled phase diagnostics", "",
+              "A separate instrumented archive measures 64 warm calls per cell. Phases are exclusive, include clock overhead, and sum to the instrumented total. They are excluded from all latency ratios and energy runs.", "",
+              "| Cell | Instrumented mean ns/call | Clock-pair median ns | Largest exclusive phases |",
+              "|---|---:|---:|---|"]
+    for row in phases['rows']:
+        ranked = sorted(row['phases'].items(), key=lambda p: p[1]['mean_ns_per_call'], reverse=True)[:3]
+        top = '; '.join(f"{name}: {fmt(p['fraction_of_instrumented_total'] * 100, 1)}%" for name, p in ranked)
+        lines.append(f"| {row['cell']} | {fmt(row['mean_instrumented_ns_per_call'], 1)} | {fmt(row['clock_pair_median_ns'], 1)} | {top} |")
     lines += [
-        "",
-        "A head/base ratio below 1 means the head runtime was faster than the selected base revision for that probe. The base is not necessarily a repeated-session implementation. A head/direct ratio above 1 means it remained slower than the direct prepared C++/ORT control.",
         "",
         "## Resident real-digit workload",
         "",
