@@ -143,3 +143,11 @@ The next step is to expand runtime observability from JSON snapshots to a real O
 5. Pass the backend compatibility matrix gate before changing public execution claims.
 6. Preserve runtime-hook ABI ownership so the linked build has no duplicate C symbol.
 7. Keep adapter, link-build, execution-path, and optional ONNX Runtime success gates passing.
+
+## PR119 execution-capability hot path
+
+The bridge-enabled compiled path now retains the `AIRuntime` hardware inventory and route while the runtime's cheap hardware-generation token and environment-policy signature remain unchanged. A policy change invalidates route selection immediately; a hardware-generation change forces a full discovery pass. Model-content comparison remains per request, so this optimization does not weaken the existing in-place model replacement checks.
+
+For prepared ONNX execution, `short_ai_infer_f32` supplies runtime-owned transactional output scratch through `AIRuntime::inferCachedInto`. The backend binds that output directly, validates the result, and only then does the bridge copy successful values into caller-owned memory. This removes the prepared path's intermediate output vector without weakening caller rollback semantics.
+
+Routine inference `stderr` formatting is disabled unless `SHORTHAND_RUNTIME_INFER_LOG=1` is set. Structured last-inference telemetry, bridge-request JSON, counters and evidence remain available.
