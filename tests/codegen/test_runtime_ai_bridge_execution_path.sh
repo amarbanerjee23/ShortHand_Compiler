@@ -72,11 +72,12 @@ ${CXX:-g++} -std=c++17 -Wall -Wextra -Wpedantic \
   "${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp" \
   -o "${WORK_DIR}/runtime_ai_bridge_execution_probe"
 
-# Routine inference logging is deliberately silent by default. The execution
-# contract is validated by the probe's return code and structured runtime state.
+# Routine *inference* diagnostics are deliberately silent by default. Other
+# runtime diagnostics (for example registration) remain outside this opt-in, so
+# assert only that the inference-specific line is absent.
 "${WORK_DIR}/runtime_ai_bridge_execution_probe" >/tmp/shorthand_runtime_ai_bridge_execution.out 2>/tmp/shorthand_runtime_ai_bridge_execution.err
-if [[ -s /tmp/shorthand_runtime_ai_bridge_execution.err ]]; then
-  echo "error: runtime inference logging must be silent unless explicitly enabled" >&2
+if grep -q 'ai_runtime_bridge=attempted' /tmp/shorthand_runtime_ai_bridge_execution.err; then
+  echo "error: per-inference runtime logging must be silent unless explicitly enabled" >&2
   cat /tmp/shorthand_runtime_ai_bridge_execution.err >&2
   exit 1
 fi
