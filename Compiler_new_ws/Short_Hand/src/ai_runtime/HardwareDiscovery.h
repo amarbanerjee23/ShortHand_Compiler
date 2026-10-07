@@ -3,11 +3,13 @@
 #include "AI_Types.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -53,6 +55,11 @@ class HardwareProbe {
 public:
     virtual ~HardwareProbe() = default;
     virtual std::vector<HardwareDeviceCapability> probe() const = 0;
+    // A cheap token for signals that can change routing. AIRuntime probes the
+    // full inventory only while a nonzero token remains unchanged. Zero means
+    // "uncacheable" so custom probes that do not opt in preserve the historical
+    // per-request probing semantics.
+    virtual std::uint64_t generationToken() const { return 0; }
 };
 
 namespace hardware_detail {
@@ -225,6 +232,42 @@ inline DeviceClass parseDeviceClass(const std::string &value) {
 
 class SystemHardwareProbe final : public HardwareProbe {
 public:
+    std::uint64_t generationToken() const override {
+        auto &state=*generation_state_;
+        std::lock_guard<std::mutex> guard(state.mutex);
+        // Deliberately excludes /proc/meminfo: MemTotal is effectively stable
+        // for a process lifetime and is expensive to parse on every inference.
+        // Compare routing-relevant signals exactly; allocate only when a signal
+        // actually changes. Zero remains reserved for "uncacheable".
+        constexpr std::array<const char *,7> paths = {
+            "/dev/nvidia0","/dev/nvidiactl","/dev/kfd","/dev/dri/renderD128",
+            "/dev/accel0","/dev/accel/accel0","/dev/apex_0"
+        };
+        constexpr std::array<const char *,11> names = {
+            "NVIDIA_VISIBLE_DEVICES","CUDA_VISIBLE_DEVICES",
+            "SHORTHAND_GPU_DETECTED","SHORTHAND_GPU_ACCESSIBLE",
+            "TPU_NAME","COLAB_TPU_ADDR","XRT_TPU_CONFIG",
+            "SHORTHAND_TPU_DETECTED","SHORTHAND_TPU_ACCESSIBLE",
+            "SHORTHAND_NPU_DETECTED","SHORTHAND_NPU_ACCESSIBLE"
+        };
+        unsigned bits=0;
+        for (std::size_t i=0;i<paths.size();++i)
+            if (hardware_detail::pathExists(paths[i])) bits|=(1U<<i);
+        bool changed=!state.initialized || bits!=state.device_signal_bits;
+        for (std::size_t i=0;i<names.size();++i)
+            changed=changed || state.environment[i]!=hardware_detail::environment(names[i]);
+        if (changed) {
+            state.device_signal_bits=bits;
+            for (std::size_t i=0;i<names.size();++i)
+                state.environment[i]=hardware_detail::environment(names[i]);
+            if (state.initialized) {
+                ++state.generation;
+                if (state.generation==0) state.generation=1;
+            }
+            state.initialized=true;
+        }
+        return state.generation;
+    }
     std::vector<HardwareDeviceCapability> probe() const override {
         std::vector<HardwareDeviceCapability> devices;
         devices.push_back({DeviceClass::CPU, "cpu:0", "host", true, true, hardware_detail::hostMemoryMb(), "host_cpu_available"});
@@ -267,16 +310,50 @@ public:
                            (npu_detected ? "npu_detected_but_backend_access_not_confirmed" : "no_npu_signal_detected")});
         return devices;
     }
+
+private:
+    struct GenerationState {
+        std::mutex mutex;
+        bool initialized=false;
+        unsigned device_signal_bits=0;
+        std::array<std::string,11> environment{};
+        std::uint64_t generation=1;
+    };
+    // Preserve source compatibility: SystemHardwareProbe remains copyable, and
+    // copies share one synchronized generation view instead of duplicating
+    // mutable routing observations.
+    std::shared_ptr<GenerationState> generation_state_=std::make_shared<GenerationState>();
 };
 
 class StaticHardwareProbe final : public HardwareProbe {
 public:
     explicit StaticHardwareProbe(std::vector<HardwareDeviceCapability> devices) : devices_(std::move(devices)) {}
     std::vector<HardwareDeviceCapability> probe() const override { return devices_; }
+    std::uint64_t generationToken() const override { return 1; }
 
 private:
     std::vector<HardwareDeviceCapability> devices_;
 };
+
+using HardwareRoutingPolicyEnvironmentState = std::array<std::string,5>;
+
+inline constexpr std::array<const char *,5> hardwareRoutingPolicyEnvironmentNames() {
+    return {"SHORTHAND_DEVICE_PREFERENCE","SHORTHAND_DEVICE_OVERRIDE",
+            "SHORTHAND_DEVICE_DENY","SHORTHAND_ALLOW_CPU_FALLBACK",
+            "SHORTHAND_MIN_DEVICE_MEMORY_MB"};
+}
+
+inline bool hardwareRoutingPolicyEnvironmentMatches(const HardwareRoutingPolicyEnvironmentState &state) {
+    const auto names=hardwareRoutingPolicyEnvironmentNames();
+    for (std::size_t i=0;i<names.size();++i)
+        if (state[i]!=hardware_detail::environment(names[i])) return false;
+    return true;
+}
+
+inline void captureHardwareRoutingPolicyEnvironment(HardwareRoutingPolicyEnvironmentState &state) {
+    const auto names=hardwareRoutingPolicyEnvironmentNames();
+    for (std::size_t i=0;i<names.size();++i) state[i]=hardware_detail::environment(names[i]);
+}
 
 inline HardwareRoutingPolicy hardwareRoutingPolicyFromEnvironment() {
     HardwareRoutingPolicy policy;

@@ -5,6 +5,7 @@
 #include "HardwareDiscovery.h"
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -33,9 +34,15 @@ public:
     AIRuntime();
     AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy);
     InferenceResult infer(const ModelSpec &model, const TensorBuffer &input);
-    // Preserves per-call hardware routing and qualification. Unsupported models
-    // use the existing uncached backend, with its original failure semantics.
+    // Preserves request-time routing qualification while reusing an unchanged
+    // inventory/route generation. Unsupported models use the existing uncached
+    // backend, with its original failure semantics.
     InferenceResult inferCached(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &);
+    // Same public validation and model-content checks as inferCached, but can
+    // bind backend output into caller-supplied scratch. Transactional callers
+    // must use private/runtime-owned scratch and commit only after success.
+    InferenceResult inferCachedInto(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache &,
+                                    float *output,std::size_t output_elements);
     // The serialized C bridge retains this runtime, while environment policy
     // remains request-scoped. Explicit-policy application runtimes opt in only.
     void refreshPolicyFromEnvironment();
@@ -43,10 +50,26 @@ public:
     std::vector<BackendCapabilities> capabilities() const;
 
 private:
-    InferenceResult inferImpl(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache *);
+    struct ResolvedRoute {
+        std::shared_ptr<const HardwareRoute> route;
+        bool cache_hit=false;
+        std::uint64_t hardware_probes=0;
+    };
+    InferenceResult inferImpl(const ModelSpec &,const TensorBuffer &,PreparedInferenceCache *,
+                              float *output,std::size_t output_elements);
+    ResolvedRoute routeForModel(const ModelSpec &);
     BackendRegistry registry;
     std::shared_ptr<HardwareProbe> hardware_probe_;
     HardwareRoutingPolicy hardware_policy_;
+    HardwareRoutingPolicyEnvironmentState policy_environment_state_{};
+    bool policy_environment_state_valid_=false;
+    std::uint64_t hardware_generation_token_=0;
+    std::vector<HardwareDeviceCapability> hardware_devices_;
+    bool hardware_inventory_valid_=false;
+    ModelSpec route_model_;
+    std::shared_ptr<const HardwareRoute> route_cache_;
+    std::uint64_t hardware_probe_count_=0;
+    mutable std::mutex state_mutex_;
 };
 }
 

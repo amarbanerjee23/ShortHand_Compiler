@@ -43,6 +43,37 @@ public:
     // Internal application-only fast path. The token cannot be constructed by
     // ordinary callers; backends may skip only checks already guaranteed by the
     // application host. Default implementations retain the full validation path.
+    // Generic preallocated-output path. Unlike the application-only overload,
+    // this retains every public input validation performed by run(). Backends
+    // may override it to bind the destination directly and avoid a temporary
+    // output vector. Callers that require transactional rollback must provide
+    // runtime-owned scratch and commit it only after a successful result.
+    virtual InferenceResult runInto(const TensorBuffer &input,float *output,std::size_t output_elements) {
+        if (!output || !output_elements) {
+            InferenceResult result;
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="invalid_preallocated_output";
+            return result;
+        }
+        auto result=run(input);
+        if (result.status!=InferenceStatus::Success) return result;
+        if (result.output_f32.size()!=output_elements) {
+            result.status=InferenceStatus::RuntimeError;
+            result.reason="prepared_output_size_mismatch";
+            result.output_f32.clear();
+            return result;
+        }
+        std::copy(result.output_f32.begin(),result.output_f32.end(),output);
+        result.output_f32.clear();
+        result.output_elements=output_elements;
+        return result;
+    }
+    virtual InferenceResult runIntoProfiled(const TensorBuffer &input,float *output,std::size_t output_elements,
+                                            PreparedInferenceProfile &profile) {
+        profile={};
+        return runInto(input,output,output_elements);
+    }
+
     virtual InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) {
         return run(input);
     }

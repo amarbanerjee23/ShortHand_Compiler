@@ -41,6 +41,14 @@ public:
         profile={};
         return runImpl<true,false>(input,&profile);
     }
+    InferenceResult runInto(const TensorBuffer &input,float *output,std::size_t output_elements) override {
+        return runIntoImpl<false,false>(input,output,output_elements,nullptr);
+    }
+    InferenceResult runIntoProfiled(const TensorBuffer &input,float *output,std::size_t output_elements,
+                                    PreparedInferenceProfile &profile) override {
+        profile={};
+        return runIntoImpl<true,false>(input,output,output_elements,&profile);
+    }
     InferenceResult runApplicationValidated(const TensorBuffer &input,const ApplicationValidatedInput &) override {
         return runImpl<false,true>(input,nullptr);
     }
@@ -51,16 +59,16 @@ public:
     }
     InferenceResult runApplicationValidatedInto(const TensorBuffer &input,const ApplicationValidatedInput &,
                                                 float *output,std::size_t output_elements) override {
-        return runIntoImpl<false>(input,output,output_elements,nullptr);
+        return runIntoImpl<false,true>(input,output,output_elements,nullptr);
     }
     InferenceResult runApplicationValidatedIntoProfiled(const TensorBuffer &input,const ApplicationValidatedInput &,
                                                          float *output,std::size_t output_elements,
                                                          PreparedInferenceProfile &profile) override {
         profile={};
-        return runIntoImpl<true>(input,output,output_elements,&profile);
+        return runIntoImpl<true,true>(input,output,output_elements,&profile);
     }
 private:
-    template<bool Profiled>
+    template<bool Profiled,bool ApplicationValidated>
     InferenceResult runIntoImpl(const TensorBuffer &input,float *output,std::size_t output_elements,
                                 PreparedInferenceProfile *profile) {
         using Clock=std::chrono::steady_clock;
@@ -75,6 +83,8 @@ private:
             if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape ||
                 input.f32_data.size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
+            if constexpr (!ApplicationValidated)
+                for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
             auto input_tensor=Ort::Value::CreateTensor<float>(
                 memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),
@@ -83,17 +93,21 @@ private:
                 memory_,output,output_elements,out_.shape.data(),out_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
             if constexpr (Profiled) invoke=Clock::now();
-            session_->Run(Ort::RunOptions{nullptr},inputs,&input_tensor,1,outputs,&output_tensor,1);
+            {
+                SHORTHAND_PHASE_SCOPE(ort_run);
+                session_->Run(Ort::RunOptions{nullptr},inputs,&input_tensor,1,outputs,&output_tensor,1);
+            }
             if constexpr (Profiled) copy=Clock::now();
             if (!output_tensor.IsTensor()) throw std::runtime_error("prepared_output_not_tensor");
             auto info=output_tensor.GetTensorTypeAndShapeInfo();
             if (info.GetElementType()!=ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT ||
                 info.GetShape()!=out_.shape || info.GetElementCount()!=out_.element_count)
                 throw std::runtime_error("prepared_output_shape_or_dtype_mismatch");
-            r.status=InferenceStatus::Success; r.reason="executed";
+            r.status=InferenceStatus::Success; r.reason="executed"; r.output_elements=output_elements;
             if constexpr (Profiled) telemetry=Clock::now();
             const auto record=timer.finish("success",r.reason,input.f32_data.size(),output_elements);
-            attachTelemetryScalars(r,record);
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
             if constexpr (Profiled) {
                 const auto end=Clock::now();
                 auto ns=[](Clock::time_point a,Clock::time_point b) {
@@ -114,7 +128,8 @@ private:
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
             const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
-            attachTelemetryScalars(r,record);
+            if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
+            else attachTelemetry(r,record);
         }
         return r;
     }

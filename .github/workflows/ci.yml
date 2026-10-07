@@ -8,9 +8,12 @@ permissions:
   contents: read
   statuses: write
 
+# Keep one live CI revision per event/ref. Push and pull_request remain
+# independent evidence lanes, but a newer commit supersedes stale work in the
+# same lane instead of adding another full matrix to the hosted-runner queue.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ github.run_id }}
-  cancel-in-progress: false
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   latency-energy-evidence:

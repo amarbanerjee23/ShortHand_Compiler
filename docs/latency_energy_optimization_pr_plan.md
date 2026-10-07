@@ -1,14 +1,14 @@
 # Latency and energy optimization PR plan
 
-Plan version: 2026-10-02, revision 4 — LE1 implementation and verified hosted evidence
+Plan version: 2026-10-04, revision 6 — evidence-directed capability hot path and energy-contracted compiler roadmap
 
-Implementation baseline: merged PR114, `master` at `0860938d384259102ef3bb8474f2b2472a561a05`
+Implementation baseline: merged PR118, `master` at `9ef794f172423cebb6a83bfa75c06368da04ec72`
 
-Status: LE1 implementation in progress; LE2–LE4 remain planned. See [implementation scope and evidence](latency_energy_implementation_le1.md).
+Status: PR115–PR118 established prepared generated execution, bridge reuse, retained evidence, and phase attribution. PR119 is the active evidence-directed hot-path optimization. LE3 AOT/static-memory work and the energy-contracted training extension remain planned; no physical energy saving is claimed without valid E1/E2/E3 evidence.
 
 Planning PR: [GitHub PR114](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/114)
 
-Active implementation PR: [GitHub PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115). Its first runtime/evidence slice passed hosted CI; exact-revision observations and retained bundles are recorded in [the implementation note](latency_energy_implementation_le1.md#first-hosted-observations-verified-2026-10-02). LE1 exit criteria remain open, and energy/power savings remain unproven.
+Active implementation PR: [GitHub PR119](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/119). It caches hardware inventory/routing behind explicit generation keys and binds prepared output into runtime-owned transactional scratch, based on PR118's measured phase attribution. Historical PR115–PR118 evidence remains in the [implementation note](latency_energy_implementation_le1.md) and [benchmark report](latency_energy_test_and_benchmark_results.md). Energy/power savings remain unproven until retained evidence supports them.
 
 Scope: compiled ShortHand applications, the native runtime, CPU model execution, and reproducible evidence
 
@@ -297,6 +297,10 @@ The target is workload-specific superiority to a tuned native C++/ONNX Runtime c
 5. **Evaluate precision only under quality gates.** INT8/FP16, structured sparsity and task-specific model reductions follow FP32 correctness and baseline tuning. Include packing/conversion costs and held-out quality. Reject configurations that improve an inner kernel while regressing the declared end-to-end boundary or quality contract.
 
 Phase-attribution implementation (2026-10-04): the optional `shorthand_runtime_profiled` archive now partitions actual compiled FP32 entry calls, with production-symbol isolation and native cold/warm/reset/failure/concurrency tests. Required CI collects 64 separate instrumented warm calls for each supported batch and replays exact exclusive partitions. Its uninstrumented comparison adds a named ALL control beside BASIC; configuration mismatches or instrumented samples in latency/energy comparisons fail validation. This completes the first continuous-arrival diagnostic/control slice of step 2. Intermittent-arrival scheduling, broader thread sweeps, held-out tuning selection and AOT fusion remain future experiments. No energy saving is established when counters are unavailable.
+
+PR119 implementation (2026-10-04): the production `AIRuntime` now retains a full hardware inventory and qualified route while a cheap hardware-generation token and environment-policy signature remain unchanged. Policy changes invalidate routing immediately; hardware-generation changes trigger a new full probe. The compiled bridge uses `inferCachedInto` and runtime-owned transactional output scratch so the prepared ONNX path avoids its per-call output vector while preserving public validation and caller rollback. Full model bytes are still reread/compared on every request, so exact file replacement semantics are unchanged. Normal per-inference stderr formatting is opt-in. New tests cover route reuse/invalidation, preallocated-output evidence and diagnostic attribution. This is an evidence-directed optimization, not a latency/energy claim.
+
+The broader research/implementation direction is documented in [Energy-Contracted Compilation](energy_contracted_compilation.md): inference and training candidates must be selected by quality/SLO-constrained measured or explicitly qualified estimated energy rather than by latency proxies. The runtime may call a plan `ECO` only when its evidence class supports that objective; otherwise ECO is unavailable and the accepted baseline remains active.
 
 Every PR must commit `docs/latency_energy_test_and_benchmark_results.md`, name the exact comparison base, and link retained evidence with tested revision and measurement boundaries. CI enforces inclusion and reruns evidence collection; pending or unavailable results remain explicit. The existing LE1–LE4 acceptance thresholds and no-claim gates remain in force.
 

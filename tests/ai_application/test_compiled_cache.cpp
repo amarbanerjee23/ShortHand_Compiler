@@ -160,9 +160,14 @@ int main(int argc,char **argv) {
     try {
         check(argc==5,"usage: test identity negate external mutable");
         replace(argv[1],argv[4]); short_runtime_reset(); registerModel(argv[4]);
-        infer(42,42); check(telemetry("\"hit\":false"),"first_preparation");
+        infer(42,42);
+        check(telemetry("\"hit\":false") && telemetry("\"route_cache_hit\":false") &&
+              telemetry("\"hardware_probes\":1") && telemetry("\"preallocated_output\":true"),
+              "first_preparation_capability");
         registerModel(argv[4]); infer(7,7);
-        check(telemetry("\"hit\":true") && telemetry("\"preparations\":1"),"idempotent_registration_reuses");
+        check(telemetry("\"hit\":true") && telemetry("\"preparations\":1") &&
+              telemetry("\"route_cache_hit\":true") && telemetry("\"hardware_probes\":1") &&
+              telemetry("\"preallocated_output\":true"),"idempotent_registration_reuses");
         check(telemetry("hardware_inventory") && telemetry("hardware_selection"),"routing_evidence_preserved");
         registerModel(argv[4],"renamed_task"); infer(7,7);
         check(telemetry("\"hit\":false") && telemetry("\"preparations\":2"),"changed_registration_invalidates");

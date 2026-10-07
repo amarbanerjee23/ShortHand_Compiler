@@ -20,17 +20,25 @@ require_text() {
 }
 
 workflow_text="$(cat "${WORKFLOW}")"
+concurrency_block="$(awk '
+  /^concurrency:/ { capture=1 }
+  capture && /^jobs:/ { exit }
+  capture { print }
+' "${WORKFLOW}")"
 publish_block="$(awk '
   /- name: Publish event-specific CI status/ { capture=1 }
   capture { print }
 ' "${WORKFLOW}")"
 
-require_text "${workflow_text}" 'group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}' \
+require_text "${concurrency_block}" 'group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}' \
   "CI concurrency must remain isolated by event and ref"
-require_text "${workflow_text}" '${{ github.run_id }}' \
-  "each revision needs its own evidence run"
-require_text "${workflow_text}" 'cancel-in-progress: false' \
-  "new pushes must not cancel an earlier revision's evidence collection"
+require_text "${concurrency_block}" 'cancel-in-progress: true' \
+  "superseded revisions must not accumulate full CI matrices"
+
+if grep -Fq -- '${{ github.run_id }}' <<<"${concurrency_block}"; then
+  echo "error: CI concurrency must not include run_id; that prevents stale revisions from cancelling" >&2
+  exit 1
+fi
 require_text "${publish_block}" 'if: ${{ always() && !cancelled() }}' \
   "cancelled runs must not publish a terminal commit status"
 require_text "${publish_block}" 'TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}' \

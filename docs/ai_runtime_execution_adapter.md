@@ -136,3 +136,9 @@ The gate `scripts/check_compiled_hook_onnxruntime_success.sh` runs the optional 
 ## Next implementation step
 
 The next runtime PR should move from hook-local JSON and telemetry fragments toward an exportable runtime observability path. It must continue returning `SHORTHAND_RUNTIME_NOT_EXECUTED` or `SHORTHAND_RUNTIME_BACKEND_UNAVAILABLE` unless real backend execution succeeds and populates output values.
+
+## PR119 prepared-output and route-reuse extension
+
+The public C ABI is unchanged. Internally, the bridge uses `AIRuntime::inferCachedInto` for a validated typed request. The generic prepared-output API retains public finite/shape/dtype checks; application-only validation tokens remain separate and cannot be forged by public callers.
+
+`AIRuntime` now caches the expensive discovered inventory and selected route. The cache key is invalidated by either a routing-policy environment signature change or a hardware-probe generation-token change. Tests inject a mutable generation token and require exactly one full probe for stable repeated calls plus a second probe after invalidation.

@@ -13,7 +13,9 @@ def sample(batch=1, runner='head'):
                 threads=1, iterations=8, warmups=8, completed_calls=16,
                 completed_vectors=16*batch, block_elapsed_ms=[1.0, 1.1], cold_session_ms=2.0,
                 instrumented=False, configuration=evidence.configuration(runner),
-                last_runtime_telemetry=dict(ai_runtime_telemetry=dict(execution_evidence=dict(hit=True, preparations=1))))
+                last_runtime_telemetry=dict(ai_runtime_telemetry=dict(execution_evidence=dict(
+                    hit=True, preparations=1, route_cache_hit=True, hardware_probes=1,
+                    preallocated_output=True))))
 
 
 def profile(batch=1):

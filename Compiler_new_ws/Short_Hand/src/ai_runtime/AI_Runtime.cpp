@@ -71,6 +71,22 @@ InferenceResult attachHardwareEvidence(InferenceResult result, const HardwareRou
     return result;
 }
 
+InferenceResult writeRequestedOutput(InferenceResult result,float *output,std::size_t output_elements) {
+    if (!output) return result;
+    if (result.status!=InferenceStatus::Success) return result;
+    if (!output_elements || result.output_f32.size()!=output_elements) {
+        result.status=InferenceStatus::RuntimeError;
+        result.reason="runtime_output_size_mismatch";
+        result.output_f32.clear();
+        result.output_elements=0;
+        return result;
+    }
+    std::copy(result.output_f32.begin(),result.output_f32.end(),output);
+    result.output_f32.clear();
+    result.output_elements=output_elements;
+    return result;
+}
+
 InferenceResult unavailableResult(const std::string &reason) {
     InferenceResult result;
     result.status = InferenceStatus::BackendUnavailable;
@@ -85,7 +101,10 @@ InferenceResult unavailableResult(const std::string &reason) {
 } // namespace
 
 AIRuntime::AIRuntime()
-    : AIRuntime(std::make_shared<SystemHardwareProbe>(), hardwareRoutingPolicyFromEnvironment()) {}
+    : AIRuntime(std::make_shared<SystemHardwareProbe>(), hardwareRoutingPolicyFromEnvironment()) {
+    captureHardwareRoutingPolicyEnvironment(policy_environment_state_);
+    policy_environment_state_valid_=true;
+}
 
 AIRuntime::AIRuntime(std::shared_ptr<HardwareProbe> hardware_probe, HardwareRoutingPolicy hardware_policy)
     : hardware_probe_(hardware_probe ? std::move(hardware_probe) : std::make_shared<SystemHardwareProbe>()),
@@ -99,8 +118,8 @@ std::vector<BackendCapabilities> AIRuntime::capabilities() const {
 
 std::unique_ptr<PreparedInference> AIRuntime::prepare(const ModelSpec &model,
     const InferenceConfiguration &configuration,std::string &error) {
-    const auto route=enforceProductionBackendQualification(
-        selectHardwareRoute(hardware_probe_->probe(),registry.capabilities(),model,hardware_policy_));
+    const auto resolved=routeForModel(model);
+    const auto &route=*resolved.route;
     if (!route.selected) { error=route.reason; return nullptr; }
     auto routed=model; routed.backend_preference={route.backend}; routed.allow_fallback=false;
     auto *backend=registry.select(routed);
@@ -109,23 +128,60 @@ std::unique_ptr<PreparedInference> AIRuntime::prepare(const ModelSpec &model,
 }
 
 InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &input) {
-    return inferImpl(model,input,nullptr);
+    return inferImpl(model,input,nullptr,nullptr,0);
 }
 
 InferenceResult AIRuntime::inferCached(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache &cache) {
-    return inferImpl(model,input,&cache);
+    return inferImpl(model,input,&cache,nullptr,0);
+}
+
+InferenceResult AIRuntime::inferCachedInto(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache &cache,
+                                           float *output,std::size_t output_elements) {
+    if (!output || !output_elements) {
+        InferenceResult result;
+        result.status=InferenceStatus::InvalidInput;
+        result.reason="invalid_preallocated_output";
+        return result;
+    }
+    return inferImpl(model,input,&cache,output,output_elements);
 }
 
 void AIRuntime::refreshPolicyFromEnvironment() {
+    std::lock_guard<std::mutex> guard(state_mutex_);
+    if (policy_environment_state_valid_ &&
+        hardwareRoutingPolicyEnvironmentMatches(policy_environment_state_)) return;
     hardware_policy_=hardwareRoutingPolicyFromEnvironment();
+    captureHardwareRoutingPolicyEnvironment(policy_environment_state_);
+    policy_environment_state_valid_=true;
+    route_cache_.reset();
 }
 
-InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache *cache) {
+AIRuntime::ResolvedRoute AIRuntime::routeForModel(const ModelSpec &model) {
+    std::lock_guard<std::mutex> guard(state_mutex_);
+    const auto generation=hardware_probe_->generationToken();
+    if (generation==0 || !hardware_inventory_valid_ || generation!=hardware_generation_token_) {
+        hardware_devices_=hardware_probe_->probe();
+        hardware_generation_token_=generation;
+        hardware_inventory_valid_=true;
+        route_cache_.reset();
+        ++hardware_probe_count_;
+    }
+
+    const bool hit=route_cache_ && sameModel(route_model_,model);
+    if (!hit) {
+        route_cache_=std::make_shared<HardwareRoute>(enforceProductionBackendQualification(
+            selectHardwareRoute(hardware_devices_,registry.capabilities(),model,hardware_policy_)));
+        route_model_=model;
+    }
+    return {route_cache_,hit,hardware_probe_count_};
+}
+
+InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache *cache,
+                                     float *output,std::size_t output_elements) {
     SHORTHAND_PHASE_SCOPE(hardware_probe);
-    const auto devices = hardware_probe_->probe();
+    const auto resolved=routeForModel(model);
     SHORTHAND_PHASE_NEXT(routing);
-    const auto route = enforceProductionBackendQualification(
-        selectHardwareRoute(devices, registry.capabilities(), model, hardware_policy_));
+    const auto &route=*resolved.route;
 
     SHORTHAND_PHASE_NEXT(runtime_validation);
     if (!validateInputMatchesShape(input)) {
@@ -164,10 +220,15 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
                     }
                     if (cache->session_) {
                         SHORTHAND_PHASE_NEXT(backend_other);
-                        auto result=cache->session_->run(input); // Public finite/shape checks remain mandatory.
+                        auto result=output
+                            ? cache->session_->runInto(input,output,output_elements)
+                            : cache->session_->run(input); // Public finite/shape checks remain mandatory.
                         SHORTHAND_PHASE_NEXT(runtime_telemetry);
                         result.evidence_json_fragment=std::string("{\"schema\":\"shorthand.prepared_cache.v1\",\"hit\":")+
-                            (hit?"true":"false")+",\"preparations\":"+std::to_string(cache->preparations_)+"}";
+                            (hit?"true":"false")+",\"preparations\":"+std::to_string(cache->preparations_)+
+                            ",\"route_cache_hit\":"+(resolved.cache_hit?"true":"false")+
+                            ",\"hardware_probes\":"+std::to_string(resolved.hardware_probes)+
+                            ",\"preallocated_output\":"+(output?"true":"false")+"}";
                         if (result.status!=InferenceStatus::Success) cache->clear();
                         return attachHardwareEvidence(std::move(result),route);
                     }
@@ -177,7 +238,7 @@ InferenceResult AIRuntime::inferImpl(const ModelSpec &model,const TensorBuffer &
                 } else cache->clear();
             } else if (cache) cache->clear();
             SHORTHAND_PHASE_NEXT(backend_other);
-            auto result = backend->infer(routed_model, input);
+            auto result = writeRequestedOutput(backend->infer(routed_model, input),output,output_elements);
             return attachHardwareEvidence(std::move(result), route);
         }
     }

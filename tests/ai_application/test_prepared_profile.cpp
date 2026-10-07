@@ -1,6 +1,7 @@
 // Real ONNX regression, invoked by runtime-profile with the pinned CPU SDK.
 #include "Compiler_new_ws/Short_Hand/src/ai_runtime/backends/OnnxRuntimeBackend.h"
 #include "Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Telemetry.h"
+#include <algorithm>
 #include <future>
 #include <iostream>
 #include <limits>
@@ -17,6 +18,18 @@ int main(int argc,char **argv) {
     TensorBuffer input; input.spec=session->inputSpec(); input.f32_data.assign(16*64,.25f);
     const auto reference=session->run(input);
     check(reference.status==InferenceStatus::Success);
+
+    std::vector<float> bound(reference.output_f32.size(),-999.0f);
+    const auto bound_result=session->runInto(input,bound.data(),bound.size());
+    check(bound_result.status==InferenceStatus::Success &&
+          bound_result.output_elements==bound.size() && bound_result.output_f32.empty() &&
+          !bound_result.telemetry_json_fragment.empty() &&
+          bound==reference.output_f32);
+    std::vector<float> rollback(bound.size(),-777.0f);
+    auto nonfinite=input; nonfinite.f32_data.back()=std::numeric_limits<float>::quiet_NaN();
+    const auto rejected=session->runInto(nonfinite,rollback.data(),rollback.size());
+    check(rejected.status!=InferenceStatus::Success &&
+          std::all_of(rollback.begin(),rollback.end(),[](float v){ return v==-777.0f; }));
 
     // Serialization is externally visible evidence. The faster implementation
     // must remain byte-compatible with the historical JSON contract.
@@ -56,5 +69,5 @@ int main(int argc,char **argv) {
         check(profiled.status!=InferenceStatus::Success && profiled.reason==ordinary.reason);
         check(!p.success && p.total_ns==0 && p.session_run_ns==0 && profiled.output_f32.empty());
     }
-    std::cout<<"PASS real ONNX profiling: output/telemetry parity, errors, cleared samples, concurrent calls\n";
+    std::cout<<"PASS real ONNX profiling: preallocated output count/parity/rollback, telemetry parity, errors, cleared samples, concurrent calls\n";
 }

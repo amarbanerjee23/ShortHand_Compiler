@@ -75,8 +75,10 @@ def validate_sample(sample, batch, iterations, blocks, runner='head', instrument
         raise ValueError('unexpected profiling data in uninstrumented sample')
     if runner in ('head', 'profiled'):
         cache = sample.get('last_runtime_telemetry', {}).get('ai_runtime_telemetry', {}).get('execution_evidence', {})
-        if cache.get('hit') is not True or type(cache.get('preparations')) is not int or cache['preparations'] != 1:
-            raise ValueError('generated path did not retain one prepared session')
+        if (cache.get('hit') is not True or type(cache.get('preparations')) is not int or cache['preparations'] != 1
+                or cache.get('route_cache_hit') is not True or type(cache.get('hardware_probes')) is not int
+                or cache['hardware_probes'] != 1 or cache.get('preallocated_output') is not True):
+            raise ValueError('generated path did not retain the prepared execution capability')
 
 
 def validate_profile(sample, batch):
