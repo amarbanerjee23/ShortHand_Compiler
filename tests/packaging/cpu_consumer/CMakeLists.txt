@@ -18,7 +18,7 @@ endforeach()
 # Compile a ShortHand source with the installed compiler, then link its bitcode
 # against the installed CMake target (including transitive ONNX dependencies).
 find_program(SHORTHAND_COMPILER NAMES short_hand REQUIRED HINTS "${PACKAGE_BIN}" NO_DEFAULT_PATH)
-find_program(SHORTHAND_LLC NAMES llc REQUIRED)
+find_program(SHORTHAND_LLC NAMES llc-18 llc REQUIRED)
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cpu_source.o"
   COMMAND "${SHORTHAND_COMPILER}" "${CMAKE_CURRENT_SOURCE_DIR}/cpu_source.short" compile-bc
   COMMAND "${SHORTHAND_LLC}" -filetype=obj -relocation-model=pic cpu_source.bc -o cpu_source.o

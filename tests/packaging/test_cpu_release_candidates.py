@@ -38,13 +38,15 @@ class Candidates(unittest.TestCase):
             (bundle / "test.manifest").write_text(f"artifact=test.tar\nartifact_sha256={digest}\ncommit={revision}\nplatform=windows-x64\n")
             report = dict(schema="shorthand.release.cpu_package.v1", status="pass", platform="windows-x64",
                           native_os="Windows", architecture="amd64", archive_sha256=digest, source_revision=revision,
-                          onnxruntime_version="1.30.0", production_claim=False, source_dirty=False, checks=sorted(candidates.CHECKS))
+                          onnxruntime_version="1.30.0", production_claim=False, source_dirty=False,
+                          qualification_mode="experimental_native_candidate", checks=sorted(candidates.CHECKS))
             path = bundle / "test.cpu-qualification.json"
             path.write_text(json.dumps(report))
             candidates.verify_receipt(bundle, "windows-x64", revision)
             mutations = {"status": "skip", "platform": "linux-x64", "native_os": "Linux", "architecture": "arm64",
                          "source_revision": "b" * 40, "archive_sha256": "0" * 64, "checks": [],
-                         "onnxruntime_version": "0.0.0", "production_claim": True, "source_dirty": True}
+                         "onnxruntime_version": "0.0.0", "production_claim": True, "source_dirty": True,
+                         "qualification_mode": "existing_production_scope"}
             for key, value in mutations.items():
                 with self.subTest(field=key):
                     path.write_text(json.dumps({**report, key: value}))

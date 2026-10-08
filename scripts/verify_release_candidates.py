@@ -9,7 +9,7 @@ import subprocess
 PLATFORMS = ("linux-x64", "linux-arm64", "macos-arm64", "windows-x64")
 CHECKS = {"relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",
           "shared_cpu_numerics", "compiled_core_source", "interpreter_cpu", "nonfinite_rollback",
-          "missing_runtime_rejected"}
+          "missing_runtime_rejected", "production_scope_guard"}
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
@@ -28,12 +28,14 @@ def verify_receipt(bundle, platform, revision):
     digest = hashlib.sha256((bundle / artifact).read_bytes()).hexdigest()
     expected_os = "Windows" if platform.startswith("windows") else "Darwin" if platform.startswith("macos") else "Linux"
     expected_arch = {"arm64", "aarch64"} if platform.endswith("arm64") else {"x86_64", "amd64"}
+    expected_mode = "existing_production_scope" if platform == "linux-x64" else "experimental_native_candidate"
     if (report.get("schema") != "shorthand.release.cpu_package.v1" or report.get("status") != "pass"
             or report.get("platform") != platform or manifest.get("platform") != platform
             or report.get("native_os") != expected_os or report.get("architecture") not in expected_arch
             or report.get("archive_sha256") != digest or manifest.get("artifact_sha256") != digest
             or report.get("source_revision") != revision or manifest.get("commit") != revision
             or report.get("source_dirty") is not False
+            or report.get("qualification_mode") != expected_mode
             or report.get("onnxruntime_version") != "1.30.0"
             or report.get("production_claim") is not False
             or not CHECKS.issubset(report.get("checks", []))):

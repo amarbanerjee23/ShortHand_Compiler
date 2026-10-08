@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SHORTHAND_PACKAGE_VERSION: ${{ inputs.version }}
+
 jobs:
   linux-x64:
     runs-on: ubuntu-24.04
@@ -38,9 +41,9 @@ jobs:
           cmake --install build-release
           ONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu" LLVM_CONFIG=/usr/bin/llvm-config-18 bash scripts/check_mlir_dialect.sh
           cmake --install build-mlir --prefix "$PWD/stage-release"
-          bash scripts/prepare_release_bundle.sh "${{ inputs.version }}" linux-x64 "$PWD/stage-release" "$PWD/release-linux-x64"
+          bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" linux-x64 "$PWD/stage-release" "$PWD/release-linux-x64"
           bash scripts/verify_release_bundle.sh "$PWD/release-linux-x64"
-          version="${{ inputs.version }}"
+          version="${SHORTHAND_PACKAGE_VERSION}"
           python3 scripts/check_installed_cpu_package.py "$PWD/release-linux-x64/shorthand-${version#v}-linux-x64.tar" linux-x64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-linux-x64/shorthand-linux-x64.cpu-qualification.json"
@@ -75,9 +78,9 @@ jobs:
           cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
           cmake --build build-release --parallel 2
           cmake --install build-release
-          bash scripts/prepare_release_bundle.sh "${{ inputs.version }}" linux-arm64 "$PWD/stage-release" "$PWD/release-linux-arm64"
+          bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" linux-arm64 "$PWD/stage-release" "$PWD/release-linux-arm64"
           bash scripts/verify_release_bundle.sh "$PWD/release-linux-arm64"
-          version="${{ inputs.version }}"
+          version="${SHORTHAND_PACKAGE_VERSION}"
           python3 scripts/check_installed_cpu_package.py "$PWD/release-linux-arm64/shorthand-${version#v}-linux-arm64.tar" linux-arm64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-linux-arm64/shorthand-linux-arm64.cpu-qualification.json"
@@ -114,9 +117,9 @@ jobs:
           cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config" -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
           cmake --build build-release --parallel 2
           cmake --install build-release
-          bash scripts/prepare_release_bundle.sh "${{ inputs.version }}" macos-arm64 "$PWD/stage-release" "$PWD/release-macos-arm64"
+          bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" macos-arm64 "$PWD/stage-release" "$PWD/release-macos-arm64"
           bash scripts/verify_release_bundle.sh "$PWD/release-macos-arm64"
-          version="${{ inputs.version }}"
+          version="${SHORTHAND_PACKAGE_VERSION}"
           python3 scripts/check_installed_cpu_package.py "$PWD/release-macos-arm64/shorthand-${version#v}-macos-arm64.tar" macos-arm64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-macos-arm64/shorthand-macos-arm64.cpu-qualification.json"
@@ -140,7 +143,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Install qualified Windows dependencies
         run: |
-          packages=(mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils)
+          packages=(mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils git)
           for attempt in 1 2 3 4; do
             if pacman -Syy --noconfirm --needed "${packages[@]}"; then exit 0; fi
             echo "MSYS2 dependency transaction failed (attempt ${attempt}/4)" >&2
@@ -161,9 +164,9 @@ jobs:
           cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
           cmake --build build-release --parallel 2
           cmake --install build-release
-          bash scripts/prepare_release_bundle.sh "${{ inputs.version }}" windows-x64 "$PWD/stage-release" "$PWD/release-windows-x64"
+          bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" windows-x64 "$PWD/stage-release" "$PWD/release-windows-x64"
           bash scripts/verify_release_bundle.sh "$PWD/release-windows-x64"
-          version="${{ inputs.version }}"
+          version="${SHORTHAND_PACKAGE_VERSION}"
           python3 scripts/check_installed_cpu_package.py "$PWD/release-windows-x64/shorthand-${version#v}-windows-x64.tar" windows-x64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-windows-x64/shorthand-windows-x64.cpu-qualification.json"

@@ -1,6 +1,6 @@
 # CPU package qualification
 
-These are controlled-beta candidate packages, not published or GA-qualified releases. CPU inference on Windows x64 and macOS ARM64 is required alongside Linux. A green compiler portability check alone does not qualify an AI package.
+These are controlled-beta candidate packages, not published or GA-qualified releases. CPU inference on Windows x64 and macOS ARM64 is required alongside Linux. A green compiler portability check alone does not qualify an AI package. The existing default production scope remains Linux x64. On the other three targets, qualification first verifies default refusal, then explicitly sets `SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE=1` for native experiments. Receipts identify `experimental_native_candidate`; they do not promote production support.
 
 ## Package contents and prerequisites
 
@@ -24,7 +24,7 @@ The same `.github/workflows/cpu-packages.yml` runs for CI and release candidates
 1. Renames the build tree and downloaded SDK for the duration of qualification; restores them even on ordinary exceptions.
 2. Extracts into a different directory containing spaces and removes other ONNX SDK loader paths.
 3. Runs both installed CLIs and a semantic output comparison.
-4. Builds installed static/shared C ABI consumers and checks four exact ONNX identity outputs, route reuse, nonfinite rollback and reset.
+4. Builds installed static/shared C ABI consumers. On platforms outside the existing production scope, both must reject execution by default, preserve the output buffer, and report no successful inference. The explicit experimental mode then checks four exact ONNX identity outputs, route reuse, nonfinite rollback, reset and truthful qualification telemetry.
 5. Compiles and executes a core `.short` source and separately checks real ONNX execution in the installed interpreter.
 6. Deletes the bundled ONNX library in the temporary extraction and requires a new consumer configuration to fail.
 7. Emits a receipt bound to the archive hash, source revision, native OS/architecture and successful checks.
@@ -33,7 +33,7 @@ The release candidate and privileged publication jobs require all four bundles a
 
 ## Remaining source compilation and release gates
 
-The C ABI probes are native C++ host programs. The core `.short` probe checks compiler installation and linking; it does not itself perform tensor inference. The installed interpreter test performs ONNX inference. These results must not be relabeled as full source-to-native tensor compilation on Windows/macOS.
+The C ABI probes are native C++ host programs. The core `.short` probe checks compiler installation and linking; it does not itself perform tensor inference. The installed interpreter test performs ONNX inference. These results must not be relabeled as full source-to-native tensor compilation or default production support on Windows/macOS. Promoting the runtime allowlist and documentation requires review of the resulting native evidence in the follow-up platform PR.
 
 Full typed `.short` tensor inference currently uses the Linux-qualified LLVM/MLIR 18 lowering path. Extending and testing that source path on Windows and macOS is a required subsequent implementation slice before public compiled-AI parity is claimed. Windows uses a different currently qualified LLVM toolchain, so merely enabling the Linux MLIR flag is insufficient. Unsupported Intel macOS, Windows ARM64 and accelerators require separate work.
 

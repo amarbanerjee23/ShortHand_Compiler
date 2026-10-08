@@ -1,12 +1,14 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `69bc10e7084036986d099d3111d374a703898287`
+Comparison base: `813c899c10f016785f5c2280aaaaedfeced78f3d`
 
-## Current PR: CPU release packaging
+## Current PR evidence
 
-This change is based on PR120 and repairs the release distribution path. CMake now installs both primary CLIs, packages the enabled ONNX Runtime dependency with its license notices, and exports a relocatable ONNX CMake target. A single reusable workflow builds CPU archives for Linux x64, Linux ARM64, Windows x64 and macOS ARM64 for both normal CI and releases. The mandatory CI aggregate includes every native package job.
+### CPU release packaging
 
-The archive is extracted into a path containing spaces. The original SDK and build directories are temporarily hidden, other ONNX-containing loader paths are removed, and installed static/shared C ABI consumers must produce exact identity outputs for 42, -7.25, 0 and 1024.5. They also check warm route reuse, nonfinite-input rollback and reset. The installed interpreter must execute the real model and return 42; a core ShortHand source is compiled, linked and run separately. Removing the bundled ONNX library must make a fresh consumer configuration fail. Native receipts bind the archive SHA-256, platform, source revision, clean tracked source state, SDK version and required checks.
+This change follows merged PR120 and repairs the release distribution path. The current comparison base is its master merge above; the first hosted run used the earlier stacked PR120 head. CMake now installs both primary CLIs, packages the enabled ONNX Runtime dependency with its license notices, and exports a relocatable ONNX CMake target. A single reusable workflow builds CPU archives for Linux x64, Linux ARM64, Windows x64 and macOS ARM64 for both normal CI and releases. The mandatory CI aggregate includes every native package job.
+
+The archive is extracted into a path containing spaces. The original SDK and build directories are temporarily hidden, other ONNX-containing loader paths are removed, and installed static/shared C ABI consumers must produce exact identity outputs for 42, -7.25, 0 and 1024.5. They also check warm route reuse, nonfinite-input rollback and reset. The installed interpreter must execute the real model and return 42; a core ShortHand source is compiled, linked and run separately. Removing the bundled ONNX library must make a fresh consumer configuration fail. Native receipts bind the archive SHA-256, platform, source revision, clean tracked source state, SDK version and required checks. Outside Linux x64, the probes first require default production-policy rejection, then exercise real inference through the existing explicit experimental override and record `experimental_native_candidate`. The current production support scope stays unchanged.
 
 Release artifact names use `release-bundle-*`, excluding `release-closeout-policy`. Candidate verification requires all four exact platforms and their matching receipts; missing platforms, wrong OS/architecture, stale revisions, skipped checks and altered archives are rejected. Publication repeats this verification before signing.
 
@@ -21,6 +23,29 @@ Release artifact names use `release-bundle-*`, excluding `release-closeout-polic
 | Full compiled tensor source path on Windows/macOS | Separate release blocker; this PR tests interpreted ONNX execution and native runtime consumers, not unqualified MLIR portability |
 
 The local build is a development tree based on the SHA above; its receipt is not a clean committed release qualification. Hosted results must be retained before marking the package PR ready. This change makes no latency, power, energy or GA claim. Full operational release qualification and source-to-native AI parity remain required as described in [cpu_release_packages.md](cpu_release_packages.md).
+
+## PR121 first hosted run and fixes
+
+[CI run 37761804858](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37761804858), on initial head `9aa4e03b3f58fe60fb1fc45e12f743a776dceb4f`, caught these integration issues:
+
+| Failure | Root cause and correction |
+| --- | --- |
+| Evidence workflow | The required `Current PR evidence` heading was renamed. Restore the contracted heading; retain all required report sections. |
+| Linux x64 archive | Ubuntu's LLVM 18 installation exposes `llc-18`; the consumer searched only for `llc`. Resolve the versioned binary first. |
+| Windows archive | The MSYS2 shell did not expose Git, needed for provenance. Install Git explicitly with the package-job dependencies. |
+| macOS/ARM64 inference | The production allowlist intentionally rejects non-Linux-x64 hosts. Test default rejection, then use the existing explicit experimental mode to collect native output evidence. Record the mode and require truthful telemetry; do not change the allowlist. |
+| Enterprise OTLP/Prometheus installation tests | These tests built only the previous installed targets. Build both newly installed CLIs before the complete install operation. |
+| CTest Makefile AI gate | A source assertion expected the former absolute ONNX link directory. Update it to the relocatable imported-target wiring, backed by the actual archive execution tests. |
+
+The ordinary Windows/macOS/ARM64 compiler jobs, toolchain matrix, reproducibility, security and both MLIR lanes passed on that first head. Updated native package and aggregate results remain pending until the amended commit is tested.
+
+## Energy and power result
+
+Packaging and explicit experimental execution establish no energy or latency improvement. Physical energy and GA claims remain blocked by the existing evidence policies.
+
+## Reproduction
+
+Run `python3 tests/packaging/test_cpu_release_candidates.py`, `bash tests/ai_runtime/test_onnxruntime_backend_source.sh` and `bash scripts/check_signed_release_contract.sh`. Build/install the enabled CPU runtime with the pinned SDK, then run `scripts/prepare_release_bundle.sh` and `python3 scripts/check_installed_cpu_package.py ARCHIVE PLATFORM --sdk SDK --build BUILD --report REPORT`. `.github/workflows/cpu-packages.yml` contains the exact native OS commands and invokes the same archive verifier for CI and release candidates. Experimental-mode receipts must never be treated as production support promotion.
 
 ## Verified PR120 hosted results
 

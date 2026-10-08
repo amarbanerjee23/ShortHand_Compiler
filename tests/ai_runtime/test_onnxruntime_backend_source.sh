@@ -38,8 +38,8 @@ done
 
 for needle in \
   "target_include_directories(short_hand PRIVATE \${ONNXRUNTIME_ROOT}/include)" \
-  "target_link_directories(short_hand PRIVATE \${ONNXRUNTIME_ROOT}/lib)" \
-  "target_link_libraries(short_hand PRIVATE onnxruntime)"; do
+  "include(cmake/ShortHandOnnxRuntime.cmake)" \
+  "target_link_libraries(short_hand PRIVATE ShortHand::OnnxRuntime)"; do
   if ! grep -Fq "${needle}" "${CMAKE_FILE}"; then
     echo "expected CMake ONNX Runtime SDK wiring to contain: ${needle}" >&2
     exit 1

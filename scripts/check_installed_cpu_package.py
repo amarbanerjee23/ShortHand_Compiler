@@ -65,6 +65,7 @@ def main():
                 env.pop(name, None)
             env.pop("ONNXRUNTIME_ROOT", None)
             env.pop("SHORTHAND_RUNTIME_LIB", None)
+            env.pop("SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE", None)
             # These paths must not select an unrelated installed ShortHand SDK.
             env.pop("ShortHand_DIR", None)
             run(["cmake", "-E", "tar", "xf", archive], cwd=prefix, env=env)
@@ -98,6 +99,15 @@ def main():
                          f"-DMODEL_FILE={model_path}", f"-DMODEL_DIRECTORY={models}"]
             run([*configure, "-B", consumer], cwd=work, env=env)
             run(["cmake", "--build", consumer, "--parallel", "2"], cwd=work, env=env)
+            qualification_mode = "existing_production_scope"
+            if args.platform != "linux-x64":
+                # Exercise the current fail-closed production policy first.
+                # Explicit native experiments collect evidence for future scope
+                # promotion; they must never claim production qualification.
+                for kind in ("static", "shared"):
+                    run([consumer / ("cpu_" + kind + suffix), model_path, "--expect-unqualified"], cwd=work, env=env)
+                env["SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE"] = "1"
+                qualification_mode = "experimental_native_candidate"
             run(["ctest", "--test-dir", consumer, "--output-on-failure", "-V"], cwd=work, env=env)
             # The interpreter uses the non-prepared ORT path; compiled consumers
             # exercise the C ABI and prepared cache. Both must execute on Windows.
@@ -114,6 +124,7 @@ def main():
                 raise RuntimeError("missing-runtime negative failed for an unrelated reason")
             receipt = {"schema": "shorthand.release.cpu_package.v1", "status": "pass",
                        "platform": args.platform, "native_os": native[0], "architecture": native[1],
+                       "qualification_mode": qualification_mode,
                        "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
                        "source_revision": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
                        "source_dirty": bool(subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain", "--untracked-files=no"], text=True).strip()),
@@ -121,7 +132,7 @@ def main():
                        "compiler_sha256": hashlib.sha256(compiler.read_bytes()).hexdigest(),
                        "checks": ["relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",
                                   "shared_cpu_numerics", "compiled_core_source", "interpreter_cpu", "nonfinite_rollback",
-                                  "missing_runtime_rejected"], "production_claim": False}
+                                  "missing_runtime_rejected", "production_scope_guard"], "production_claim": False}
             report.write_text(json.dumps(receipt, indent=2) + "\n")
             print(f"PASS native installed CPU package {args.platform}")
     finally:
