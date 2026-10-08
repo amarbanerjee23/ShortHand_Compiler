@@ -48,8 +48,12 @@ for anchor in \
   'SHORTHAND_FUZZ_SEED' \
   'artifact_prefix=' \
   'PASS libFuzzer ASan LSan UBSan compiler-stage gate'; do
-  require_contains "${FUZZ}" "${anchor}"
+require_contains "${FUZZ}" "${anchor}"
 done
+require_contains "${FUZZ}" 'tests/parser/ParserLifetime.cpp'
+require_contains "${HARNESS}" 'shorthand::parser::ParseSession parse_session;'
+require_file "${ROOT_DIR}/tests/parser/ParserLifetime.cpp"
+require_file "${ROOT_DIR}/scripts/check_parser_lifetime.sh"
 require_contains "${REPLAY}" 'REPLAY_EXECUTED'
 require_contains "${REPLAY}" '--minimize'
 require_contains "${MEMORY}" '-fsanitize=address,undefined'
@@ -67,7 +71,7 @@ for anchor in \
 done
 require_contains "${NIGHTLY}" 'Extended staged libFuzzer campaign'
 require_contains "${NIGHTLY}" 'Runtime ASan LSan UBSan extended stress'
-require_contains "${NIGHTLY}" 'SHORTHAND_FUZZ_SEED: ${{ github.run_number }}'
+require_contains "${NIGHTLY}" "SHORTHAND_FUZZ_SEED: \${{ github.event_name == 'pull_request' && 56 || github.run_number }}"
 require_contains "${MATRIX}" $'TST008\tfull sanitizer coverage\timplemented'
 require_contains "${MATRIX}" $'TST009\tcontinuous fuzzing\timplemented'
 require_contains "${MATRIX}" $'TST010\tconcurrency and race detection\timplemented'

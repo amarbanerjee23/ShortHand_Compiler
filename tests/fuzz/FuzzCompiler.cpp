@@ -2,6 +2,7 @@
 #include "ast/ModuleAST.h"
 #include "module/ModuleResolver.h"
 #include "parser/ParserLimits.h"
+#include "parser/ParseSession.h"
 #include "visitors/IR_Generator.h"
 #include "visitors/SemanticAnalyzer.h"
 
@@ -165,6 +166,7 @@ extern "C" int LLVMFuzzerInitialize(int *, char ***) {
 }
 
 extern "C" int LLVMFuzzerTestOneInput(const std::uint8_t *data, std::size_t size) {
+    shorthand::parser::ParseSession parse_session;
 #if SHORTHAND_FUZZ_STAGE == 1
     return fuzzParser(data, size);
 #elif SHORTHAND_FUZZ_STAGE == 2

@@ -1,6 +1,7 @@
 %{
 #include "./ast/AST.h"
 #include "./parser/ParserLimits.h"
+#include "./parser/ParseSession.h"
 #include "./visitors/DiagnosticCodes.h"
 #include "parser.tab.hh"
 #include <cstdio>
@@ -81,9 +82,19 @@ extern "C" void shorthand_reset_scanner_location() {
     shorthand::parser::resetParserGuard();
 }
 
+std::size_t shorthand::parser::liveScannerStringCount() {
+    return shorthand_scanner_strings.size();
+}
+
+extern "C" void shorthand_release_scanner_strings_from(std::size_t checkpoint) {
+    while (shorthand_scanner_strings.size() > checkpoint) {
+        free(shorthand_scanner_strings.back());
+        shorthand_scanner_strings.pop_back();
+    }
+}
+
 extern "C" void shorthand_release_scanner_strings() {
-    for (char *value : shorthand_scanner_strings) free(value);
-    shorthand_scanner_strings.clear();
+    shorthand_release_scanner_strings_from(0);
 }
 %}
 

@@ -1,8 +1,44 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `9ef794f172423cebb6a83bfa75c06368da04ec72`
+Comparison base: `3417f8ed261c32aa59f09080cc4d325b316edc0e`
 
 ## Current PR evidence
+
+This PR addresses the post-PR119 audit's parser memory blocker. Parser allocations previously survived until process exit, including nodes from failed parses. The CLI now owns one `ParseSession` for its full module graph, while every fuzz input has its own session. Session destruction releases AST allocations, scanner tokens and source ranges; nested temporary parses preserve outer graphs and roots.
+
+The public-release implementation sequence is recorded in [public_release_implementation_plan.md](public_release_implementation_plan.md). The requested CPU target scope includes Windows x64 and macOS ARM64 in addition to Linux x64. Native ONNX execution from installed packages is required in the packaging PR before expanding qualification claims.
+
+Local validation on the working tree based on the exact merge above:
+
+| Check | Observed result |
+| --- | --- |
+| Clang 18 Release CMake build with LLVM/MLIR 18 and ONNX Runtime 1.30.0 | PASS |
+| Parser lifetime: 25,000 sessions / 100,000 valid and malformed parses | PASS; zero live parser allocations, scanner strings and source ranges after every session; nested module/function-name retention checked |
+| Lifetime regression RSS, uninstrumented Linux | 1,556 KiB initial / 1,944 KiB peak; a repeat in the robustness gate peaked at 1,968 KiB |
+| Earlier audited parser probe, 100,000 simple valid parses | 1,556 KiB initial / 243,444 KiB peak; this older workload differs from the new mixed regression and is not a paired performance comparison |
+| Module resolution, deterministic locks and multi-file code generation | PASS |
+| Interpreter/LLVM/native semantic differential execution | PASS |
+| Function, scope, control-flow, deterministic-error and cleanup gate | PASS |
+| Exact source diagnostic ranges and stable codes | PASS |
+| Parser malformed-input/resource-bound matrix plus lifetime gate | PASS |
+| Local ASan/LSan/UBSan lifetime attempt | BLOCKED by runner: LeakSanitizer cannot open `/proc/99/task`; mandatory leak detection was not disabled. The script failed before entering the extended random campaigns. |
+| Hosted mandatory CI and seed-56 extended fuzz | Pending on the final PR revision; no hosted pass is claimed here. |
+
+The extended workflow now runs on parser/AST/harness PR changes as well as nightly. PR runs use the formerly failing seed 56, four stages of 180 seconds each, the unchanged 2,048 MiB RSS limit and mandatory leak/undefined-behavior checks. Its deterministic lifetime regression runs under the same instrumentation. Full diagnostics remain retained as artifacts while console output is bounded. Fuzzing grows a temporary copy of the checked-in seeds.
+
+## Energy and power result
+
+This is a correctness and bounded-lifetime fix. RSS observations do not establish lower energy, power or end-to-end inference latency. No new physical-energy or production-readiness claim is made.
+
+## Reproduction
+
+Build the compiler with the normal CMake configuration, then run `bash scripts/check_parser_robustness.sh`, `bash scripts/check_module_resolution.sh`, `bash scripts/check_semantic_differential.sh`, `bash scripts/check_functions_control_error_semantics.sh` and `bash tests/diagnostics/test_source_diagnostics.sh`. Set `SHORTHAND_BIN` and `SHORTHAND_RUNTIME_LIB` to the built outputs when using an out-of-tree build. The standalone lifetime test is `bash scripts/check_parser_lifetime.sh`.
+
+On a runner supporting LeakSanitizer process inspection, execute `SHORTHAND_FUZZ_SEED=56 SHORTHAND_FUZZ_MAX_TOTAL_TIME=180 SHORTHAND_FUZZ_RUNS=0 bash scripts/check_fuzz_sanitizers.sh`. Preserve `/tmp/shorthand_fuzz_*.out`, build logs and crash artifacts. Hosted PR and extended-fuzz runs retain these automatically. The comparison base is the merged PR119 SHA above.
+
+## Historical PR119 implementation
+
+PR119 comparison base: `9ef794f172423cebb6a83bfa75c06368da04ec72`.
 
 GitHub PR119 implements the first optimization selected from PR118's measured phase attribution. The production runtime now caches the expensive hardware inventory and route behind a cheap hardware-generation token and a separate environment-policy signature. Repeated calls for the same model therefore reuse the qualified route; a changed policy invalidates routing immediately, and a changed hardware-generation token forces a fresh full probe. The model-content safety boundary is intentionally unchanged: self-contained cached ONNX models are still reread and byte-compared on every request, including replacements with preserved timestamps.
 

@@ -33,6 +33,16 @@ bool shorthand_has_ast_source_range(const void *node) {
     return shorthand_get_ast_source_range(node).valid();
 }
 
+void shorthand_erase_ast_source_range(const void *node) {
+    std::lock_guard<std::mutex> lock(range_mutex);
+    ranges.erase(node);
+}
+
+std::size_t shorthand_ast_source_range_count() {
+    std::lock_guard<std::mutex> lock(range_mutex);
+    return ranges.size();
+}
+
 void shorthand_clear_ast_source_ranges() {
     std::lock_guard<std::mutex> lock(range_mutex);
     ranges.clear();

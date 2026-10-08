@@ -28,6 +28,8 @@ struct SourceRange {
 void shorthand_set_ast_source_range(const void *node, const SourceRange &range);
 SourceRange shorthand_get_ast_source_range(const void *node);
 bool shorthand_has_ast_source_range(const void *node);
+void shorthand_erase_ast_source_range(const void *node);
+std::size_t shorthand_ast_source_range_count();
 void shorthand_clear_ast_source_ranges();
 
 #endif

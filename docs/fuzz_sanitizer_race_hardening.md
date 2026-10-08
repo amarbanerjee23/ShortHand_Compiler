@@ -23,6 +23,10 @@ PR73 makes memory/undefined-behavior fuzzing and runtime race detection mandator
 
 Every PR invocation uses Clang libFuzzer with AddressSanitizer and UndefinedBehaviorSanitizer instrumentation. LeakSanitizer is enabled through `ASAN_OPTIONS=detect_leaks=1`. Sanitizer recovery is disabled. A non-zero fuzzer result or sanitizer marker is a hard failure.
 
+Every fuzz invocation first runs `tests/parser/ParserLifetime.cpp` under the same ASan/LSan/UBSan instrumentation. It performs 100,000 parses in 25,000 compilation sessions, mixing valid module graphs, malformed input and nested temporary parses. Every session must release all tracked AST objects, source ranges and scanner strings. The retained graph must remain readable and semantically traversable after nested cleanup, including function names borrowed from scanner tokens. The ordinary parser-robustness gate also runs this regression without instrumentation. RSS is reported as an observation; live-allocation invariants are the deterministic acceptance condition.
+
+`shorthand::parser::ParseSession` owns the parser allocations for one complete compilation graph. The CLI keeps it alive through every AST consumer, and the fuzz callback creates one per input. Nested sequential scopes preserve their outer graph and parser roots. The generated parser remains non-reentrant. Releasing a graph per source file would invalidate imported modules and is not permitted. Source ranges are erased before each node is deleted so reused addresses cannot inherit stale diagnostics.
+
 The bounded PR profile records these deterministic defaults:
 
 - seed: `1337`,
@@ -37,7 +41,7 @@ These values may be overridden only by explicit environment variables for a larg
 
 Checked-in corpus entries contain both valid and malformed language/package inputs. New deterministic fuzz findings must be minimized where practical and promoted into the appropriate checked-in corpus or a focused regression fixture after root-cause repair.
 
-The scheduled `.github/workflows/fuzz.yml` campaign runs the same four targets for 180 seconds per stage. It records the Actions `run_number` as the fuzz seed so a campaign is reproducible while remaining within libFuzzer's integer seed range.
+The scheduled `.github/workflows/fuzz.yml` campaign runs the same four targets for 180 seconds per stage. It records the Actions `run_number` as the fuzz seed so a campaign is reproducible while remaining within libFuzzer's integer seed range. Parser, AST and fuzz-harness pull requests also run this extended campaign, using seed `56` from the audited parser OOM. Sanitizer failures remain fatal. The writable corpus is copied into the temporary build directory so each invocation starts from the checked-in seeds; the script retains complete raw logs for artifacts and prints a bounded tail to the Actions console.
 
 ## Crash artifacts and replay
 
