@@ -44,6 +44,9 @@ function(shorthand_optional name enabled root outvar)
   endif()
 endfunction()
 shorthand_optional("ONNX Runtime" SHORTHAND_ENABLE_ONNXRUNTIME "${ONNXRUNTIME_ROOT}" SHORTHAND_HAS_ONNXRUNTIME)
+if(SHORTHAND_HAS_ONNXRUNTIME)
+  include(cmake/ShortHandOnnxRuntime.cmake)
+endif()
 shorthand_optional("TensorRT" SHORTHAND_ENABLE_TENSORRT "${TENSORRT_ROOT}" SHORTHAND_HAS_TENSORRT)
 shorthand_optional("OpenVINO" SHORTHAND_ENABLE_OPENVINO "${OPENVINO_ROOT}" SHORTHAND_HAS_OPENVINO)
 shorthand_optional("LibTorch" SHORTHAND_ENABLE_LIBTORCH "${LIBTORCH_ROOT}" SHORTHAND_HAS_LIBTORCH)
@@ -301,7 +304,6 @@ endif()
 
 # Preserve the frozen C ABI while enabling real inference in installed runtimes.
 if(SHORTHAND_HAS_ONNXRUNTIME)
-  find_library(SHORTHAND_ORT_LIBRARY NAMES onnxruntime PATHS "${ONNXRUNTIME_ROOT}/lib" NO_DEFAULT_PATH REQUIRED)
   set(runtime_targets shorthand_runtime shorthand_runtime_shared)
   if(SHORTHAND_BUILD_RUNTIME_PHASE_PROFILE)
     add_library(shorthand_runtime_profiled STATIC EXCLUDE_FROM_ALL ${SHORTHAND_RUNTIME_SOURCES})
@@ -317,7 +319,7 @@ if(SHORTHAND_HAS_ONNXRUNTIME)
       SHORTHAND_HAS_ONNXRUNTIME=1 SHORTHAND_HAS_TENSORRT=0 SHORTHAND_HAS_OPENVINO=0
       SHORTHAND_HAS_LIBTORCH=0 SHORTHAND_HAS_LLAMACPP=0 SHORTHAND_HAS_OPENBLAS=0 SHORTHAND_HAS_EIGEN=0)
     target_include_directories(${runtime_target} PRIVATE "${ONNXRUNTIME_ROOT}/include")
-    target_link_libraries(${runtime_target} PUBLIC "${SHORTHAND_ORT_LIBRARY}")
+    target_link_libraries(${runtime_target} PUBLIC ShortHand::OnnxRuntime)
   endforeach()
 elseif(SHORTHAND_BUILD_RUNTIME_PHASE_PROFILE)
   message(FATAL_ERROR "Runtime phase profiling requires the real ONNX Runtime SDK")
@@ -347,8 +349,7 @@ target_compile_options(short_hand PRIVATE ${LLVM_CXXFLAGS})
 target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_ONNXRUNTIME=${SHORTHAND_HAS_ONNXRUNTIME} SHORTHAND_HAS_TENSORRT=${SHORTHAND_HAS_TENSORRT} SHORTHAND_HAS_OPENVINO=${SHORTHAND_HAS_OPENVINO} SHORTHAND_HAS_LIBTORCH=${SHORTHAND_HAS_LIBTORCH} SHORTHAND_HAS_LLAMACPP=${SHORTHAND_HAS_LLAMACPP} SHORTHAND_HAS_OPENBLAS=${SHORTHAND_HAS_OPENBLAS} SHORTHAND_HAS_EIGEN=${SHORTHAND_HAS_EIGEN})
 if(SHORTHAND_HAS_ONNXRUNTIME)
   target_include_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/include)
-  target_link_directories(short_hand PRIVATE ${ONNXRUNTIME_ROOT}/lib)
-  target_link_libraries(short_hand PRIVATE onnxruntime)
+  target_link_libraries(short_hand PRIVATE ShortHand::OnnxRuntime)
   # llvm-config commonly contributes -fno-exceptions. The ONNX Runtime C++ API
   # throws Ort::Exception, and ShortHand deliberately catches it to return a
   # recoverable inference result instead of terminating the process.
@@ -430,8 +431,7 @@ target_compile_definitions(shorthand_ai_qualify PRIVATE SHORTHAND_C3ECO_ASSESS_L
 target_link_libraries(shorthand_ai_qualify PRIVATE Threads::Threads)
 if(SHORTHAND_HAS_ONNXRUNTIME)
   target_include_directories(shorthand_ai_qualify PRIVATE ${ONNXRUNTIME_ROOT}/include)
-  target_link_directories(shorthand_ai_qualify PRIVATE ${ONNXRUNTIME_ROOT}/lib)
-  target_link_libraries(shorthand_ai_qualify PRIVATE onnxruntime)
+  target_link_libraries(shorthand_ai_qualify PRIVATE ShortHand::OnnxRuntime)
 endif()
 
 
@@ -462,7 +462,7 @@ install(TARGETS
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand
 )
 
-install(TARGETS shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_lifecycle_boundary shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify
+install(TARGETS short_hand green_ai_tool shorthand_lsp shorthand_serving_worker shorthand_c3eco_measure shorthand_c3eco_lifecycle_boundary shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 install(DIRECTORY schemas/c3eco/
@@ -476,6 +476,9 @@ install(FILES docs/ai_cpu_energy_qualification.md docs/ai_application_qualificat
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
 install(FILES docs/c3eco_auditor_bundle.md docs/c3eco_independent_pilot.md
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
+)
+install(FILES docs/cpu_release_packages.md
   DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/docs
 )
 install(FILES scripts/release_closeout.py

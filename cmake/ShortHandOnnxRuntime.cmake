@@ -1,0 +1,40 @@
+# The ONNX dependency is part of an ONNX-enabled installed SDK. Never export
+# an absolute path into the build machine's downloaded SDK.
+if(NOT EXISTS "${ONNXRUNTIME_ROOT}/include/onnxruntime_cxx_api.h")
+  message(FATAL_ERROR "ONNX Runtime C++ header missing under ONNXRUNTIME_ROOT")
+endif()
+foreach(notice LICENSE ThirdPartyNotices.txt VERSION_NUMBER)
+  if(NOT EXISTS "${ONNXRUNTIME_ROOT}/${notice}")
+    message(FATAL_ERROR "ONNX Runtime redistribution file missing: ${notice}")
+  endif()
+endforeach()
+find_library(SHORTHAND_ORT_LIBRARY NAMES onnxruntime onnxruntime.lib
+  PATHS "${ONNXRUNTIME_ROOT}/lib" NO_DEFAULT_PATH REQUIRED)
+add_library(ShortHand::OnnxRuntime SHARED IMPORTED GLOBAL)
+set(SHORTHAND_ORT_PKGCONFIG_LIBS "-lonnxruntime")
+if(WIN32)
+  find_file(SHORTHAND_ORT_DLL NAMES onnxruntime.dll
+    PATHS "${ONNXRUNTIME_ROOT}/lib" "${ONNXRUNTIME_ROOT}/bin" NO_DEFAULT_PATH REQUIRED)
+  set_target_properties(ShortHand::OnnxRuntime PROPERTIES
+    IMPORTED_IMPLIB "${SHORTHAND_ORT_LIBRARY}" IMPORTED_LOCATION "${SHORTHAND_ORT_DLL}")
+  file(GLOB ort_runtime_files "${ONNXRUNTIME_ROOT}/lib/*.dll" "${ONNXRUNTIME_ROOT}/bin/*.dll")
+  install(FILES ${ort_runtime_files} DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(FILES "${SHORTHAND_ORT_LIBRARY}" DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  get_filename_component(SHORTHAND_ORT_IMPORT_NAME "${SHORTHAND_ORT_LIBRARY}" NAME)
+  set(SHORTHAND_ORT_RUNTIME_RELATIVE "${CMAKE_INSTALL_BINDIR}/onnxruntime.dll")
+else()
+  set_target_properties(ShortHand::OnnxRuntime PROPERTIES IMPORTED_LOCATION "${SHORTHAND_ORT_LIBRARY}")
+  if(APPLE)
+    file(GLOB ort_runtime_files "${ONNXRUNTIME_ROOT}/lib/libonnxruntime*.dylib")
+    set(SHORTHAND_ORT_RUNTIME_RELATIVE "${CMAKE_INSTALL_LIBDIR}/libonnxruntime.dylib")
+    set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+  else()
+    file(GLOB ort_runtime_files "${ONNXRUNTIME_ROOT}/lib/libonnxruntime.so*")
+    set(SHORTHAND_ORT_RUNTIME_RELATIVE "${CMAKE_INSTALL_LIBDIR}/libonnxruntime.so")
+    set(CMAKE_INSTALL_RPATH "$ORIGIN;$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+  endif()
+  install(FILES ${ort_runtime_files} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+install(FILES "${ONNXRUNTIME_ROOT}/LICENSE" "${ONNXRUNTIME_ROOT}/ThirdPartyNotices.txt"
+  "${ONNXRUNTIME_ROOT}/VERSION_NUMBER"
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/shorthand/licenses/onnxruntime)

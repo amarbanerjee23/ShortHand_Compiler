@@ -16,3 +16,7 @@ Implement and review the following changes sequentially. These are engineering a
 Each PR updates `docs/latency_energy_test_and_benchmark_results.md` with its exact base and observed results. A platform is only qualified after its native checks pass on the candidate revision and installed payload. The first releasable milestone is a publicly installable, accurately scoped controlled-beta/RC; GA remains subject to the existing production blockers and independently retained operational evidence.
 
 The current `linux-x64-cpu-v1` qualification, `controlled_beta` maturity and `production_claim: false` remain the recorded state until the applicable evidence and executable guards are updated together. No latency or memory result substitutes for physical energy measurements, and these PRs do not grant C3-ECO certification.
+
+## Packaging implementation boundary
+
+PR120 passed hosted CI, tooling and the seed-56 extended sanitizer campaign and is ready for review. The following packaging slice introduces shared native archive qualification on all four existing package platforms; see [cpu_release_packages.md](cpu_release_packages.md). Its Windows/macOS scope covers installed interpreter inference and native C ABI consumers. Full typed `.short` source-to-native tensor execution on those platforms remains a required follow-up within the platform-qualification work, before public compiled-AI parity can be claimed. Keep this gate open even if package receipts pass.

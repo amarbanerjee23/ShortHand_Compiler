@@ -3,6 +3,17 @@
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
 
+set(ShortHand_ONNXRUNTIME_ENABLED @SHORTHAND_HAS_ONNXRUNTIME@)
+if(ShortHand_ONNXRUNTIME_ENABLED AND NOT TARGET ShortHand::OnnxRuntime)
+  set_and_check(ShortHand_ONNXRUNTIME_LIBRARY "${PACKAGE_PREFIX_DIR}/@SHORTHAND_ORT_RUNTIME_RELATIVE@")
+  add_library(ShortHand::OnnxRuntime SHARED IMPORTED)
+  set_target_properties(ShortHand::OnnxRuntime PROPERTIES IMPORTED_LOCATION "${ShortHand_ONNXRUNTIME_LIBRARY}")
+  if(WIN32)
+    set_and_check(ShortHand_ONNXRUNTIME_IMPLIB "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@/@SHORTHAND_ORT_IMPORT_NAME@")
+    set_target_properties(ShortHand::OnnxRuntime PROPERTIES IMPORTED_IMPLIB "${ShortHand_ONNXRUNTIME_IMPLIB}")
+  endif()
+endif()
+
 include("${CMAKE_CURRENT_LIST_DIR}/ShortHandTargets.cmake")
 
 set(ShortHand_RUNTIME_ABI_VERSION "@SHORTHAND_RUNTIME_ABI_VERSION@")

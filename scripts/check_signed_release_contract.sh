@@ -98,6 +98,8 @@ if [[ "$(grep -Fc 'environment: production-release' "${WORKFLOW}")" != 1 ]]; the
   exit 1
 fi
 
+python3 tests/packaging/test_cpu_release_candidates.py
+
 bash tests/release/test_release_version_policy.sh
 bash tests/release/test_release_environment_policy.sh
 bash tests/release/test_release_bundle_tamper.sh

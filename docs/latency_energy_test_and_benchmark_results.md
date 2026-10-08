@@ -1,8 +1,34 @@
 # ShortHand testing, experimentation and benchmark results
 
+Comparison base: `69bc10e7084036986d099d3111d374a703898287`
+
+## Current PR: CPU release packaging
+
+This change is based on PR120 and repairs the release distribution path. CMake now installs both primary CLIs, packages the enabled ONNX Runtime dependency with its license notices, and exports a relocatable ONNX CMake target. A single reusable workflow builds CPU archives for Linux x64, Linux ARM64, Windows x64 and macOS ARM64 for both normal CI and releases. The mandatory CI aggregate includes every native package job.
+
+The archive is extracted into a path containing spaces. The original SDK and build directories are temporarily hidden, other ONNX-containing loader paths are removed, and installed static/shared C ABI consumers must produce exact identity outputs for 42, -7.25, 0 and 1024.5. They also check warm route reuse, nonfinite-input rollback and reset. The installed interpreter must execute the real model and return 42; a core ShortHand source is compiled, linked and run separately. Removing the bundled ONNX library must make a fresh consumer configuration fail. Native receipts bind the archive SHA-256, platform, source revision, clean tracked source state, SDK version and required checks.
+
+Release artifact names use `release-bundle-*`, excluding `release-closeout-policy`. Candidate verification requires all four exact platforms and their matching receipts; missing platforms, wrong OS/architecture, stale revisions, skipped checks and altered archives are rejected. Publication repeats this verification before signing.
+
+| Validation | Result |
+| --- | --- |
+| Local Release build, LLVM 18 / ONNX Runtime 1.30.0 | PASS on the development working tree |
+| Relocated Linux x64 archive: installed CLIs, static/shared CPU outputs, core compilation, interpreter inference, missing-library negative | PASS locally; original build/SDK paths hidden |
+| Candidate selection and receipt negative controls | PASS: policy report excluded; missing/unexpected platform, missing receipt, stale revision, wrong OS/architecture, dirty source, missing check and tampered digest rejected |
+| Signed-release contract and existing closeout regression matrix | PASS locally, including 54 inherited closeout cases |
+| CI status hygiene and platform contract guard | PASS locally |
+| Native Windows x64 / macOS ARM64 / Linux ARM64 archive execution | Pending hosted checks on this PR; no pass claimed from a Linux runner |
+| Full compiled tensor source path on Windows/macOS | Separate release blocker; this PR tests interpreted ONNX execution and native runtime consumers, not unqualified MLIR portability |
+
+The local build is a development tree based on the SHA above; its receipt is not a clean committed release qualification. Hosted results must be retained before marking the package PR ready. This change makes no latency, power, energy or GA claim. Full operational release qualification and source-to-native AI parity remain required as described in [cpu_release_packages.md](cpu_release_packages.md).
+
+## Verified PR120 hosted results
+
+PR120 head `69bc10e7084036986d099d3111d374a703898287` passed [CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222619), [tooling](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222201) and [extended fuzz/sanitizers](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222063). Seed 56 completed 1,129,345 parser, 635,611 module, 1,208,787 semantic and 1,188,143 lowering inputs, 181 seconds per stage. ASan/LSan/UBSan and mandatory runtime/training ThreadSanitizer passed. These hosted results close the local LeakSanitizer limitation recorded historically below.
+
 Comparison base: `3417f8ed261c32aa59f09080cc4d325b316edc0e`
 
-## Current PR evidence
+## Historical PR120 parser lifetime evidence
 
 This PR addresses the post-PR119 audit's parser memory blocker. Parser allocations previously survived until process exit, including nodes from failed parses. The CLI now owns one `ParseSession` for its full module graph, while every fuzz input has its own session. Session destruction releases AST allocations, scanner tokens and source ranges; nested temporary parses preserve outer graphs and roots.
 

@@ -16,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  cpu-packages:
+    uses: ./.github/workflows/cpu-packages.yml
+
   latency-energy-evidence:
     uses: ./.github/workflows/runtime-profile.yml
 
@@ -699,6 +702,7 @@ jobs:
       - security
       - mlir
       - latency-energy-evidence
+      - cpu-packages
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -717,6 +721,7 @@ jobs:
           test "${{ needs.security.result }}" = "success"
           test "${{ needs.mlir.result }}" = "success"
           test "${{ needs.latency-energy-evidence.result }}" = "success"
+          test "${{ needs.cpu-packages.result }}" = "success"
 
       - name: Publish event-specific CI status
         if: ${{ always() && !cancelled() }}

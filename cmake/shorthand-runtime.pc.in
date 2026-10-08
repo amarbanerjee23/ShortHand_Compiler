@@ -1,4 +1,4 @@
-prefix=@CMAKE_INSTALL_PREFIX@
+prefix=${pcfiledir}/../..
 exec_prefix=${prefix}
 libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
@@ -7,5 +7,5 @@ Name: ShortHand Runtime
 Description: ShortHand frozen C ABI runtime
 Version: @SHORTHAND_RUNTIME_API_VERSION@
 Libs: -L${libdir} -lshorthand_runtime
-Libs.private: -pthread
+Libs.private: -pthread @SHORTHAND_ORT_PKGCONFIG_LIBS@
 Cflags: -I${includedir}/shorthand
