@@ -5,6 +5,7 @@
 #include "./ast/AST.h"
 #include "./ast/ModuleAST.h"
 #include "./ast/SourceRange.h"
+#include "./parser/ParseSession.h"
 #include "./visitors/DiagnosticCodes.h"
 #include <vector>
 #include <string>
@@ -21,6 +22,7 @@ extern "C" int yyparse();
 extern "C" void yyerror(char const *s);
 extern "C" int yywrap(void){return 1;}
 extern "C" int yydebug;
+extern "C" void shorthand_release_scanner_strings_from(std::size_t checkpoint);
 extern union _NODE_ yylval;
 extern class AST_PROGRAM * main_program;
 extern class AST_MODULE_PREAMBLE * main_module_preamble;
@@ -53,11 +55,20 @@ public:
         return node;
     }
 
-    ~ShorthandParserAllocationRegistry() {
-        for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
-             it != allocations.rend(); ++it) {
-            it->destroy(it->pointer);
+    std::size_t size() const { return allocations.size(); }
+
+    void releaseFrom(std::size_t checkpoint) {
+        while (allocations.size() > checkpoint) {
+            const ShorthandParserAllocation allocation = allocations.back();
+            allocations.pop_back();
+            shorthand_erase_ast_source_range(allocation.pointer);
+            tracked.erase(allocation.pointer);
+            allocation.destroy(allocation.pointer);
         }
+    }
+
+    ~ShorthandParserAllocationRegistry() {
+        releaseFrom(0);
         main_program = nullptr;
         main_module_preamble = nullptr;
     }
@@ -66,6 +77,25 @@ public:
 static ShorthandParserAllocationRegistry &shorthand_parser_allocation_registry() {
     static ShorthandParserAllocationRegistry registry;
     return registry;
+}
+
+shorthand::parser::ParseSession::ParseSession()
+    : checkpoint_(shorthand_parser_allocation_registry().size()),
+      scanner_checkpoint_(shorthand::parser::liveScannerStringCount()),
+      previous_program_(main_program), previous_preamble_(main_module_preamble) {
+    main_program = nullptr;
+    main_module_preamble = nullptr;
+}
+
+shorthand::parser::ParseSession::~ParseSession() {
+    shorthand_parser_allocation_registry().releaseFrom(checkpoint_);
+    shorthand_release_scanner_strings_from(scanner_checkpoint_);
+    main_program = previous_program_;
+    main_module_preamble = previous_preamble_;
+}
+
+std::size_t shorthand::parser::liveParserAllocationCount() {
+    return shorthand_parser_allocation_registry().size();
 }
 
 template <typename T>

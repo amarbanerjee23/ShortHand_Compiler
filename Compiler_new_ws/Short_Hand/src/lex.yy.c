@@ -882,6 +882,7 @@ char *yytext;
 #line 2 "scanner_parser/scanner.ll"
 #include "./ast/AST.h"
 #include "./parser/ParserLimits.h"
+#include "./parser/ParseSession.h"
 #include "./visitors/DiagnosticCodes.h"
 #include "parser.tab.hh"
 #include <cstdio>
@@ -962,12 +963,22 @@ extern "C" void shorthand_reset_scanner_location() {
     shorthand::parser::resetParserGuard();
 }
 
-extern "C" void shorthand_release_scanner_strings() {
-    for (char *value : shorthand_scanner_strings) free(value);
-    shorthand_scanner_strings.clear();
+std::size_t shorthand::parser::liveScannerStringCount() {
+    return shorthand_scanner_strings.size();
 }
-#line 970 "lex.yy.c"
-#line 971 "lex.yy.c"
+
+extern "C" void shorthand_release_scanner_strings_from(std::size_t checkpoint) {
+    while (shorthand_scanner_strings.size() > checkpoint) {
+        free(shorthand_scanner_strings.back());
+        shorthand_scanner_strings.pop_back();
+    }
+}
+
+extern "C" void shorthand_release_scanner_strings() {
+    shorthand_release_scanner_strings_from(0);
+}
+#line 981 "lex.yy.c"
+#line 982 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -1184,10 +1195,10 @@ YY_DECL
 		}
 
 	{
-#line 94 "scanner_parser/scanner.ll"
+#line 105 "scanner_parser/scanner.ll"
 
 
-#line 1191 "lex.yy.c"
+#line 1202 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1246,102 +1257,102 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 96 "scanner_parser/scanner.ll"
+#line 107 "scanner_parser/scanner.ll"
 return PACKAGE;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 97 "scanner_parser/scanner.ll"
+#line 108 "scanner_parser/scanner.ll"
 return MODULE;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 98 "scanner_parser/scanner.ll"
+#line 109 "scanner_parser/scanner.ll"
 return IMPORT;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 99 "scanner_parser/scanner.ll"
+#line 110 "scanner_parser/scanner.ll"
 return AS;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 100 "scanner_parser/scanner.ll"
+#line 111 "scanner_parser/scanner.ll"
 return DEF;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 101 "scanner_parser/scanner.ll"
+#line 112 "scanner_parser/scanner.ll"
 return DOUBLE;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 102 "scanner_parser/scanner.ll"
+#line 113 "scanner_parser/scanner.ll"
 return RETURN;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 103 "scanner_parser/scanner.ll"
+#line 114 "scanner_parser/scanner.ll"
 return CONTINUE;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 104 "scanner_parser/scanner.ll"
+#line 115 "scanner_parser/scanner.ll"
 return TRUE;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 105 "scanner_parser/scanner.ll"
+#line 116 "scanner_parser/scanner.ll"
 return FALSE;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 106 "scanner_parser/scanner.ll"
+#line 117 "scanner_parser/scanner.ll"
 return MODEL;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 107 "scanner_parser/scanner.ll"
+#line 118 "scanner_parser/scanner.ll"
 return FORMAT;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 108 "scanner_parser/scanner.ll"
+#line 119 "scanner_parser/scanner.ll"
 return PATH;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 109 "scanner_parser/scanner.ll"
+#line 120 "scanner_parser/scanner.ll"
 return TASK;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 110 "scanner_parser/scanner.ll"
+#line 121 "scanner_parser/scanner.ll"
 return PRECISION;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 111 "scanner_parser/scanner.ll"
+#line 122 "scanner_parser/scanner.ll"
 return INPUT_SHAPE;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 112 "scanner_parser/scanner.ll"
+#line 123 "scanner_parser/scanner.ll"
 return OUTPUT_SHAPE;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 113 "scanner_parser/scanner.ll"
+#line 124 "scanner_parser/scanner.ll"
 return BACKEND_PREFERENCE;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 114 "scanner_parser/scanner.ll"
+#line 125 "scanner_parser/scanner.ll"
 return COMPACT;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 115 "scanner_parser/scanner.ll"
+#line 126 "scanner_parser/scanner.ll"
 return QUALITY_GUARDRAIL;
 	YY_BREAK
 case 21:
@@ -1351,7 +1362,7 @@ YY_LINENO_REWIND_TO(yy_bp + 21);
 (yy_c_buf_p) = yy_cp = yy_bp + 21;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 116 "scanner_parser/scanner.ll"
+#line 127 "scanner_parser/scanner.ll"
 return CERTIFICATION_PROFILE;
 	YY_BREAK
 case 22:
@@ -1361,7 +1372,7 @@ YY_LINENO_REWIND_TO(yy_bp + 13);
 (yy_c_buf_p) = yy_cp = yy_bp + 13;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 117 "scanner_parser/scanner.ll"
+#line 128 "scanner_parser/scanner.ll"
 return CERTIFICATION;
 	YY_BREAK
 case 23:
@@ -1371,7 +1382,7 @@ YY_LINENO_REWIND_TO(yy_bp + 8);
 (yy_c_buf_p) = yy_cp = yy_bp + 8;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 118 "scanner_parser/scanner.ll"
+#line 129 "scanner_parser/scanner.ll"
 return WORKLOAD;
 	YY_BREAK
 case 24:
@@ -1381,7 +1392,7 @@ YY_LINENO_REWIND_TO(yy_bp + 16);
 (yy_c_buf_p) = yy_cp = yy_bp + 16;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 119 "scanner_parser/scanner.ll"
+#line 130 "scanner_parser/scanner.ll"
 return MEASUREMENT_PLAN;
 	YY_BREAK
 case 25:
@@ -1391,7 +1402,7 @@ YY_LINENO_REWIND_TO(yy_bp + 12);
 (yy_c_buf_p) = yy_cp = yy_bp + 12;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 120 "scanner_parser/scanner.ll"
+#line 131 "scanner_parser/scanner.ll"
 return AI_LIFECYCLE;
 	YY_BREAK
 case 26:
@@ -1401,7 +1412,7 @@ YY_LINENO_REWIND_TO(yy_bp + 12);
 (yy_c_buf_p) = yy_cp = yy_bp + 12;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 121 "scanner_parser/scanner.ll"
+#line 132 "scanner_parser/scanner.ll"
 return RAG_PIPELINE;
 	YY_BREAK
 case 27:
@@ -1411,7 +1422,7 @@ YY_LINENO_REWIND_TO(yy_bp + 12);
 (yy_c_buf_p) = yy_cp = yy_bp + 12;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 122 "scanner_parser/scanner.ll"
+#line 133 "scanner_parser/scanner.ll"
 return TOKEN_BUDGET;
 	YY_BREAK
 case 28:
@@ -1421,7 +1432,7 @@ YY_LINENO_REWIND_TO(yy_bp + 13);
 (yy_c_buf_p) = yy_cp = yy_bp + 13;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 123 "scanner_parser/scanner.ll"
+#line 134 "scanner_parser/scanner.ll"
 return MODEL_ROUTING;
 	YY_BREAK
 case 29:
@@ -1431,17 +1442,17 @@ YY_LINENO_REWIND_TO(yy_bp + 10);
 (yy_c_buf_p) = yy_cp = yy_bp + 10;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 124 "scanner_parser/scanner.ll"
+#line 135 "scanner_parser/scanner.ll"
 return GUARDRAILS;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 125 "scanner_parser/scanner.ll"
+#line 136 "scanner_parser/scanner.ll"
 return GREENAI_CONTRACT_T;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 126 "scanner_parser/scanner.ll"
+#line 137 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     yylval.string_val = shorthand_strdup_token(yytext);
@@ -1450,7 +1461,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 131 "scanner_parser/scanner.ll"
+#line 142 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     yylval.string_val = shorthand_strdup_token(yytext);
@@ -1459,344 +1470,344 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 136 "scanner_parser/scanner.ll"
+#line 147 "scanner_parser/scanner.ll"
 return FUNCTIONAL_UNIT;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 137 "scanner_parser/scanner.ll"
+#line 148 "scanner_parser/scanner.ll"
 return SUCCESS_CRITERIA;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 138 "scanner_parser/scanner.ll"
+#line 149 "scanner_parser/scanner.ll"
 return BOUNDARY;
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 139 "scanner_parser/scanner.ll"
+#line 150 "scanner_parser/scanner.ll"
 return MEASUREMENT_QUALITY;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 140 "scanner_parser/scanner.ll"
+#line 151 "scanner_parser/scanner.ll"
 return DATA_QUALITY;
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 141 "scanner_parser/scanner.ll"
+#line 152 "scanner_parser/scanner.ll"
 return CARBON_FACTOR;
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 142 "scanner_parser/scanner.ll"
+#line 153 "scanner_parser/scanner.ll"
 return ENERGY_BUDGET_J;
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 143 "scanner_parser/scanner.ll"
+#line 154 "scanner_parser/scanner.ll"
 return CARBON_BUDGET_GCO2E;
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 144 "scanner_parser/scanner.ll"
+#line 155 "scanner_parser/scanner.ll"
 return EVIDENCE_RETENTION;
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 145 "scanner_parser/scanner.ll"
+#line 156 "scanner_parser/scanner.ll"
 return CLAIMS_MODE;
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 146 "scanner_parser/scanner.ll"
+#line 157 "scanner_parser/scanner.ll"
 return EVIDENCE_ONLY;
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 147 "scanner_parser/scanner.ll"
+#line 158 "scanner_parser/scanner.ll"
 return GREENAI_MEASURE;
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 148 "scanner_parser/scanner.ll"
+#line 159 "scanner_parser/scanner.ll"
 return INFER;
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 149 "scanner_parser/scanner.ll"
+#line 160 "scanner_parser/scanner.ll"
 return TENSOR;
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 150 "scanner_parser/scanner.ll"
+#line 161 "scanner_parser/scanner.ll"
 return INT8;
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 151 "scanner_parser/scanner.ll"
+#line 162 "scanner_parser/scanner.ll"
 return FP16;
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 152 "scanner_parser/scanner.ll"
+#line 163 "scanner_parser/scanner.ll"
 return FP32;
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 153 "scanner_parser/scanner.ll"
+#line 164 "scanner_parser/scanner.ll"
 return BF16;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 154 "scanner_parser/scanner.ll"
+#line 165 "scanner_parser/scanner.ll"
 return INT4;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 155 "scanner_parser/scanner.ll"
+#line 166 "scanner_parser/scanner.ll"
 return FP64;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 156 "scanner_parser/scanner.ll"
+#line 167 "scanner_parser/scanner.ll"
 return ONNX;
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 157 "scanner_parser/scanner.ll"
+#line 168 "scanner_parser/scanner.ll"
 return ENGINE;
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 158 "scanner_parser/scanner.ll"
+#line 169 "scanner_parser/scanner.ll"
 return TORCHSCRIPT;
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 159 "scanner_parser/scanner.ll"
+#line 170 "scanner_parser/scanner.ll"
 return OPENVINO_IR;
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 160 "scanner_parser/scanner.ll"
+#line 171 "scanner_parser/scanner.ll"
 return GGUF;
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 161 "scanner_parser/scanner.ll"
+#line 172 "scanner_parser/scanner.ll"
 return TENSORRT;
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 162 "scanner_parser/scanner.ll"
+#line 173 "scanner_parser/scanner.ll"
 return ONNXRUNTIME_TENSORRT;
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 163 "scanner_parser/scanner.ll"
+#line 174 "scanner_parser/scanner.ll"
 return ONNXRUNTIME_CUDA;
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 164 "scanner_parser/scanner.ll"
+#line 175 "scanner_parser/scanner.ll"
 return ONNXRUNTIME_CPU;
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 165 "scanner_parser/scanner.ll"
+#line 176 "scanner_parser/scanner.ll"
 return OPENVINO;
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 166 "scanner_parser/scanner.ll"
+#line 177 "scanner_parser/scanner.ll"
 return LIBTORCH;
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 167 "scanner_parser/scanner.ll"
+#line 178 "scanner_parser/scanner.ll"
 return LLAMACPP;
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 168 "scanner_parser/scanner.ll"
+#line 179 "scanner_parser/scanner.ll"
 return FALLBACK;
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 169 "scanner_parser/scanner.ll"
+#line 180 "scanner_parser/scanner.ll"
 return MQ1;
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 170 "scanner_parser/scanner.ll"
+#line 181 "scanner_parser/scanner.ll"
 return MQ2;
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 171 "scanner_parser/scanner.ll"
+#line 182 "scanner_parser/scanner.ll"
 return MQ3;
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 172 "scanner_parser/scanner.ll"
+#line 183 "scanner_parser/scanner.ll"
 return MQ4;
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 173 "scanner_parser/scanner.ll"
+#line 184 "scanner_parser/scanner.ll"
 return DQ1;
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 174 "scanner_parser/scanner.ll"
+#line 185 "scanner_parser/scanner.ll"
 return DQ2;
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 175 "scanner_parser/scanner.ll"
+#line 186 "scanner_parser/scanner.ll"
 return DQ3;
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 176 "scanner_parser/scanner.ll"
+#line 187 "scanner_parser/scanner.ll"
 return DQ4;
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 177 "scanner_parser/scanner.ll"
+#line 188 "scanner_parser/scanner.ll"
 return LOCATION;
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 178 "scanner_parser/scanner.ll"
+#line 189 "scanner_parser/scanner.ll"
 return CI_CD;
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 179 "scanner_parser/scanner.ll"
+#line 190 "scanner_parser/scanner.ll"
 return THIRDPARTY;
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 180 "scanner_parser/scanner.ll"
+#line 191 "scanner_parser/scanner.ll"
 return ACCELERATOR;
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 181 "scanner_parser/scanner.ll"
+#line 192 "scanner_parser/scanner.ll"
 return COMPUTE;
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 182 "scanner_parser/scanner.ll"
+#line 193 "scanner_parser/scanner.ll"
 return STORAGE;
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 183 "scanner_parser/scanner.ll"
+#line 194 "scanner_parser/scanner.ll"
 return NETWORK;
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 184 "scanner_parser/scanner.ll"
+#line 195 "scanner_parser/scanner.ll"
 return INT;
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 185 "scanner_parser/scanner.ll"
+#line 196 "scanner_parser/scanner.ll"
 return FLOAT;
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 186 "scanner_parser/scanner.ll"
+#line 197 "scanner_parser/scanner.ll"
 return STRING;
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 187 "scanner_parser/scanner.ll"
+#line 198 "scanner_parser/scanner.ll"
 return BOOL;
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 188 "scanner_parser/scanner.ll"
+#line 199 "scanner_parser/scanner.ll"
 return VOID;
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 189 "scanner_parser/scanner.ll"
+#line 200 "scanner_parser/scanner.ll"
 return LOOP;
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 190 "scanner_parser/scanner.ll"
+#line 201 "scanner_parser/scanner.ll"
 return WHILE;
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 191 "scanner_parser/scanner.ll"
+#line 202 "scanner_parser/scanner.ll"
 return IF;
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 192 "scanner_parser/scanner.ll"
+#line 203 "scanner_parser/scanner.ll"
 return ELSE;
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 193 "scanner_parser/scanner.ll"
+#line 204 "scanner_parser/scanner.ll"
 return GOTO;
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 194 "scanner_parser/scanner.ll"
+#line 205 "scanner_parser/scanner.ll"
 return PRINT;
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 195 "scanner_parser/scanner.ll"
+#line 206 "scanner_parser/scanner.ll"
 return READ;
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 196 "scanner_parser/scanner.ll"
+#line 207 "scanner_parser/scanner.ll"
 return BREAK;
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 197 "scanner_parser/scanner.ll"
+#line 208 "scanner_parser/scanner.ll"
 return '+';
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 198 "scanner_parser/scanner.ll"
+#line 209 "scanner_parser/scanner.ll"
 return '-';
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 199 "scanner_parser/scanner.ll"
+#line 210 "scanner_parser/scanner.ll"
 return '*';
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 200 "scanner_parser/scanner.ll"
+#line 211 "scanner_parser/scanner.ll"
 ;
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 201 "scanner_parser/scanner.ll"
+#line 212 "scanner_parser/scanner.ll"
 ;
 	YY_BREAK
 case 99:
 /* rule 99 can match eol */
 YY_RULE_SETUP
-#line 202 "scanner_parser/scanner.ll"
+#line 213 "scanner_parser/scanner.ll"
 ;
 	YY_BREAK
 case 100:
 /* rule 100 can match eol */
 YY_RULE_SETUP
-#line 203 "scanner_parser/scanner.ll"
+#line 214 "scanner_parser/scanner.ll"
 {
     return shorthand_scanner_failure(
         shorthand::diagnostics::ScannerUnterminatedComment,
@@ -1805,37 +1816,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 208 "scanner_parser/scanner.ll"
+#line 219 "scanner_parser/scanner.ll"
 return '/';
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 209 "scanner_parser/scanner.ll"
+#line 220 "scanner_parser/scanner.ll"
 return '%';
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 210 "scanner_parser/scanner.ll"
+#line 221 "scanner_parser/scanner.ll"
 return ';';
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 211 "scanner_parser/scanner.ll"
+#line 222 "scanner_parser/scanner.ll"
 return ',';
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 212 "scanner_parser/scanner.ll"
+#line 223 "scanner_parser/scanner.ll"
 return ':';
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 213 "scanner_parser/scanner.ll"
+#line 224 "scanner_parser/scanner.ll"
 return '.';
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 214 "scanner_parser/scanner.ll"
+#line 225 "scanner_parser/scanner.ll"
 {
     if (!shorthand::parser::enterDelimiter()) {
         shorthand_emit_guard_failure();
@@ -1846,17 +1857,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 221 "scanner_parser/scanner.ll"
+#line 232 "scanner_parser/scanner.ll"
 { shorthand::parser::leaveDelimiter(); return '}'; }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 222 "scanner_parser/scanner.ll"
+#line 233 "scanner_parser/scanner.ll"
 return '=';
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 223 "scanner_parser/scanner.ll"
+#line 234 "scanner_parser/scanner.ll"
 {
     if (!shorthand::parser::enterDelimiter()) {
         shorthand_emit_guard_failure();
@@ -1867,17 +1878,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 230 "scanner_parser/scanner.ll"
+#line 241 "scanner_parser/scanner.ll"
 { shorthand::parser::leaveDelimiter(); return ']'; }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 231 "scanner_parser/scanner.ll"
+#line 242 "scanner_parser/scanner.ll"
 { return ARROW; }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 232 "scanner_parser/scanner.ll"
+#line 243 "scanner_parser/scanner.ll"
 {
     if (!shorthand::parser::enterDelimiter()) {
         shorthand_emit_guard_failure();
@@ -1888,52 +1899,52 @@ YY_RULE_SETUP
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 239 "scanner_parser/scanner.ll"
+#line 250 "scanner_parser/scanner.ll"
 { shorthand::parser::leaveDelimiter(); return ')'; }
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 240 "scanner_parser/scanner.ll"
+#line 251 "scanner_parser/scanner.ll"
 return LESS;
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 241 "scanner_parser/scanner.ll"
+#line 252 "scanner_parser/scanner.ll"
 return GREATER;
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 242 "scanner_parser/scanner.ll"
+#line 253 "scanner_parser/scanner.ll"
 return LESS_OR_EQUAL;
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 243 "scanner_parser/scanner.ll"
+#line 254 "scanner_parser/scanner.ll"
 return GREATER_OR_EQUAL;
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 244 "scanner_parser/scanner.ll"
+#line 255 "scanner_parser/scanner.ll"
 return EQUAL;
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 245 "scanner_parser/scanner.ll"
+#line 256 "scanner_parser/scanner.ll"
 return NOT_EQUAL;
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 246 "scanner_parser/scanner.ll"
+#line 257 "scanner_parser/scanner.ll"
 return OR;
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 247 "scanner_parser/scanner.ll"
+#line 258 "scanner_parser/scanner.ll"
 return AND;
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 249 "scanner_parser/scanner.ll"
+#line 260 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     yylval.float_val = atof(yytext);
@@ -1942,7 +1953,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 254 "scanner_parser/scanner.ll"
+#line 265 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     yylval.int_val = atoi(yytext);
@@ -1952,7 +1963,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 260 "scanner_parser/scanner.ll"
+#line 271 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     yylval.string_val = shorthand_strdup_token(yytext);
@@ -1963,7 +1974,7 @@ YY_RULE_SETUP
 case 126:
 /* rule 126 can match eol */
 YY_RULE_SETUP
-#line 266 "scanner_parser/scanner.ll"
+#line 277 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     yylval.string_val = shorthand_strdup_token(yytext);
@@ -1973,7 +1984,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 272 "scanner_parser/scanner.ll"
+#line 283 "scanner_parser/scanner.ll"
 {
     if (!shorthand_accept_token_size()) return ETOK;
     return shorthand_scanner_failure(
@@ -1984,12 +1995,12 @@ YY_RULE_SETUP
 case 128:
 /* rule 128 can match eol */
 YY_RULE_SETUP
-#line 278 "scanner_parser/scanner.ll"
+#line 289 "scanner_parser/scanner.ll"
 { }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 279 "scanner_parser/scanner.ll"
+#line 290 "scanner_parser/scanner.ll"
 {
     const unsigned int value = static_cast<unsigned char>(yytext[0]);
     char message[64];
@@ -2002,10 +2013,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 289 "scanner_parser/scanner.ll"
+#line 300 "scanner_parser/scanner.ll"
 ECHO;
 	YY_BREAK
-#line 2009 "lex.yy.c"
+#line 2020 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -3010,4 +3021,4 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 289 "scanner_parser/scanner.ll"
+#line 300 "scanner_parser/scanner.ll"

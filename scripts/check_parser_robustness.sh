@@ -209,3 +209,4 @@ printf 'Parser robustness summary: pass=%d fail=%d mutations=%d\n' \
   "${pass}" "${fail}" "${mutation_count}"
 [[ "${fail}" -eq 0 ]]
 printf 'PASS parser robustness and negative corpus gate\n'
+bash "${ROOT_DIR}/scripts/check_parser_lifetime.sh"

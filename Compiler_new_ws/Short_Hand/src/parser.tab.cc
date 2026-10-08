@@ -75,6 +75,7 @@
 #include "./ast/AST.h"
 #include "./ast/ModuleAST.h"
 #include "./ast/SourceRange.h"
+#include "./parser/ParseSession.h"
 #include "./visitors/DiagnosticCodes.h"
 #include <vector>
 #include <string>
@@ -91,12 +92,13 @@ extern "C" int yyparse();
 extern "C" void yyerror(char const *s);
 extern "C" int yywrap(void){return 1;}
 extern "C" int yydebug;
+extern "C" void shorthand_release_scanner_strings_from(std::size_t checkpoint);
 extern union _NODE_ yylval;
 extern class AST_PROGRAM * main_program;
 extern class AST_MODULE_PREAMBLE * main_module_preamble;
 extern const char *shorthand_source_path;
 
-#line 100 "parser.tab.cc"
+#line 102 "parser.tab.cc"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -325,7 +327,7 @@ typedef enum yysymbol_kind_t yysymbol_kind_t;
 
 
 /* Unqualified %code blocks.  */
-#line 32 "scanner_parser/parser.yy"
+#line 34 "scanner_parser/parser.yy"
 
 struct ShorthandParserAllocation {
     void *pointer;
@@ -350,11 +352,20 @@ public:
         return node;
     }
 
-    ~ShorthandParserAllocationRegistry() {
-        for (vector<ShorthandParserAllocation>::reverse_iterator it = allocations.rbegin();
-             it != allocations.rend(); ++it) {
-            it->destroy(it->pointer);
+    std::size_t size() const { return allocations.size(); }
+
+    void releaseFrom(std::size_t checkpoint) {
+        while (allocations.size() > checkpoint) {
+            const ShorthandParserAllocation allocation = allocations.back();
+            allocations.pop_back();
+            shorthand_erase_ast_source_range(allocation.pointer);
+            tracked.erase(allocation.pointer);
+            allocation.destroy(allocation.pointer);
         }
+    }
+
+    ~ShorthandParserAllocationRegistry() {
+        releaseFrom(0);
         main_program = nullptr;
         main_module_preamble = nullptr;
     }
@@ -363,6 +374,25 @@ public:
 static ShorthandParserAllocationRegistry &shorthand_parser_allocation_registry() {
     static ShorthandParserAllocationRegistry registry;
     return registry;
+}
+
+shorthand::parser::ParseSession::ParseSession()
+    : checkpoint_(shorthand_parser_allocation_registry().size()),
+      scanner_checkpoint_(shorthand::parser::liveScannerStringCount()),
+      previous_program_(main_program), previous_preamble_(main_module_preamble) {
+    main_program = nullptr;
+    main_module_preamble = nullptr;
+}
+
+shorthand::parser::ParseSession::~ParseSession() {
+    shorthand_parser_allocation_registry().releaseFrom(checkpoint_);
+    shorthand_release_scanner_strings_from(scanner_checkpoint_);
+    main_program = previous_program_;
+    main_module_preamble = previous_preamble_;
+}
+
+std::size_t shorthand::parser::liveParserAllocationCount() {
+    return shorthand_parser_allocation_registry().size();
 }
 
 template <typename T>
@@ -449,7 +479,7 @@ static std::string shorthand_decimal_text(double value) {
     return std::string(buffer);
 }
 
-#line 453 "parser.tab.cc"
+#line 483 "parser.tab.cc"
 
 #ifdef short
 # undef short
@@ -844,29 +874,29 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   207,   207,   222,   223,   224,   225,   227,   243,   259,
-     281,   282,   285,   286,   289,   290,   292,   296,   297,   300,
-     301,   303,   303,   303,   303,   303,   303,   305,   308,   309,
-     310,   311,   312,   321,   323,   324,   325,   327,   328,   331,
-     332,   335,   336,   337,   338,   339,   340,   341,   342,   343,
-     344,   345,   346,   347,   348,   349,   350,   351,   352,   353,
-     354,   355,   356,   357,   358,   359,   362,   363,   366,   367,
-     369,   375,   375,   376,   376,   377,   377,   377,   377,   377,
-     377,   377,   377,   377,   377,   378,   378,   380,   380,   381,
-     381,   382,   382,   382,   382,   382,   382,   382,   382,   382,
-     382,   382,   383,   383,   385,   385,   386,   386,   387,   387,
-     390,   390,   391,   391,   392,   392,   393,   393,   394,   394,
-     395,   395,   396,   396,   397,   397,   398,   398,   399,   399,
-     400,   400,   401,   401,   403,   404,   405,   406,   407,   408,
-     410,   411,   412,   413,   414,   415,   418,   419,   420,   421,
-     422,   423,   424,   426,   426,   426,   426,   426,   427,   427,
-     427,   427,   427,   427,   427,   428,   428,   428,   428,   428,
-     428,   428,   428,   429,   429,   429,   429,   430,   430,   430,
-     430,   431,   431,   431,   431,   431,   431,   433,   442,   452,
-     453,   454,   455,   456,   457,   458,   459,   460,   461,   462,
-     463,   464,   465,   466,   467,   468,   469,   470,   471,   472,
-     473,   476,   477,   480,   481,   484,   485,   488,   489,   492,
-     493
+       0,   237,   237,   252,   253,   254,   255,   257,   273,   289,
+     311,   312,   315,   316,   319,   320,   322,   326,   327,   330,
+     331,   333,   333,   333,   333,   333,   333,   335,   338,   339,
+     340,   341,   342,   351,   353,   354,   355,   357,   358,   361,
+     362,   365,   366,   367,   368,   369,   370,   371,   372,   373,
+     374,   375,   376,   377,   378,   379,   380,   381,   382,   383,
+     384,   385,   386,   387,   388,   389,   392,   393,   396,   397,
+     399,   405,   405,   406,   406,   407,   407,   407,   407,   407,
+     407,   407,   407,   407,   407,   408,   408,   410,   410,   411,
+     411,   412,   412,   412,   412,   412,   412,   412,   412,   412,
+     412,   412,   413,   413,   415,   415,   416,   416,   417,   417,
+     420,   420,   421,   421,   422,   422,   423,   423,   424,   424,
+     425,   425,   426,   426,   427,   427,   428,   428,   429,   429,
+     430,   430,   431,   431,   433,   434,   435,   436,   437,   438,
+     440,   441,   442,   443,   444,   445,   448,   449,   450,   451,
+     452,   453,   454,   456,   456,   456,   456,   456,   457,   457,
+     457,   457,   457,   457,   457,   458,   458,   458,   458,   458,
+     458,   458,   458,   459,   459,   459,   459,   460,   460,   460,
+     460,   461,   461,   461,   461,   461,   461,   463,   472,   482,
+     483,   484,   485,   486,   487,   488,   489,   490,   491,   492,
+     493,   494,   495,   496,   497,   498,   499,   500,   501,   502,
+     503,   506,   507,   510,   511,   514,   515,   518,   519,   522,
+     523
 };
 #endif
 
@@ -1934,7 +1964,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* PROGRAMME_RULE: MODULE_PREAMBLE_RULE DECLARATION_STATEMENT_LIST_RULE FUNCTION_LIST_RULE LOGIC_BLOCK  */
-#line 208 "scanner_parser/parser.yy"
+#line 238 "scanner_parser/parser.yy"
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble((yylsp[-3]));
         if (preamble->hasAnyDeclaration() && !preamble->hasModule()) {
@@ -1947,17 +1977,17 @@ yyreduce:
         (yyval.program) = located(new AST_PROGRAM((yyvsp[-2].decl_block),(yyvsp[-1].functions),(yyvsp[0].code_block)), (yyloc));
         main_program = (yyval.program);
     }
-#line 1951 "parser.tab.cc"
+#line 1981 "parser.tab.cc"
     break;
 
   case 3: /* MODULE_PREAMBLE_RULE: %empty  */
-#line 222 "scanner_parser/parser.yy"
+#line 252 "scanner_parser/parser.yy"
              { shorthand_ensure_module_preamble((yyloc)); }
-#line 1957 "parser.tab.cc"
+#line 1987 "parser.tab.cc"
     break;
 
   case 7: /* PACKAGE_DECLARATION: PACKAGE MODULE_PATH ';'  */
-#line 228 "scanner_parser/parser.yy"
+#line 258 "scanner_parser/parser.yy"
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble((yyloc));
         if (preamble->hasPackage()) {
@@ -1972,11 +2002,11 @@ yyreduce:
         }
         preamble->setPackage(current_module_path, shorthand_range((yyloc)));
     }
-#line 1976 "parser.tab.cc"
+#line 2006 "parser.tab.cc"
     break;
 
   case 8: /* MODULE_DECLARATION: MODULE MODULE_PATH ';'  */
-#line 244 "scanner_parser/parser.yy"
+#line 274 "scanner_parser/parser.yy"
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble((yyloc));
         if (preamble->hasModule()) {
@@ -1991,11 +2021,11 @@ yyreduce:
         }
         preamble->setModule(current_module_path, shorthand_range((yyloc)));
     }
-#line 1995 "parser.tab.cc"
+#line 2025 "parser.tab.cc"
     break;
 
   case 9: /* IMPORT_DECLARATION: IMPORT MODULE_PATH IMPORT_ALIAS_OPT ';'  */
-#line 260 "scanner_parser/parser.yy"
+#line 290 "scanner_parser/parser.yy"
     {
         AST_MODULE_PREAMBLE *preamble = shorthand_ensure_module_preamble((yyloc));
         if (!preamble->hasModule()) {
@@ -2015,1023 +2045,1023 @@ yyreduce:
         }
         preamble->addImport(current_module_path, current_import_alias, shorthand_range((yyloc)));
     }
-#line 2019 "parser.tab.cc"
-    break;
-
-  case 10: /* MODULE_PATH: IDENTIFIER  */
-#line 281 "scanner_parser/parser.yy"
-                 { current_module_path = string((yyvsp[0].string_val)); }
-#line 2025 "parser.tab.cc"
-    break;
-
-  case 11: /* MODULE_PATH: MODULE_PATH '.' IDENTIFIER  */
-#line 282 "scanner_parser/parser.yy"
-                                 { current_module_path += "."; current_module_path += string((yyvsp[0].string_val)); }
-#line 2031 "parser.tab.cc"
-    break;
-
-  case 12: /* IMPORT_ALIAS_OPT: %empty  */
-#line 285 "scanner_parser/parser.yy"
-             { current_import_alias.clear(); }
-#line 2037 "parser.tab.cc"
-    break;
-
-  case 13: /* IMPORT_ALIAS_OPT: AS IDENTIFIER  */
-#line 286 "scanner_parser/parser.yy"
-                    { current_import_alias = string((yyvsp[0].string_val)); }
-#line 2043 "parser.tab.cc"
-    break;
-
-  case 14: /* FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'  */
-#line 289 "scanner_parser/parser.yy"
-                                           { (yyval.functions)=(yyvsp[-2].functions); (yyval.functions)->push_back((yyvsp[-1].function)); located((yyval.functions), (yyloc)); }
 #line 2049 "parser.tab.cc"
     break;
 
-  case 15: /* FUNCTION_LIST_RULE: %empty  */
-#line 290 "scanner_parser/parser.yy"
-             { (yyval.functions)=located(new AST_FUNCTION_LIST_RULE(), (yyloc)); }
+  case 10: /* MODULE_PATH: IDENTIFIER  */
+#line 311 "scanner_parser/parser.yy"
+                 { current_module_path = string((yyvsp[0].string_val)); }
 #line 2055 "parser.tab.cc"
     break;
 
-  case 16: /* FUNCTION_RULE: DEF ShortType IDENTIFIER '(' FUNCTION_PARAMETER_LIST_RULE ')' STATEMENT_BLOCK_RULE  */
-#line 293 "scanner_parser/parser.yy"
-    { (yyvsp[0].block_statement)->setLexicalScope(false); (yyval.function)=located(new AST_FUNCTION_RULE((yyvsp[-5].type),(yyvsp[-4].string_val),(yyvsp[-2].decl_block),(yyvsp[0].block_statement)), (yyloc)); }
+  case 11: /* MODULE_PATH: MODULE_PATH '.' IDENTIFIER  */
+#line 312 "scanner_parser/parser.yy"
+                                 { current_module_path += "."; current_module_path += string((yyvsp[0].string_val)); }
 #line 2061 "parser.tab.cc"
     break;
 
-  case 17: /* FUNCTION_PARAMETER_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE  */
-#line 296 "scanner_parser/parser.yy"
-                                      { (yyval.decl_block)=(yyvsp[0].decl_block); }
+  case 12: /* IMPORT_ALIAS_OPT: %empty  */
+#line 315 "scanner_parser/parser.yy"
+             { current_import_alias.clear(); }
 #line 2067 "parser.tab.cc"
     break;
 
-  case 18: /* FUNCTION_PARAMETER_LIST_RULE: %empty  */
-#line 297 "scanner_parser/parser.yy"
-             { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); }
+  case 13: /* IMPORT_ALIAS_OPT: AS IDENTIFIER  */
+#line 316 "scanner_parser/parser.yy"
+                    { current_import_alias = string((yyvsp[0].string_val)); }
 #line 2073 "parser.tab.cc"
     break;
 
-  case 19: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';'  */
-#line 300 "scanner_parser/parser.yy"
-                                                                     { (yyval.decl_block)=(yyvsp[-2].decl_block); (yyval.decl_block)->push_back((yyvsp[-1].decl_block)); located((yyval.decl_block), (yyloc)); }
+  case 14: /* FUNCTION_LIST_RULE: FUNCTION_LIST_RULE FUNCTION_RULE ';'  */
+#line 319 "scanner_parser/parser.yy"
+                                           { (yyval.functions)=(yyvsp[-2].functions); (yyval.functions)->push_back((yyvsp[-1].function)); located((yyval.functions), (yyloc)); }
 #line 2079 "parser.tab.cc"
     break;
 
-  case 20: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_RULE ';'  */
-#line 301 "scanner_parser/parser.yy"
-                                     { (yyval.decl_block)=(yyvsp[-1].decl_block); located((yyval.decl_block), (yyloc)); }
+  case 15: /* FUNCTION_LIST_RULE: %empty  */
+#line 320 "scanner_parser/parser.yy"
+             { (yyval.functions)=located(new AST_FUNCTION_LIST_RULE(), (yyloc)); }
 #line 2085 "parser.tab.cc"
     break;
 
-  case 21: /* ShortType: INT  */
-#line 303 "scanner_parser/parser.yy"
-               {(yyval.type)=ShortType::Int;}
+  case 16: /* FUNCTION_RULE: DEF ShortType IDENTIFIER '(' FUNCTION_PARAMETER_LIST_RULE ')' STATEMENT_BLOCK_RULE  */
+#line 323 "scanner_parser/parser.yy"
+    { (yyvsp[0].block_statement)->setLexicalScope(false); (yyval.function)=located(new AST_FUNCTION_RULE((yyvsp[-5].type),(yyvsp[-4].string_val),(yyvsp[-2].decl_block),(yyvsp[0].block_statement)), (yyloc)); }
 #line 2091 "parser.tab.cc"
     break;
 
-  case 22: /* ShortType: FLOAT  */
-#line 303 "scanner_parser/parser.yy"
-                                            {(yyval.type)=ShortType::Float;}
+  case 17: /* FUNCTION_PARAMETER_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE  */
+#line 326 "scanner_parser/parser.yy"
+                                      { (yyval.decl_block)=(yyvsp[0].decl_block); }
 #line 2097 "parser.tab.cc"
     break;
 
-  case 23: /* ShortType: DOUBLE  */
-#line 303 "scanner_parser/parser.yy"
-                                                                            {(yyval.type)=ShortType::Float;}
+  case 18: /* FUNCTION_PARAMETER_LIST_RULE: %empty  */
+#line 327 "scanner_parser/parser.yy"
+             { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); }
 #line 2103 "parser.tab.cc"
     break;
 
-  case 24: /* ShortType: STRING  */
-#line 303 "scanner_parser/parser.yy"
-                                                                                                            {(yyval.type)=ShortType::String;}
+  case 19: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_LIST_RULE DECLARATION_STATEMENT_RULE ';'  */
+#line 330 "scanner_parser/parser.yy"
+                                                                     { (yyval.decl_block)=(yyvsp[-2].decl_block); (yyval.decl_block)->push_back((yyvsp[-1].decl_block)); located((yyval.decl_block), (yyloc)); }
 #line 2109 "parser.tab.cc"
     break;
 
-  case 25: /* ShortType: VOID  */
-#line 303 "scanner_parser/parser.yy"
-                                                                                                                                           {(yyval.type)=ShortType::Void;}
+  case 20: /* DECLARATION_STATEMENT_LIST_RULE: DECLARATION_STATEMENT_RULE ';'  */
+#line 331 "scanner_parser/parser.yy"
+                                     { (yyval.decl_block)=(yyvsp[-1].decl_block); located((yyval.decl_block), (yyloc)); }
 #line 2115 "parser.tab.cc"
     break;
 
-  case 26: /* ShortType: BOOL  */
-#line 303 "scanner_parser/parser.yy"
-                                                                                                                                                                        {(yyval.type)=ShortType::Boolean;}
+  case 21: /* ShortType: INT  */
+#line 333 "scanner_parser/parser.yy"
+               {(yyval.type)=ShortType::Int;}
 #line 2121 "parser.tab.cc"
     break;
 
-  case 27: /* DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE  */
-#line 305 "scanner_parser/parser.yy"
-                                                                     { (yyval.decl_block)=(yyvsp[0].decl_block); (yyval.decl_block)->setType((yyvsp[-1].type)); located((yyval.decl_block), (yyloc)); }
+  case 22: /* ShortType: FLOAT  */
+#line 333 "scanner_parser/parser.yy"
+                                            {(yyval.type)=ShortType::Float;}
 #line 2127 "parser.tab.cc"
     break;
 
-  case 28: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER  */
-#line 308 "scanner_parser/parser.yy"
-                                                    { (yyval.decl_block)=(yyvsp[-2].decl_block); (yyval.decl_block)->push_back(string((yyvsp[0].string_val))); located((yyval.decl_block), (yyloc)); }
+  case 23: /* ShortType: DOUBLE  */
+#line 333 "scanner_parser/parser.yy"
+                                                                            {(yyval.type)=ShortType::Float;}
 #line 2133 "parser.tab.cc"
     break;
 
-  case 29: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'  */
-#line 309 "scanner_parser/parser.yy"
-                                                                        { (yyval.decl_block)=(yyvsp[-5].decl_block); (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)),(yyvsp[-1].int_val)); located((yyval.decl_block), (yyloc)); }
+  case 24: /* ShortType: STRING  */
+#line 333 "scanner_parser/parser.yy"
+                                                                                                            {(yyval.type)=ShortType::String;}
 #line 2139 "parser.tab.cc"
     break;
 
-  case 30: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER  */
-#line 310 "scanner_parser/parser.yy"
-                 { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); (yyval.decl_block)->push_back(string((yyvsp[0].string_val))); }
+  case 25: /* ShortType: VOID  */
+#line 333 "scanner_parser/parser.yy"
+                                                                                                                                           {(yyval.type)=ShortType::Void;}
 #line 2145 "parser.tab.cc"
     break;
 
-  case 31: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL ']'  */
-#line 311 "scanner_parser/parser.yy"
-                                     { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)),(yyvsp[-1].int_val)); }
+  case 26: /* ShortType: BOOL  */
+#line 333 "scanner_parser/parser.yy"
+                                                                                                                                                                        {(yyval.type)=ShortType::Boolean;}
 #line 2151 "parser.tab.cc"
     break;
 
-  case 32: /* DECLARATION_VARIABLE_LIST_RULE: %empty  */
-#line 312 "scanner_parser/parser.yy"
-             { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); }
+  case 27: /* DECLARATION_STATEMENT_RULE: ShortType DECLARATION_VARIABLE_LIST_RULE  */
+#line 335 "scanner_parser/parser.yy"
+                                                                     { (yyval.decl_block)=(yyvsp[0].decl_block); (yyval.decl_block)->setType((yyvsp[-1].type)); located((yyval.decl_block), (yyloc)); }
 #line 2157 "parser.tab.cc"
     break;
 
-  case 33: /* LOGIC_BLOCK: TOP_LEVEL_STATEMENT_LIST_RULE  */
-#line 321 "scanner_parser/parser.yy"
-                                           { (yyval.code_block)=located(new AST_LOGIC_BLOCK((yyvsp[0].block_statement)), (yyloc)); }
+  case 28: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER  */
+#line 338 "scanner_parser/parser.yy"
+                                                    { (yyval.decl_block)=(yyvsp[-2].decl_block); (yyval.decl_block)->push_back(string((yyvsp[0].string_val))); located((yyval.decl_block), (yyloc)); }
 #line 2163 "parser.tab.cc"
     break;
 
-  case 34: /* TOP_LEVEL_STATEMENT_LIST_RULE: TOP_LEVEL_STATEMENT_LIST_RULE EXECUTABLE_STATEMENT_RULE  */
-#line 323 "scanner_parser/parser.yy"
-                                                              { (yyval.block_statement)=(yyvsp[-1].block_statement); (yyval.block_statement)->push_back((yyvsp[0].statement)); located((yyval.block_statement), (yyloc)); }
+  case 29: /* DECLARATION_VARIABLE_LIST_RULE: DECLARATION_VARIABLE_LIST_RULE ',' IDENTIFIER '[' INT_LITERAL ']'  */
+#line 339 "scanner_parser/parser.yy"
+                                                                        { (yyval.decl_block)=(yyvsp[-5].decl_block); (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)),(yyvsp[-1].int_val)); located((yyval.decl_block), (yyloc)); }
 #line 2169 "parser.tab.cc"
     break;
 
-  case 35: /* TOP_LEVEL_STATEMENT_LIST_RULE: EXECUTABLE_STATEMENT_RULE  */
-#line 324 "scanner_parser/parser.yy"
-                                { (yyval.block_statement)=located(new AST_STATEMENTS_BLOCK(), (yyloc)); (yyval.block_statement)->push_back((yyvsp[0].statement)); }
+  case 30: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER  */
+#line 340 "scanner_parser/parser.yy"
+                 { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); (yyval.decl_block)->push_back(string((yyvsp[0].string_val))); }
 #line 2175 "parser.tab.cc"
     break;
 
-  case 36: /* STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'  */
-#line 325 "scanner_parser/parser.yy"
-                                                  { (yyval.block_statement)=(yyvsp[-1].block_statement); (yyval.block_statement)->setLexicalScope(true); located((yyval.block_statement), (yyloc)); }
+  case 31: /* DECLARATION_VARIABLE_LIST_RULE: IDENTIFIER '[' INT_LITERAL ']'  */
+#line 341 "scanner_parser/parser.yy"
+                                     { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); (yyval.decl_block)->push_back(string((yyvsp[-3].string_val)),(yyvsp[-1].int_val)); }
 #line 2181 "parser.tab.cc"
     break;
 
-  case 37: /* STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE  */
-#line 327 "scanner_parser/parser.yy"
-                                         { (yyval.block_statement)=(yyvsp[-1].block_statement); (yyval.block_statement)->push_back((yyvsp[0].statement)); located((yyval.block_statement), (yyloc)); }
+  case 32: /* DECLARATION_VARIABLE_LIST_RULE: %empty  */
+#line 342 "scanner_parser/parser.yy"
+             { (yyval.decl_block)=located(new AST_DATA_DECLARATION_BLOCK(), (yyloc)); }
 #line 2187 "parser.tab.cc"
     break;
 
-  case 38: /* STATEMENT_LIST_RULE: STATEMENT_RULE  */
-#line 328 "scanner_parser/parser.yy"
-                     { (yyval.block_statement)=located(new AST_STATEMENTS_BLOCK(), (yyloc)); (yyval.block_statement)->push_back((yyvsp[0].statement)); }
+  case 33: /* LOGIC_BLOCK: TOP_LEVEL_STATEMENT_LIST_RULE  */
+#line 351 "scanner_parser/parser.yy"
+                                           { (yyval.code_block)=located(new AST_LOGIC_BLOCK((yyvsp[0].block_statement)), (yyloc)); }
 #line 2193 "parser.tab.cc"
     break;
 
-  case 39: /* STATEMENT_RULE: EXECUTABLE_STATEMENT_RULE  */
-#line 331 "scanner_parser/parser.yy"
-                                { (yyval.statement)=(yyvsp[0].statement); }
+  case 34: /* TOP_LEVEL_STATEMENT_LIST_RULE: TOP_LEVEL_STATEMENT_LIST_RULE EXECUTABLE_STATEMENT_RULE  */
+#line 353 "scanner_parser/parser.yy"
+                                                              { (yyval.block_statement)=(yyvsp[-1].block_statement); (yyval.block_statement)->push_back((yyvsp[0].statement)); located((yyval.block_statement), (yyloc)); }
 #line 2199 "parser.tab.cc"
     break;
 
-  case 40: /* STATEMENT_RULE: DECLARATION_STATEMENT_RULE ';'  */
-#line 332 "scanner_parser/parser.yy"
-                                     { (yyval.statement)=(yyvsp[-1].decl_block); located((yyval.statement), (yyloc)); }
+  case 35: /* TOP_LEVEL_STATEMENT_LIST_RULE: EXECUTABLE_STATEMENT_RULE  */
+#line 354 "scanner_parser/parser.yy"
+                                { (yyval.block_statement)=located(new AST_STATEMENTS_BLOCK(), (yyloc)); (yyval.block_statement)->push_back((yyvsp[0].statement)); }
 #line 2205 "parser.tab.cc"
     break;
 
-  case 41: /* EXECUTABLE_STATEMENT_RULE: MODEL_DECLARATION  */
-#line 335 "scanner_parser/parser.yy"
-                        { (yyval.statement)=(yyvsp[0].model_decl); }
+  case 36: /* STATEMENT_BLOCK_RULE: '{' STATEMENT_LIST_RULE '}'  */
+#line 355 "scanner_parser/parser.yy"
+                                                  { (yyval.block_statement)=(yyvsp[-1].block_statement); (yyval.block_statement)->setLexicalScope(true); located((yyval.block_statement), (yyloc)); }
 #line 2211 "parser.tab.cc"
     break;
 
-  case 42: /* EXECUTABLE_STATEMENT_RULE: TENSOR_DECLARATION  */
-#line 336 "scanner_parser/parser.yy"
-                         { (yyval.statement)=(yyvsp[0].tensor_decl); }
+  case 37: /* STATEMENT_LIST_RULE: STATEMENT_LIST_RULE STATEMENT_RULE  */
+#line 357 "scanner_parser/parser.yy"
+                                         { (yyval.block_statement)=(yyvsp[-1].block_statement); (yyval.block_statement)->push_back((yyvsp[0].statement)); located((yyval.block_statement), (yyloc)); }
 #line 2217 "parser.tab.cc"
     break;
 
-  case 43: /* EXECUTABLE_STATEMENT_RULE: GREENAI_CONTRACT  */
-#line 337 "scanner_parser/parser.yy"
-                       { (yyval.statement)=(yyvsp[0].greenai_contract); }
+  case 38: /* STATEMENT_LIST_RULE: STATEMENT_RULE  */
+#line 358 "scanner_parser/parser.yy"
+                     { (yyval.block_statement)=located(new AST_STATEMENTS_BLOCK(), (yyloc)); (yyval.block_statement)->push_back((yyvsp[0].statement)); }
 #line 2223 "parser.tab.cc"
     break;
 
-  case 44: /* EXECUTABLE_STATEMENT_RULE: GREENAI_MEASUREMENT  */
-#line 338 "scanner_parser/parser.yy"
-                          { (yyval.statement)=(yyvsp[0].greenai_measure); }
+  case 39: /* STATEMENT_RULE: EXECUTABLE_STATEMENT_RULE  */
+#line 361 "scanner_parser/parser.yy"
+                                { (yyval.statement)=(yyvsp[0].statement); }
 #line 2229 "parser.tab.cc"
     break;
 
-  case 45: /* EXECUTABLE_STATEMENT_RULE: C3ECO_DECLARATION  */
-#line 339 "scanner_parser/parser.yy"
-                        { (yyval.statement)=(yyvsp[0].c3eco_decl); }
+  case 40: /* STATEMENT_RULE: DECLARATION_STATEMENT_RULE ';'  */
+#line 362 "scanner_parser/parser.yy"
+                                     { (yyval.statement)=(yyvsp[-1].decl_block); located((yyval.statement), (yyloc)); }
 #line 2235 "parser.tab.cc"
     break;
 
-  case 46: /* EXECUTABLE_STATEMENT_RULE: INFER_STATEMENT  */
-#line 340 "scanner_parser/parser.yy"
-                      { (yyval.statement)=(yyvsp[0].infer_statement); }
+  case 41: /* EXECUTABLE_STATEMENT_RULE: MODEL_DECLARATION  */
+#line 365 "scanner_parser/parser.yy"
+                        { (yyval.statement)=(yyvsp[0].model_decl); }
 #line 2241 "parser.tab.cc"
     break;
 
-  case 47: /* EXECUTABLE_STATEMENT_RULE: RETURN_STATEMENT  */
-#line 341 "scanner_parser/parser.yy"
-                       { (yyval.statement)=(yyvsp[0].return_statement); }
+  case 42: /* EXECUTABLE_STATEMENT_RULE: TENSOR_DECLARATION  */
+#line 366 "scanner_parser/parser.yy"
+                         { (yyval.statement)=(yyvsp[0].tensor_decl); }
 #line 2247 "parser.tab.cc"
     break;
 
-  case 48: /* EXECUTABLE_STATEMENT_RULE: CONTINUE ';'  */
-#line 342 "scanner_parser/parser.yy"
-                   { (yyval.statement)=located(new AST_CONTINUE(), (yyloc)); }
+  case 43: /* EXECUTABLE_STATEMENT_RULE: GREENAI_CONTRACT  */
+#line 367 "scanner_parser/parser.yy"
+                       { (yyval.statement)=(yyvsp[0].greenai_contract); }
 #line 2253 "parser.tab.cc"
     break;
 
-  case 49: /* EXECUTABLE_STATEMENT_RULE: EXPRESSION_RULE ';'  */
-#line 343 "scanner_parser/parser.yy"
-                          { (yyval.statement)=located(new AST_EXPRESSION_STATEMENT_RULE((yyvsp[-1].expression)), (yyloc)); }
+  case 44: /* EXECUTABLE_STATEMENT_RULE: GREENAI_MEASUREMENT  */
+#line 368 "scanner_parser/parser.yy"
+                          { (yyval.statement)=(yyvsp[0].greenai_measure); }
 #line 2259 "parser.tab.cc"
     break;
 
-  case 50: /* EXECUTABLE_STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE ';'  */
-#line 344 "scanner_parser/parser.yy"
-                                            { (yyval.statement)=located(new AST_ASSIGNMENT_RULE((yyvsp[-3].variable),(yyvsp[-1].expression)), (yyloc)); }
+  case 45: /* EXECUTABLE_STATEMENT_RULE: C3ECO_DECLARATION  */
+#line 369 "scanner_parser/parser.yy"
+                        { (yyval.statement)=(yyvsp[0].c3eco_decl); }
 #line 2265 "parser.tab.cc"
     break;
 
-  case 51: /* EXECUTABLE_STATEMENT_RULE: STATEMENT_BLOCK_RULE  */
-#line 345 "scanner_parser/parser.yy"
-                           { (yyval.statement)=(yyvsp[0].block_statement); }
+  case 46: /* EXECUTABLE_STATEMENT_RULE: INFER_STATEMENT  */
+#line 370 "scanner_parser/parser.yy"
+                      { (yyval.statement)=(yyvsp[0].infer_statement); }
 #line 2271 "parser.tab.cc"
     break;
 
-  case 52: /* EXECUTABLE_STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 346 "scanner_parser/parser.yy"
-                                              { (yyval.statement)=located(new AST_IF_STATEMENT((yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
+  case 47: /* EXECUTABLE_STATEMENT_RULE: RETURN_STATEMENT  */
+#line 371 "scanner_parser/parser.yy"
+                       { (yyval.statement)=(yyvsp[0].return_statement); }
 #line 2277 "parser.tab.cc"
     break;
 
-  case 53: /* EXECUTABLE_STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE  */
-#line 347 "scanner_parser/parser.yy"
-                                                                        { (yyval.statement)=located(new AST_IF_ELSE_STATEMENT((yyvsp[-3].expression),(yyvsp[-2].block_statement),(yyvsp[0].block_statement)), (yyloc)); }
+  case 48: /* EXECUTABLE_STATEMENT_RULE: CONTINUE ';'  */
+#line 372 "scanner_parser/parser.yy"
+                   { (yyval.statement)=located(new AST_CONTINUE(), (yyloc)); }
 #line 2283 "parser.tab.cc"
     break;
 
-  case 54: /* EXECUTABLE_STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 348 "scanner_parser/parser.yy"
-                                                                                      { (yyval.statement)=located(new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-5].variable),(yyvsp[-3].expression),(yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
+  case 49: /* EXECUTABLE_STATEMENT_RULE: EXPRESSION_RULE ';'  */
+#line 373 "scanner_parser/parser.yy"
+                          { (yyval.statement)=located(new AST_EXPRESSION_STATEMENT_RULE((yyvsp[-1].expression)), (yyloc)); }
 #line 2289 "parser.tab.cc"
     break;
 
-  case 55: /* EXECUTABLE_STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 349 "scanner_parser/parser.yy"
-                                                                                                          { (yyval.statement)=located(new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-7].variable),(yyvsp[-5].expression),(yyvsp[-3].expression),(yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
+  case 50: /* EXECUTABLE_STATEMENT_RULE: VARIABLE_RULE '=' EXPRESSION_RULE ';'  */
+#line 374 "scanner_parser/parser.yy"
+                                            { (yyval.statement)=located(new AST_ASSIGNMENT_RULE((yyvsp[-3].variable),(yyvsp[-1].expression)), (yyloc)); }
 #line 2295 "parser.tab.cc"
     break;
 
-  case 56: /* EXECUTABLE_STATEMENT_RULE: LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
-#line 350 "scanner_parser/parser.yy"
-                                                { (yyval.statement)=located(new AST_WHILE_LOOP_STATEMENT_RULE((yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
+  case 51: /* EXECUTABLE_STATEMENT_RULE: STATEMENT_BLOCK_RULE  */
+#line 375 "scanner_parser/parser.yy"
+                           { (yyval.statement)=(yyvsp[0].block_statement); }
 #line 2301 "parser.tab.cc"
     break;
 
-  case 57: /* EXECUTABLE_STATEMENT_RULE: GOTO IDENTIFIER ';'  */
-#line 351 "scanner_parser/parser.yy"
-                          { (yyval.statement)=located(new AST_GOTO_STATEMENT_RULE(string((yyvsp[-1].string_val))), (yyloc)); }
+  case 52: /* EXECUTABLE_STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 376 "scanner_parser/parser.yy"
+                                              { (yyval.statement)=located(new AST_IF_STATEMENT((yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
 #line 2307 "parser.tab.cc"
     break;
 
-  case 58: /* EXECUTABLE_STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE ';'  */
-#line 352 "scanner_parser/parser.yy"
-                                             { (yyval.statement)=located(new AST_GOTO_STATEMENT_RULE((yyvsp[-1].expression),string((yyvsp[-3].string_val))), (yyloc)); }
+  case 53: /* EXECUTABLE_STATEMENT_RULE: IF EXPRESSION_RULE STATEMENT_BLOCK_RULE ELSE STATEMENT_BLOCK_RULE  */
+#line 377 "scanner_parser/parser.yy"
+                                                                        { (yyval.statement)=located(new AST_IF_ELSE_STATEMENT((yyvsp[-3].expression),(yyvsp[-2].block_statement),(yyvsp[0].block_statement)), (yyloc)); }
 #line 2313 "parser.tab.cc"
     break;
 
-  case 59: /* EXECUTABLE_STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE ';'  */
-#line 353 "scanner_parser/parser.yy"
-                                       { (yyval.statement)=(yyvsp[-1].read_statement); located((yyval.statement), (yyloc)); }
+  case 54: /* EXECUTABLE_STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 378 "scanner_parser/parser.yy"
+                                                                                      { (yyval.statement)=located(new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-5].variable),(yyvsp[-3].expression),(yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
 #line 2319 "parser.tab.cc"
     break;
 
-  case 60: /* EXECUTABLE_STATEMENT_RULE: BREAK ';'  */
-#line 354 "scanner_parser/parser.yy"
-                { (yyval.statement)=located(new AST_BREAK(), (yyloc)); }
+  case 55: /* EXECUTABLE_STATEMENT_RULE: LOOP VARIABLE_RULE '=' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 379 "scanner_parser/parser.yy"
+                                                                                                          { (yyval.statement)=located(new AST_FOR_LOOP_STATEMENT_RULE((yyvsp[-7].variable),(yyvsp[-5].expression),(yyvsp[-3].expression),(yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
 #line 2325 "parser.tab.cc"
     break;
 
-  case 61: /* EXECUTABLE_STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE ';'  */
-#line 355 "scanner_parser/parser.yy"
-                                         { (yyval.statement)=(yyvsp[-1].print_statement); located((yyval.statement), (yyloc)); }
+  case 56: /* EXECUTABLE_STATEMENT_RULE: LOOP EXPRESSION_RULE STATEMENT_BLOCK_RULE  */
+#line 380 "scanner_parser/parser.yy"
+                                                { (yyval.statement)=located(new AST_WHILE_LOOP_STATEMENT_RULE((yyvsp[-1].expression),(yyvsp[0].block_statement)), (yyloc)); }
 #line 2331 "parser.tab.cc"
     break;
 
-  case 62: /* EXECUTABLE_STATEMENT_RULE: GREENAI_REPORT_RULE ';'  */
-#line 356 "scanner_parser/parser.yy"
-                              { (yyval.statement)=(yyvsp[-1].greenai_report); located((yyval.statement), (yyloc)); }
+  case 57: /* EXECUTABLE_STATEMENT_RULE: GOTO IDENTIFIER ';'  */
+#line 381 "scanner_parser/parser.yy"
+                          { (yyval.statement)=located(new AST_GOTO_STATEMENT_RULE(string((yyvsp[-1].string_val))), (yyloc)); }
 #line 2337 "parser.tab.cc"
     break;
 
-  case 63: /* EXECUTABLE_STATEMENT_RULE: AI_INFER_RULE ';'  */
-#line 357 "scanner_parser/parser.yy"
-                        { (yyval.statement)=(yyvsp[-1].ai_infer); located((yyval.statement), (yyloc)); }
+  case 58: /* EXECUTABLE_STATEMENT_RULE: GOTO IDENTIFIER IF EXPRESSION_RULE ';'  */
+#line 382 "scanner_parser/parser.yy"
+                                             { (yyval.statement)=located(new AST_GOTO_STATEMENT_RULE((yyvsp[-1].expression),string((yyvsp[-3].string_val))), (yyloc)); }
 #line 2343 "parser.tab.cc"
     break;
 
-  case 64: /* EXECUTABLE_STATEMENT_RULE: IDENTIFIER ':'  */
-#line 358 "scanner_parser/parser.yy"
-                     { (yyval.statement)=located(new AST_LABEL_RULE(string((yyvsp[-1].string_val))), (yyloc)); }
+  case 59: /* EXECUTABLE_STATEMENT_RULE: READ READ_VARIABLE_LIST_RULE ';'  */
+#line 383 "scanner_parser/parser.yy"
+                                       { (yyval.statement)=(yyvsp[-1].read_statement); located((yyval.statement), (yyloc)); }
 #line 2349 "parser.tab.cc"
     break;
 
-  case 65: /* EXECUTABLE_STATEMENT_RULE: ';'  */
-#line 359 "scanner_parser/parser.yy"
-          { (yyval.statement)=located(new AST_EXPRESSION_STATEMENT_RULE(located(new AST_LITERAL(1), (yyloc))), (yyloc)); }
+  case 60: /* EXECUTABLE_STATEMENT_RULE: BREAK ';'  */
+#line 384 "scanner_parser/parser.yy"
+                { (yyval.statement)=located(new AST_BREAK(), (yyloc)); }
 #line 2355 "parser.tab.cc"
     break;
 
-  case 66: /* RETURN_STATEMENT: RETURN EXPRESSION_RULE ';'  */
-#line 362 "scanner_parser/parser.yy"
-                                 { (yyval.return_statement)=located(new AST_RETURN_STATEMENT((yyvsp[-1].expression)), (yyloc)); }
+  case 61: /* EXECUTABLE_STATEMENT_RULE: PRINT PRINT_VARIABLE_LIST_RULE ';'  */
+#line 385 "scanner_parser/parser.yy"
+                                         { (yyval.statement)=(yyvsp[-1].print_statement); located((yyval.statement), (yyloc)); }
 #line 2361 "parser.tab.cc"
     break;
 
-  case 67: /* RETURN_STATEMENT: RETURN ';'  */
-#line 363 "scanner_parser/parser.yy"
-                 { (yyval.return_statement)=located(new AST_RETURN_STATEMENT(), (yyloc)); }
+  case 62: /* EXECUTABLE_STATEMENT_RULE: GREENAI_REPORT_RULE ';'  */
+#line 386 "scanner_parser/parser.yy"
+                              { (yyval.statement)=(yyvsp[-1].greenai_report); located((yyval.statement), (yyloc)); }
 #line 2367 "parser.tab.cc"
     break;
 
-  case 68: /* INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' ARROW IDENTIFIER ';'  */
-#line 366 "scanner_parser/parser.yy"
-                                                               { (yyval.infer_statement)=located(new AST_INFER_STATEMENT(string((yyvsp[-6].string_val)),string((yyvsp[-4].string_val)),string((yyvsp[-1].string_val))), (yyloc)); }
+  case 63: /* EXECUTABLE_STATEMENT_RULE: AI_INFER_RULE ';'  */
+#line 387 "scanner_parser/parser.yy"
+                        { (yyval.statement)=(yyvsp[-1].ai_infer); located((yyval.statement), (yyloc)); }
 #line 2373 "parser.tab.cc"
     break;
 
-  case 69: /* INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';'  */
-#line 367 "scanner_parser/parser.yy"
-                                                                 { (yyval.infer_statement)=located(new AST_INFER_STATEMENT(string((yyvsp[-6].string_val)),string((yyvsp[-4].string_val)),string((yyvsp[-1].string_val))), (yyloc)); }
+  case 64: /* EXECUTABLE_STATEMENT_RULE: IDENTIFIER ':'  */
+#line 388 "scanner_parser/parser.yy"
+                     { (yyval.statement)=located(new AST_LABEL_RULE(string((yyvsp[-1].string_val))), (yyloc)); }
 #line 2379 "parser.tab.cc"
     break;
 
+  case 65: /* EXECUTABLE_STATEMENT_RULE: ';'  */
+#line 389 "scanner_parser/parser.yy"
+          { (yyval.statement)=located(new AST_EXPRESSION_STATEMENT_RULE(located(new AST_LITERAL(1), (yyloc))), (yyloc)); }
+#line 2385 "parser.tab.cc"
+    break;
+
+  case 66: /* RETURN_STATEMENT: RETURN EXPRESSION_RULE ';'  */
+#line 392 "scanner_parser/parser.yy"
+                                 { (yyval.return_statement)=located(new AST_RETURN_STATEMENT((yyvsp[-1].expression)), (yyloc)); }
+#line 2391 "parser.tab.cc"
+    break;
+
+  case 67: /* RETURN_STATEMENT: RETURN ';'  */
+#line 393 "scanner_parser/parser.yy"
+                 { (yyval.return_statement)=located(new AST_RETURN_STATEMENT(), (yyloc)); }
+#line 2397 "parser.tab.cc"
+    break;
+
+  case 68: /* INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' ARROW IDENTIFIER ';'  */
+#line 396 "scanner_parser/parser.yy"
+                                                               { (yyval.infer_statement)=located(new AST_INFER_STATEMENT(string((yyvsp[-6].string_val)),string((yyvsp[-4].string_val)),string((yyvsp[-1].string_val))), (yyloc)); }
+#line 2403 "parser.tab.cc"
+    break;
+
+  case 69: /* INFER_STATEMENT: INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';'  */
+#line 397 "scanner_parser/parser.yy"
+                                                                 { (yyval.infer_statement)=located(new AST_INFER_STATEMENT(string((yyvsp[-6].string_val)),string((yyvsp[-4].string_val)),string((yyvsp[-1].string_val))), (yyloc)); }
+#line 2409 "parser.tab.cc"
+    break;
+
   case 70: /* TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL ';'  */
-#line 369 "scanner_parser/parser.yy"
+#line 399 "scanner_parser/parser.yy"
                                                                         {
     TensorDeclarationData d; d.name=(yyvsp[-3].string_val); d.element_type=(yyvsp[-2].string_val); d.shape_csv=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); d.dynamic=(d.shape_csv=="dynamic"); d.rank=d.dynamic?0:1;
     long long total=1; if(!d.dynamic){ d.rank=0; size_t start=0; while(start<d.shape_csv.size()){ size_t pos=d.shape_csv.find(',',start); string part=d.shape_csv.substr(start,pos==string::npos?string::npos:pos-start); total*=atoll(part.c_str()); d.rank++; if(pos==string::npos) break; start=pos+1; }} d.total_elements=total;
     (yyval.tensor_decl)=located(new AST_TENSOR_DECLARATION(d), (yyloc));
 }
-#line 2389 "parser.tab.cc"
-    break;
-
-  case 71: /* $@1: %empty  */
-#line 375 "scanner_parser/parser.yy"
-                                        { current_model=ModelDeclarationData(); current_model.name=(yyvsp[-1].string_val); }
-#line 2395 "parser.tab.cc"
-    break;
-
-  case 72: /* MODEL_DECLARATION: MODEL IDENTIFIER '{' $@1 MODEL_FIELD_LIST '}' ';'  */
-#line 375 "scanner_parser/parser.yy"
-                                                                                                                                  { (yyval.model_decl)=located(new AST_MODEL_DECLARATION(current_model), (yyloc)); }
-#line 2401 "parser.tab.cc"
-    break;
-
-  case 75: /* MODEL_FIELD: FORMAT FORMAT_NAME ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                    { current_model.format=(yyvsp[-1].string_val); }
-#line 2407 "parser.tab.cc"
-    break;
-
-  case 76: /* MODEL_FIELD: PATH STRING_LITERAL ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                           { current_model.path=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
-#line 2413 "parser.tab.cc"
-    break;
-
-  case 77: /* MODEL_FIELD: TASK STRING_LITERAL ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                      { current_model.task=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
 #line 2419 "parser.tab.cc"
     break;
 
-  case 78: /* MODEL_FIELD: PRECISION PRECISION_NAME ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                      { current_model.precision=(yyvsp[-1].string_val); }
+  case 71: /* $@1: %empty  */
+#line 405 "scanner_parser/parser.yy"
+                                        { current_model=ModelDeclarationData(); current_model.name=(yyvsp[-1].string_val); }
 #line 2425 "parser.tab.cc"
     break;
 
-  case 79: /* MODEL_FIELD: INPUT_SHAPE STRING_LITERAL ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                       { current_model.input_shape=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+  case 72: /* MODEL_DECLARATION: MODEL IDENTIFIER '{' $@1 MODEL_FIELD_LIST '}' ';'  */
+#line 405 "scanner_parser/parser.yy"
+                                                                                                                                  { (yyval.model_decl)=located(new AST_MODEL_DECLARATION(current_model), (yyloc)); }
 #line 2431 "parser.tab.cc"
     break;
 
-  case 80: /* MODEL_FIELD: OUTPUT_SHAPE STRING_LITERAL ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                 { current_model.output_shape=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+  case 75: /* MODEL_FIELD: FORMAT FORMAT_NAME ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                    { current_model.format=(yyvsp[-1].string_val); }
 #line 2437 "parser.tab.cc"
     break;
 
-  case 82: /* MODEL_FIELD: COMPACT TRUE ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   { current_model.compact=true; }
+  case 76: /* MODEL_FIELD: PATH STRING_LITERAL ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                           { current_model.path=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
 #line 2443 "parser.tab.cc"
     break;
 
-  case 83: /* MODEL_FIELD: COMPACT FALSE ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       { current_model.compact=false; }
+  case 77: /* MODEL_FIELD: TASK STRING_LITERAL ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                      { current_model.task=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
 #line 2449 "parser.tab.cc"
     break;
 
-  case 84: /* MODEL_FIELD: QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';'  */
-#line 377 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        { current_model.has_quality_guardrail=true; current_model.quality_guardrail={string((yyvsp[-3].string_val)),">=",(double)(yyvsp[-1].int_val)}; }
+  case 78: /* MODEL_FIELD: PRECISION PRECISION_NAME ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                      { current_model.precision=(yyvsp[-1].string_val); }
 #line 2455 "parser.tab.cc"
     break;
 
-  case 85: /* BACKEND_LIST: BACKEND_LIST ',' BACKEND_NAME  */
-#line 378 "scanner_parser/parser.yy"
-                                            { current_model.backend_preference.push_back((yyvsp[0].string_val)); }
+  case 79: /* MODEL_FIELD: INPUT_SHAPE STRING_LITERAL ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                       { current_model.input_shape=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
 #line 2461 "parser.tab.cc"
     break;
 
-  case 86: /* BACKEND_LIST: BACKEND_NAME  */
-#line 378 "scanner_parser/parser.yy"
-                                                                                                               { current_model.backend_preference.push_back((yyvsp[0].string_val)); }
+  case 80: /* MODEL_FIELD: OUTPUT_SHAPE STRING_LITERAL ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                 { current_model.output_shape=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
 #line 2467 "parser.tab.cc"
     break;
 
-  case 87: /* $@2: %empty  */
-#line 380 "scanner_parser/parser.yy"
-                                                    { current_contract=GreenAIContractData(); current_contract.name=(yyvsp[-1].string_val); }
+  case 82: /* MODEL_FIELD: COMPACT TRUE ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   { current_model.compact=true; }
 #line 2473 "parser.tab.cc"
     break;
 
-  case 88: /* GREENAI_CONTRACT: GREENAI_CONTRACT_T IDENTIFIER '{' $@2 CONTRACT_FIELD_LIST '}' ';'  */
-#line 380 "scanner_parser/parser.yy"
-                                                                                                                                                      { (yyval.greenai_contract)=located(new AST_GREENAI_CONTRACT(current_contract), (yyloc)); }
+  case 83: /* MODEL_FIELD: COMPACT FALSE ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       { current_model.compact=false; }
 #line 2479 "parser.tab.cc"
     break;
 
-  case 91: /* CONTRACT_FIELD: FUNCTIONAL_UNIT STRING_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                   { current_contract.functional_unit=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); current_contract.has_functional_unit=true; }
+  case 84: /* MODEL_FIELD: QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';'  */
+#line 407 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        { current_model.has_quality_guardrail=true; current_model.quality_guardrail={string((yyvsp[-3].string_val)),">=",(double)(yyvsp[-1].int_val)}; }
 #line 2485 "parser.tab.cc"
     break;
 
-  case 92: /* CONTRACT_FIELD: SUCCESS_CRITERIA STRING_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                   { current_contract.success_criteria=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); current_contract.has_success_criteria=true; }
+  case 85: /* BACKEND_LIST: BACKEND_LIST ',' BACKEND_NAME  */
+#line 408 "scanner_parser/parser.yy"
+                                            { current_model.backend_preference.push_back((yyvsp[0].string_val)); }
 #line 2491 "parser.tab.cc"
     break;
 
-  case 93: /* CONTRACT_FIELD: BOUNDARY BOUNDARY_LIST ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                            { current_contract.has_boundary=true; }
+  case 86: /* BACKEND_LIST: BACKEND_NAME  */
+#line 408 "scanner_parser/parser.yy"
+                                                                                                               { current_model.backend_preference.push_back((yyvsp[0].string_val)); }
 #line 2497 "parser.tab.cc"
     break;
 
-  case 94: /* CONTRACT_FIELD: MEASUREMENT_QUALITY MQ_NAME ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                      { current_contract.measurement_quality=(yyvsp[-1].string_val); current_contract.has_mq=true; }
+  case 87: /* $@2: %empty  */
+#line 410 "scanner_parser/parser.yy"
+                                                    { current_contract=GreenAIContractData(); current_contract.name=(yyvsp[-1].string_val); }
 #line 2503 "parser.tab.cc"
     break;
 
-  case 95: /* CONTRACT_FIELD: DATA_QUALITY DQ_NAME ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            { current_contract.data_quality=(yyvsp[-1].string_val); current_contract.has_dq=true; }
+  case 88: /* GREENAI_CONTRACT: GREENAI_CONTRACT_T IDENTIFIER '{' $@2 CONTRACT_FIELD_LIST '}' ';'  */
+#line 410 "scanner_parser/parser.yy"
+                                                                                                                                                      { (yyval.greenai_contract)=located(new AST_GREENAI_CONTRACT(current_contract), (yyloc)); }
 #line 2509 "parser.tab.cc"
     break;
 
-  case 96: /* CONTRACT_FIELD: CARBON_FACTOR LOCATION INT_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         { current_contract.carbon_factor_scope="location"; current_contract.carbon_factor=(yyvsp[-1].int_val); current_contract.has_carbon_factor=true; }
+  case 91: /* CONTRACT_FIELD: FUNCTIONAL_UNIT STRING_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                   { current_contract.functional_unit=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); current_contract.has_functional_unit=true; }
 #line 2515 "parser.tab.cc"
     break;
 
-  case 97: /* CONTRACT_FIELD: ENERGY_BUDGET_J INT_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            { current_contract.energy_budget_j=(yyvsp[-1].int_val); }
+  case 92: /* CONTRACT_FIELD: SUCCESS_CRITERIA STRING_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                   { current_contract.success_criteria=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); current_contract.has_success_criteria=true; }
 #line 2521 "parser.tab.cc"
     break;
 
-  case 98: /* CONTRACT_FIELD: CARBON_BUDGET_GCO2E INT_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           { current_contract.carbon_budget_gco2e=(yyvsp[-1].int_val); }
+  case 93: /* CONTRACT_FIELD: BOUNDARY BOUNDARY_LIST ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                            { current_contract.has_boundary=true; }
 #line 2527 "parser.tab.cc"
     break;
 
-  case 99: /* CONTRACT_FIELD: QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        { current_contract.has_quality_guardrail=true; current_contract.quality_guardrail={string((yyvsp[-3].string_val)),">=",(double)(yyvsp[-1].int_val)}; }
+  case 94: /* CONTRACT_FIELD: MEASUREMENT_QUALITY MQ_NAME ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                      { current_contract.measurement_quality=(yyvsp[-1].string_val); current_contract.has_mq=true; }
 #line 2533 "parser.tab.cc"
     break;
 
-  case 100: /* CONTRACT_FIELD: EVIDENCE_RETENTION STRING_LITERAL ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  { current_contract.evidence_retention=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
+  case 95: /* CONTRACT_FIELD: DATA_QUALITY DQ_NAME ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            { current_contract.data_quality=(yyvsp[-1].string_val); current_contract.has_dq=true; }
 #line 2539 "parser.tab.cc"
     break;
 
-  case 101: /* CONTRACT_FIELD: CLAIMS_MODE EVIDENCE_ONLY ';'  */
-#line 382 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    { current_contract.claims_mode="evidence_only"; }
+  case 96: /* CONTRACT_FIELD: CARBON_FACTOR LOCATION INT_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         { current_contract.carbon_factor_scope="location"; current_contract.carbon_factor=(yyvsp[-1].int_val); current_contract.has_carbon_factor=true; }
 #line 2545 "parser.tab.cc"
     break;
 
-  case 102: /* BOUNDARY_LIST: BOUNDARY_LIST ',' BOUNDARY_NAME  */
-#line 383 "scanner_parser/parser.yy"
-                                               { current_contract.boundary.push_back((yyvsp[0].string_val)); }
+  case 97: /* CONTRACT_FIELD: ENERGY_BUDGET_J INT_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            { current_contract.energy_budget_j=(yyvsp[-1].int_val); }
 #line 2551 "parser.tab.cc"
     break;
 
-  case 103: /* BOUNDARY_LIST: BOUNDARY_NAME  */
-#line 383 "scanner_parser/parser.yy"
-                                                                                                            { current_contract.boundary.push_back((yyvsp[0].string_val)); }
+  case 98: /* CONTRACT_FIELD: CARBON_BUDGET_GCO2E INT_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           { current_contract.carbon_budget_gco2e=(yyvsp[-1].int_val); }
 #line 2557 "parser.tab.cc"
     break;
 
-  case 104: /* $@3: %empty  */
-#line 385 "scanner_parser/parser.yy"
-                                                    { current_measure=GreenAIMeasurementData(); current_measure.workload=(yyvsp[-1].string_val); }
+  case 99: /* CONTRACT_FIELD: QUALITY_GUARDRAIL IDENTIFIER GREATER_OR_EQUAL INT_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        { current_contract.has_quality_guardrail=true; current_contract.quality_guardrail={string((yyvsp[-3].string_val)),">=",(double)(yyvsp[-1].int_val)}; }
 #line 2563 "parser.tab.cc"
     break;
 
-  case 105: /* GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER '{' $@3 MEASURE_FIELD_LIST '}' ';'  */
-#line 385 "scanner_parser/parser.yy"
-                                                                                                                                                          { (yyval.greenai_measure)=located(new AST_GREENAI_MEASUREMENT(current_measure), (yyloc)); }
+  case 100: /* CONTRACT_FIELD: EVIDENCE_RETENTION STRING_LITERAL ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  { current_contract.evidence_retention=string((yyvsp[-1].string_val)).substr(1,string((yyvsp[-1].string_val)).size()-2); }
 #line 2569 "parser.tab.cc"
     break;
 
-  case 108: /* MEASURE_FIELD: IDENTIFIER INT_LITERAL ';'  */
-#line 387 "scanner_parser/parser.yy"
-                                          { string n=(yyvsp[-2].string_val); if(n=="inferences") current_measure.inferences=(yyvsp[-1].int_val); else if(n=="watts") current_measure.watts=(yyvsp[-1].int_val); else if(n=="seconds") current_measure.seconds=(yyvsp[-1].int_val); }
+  case 101: /* CONTRACT_FIELD: CLAIMS_MODE EVIDENCE_ONLY ';'  */
+#line 412 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    { current_contract.claims_mode="evidence_only"; }
 #line 2575 "parser.tab.cc"
     break;
 
-  case 109: /* MEASURE_FIELD: IDENTIFIER IDENTIFIER ';'  */
-#line 387 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                          { if(string((yyvsp[-2].string_val))=="backend") current_measure.backend=(yyvsp[-1].string_val); }
+  case 102: /* BOUNDARY_LIST: BOUNDARY_LIST ',' BOUNDARY_NAME  */
+#line 413 "scanner_parser/parser.yy"
+                                               { current_contract.boundary.push_back((yyvsp[0].string_val)); }
 #line 2581 "parser.tab.cc"
     break;
 
-  case 110: /* $@4: %empty  */
-#line 390 "scanner_parser/parser.yy"
-                                           { shorthand_begin_c3eco(C3EcoDeclarationKind::CertificationProfile, (yyvsp[-1].string_val)); }
+  case 103: /* BOUNDARY_LIST: BOUNDARY_NAME  */
+#line 413 "scanner_parser/parser.yy"
+                                                                                                            { current_contract.boundary.push_back((yyvsp[0].string_val)); }
 #line 2587 "parser.tab.cc"
     break;
 
-  case 111: /* C3ECO_DECLARATION: CERTIFICATION_PROFILE IDENTIFIER '{' $@4 C3ECO_FIELD_LIST '}' ';'  */
-#line 390 "scanner_parser/parser.yy"
-                                                                                                                                               { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 104: /* $@3: %empty  */
+#line 415 "scanner_parser/parser.yy"
+                                                    { current_measure=GreenAIMeasurementData(); current_measure.workload=(yyvsp[-1].string_val); }
 #line 2593 "parser.tab.cc"
     break;
 
-  case 112: /* $@5: %empty  */
-#line 391 "scanner_parser/parser.yy"
-                                   { shorthand_begin_c3eco(C3EcoDeclarationKind::Certification, (yyvsp[-1].string_val)); }
+  case 105: /* GREENAI_MEASUREMENT: GREENAI_MEASURE IDENTIFIER '{' $@3 MEASURE_FIELD_LIST '}' ';'  */
+#line 415 "scanner_parser/parser.yy"
+                                                                                                                                                          { (yyval.greenai_measure)=located(new AST_GREENAI_MEASUREMENT(current_measure), (yyloc)); }
 #line 2599 "parser.tab.cc"
     break;
 
-  case 113: /* C3ECO_DECLARATION: CERTIFICATION IDENTIFIER '{' $@5 C3ECO_FIELD_LIST '}' ';'  */
-#line 391 "scanner_parser/parser.yy"
-                                                                                                                                { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 108: /* MEASURE_FIELD: IDENTIFIER INT_LITERAL ';'  */
+#line 417 "scanner_parser/parser.yy"
+                                          { string n=(yyvsp[-2].string_val); if(n=="inferences") current_measure.inferences=(yyvsp[-1].int_val); else if(n=="watts") current_measure.watts=(yyvsp[-1].int_val); else if(n=="seconds") current_measure.seconds=(yyvsp[-1].int_val); }
 #line 2605 "parser.tab.cc"
     break;
 
-  case 114: /* $@6: %empty  */
-#line 392 "scanner_parser/parser.yy"
-                                     { shorthand_begin_c3eco(C3EcoDeclarationKind::FunctionalUnit, (yyvsp[-1].string_val)); }
+  case 109: /* MEASURE_FIELD: IDENTIFIER IDENTIFIER ';'  */
+#line 417 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                          { if(string((yyvsp[-2].string_val))=="backend") current_measure.backend=(yyvsp[-1].string_val); }
 #line 2611 "parser.tab.cc"
     break;
 
-  case 115: /* C3ECO_DECLARATION: FUNCTIONAL_UNIT IDENTIFIER '{' $@6 C3ECO_FIELD_LIST '}' ';'  */
-#line 392 "scanner_parser/parser.yy"
-                                                                                                                                   { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 110: /* $@4: %empty  */
+#line 420 "scanner_parser/parser.yy"
+                                           { shorthand_begin_c3eco(C3EcoDeclarationKind::CertificationProfile, (yyvsp[-1].string_val)); }
 #line 2617 "parser.tab.cc"
     break;
 
-  case 116: /* $@7: %empty  */
-#line 393 "scanner_parser/parser.yy"
-                              { shorthand_begin_c3eco(C3EcoDeclarationKind::Workload, (yyvsp[-1].string_val)); }
+  case 111: /* C3ECO_DECLARATION: CERTIFICATION_PROFILE IDENTIFIER '{' $@4 C3ECO_FIELD_LIST '}' ';'  */
+#line 420 "scanner_parser/parser.yy"
+                                                                                                                                               { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2623 "parser.tab.cc"
     break;
 
-  case 117: /* C3ECO_DECLARATION: WORKLOAD IDENTIFIER '{' $@7 C3ECO_FIELD_LIST '}' ';'  */
-#line 393 "scanner_parser/parser.yy"
-                                                                                                                      { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 112: /* $@5: %empty  */
+#line 421 "scanner_parser/parser.yy"
+                                   { shorthand_begin_c3eco(C3EcoDeclarationKind::Certification, (yyvsp[-1].string_val)); }
 #line 2629 "parser.tab.cc"
     break;
 
-  case 118: /* $@8: %empty  */
-#line 394 "scanner_parser/parser.yy"
-                              { shorthand_begin_c3eco(C3EcoDeclarationKind::Boundary, (yyvsp[-1].string_val)); }
+  case 113: /* C3ECO_DECLARATION: CERTIFICATION IDENTIFIER '{' $@5 C3ECO_FIELD_LIST '}' ';'  */
+#line 421 "scanner_parser/parser.yy"
+                                                                                                                                { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2635 "parser.tab.cc"
     break;
 
-  case 119: /* C3ECO_DECLARATION: BOUNDARY IDENTIFIER '{' $@8 C3ECO_FIELD_LIST '}' ';'  */
-#line 394 "scanner_parser/parser.yy"
-                                                                                                                      { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 114: /* $@6: %empty  */
+#line 422 "scanner_parser/parser.yy"
+                                     { shorthand_begin_c3eco(C3EcoDeclarationKind::FunctionalUnit, (yyvsp[-1].string_val)); }
 #line 2641 "parser.tab.cc"
     break;
 
-  case 120: /* $@9: %empty  */
-#line 395 "scanner_parser/parser.yy"
-                                      { shorthand_begin_c3eco(C3EcoDeclarationKind::MeasurementPlan, (yyvsp[-1].string_val)); }
+  case 115: /* C3ECO_DECLARATION: FUNCTIONAL_UNIT IDENTIFIER '{' $@6 C3ECO_FIELD_LIST '}' ';'  */
+#line 422 "scanner_parser/parser.yy"
+                                                                                                                                   { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2647 "parser.tab.cc"
     break;
 
-  case 121: /* C3ECO_DECLARATION: MEASUREMENT_PLAN IDENTIFIER '{' $@9 C3ECO_FIELD_LIST '}' ';'  */
-#line 395 "scanner_parser/parser.yy"
-                                                                                                                                     { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 116: /* $@7: %empty  */
+#line 423 "scanner_parser/parser.yy"
+                              { shorthand_begin_c3eco(C3EcoDeclarationKind::Workload, (yyvsp[-1].string_val)); }
 #line 2653 "parser.tab.cc"
     break;
 
-  case 122: /* $@10: %empty  */
-#line 396 "scanner_parser/parser.yy"
-                                  { shorthand_begin_c3eco(C3EcoDeclarationKind::AILifecycle, (yyvsp[-1].string_val)); }
+  case 117: /* C3ECO_DECLARATION: WORKLOAD IDENTIFIER '{' $@7 C3ECO_FIELD_LIST '}' ';'  */
+#line 423 "scanner_parser/parser.yy"
+                                                                                                                      { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2659 "parser.tab.cc"
     break;
 
-  case 123: /* C3ECO_DECLARATION: AI_LIFECYCLE IDENTIFIER '{' $@10 C3ECO_FIELD_LIST '}' ';'  */
-#line 396 "scanner_parser/parser.yy"
-                                                                                                                             { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 118: /* $@8: %empty  */
+#line 424 "scanner_parser/parser.yy"
+                              { shorthand_begin_c3eco(C3EcoDeclarationKind::Boundary, (yyvsp[-1].string_val)); }
 #line 2665 "parser.tab.cc"
     break;
 
-  case 124: /* $@11: %empty  */
-#line 397 "scanner_parser/parser.yy"
-                                  { shorthand_begin_c3eco(C3EcoDeclarationKind::RAGPipeline, (yyvsp[-1].string_val)); }
+  case 119: /* C3ECO_DECLARATION: BOUNDARY IDENTIFIER '{' $@8 C3ECO_FIELD_LIST '}' ';'  */
+#line 424 "scanner_parser/parser.yy"
+                                                                                                                      { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2671 "parser.tab.cc"
     break;
 
-  case 125: /* C3ECO_DECLARATION: RAG_PIPELINE IDENTIFIER '{' $@11 C3ECO_FIELD_LIST '}' ';'  */
-#line 397 "scanner_parser/parser.yy"
-                                                                                                                             { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 120: /* $@9: %empty  */
+#line 425 "scanner_parser/parser.yy"
+                                      { shorthand_begin_c3eco(C3EcoDeclarationKind::MeasurementPlan, (yyvsp[-1].string_val)); }
 #line 2677 "parser.tab.cc"
     break;
 
-  case 126: /* $@12: %empty  */
-#line 398 "scanner_parser/parser.yy"
-                                  { shorthand_begin_c3eco(C3EcoDeclarationKind::TokenBudget, (yyvsp[-1].string_val)); }
+  case 121: /* C3ECO_DECLARATION: MEASUREMENT_PLAN IDENTIFIER '{' $@9 C3ECO_FIELD_LIST '}' ';'  */
+#line 425 "scanner_parser/parser.yy"
+                                                                                                                                     { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2683 "parser.tab.cc"
     break;
 
-  case 127: /* C3ECO_DECLARATION: TOKEN_BUDGET IDENTIFIER '{' $@12 C3ECO_FIELD_LIST '}' ';'  */
-#line 398 "scanner_parser/parser.yy"
-                                                                                                                             { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 122: /* $@10: %empty  */
+#line 426 "scanner_parser/parser.yy"
+                                  { shorthand_begin_c3eco(C3EcoDeclarationKind::AILifecycle, (yyvsp[-1].string_val)); }
 #line 2689 "parser.tab.cc"
     break;
 
-  case 128: /* $@13: %empty  */
-#line 399 "scanner_parser/parser.yy"
-                                   { shorthand_begin_c3eco(C3EcoDeclarationKind::ModelRouting, (yyvsp[-1].string_val)); }
+  case 123: /* C3ECO_DECLARATION: AI_LIFECYCLE IDENTIFIER '{' $@10 C3ECO_FIELD_LIST '}' ';'  */
+#line 426 "scanner_parser/parser.yy"
+                                                                                                                             { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2695 "parser.tab.cc"
     break;
 
-  case 129: /* C3ECO_DECLARATION: MODEL_ROUTING IDENTIFIER '{' $@13 C3ECO_FIELD_LIST '}' ';'  */
-#line 399 "scanner_parser/parser.yy"
-                                                                                                                               { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 124: /* $@11: %empty  */
+#line 427 "scanner_parser/parser.yy"
+                                  { shorthand_begin_c3eco(C3EcoDeclarationKind::RAGPipeline, (yyvsp[-1].string_val)); }
 #line 2701 "parser.tab.cc"
     break;
 
-  case 130: /* $@14: %empty  */
-#line 400 "scanner_parser/parser.yy"
-                                { shorthand_begin_c3eco(C3EcoDeclarationKind::Guardrails, (yyvsp[-1].string_val)); }
+  case 125: /* C3ECO_DECLARATION: RAG_PIPELINE IDENTIFIER '{' $@11 C3ECO_FIELD_LIST '}' ';'  */
+#line 427 "scanner_parser/parser.yy"
+                                                                                                                             { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2707 "parser.tab.cc"
     break;
 
-  case 131: /* C3ECO_DECLARATION: GUARDRAILS IDENTIFIER '{' $@14 C3ECO_FIELD_LIST '}' ';'  */
-#line 400 "scanner_parser/parser.yy"
-                                                                                                                          { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
+  case 126: /* $@12: %empty  */
+#line 428 "scanner_parser/parser.yy"
+                                  { shorthand_begin_c3eco(C3EcoDeclarationKind::TokenBudget, (yyvsp[-1].string_val)); }
 #line 2713 "parser.tab.cc"
     break;
 
-  case 134: /* C3ECO_FIELD: C3ECO_FIELD_NAME STRING_LITERAL ';'  */
-#line 403 "scanner_parser/parser.yy"
-                                          { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::String, shorthand_unquote((yyvsp[-1].string_val))); }
+  case 127: /* C3ECO_DECLARATION: TOKEN_BUDGET IDENTIFIER '{' $@12 C3ECO_FIELD_LIST '}' ';'  */
+#line 428 "scanner_parser/parser.yy"
+                                                                                                                             { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2719 "parser.tab.cc"
     break;
 
-  case 135: /* C3ECO_FIELD: C3ECO_FIELD_NAME C3ECO_IDENTIFIER_VALUE ';'  */
-#line 404 "scanner_parser/parser.yy"
-                                                  { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Identifier, (yyvsp[-1].string_val) == nullptr ? "" : std::string((yyvsp[-1].string_val))); }
+  case 128: /* $@13: %empty  */
+#line 429 "scanner_parser/parser.yy"
+                                   { shorthand_begin_c3eco(C3EcoDeclarationKind::ModelRouting, (yyvsp[-1].string_val)); }
 #line 2725 "parser.tab.cc"
     break;
 
-  case 136: /* C3ECO_FIELD: C3ECO_FIELD_NAME INT_LITERAL ';'  */
-#line 405 "scanner_parser/parser.yy"
-                                       { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Integer, std::to_string((yyvsp[-1].int_val))); }
+  case 129: /* C3ECO_DECLARATION: MODEL_ROUTING IDENTIFIER '{' $@13 C3ECO_FIELD_LIST '}' ';'  */
+#line 429 "scanner_parser/parser.yy"
+                                                                                                                               { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2731 "parser.tab.cc"
     break;
 
-  case 137: /* C3ECO_FIELD: C3ECO_FIELD_NAME FLOAT_LITERAL ';'  */
-#line 406 "scanner_parser/parser.yy"
-                                         { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Decimal, shorthand_decimal_text((yyvsp[-1].float_val))); }
+  case 130: /* $@14: %empty  */
+#line 430 "scanner_parser/parser.yy"
+                                { shorthand_begin_c3eco(C3EcoDeclarationKind::Guardrails, (yyvsp[-1].string_val)); }
 #line 2737 "parser.tab.cc"
     break;
 
-  case 138: /* C3ECO_FIELD: C3ECO_FIELD_NAME TRUE ';'  */
-#line 407 "scanner_parser/parser.yy"
-                                { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Boolean, "true"); }
+  case 131: /* C3ECO_DECLARATION: GUARDRAILS IDENTIFIER '{' $@14 C3ECO_FIELD_LIST '}' ';'  */
+#line 430 "scanner_parser/parser.yy"
+                                                                                                                          { (yyval.c3eco_decl)=located(new AST_C3ECO_DECLARATION(current_c3eco), (yyloc)); }
 #line 2743 "parser.tab.cc"
     break;
 
-  case 139: /* C3ECO_FIELD: C3ECO_FIELD_NAME FALSE ';'  */
-#line 408 "scanner_parser/parser.yy"
-                                 { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Boolean, "false"); }
+  case 134: /* C3ECO_FIELD: C3ECO_FIELD_NAME STRING_LITERAL ';'  */
+#line 433 "scanner_parser/parser.yy"
+                                          { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::String, shorthand_unquote((yyvsp[-1].string_val))); }
 #line 2749 "parser.tab.cc"
     break;
 
-  case 140: /* C3ECO_FIELD_NAME: IDENTIFIER  */
-#line 410 "scanner_parser/parser.yy"
-                 { (yyval.string_val)=(yyvsp[0].string_val); }
+  case 135: /* C3ECO_FIELD: C3ECO_FIELD_NAME C3ECO_IDENTIFIER_VALUE ';'  */
+#line 434 "scanner_parser/parser.yy"
+                                                  { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Identifier, (yyvsp[-1].string_val) == nullptr ? "" : std::string((yyvsp[-1].string_val))); }
 #line 2755 "parser.tab.cc"
     break;
 
-  case 141: /* C3ECO_FIELD_NAME: CARBON_FACTOR  */
-#line 411 "scanner_parser/parser.yy"
-                    { (yyval.string_val)=(char*)"carbon_factor"; }
+  case 136: /* C3ECO_FIELD: C3ECO_FIELD_NAME INT_LITERAL ';'  */
+#line 435 "scanner_parser/parser.yy"
+                                       { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Integer, std::to_string((yyvsp[-1].int_val))); }
 #line 2761 "parser.tab.cc"
     break;
 
-  case 142: /* C3ECO_FIELD_NAME: FALLBACK  */
-#line 412 "scanner_parser/parser.yy"
-               { (yyval.string_val)=(char*)"fallback"; }
+  case 137: /* C3ECO_FIELD: C3ECO_FIELD_NAME FLOAT_LITERAL ';'  */
+#line 436 "scanner_parser/parser.yy"
+                                         { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Decimal, shorthand_decimal_text((yyvsp[-1].float_val))); }
 #line 2767 "parser.tab.cc"
     break;
 
-  case 143: /* C3ECO_FIELD_NAME: QUALITY_GUARDRAIL  */
-#line 413 "scanner_parser/parser.yy"
-                        { (yyval.string_val)=(char*)"quality_guardrail"; }
+  case 138: /* C3ECO_FIELD: C3ECO_FIELD_NAME TRUE ';'  */
+#line 437 "scanner_parser/parser.yy"
+                                { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Boolean, "true"); }
 #line 2773 "parser.tab.cc"
     break;
 
-  case 144: /* C3ECO_FIELD_NAME: FUNCTIONAL_UNIT  */
-#line 414 "scanner_parser/parser.yy"
-                      { (yyval.string_val)=(char*)"functional_unit"; }
+  case 139: /* C3ECO_FIELD: C3ECO_FIELD_NAME FALSE ';'  */
+#line 438 "scanner_parser/parser.yy"
+                                 { shorthand_add_c3eco_field((yyvsp[-2].string_val), C3EcoValueKind::Boolean, "false"); }
 #line 2779 "parser.tab.cc"
     break;
 
-  case 145: /* C3ECO_FIELD_NAME: BOUNDARY  */
-#line 415 "scanner_parser/parser.yy"
-               { (yyval.string_val)=(char*)"boundary"; }
+  case 140: /* C3ECO_FIELD_NAME: IDENTIFIER  */
+#line 440 "scanner_parser/parser.yy"
+                 { (yyval.string_val)=(yyvsp[0].string_val); }
 #line 2785 "parser.tab.cc"
     break;
 
-  case 146: /* C3ECO_IDENTIFIER_VALUE: IDENTIFIER  */
-#line 418 "scanner_parser/parser.yy"
-                 { (yyval.string_val)=(yyvsp[0].string_val); }
+  case 141: /* C3ECO_FIELD_NAME: CARBON_FACTOR  */
+#line 441 "scanner_parser/parser.yy"
+                    { (yyval.string_val)=(char*)"carbon_factor"; }
 #line 2791 "parser.tab.cc"
     break;
 
-  case 147: /* C3ECO_IDENTIFIER_VALUE: BOUNDARY_NAME  */
-#line 419 "scanner_parser/parser.yy"
-                    { (yyval.string_val)=(yyvsp[0].string_val); }
+  case 142: /* C3ECO_FIELD_NAME: FALLBACK  */
+#line 442 "scanner_parser/parser.yy"
+               { (yyval.string_val)=(char*)"fallback"; }
 #line 2797 "parser.tab.cc"
     break;
 
-  case 148: /* C3ECO_IDENTIFIER_VALUE: MQ_NAME  */
-#line 420 "scanner_parser/parser.yy"
-              { (yyval.string_val)=(yyvsp[0].string_val); }
+  case 143: /* C3ECO_FIELD_NAME: QUALITY_GUARDRAIL  */
+#line 443 "scanner_parser/parser.yy"
+                        { (yyval.string_val)=(char*)"quality_guardrail"; }
 #line 2803 "parser.tab.cc"
     break;
 
-  case 149: /* C3ECO_IDENTIFIER_VALUE: DQ_NAME  */
-#line 421 "scanner_parser/parser.yy"
-              { (yyval.string_val)=(yyvsp[0].string_val); }
+  case 144: /* C3ECO_FIELD_NAME: FUNCTIONAL_UNIT  */
+#line 444 "scanner_parser/parser.yy"
+                      { (yyval.string_val)=(char*)"functional_unit"; }
 #line 2809 "parser.tab.cc"
     break;
 
-  case 150: /* C3ECO_IDENTIFIER_VALUE: LOCATION  */
-#line 422 "scanner_parser/parser.yy"
-               { (yyval.string_val)=(char*)"location"; }
+  case 145: /* C3ECO_FIELD_NAME: BOUNDARY  */
+#line 445 "scanner_parser/parser.yy"
+               { (yyval.string_val)=(char*)"boundary"; }
 #line 2815 "parser.tab.cc"
     break;
 
-  case 151: /* C3ECO_IDENTIFIER_VALUE: EVIDENCE_ONLY  */
-#line 423 "scanner_parser/parser.yy"
-                    { (yyval.string_val)=(char*)"evidence_only"; }
+  case 146: /* C3ECO_IDENTIFIER_VALUE: IDENTIFIER  */
+#line 448 "scanner_parser/parser.yy"
+                 { (yyval.string_val)=(yyvsp[0].string_val); }
 #line 2821 "parser.tab.cc"
     break;
 
-  case 152: /* C3ECO_IDENTIFIER_VALUE: FALLBACK  */
-#line 424 "scanner_parser/parser.yy"
-               { (yyval.string_val)=(char*)"fallback"; }
+  case 147: /* C3ECO_IDENTIFIER_VALUE: BOUNDARY_NAME  */
+#line 449 "scanner_parser/parser.yy"
+                    { (yyval.string_val)=(yyvsp[0].string_val); }
 #line 2827 "parser.tab.cc"
     break;
 
-  case 153: /* FORMAT_NAME: ONNX  */
-#line 426 "scanner_parser/parser.yy"
-                  {(yyval.string_val)=(char*)"onnx";}
+  case 148: /* C3ECO_IDENTIFIER_VALUE: MQ_NAME  */
+#line 450 "scanner_parser/parser.yy"
+              { (yyval.string_val)=(yyvsp[0].string_val); }
 #line 2833 "parser.tab.cc"
     break;
 
-  case 154: /* FORMAT_NAME: ENGINE  */
-#line 426 "scanner_parser/parser.yy"
-                                               {(yyval.string_val)=(char*)"engine";}
+  case 149: /* C3ECO_IDENTIFIER_VALUE: DQ_NAME  */
+#line 451 "scanner_parser/parser.yy"
+              { (yyval.string_val)=(yyvsp[0].string_val); }
 #line 2839 "parser.tab.cc"
     break;
 
-  case 155: /* FORMAT_NAME: TORCHSCRIPT  */
-#line 426 "scanner_parser/parser.yy"
-                                                                                   {(yyval.string_val)=(char*)"torchscript";}
+  case 150: /* C3ECO_IDENTIFIER_VALUE: LOCATION  */
+#line 452 "scanner_parser/parser.yy"
+               { (yyval.string_val)=(char*)"location"; }
 #line 2845 "parser.tab.cc"
     break;
 
-  case 156: /* FORMAT_NAME: OPENVINO_IR  */
-#line 426 "scanner_parser/parser.yy"
-                                                                                                                            {(yyval.string_val)=(char*)"openvino_ir";}
+  case 151: /* C3ECO_IDENTIFIER_VALUE: EVIDENCE_ONLY  */
+#line 453 "scanner_parser/parser.yy"
+                    { (yyval.string_val)=(char*)"evidence_only"; }
 #line 2851 "parser.tab.cc"
     break;
 
-  case 157: /* FORMAT_NAME: GGUF  */
-#line 426 "scanner_parser/parser.yy"
-                                                                                                                                                              {(yyval.string_val)=(char*)"gguf";}
+  case 152: /* C3ECO_IDENTIFIER_VALUE: FALLBACK  */
+#line 454 "scanner_parser/parser.yy"
+               { (yyval.string_val)=(char*)"fallback"; }
 #line 2857 "parser.tab.cc"
     break;
 
-  case 158: /* PRECISION_NAME: INT8  */
-#line 427 "scanner_parser/parser.yy"
-                     {(yyval.string_val)=(char*)"int8";}
+  case 153: /* FORMAT_NAME: ONNX  */
+#line 456 "scanner_parser/parser.yy"
+                  {(yyval.string_val)=(char*)"onnx";}
 #line 2863 "parser.tab.cc"
     break;
 
-  case 159: /* PRECISION_NAME: INT4  */
-#line 427 "scanner_parser/parser.yy"
-                                                {(yyval.string_val)=(char*)"int4";}
+  case 154: /* FORMAT_NAME: ENGINE  */
+#line 456 "scanner_parser/parser.yy"
+                                               {(yyval.string_val)=(char*)"engine";}
 #line 2869 "parser.tab.cc"
     break;
 
-  case 160: /* PRECISION_NAME: FP16  */
-#line 427 "scanner_parser/parser.yy"
-                                                                           {(yyval.string_val)=(char*)"fp16";}
+  case 155: /* FORMAT_NAME: TORCHSCRIPT  */
+#line 456 "scanner_parser/parser.yy"
+                                                                                   {(yyval.string_val)=(char*)"torchscript";}
 #line 2875 "parser.tab.cc"
     break;
 
-  case 161: /* PRECISION_NAME: FP32  */
-#line 427 "scanner_parser/parser.yy"
-                                                                                                      {(yyval.string_val)=(char*)"fp32";}
+  case 156: /* FORMAT_NAME: OPENVINO_IR  */
+#line 456 "scanner_parser/parser.yy"
+                                                                                                                            {(yyval.string_val)=(char*)"openvino_ir";}
 #line 2881 "parser.tab.cc"
     break;
 
-  case 162: /* PRECISION_NAME: BF16  */
-#line 427 "scanner_parser/parser.yy"
-                                                                                                                                 {(yyval.string_val)=(char*)"bf16";}
+  case 157: /* FORMAT_NAME: GGUF  */
+#line 456 "scanner_parser/parser.yy"
+                                                                                                                                                              {(yyval.string_val)=(char*)"gguf";}
 #line 2887 "parser.tab.cc"
     break;
 
-  case 163: /* PRECISION_NAME: FP64  */
-#line 427 "scanner_parser/parser.yy"
-                                                                                                                                                            {(yyval.string_val)=(char*)"fp64";}
+  case 158: /* PRECISION_NAME: INT8  */
+#line 457 "scanner_parser/parser.yy"
+                     {(yyval.string_val)=(char*)"int8";}
 #line 2893 "parser.tab.cc"
     break;
 
-  case 164: /* PRECISION_NAME: FLOAT  */
-#line 427 "scanner_parser/parser.yy"
-                                                                                                                                                                                        {(yyval.string_val)=(char*)"float";}
+  case 159: /* PRECISION_NAME: INT4  */
+#line 457 "scanner_parser/parser.yy"
+                                                {(yyval.string_val)=(char*)"int4";}
 #line 2899 "parser.tab.cc"
     break;
 
-  case 165: /* BACKEND_NAME: TENSORRT  */
-#line 428 "scanner_parser/parser.yy"
-                       {(yyval.string_val)=(char*)"tensorrt";}
+  case 160: /* PRECISION_NAME: FP16  */
+#line 457 "scanner_parser/parser.yy"
+                                                                           {(yyval.string_val)=(char*)"fp16";}
 #line 2905 "parser.tab.cc"
     break;
 
-  case 166: /* BACKEND_NAME: ONNXRUNTIME_TENSORRT  */
-#line 428 "scanner_parser/parser.yy"
-                                                                      {(yyval.string_val)=(char*)"onnxruntime_tensorrt";}
+  case 161: /* PRECISION_NAME: FP32  */
+#line 457 "scanner_parser/parser.yy"
+                                                                                                      {(yyval.string_val)=(char*)"fp32";}
 #line 2911 "parser.tab.cc"
     break;
 
-  case 167: /* BACKEND_NAME: ONNXRUNTIME_CUDA  */
-#line 428 "scanner_parser/parser.yy"
-                                                                                                                             {(yyval.string_val)=(char*)"onnxruntime_cuda";}
+  case 162: /* PRECISION_NAME: BF16  */
+#line 457 "scanner_parser/parser.yy"
+                                                                                                                                 {(yyval.string_val)=(char*)"bf16";}
 #line 2917 "parser.tab.cc"
     break;
 
-  case 168: /* BACKEND_NAME: ONNXRUNTIME_CPU  */
-#line 428 "scanner_parser/parser.yy"
-                                                                                                                                                                               {(yyval.string_val)=(char*)"onnxruntime_cpu";}
+  case 163: /* PRECISION_NAME: FP64  */
+#line 457 "scanner_parser/parser.yy"
+                                                                                                                                                            {(yyval.string_val)=(char*)"fp64";}
 #line 2923 "parser.tab.cc"
     break;
 
-  case 169: /* BACKEND_NAME: OPENVINO  */
-#line 428 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                         {(yyval.string_val)=(char*)"openvino";}
+  case 164: /* PRECISION_NAME: FLOAT  */
+#line 457 "scanner_parser/parser.yy"
+                                                                                                                                                                                        {(yyval.string_val)=(char*)"float";}
 #line 2929 "parser.tab.cc"
     break;
 
-  case 170: /* BACKEND_NAME: LIBTORCH  */
-#line 428 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                            {(yyval.string_val)=(char*)"libtorch";}
+  case 165: /* BACKEND_NAME: TENSORRT  */
+#line 458 "scanner_parser/parser.yy"
+                       {(yyval.string_val)=(char*)"tensorrt";}
 #line 2935 "parser.tab.cc"
     break;
 
-  case 171: /* BACKEND_NAME: LLAMACPP  */
-#line 428 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                               {(yyval.string_val)=(char*)"llamacpp";}
+  case 166: /* BACKEND_NAME: ONNXRUNTIME_TENSORRT  */
+#line 458 "scanner_parser/parser.yy"
+                                                                      {(yyval.string_val)=(char*)"onnxruntime_tensorrt";}
 #line 2941 "parser.tab.cc"
     break;
 
-  case 172: /* BACKEND_NAME: FALLBACK  */
-#line 428 "scanner_parser/parser.yy"
-                                                                                                                                                                                                                                                                                                                                  {(yyval.string_val)=(char*)"fallback";}
+  case 167: /* BACKEND_NAME: ONNXRUNTIME_CUDA  */
+#line 458 "scanner_parser/parser.yy"
+                                                                                                                             {(yyval.string_val)=(char*)"onnxruntime_cuda";}
 #line 2947 "parser.tab.cc"
     break;
 
-  case 173: /* MQ_NAME: MQ1  */
-#line 429 "scanner_parser/parser.yy"
-             {(yyval.string_val)=(char*)"MQ1";}
+  case 168: /* BACKEND_NAME: ONNXRUNTIME_CPU  */
+#line 458 "scanner_parser/parser.yy"
+                                                                                                                                                                               {(yyval.string_val)=(char*)"onnxruntime_cpu";}
 #line 2953 "parser.tab.cc"
     break;
 
-  case 174: /* MQ_NAME: MQ2  */
-#line 429 "scanner_parser/parser.yy"
-                                      {(yyval.string_val)=(char*)"MQ2";}
+  case 169: /* BACKEND_NAME: OPENVINO  */
+#line 458 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                         {(yyval.string_val)=(char*)"openvino";}
 #line 2959 "parser.tab.cc"
     break;
 
-  case 175: /* MQ_NAME: MQ3  */
-#line 429 "scanner_parser/parser.yy"
-                                                               {(yyval.string_val)=(char*)"MQ3";}
+  case 170: /* BACKEND_NAME: LIBTORCH  */
+#line 458 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                            {(yyval.string_val)=(char*)"libtorch";}
 #line 2965 "parser.tab.cc"
     break;
 
-  case 176: /* MQ_NAME: MQ4  */
-#line 429 "scanner_parser/parser.yy"
-                                                                                        {(yyval.string_val)=(char*)"MQ4";}
+  case 171: /* BACKEND_NAME: LLAMACPP  */
+#line 458 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                               {(yyval.string_val)=(char*)"llamacpp";}
 #line 2971 "parser.tab.cc"
     break;
 
-  case 177: /* DQ_NAME: DQ1  */
-#line 430 "scanner_parser/parser.yy"
-             {(yyval.string_val)=(char*)"DQ1";}
+  case 172: /* BACKEND_NAME: FALLBACK  */
+#line 458 "scanner_parser/parser.yy"
+                                                                                                                                                                                                                                                                                                                                  {(yyval.string_val)=(char*)"fallback";}
 #line 2977 "parser.tab.cc"
     break;
 
-  case 178: /* DQ_NAME: DQ2  */
-#line 430 "scanner_parser/parser.yy"
-                                      {(yyval.string_val)=(char*)"DQ2";}
+  case 173: /* MQ_NAME: MQ1  */
+#line 459 "scanner_parser/parser.yy"
+             {(yyval.string_val)=(char*)"MQ1";}
 #line 2983 "parser.tab.cc"
     break;
 
-  case 179: /* DQ_NAME: DQ3  */
-#line 430 "scanner_parser/parser.yy"
-                                                               {(yyval.string_val)=(char*)"DQ3";}
+  case 174: /* MQ_NAME: MQ2  */
+#line 459 "scanner_parser/parser.yy"
+                                      {(yyval.string_val)=(char*)"MQ2";}
 #line 2989 "parser.tab.cc"
     break;
 
-  case 180: /* DQ_NAME: DQ4  */
-#line 430 "scanner_parser/parser.yy"
-                                                                                        {(yyval.string_val)=(char*)"DQ4";}
+  case 175: /* MQ_NAME: MQ3  */
+#line 459 "scanner_parser/parser.yy"
+                                                               {(yyval.string_val)=(char*)"MQ3";}
 #line 2995 "parser.tab.cc"
     break;
 
-  case 181: /* BOUNDARY_NAME: COMPUTE  */
-#line 431 "scanner_parser/parser.yy"
-                       {(yyval.string_val)=(char*)"compute";}
+  case 176: /* MQ_NAME: MQ4  */
+#line 459 "scanner_parser/parser.yy"
+                                                                                        {(yyval.string_val)=(char*)"MQ4";}
 #line 3001 "parser.tab.cc"
     break;
 
-  case 182: /* BOUNDARY_NAME: ACCELERATOR  */
-#line 431 "scanner_parser/parser.yy"
-                                                            {(yyval.string_val)=(char*)"accelerator";}
+  case 177: /* DQ_NAME: DQ1  */
+#line 460 "scanner_parser/parser.yy"
+             {(yyval.string_val)=(char*)"DQ1";}
 #line 3007 "parser.tab.cc"
     break;
 
-  case 183: /* BOUNDARY_NAME: STORAGE  */
-#line 431 "scanner_parser/parser.yy"
-                                                                                                 {(yyval.string_val)=(char*)"storage";}
+  case 178: /* DQ_NAME: DQ2  */
+#line 460 "scanner_parser/parser.yy"
+                                      {(yyval.string_val)=(char*)"DQ2";}
 #line 3013 "parser.tab.cc"
     break;
 
-  case 184: /* BOUNDARY_NAME: NETWORK  */
-#line 431 "scanner_parser/parser.yy"
-                                                                                                                                  {(yyval.string_val)=(char*)"network";}
+  case 179: /* DQ_NAME: DQ3  */
+#line 460 "scanner_parser/parser.yy"
+                                                               {(yyval.string_val)=(char*)"DQ3";}
 #line 3019 "parser.tab.cc"
     break;
 
-  case 185: /* BOUNDARY_NAME: CI_CD  */
-#line 431 "scanner_parser/parser.yy"
-                                                                                                                                                                 {(yyval.string_val)=(char*)"ci_cd";}
+  case 180: /* DQ_NAME: DQ4  */
+#line 460 "scanner_parser/parser.yy"
+                                                                                        {(yyval.string_val)=(char*)"DQ4";}
 #line 3025 "parser.tab.cc"
     break;
 
-  case 186: /* BOUNDARY_NAME: THIRDPARTY  */
-#line 431 "scanner_parser/parser.yy"
-                                                                                                                                                                                                   {(yyval.string_val)=(char*)"thirdparty";}
+  case 181: /* BOUNDARY_NAME: COMPUTE  */
+#line 461 "scanner_parser/parser.yy"
+                       {(yyval.string_val)=(char*)"compute";}
 #line 3031 "parser.tab.cc"
     break;
 
+  case 182: /* BOUNDARY_NAME: ACCELERATOR  */
+#line 461 "scanner_parser/parser.yy"
+                                                            {(yyval.string_val)=(char*)"accelerator";}
+#line 3037 "parser.tab.cc"
+    break;
+
+  case 183: /* BOUNDARY_NAME: STORAGE  */
+#line 461 "scanner_parser/parser.yy"
+                                                                                                 {(yyval.string_val)=(char*)"storage";}
+#line 3043 "parser.tab.cc"
+    break;
+
+  case 184: /* BOUNDARY_NAME: NETWORK  */
+#line 461 "scanner_parser/parser.yy"
+                                                                                                                                  {(yyval.string_val)=(char*)"network";}
+#line 3049 "parser.tab.cc"
+    break;
+
+  case 185: /* BOUNDARY_NAME: CI_CD  */
+#line 461 "scanner_parser/parser.yy"
+                                                                                                                                                                 {(yyval.string_val)=(char*)"ci_cd";}
+#line 3055 "parser.tab.cc"
+    break;
+
+  case 186: /* BOUNDARY_NAME: THIRDPARTY  */
+#line 461 "scanner_parser/parser.yy"
+                                                                                                                                                                                                   {(yyval.string_val)=(char*)"thirdparty";}
+#line 3061 "parser.tab.cc"
+    break;
+
   case 187: /* AI_INFER_RULE: AI_INFER_BUILTIN '(' STRING_LITERAL ',' STRING_LITERAL ',' STRING_LITERAL ')'  */
-#line 433 "scanner_parser/parser.yy"
+#line 463 "scanner_parser/parser.yy"
                                                                                              {
     if ((string((yyvsp[-7].string_val))!="ai_infer" && string((yyvsp[-7].string_val))!="aiinfer")) {
         shorthand_parser_diagnostic(shorthand::diagnostics::ParserExpectedAIInferBuiltin,
@@ -3040,11 +3070,11 @@ yyreduce:
     }
     (yyval.ai_infer)=located(new AST_AI_INFER_RULE(string((yyvsp[-5].string_val)),string((yyvsp[-3].string_val)),string((yyvsp[-1].string_val))), (yyloc));
 }
-#line 3044 "parser.tab.cc"
+#line 3074 "parser.tab.cc"
     break;
 
   case 188: /* GREENAI_REPORT_RULE: GREENAI_REPORT_BUILTIN '(' STRING_LITERAL ',' EXPRESSION_RULE ',' EXPRESSION_RULE ',' EXPRESSION_RULE ')'  */
-#line 442 "scanner_parser/parser.yy"
+#line 472 "scanner_parser/parser.yy"
                                                                                                                                {
     if (string((yyvsp[-9].string_val))!="greenai") {
         shorthand_parser_diagnostic(shorthand::diagnostics::ParserExpectedGreenAIReportBuiltin,
@@ -3053,203 +3083,203 @@ yyreduce:
     }
     (yyval.greenai_report)=located(new AST_GREENAI_REPORT_RULE(string((yyvsp[-7].string_val)),(yyvsp[-5].expression),(yyvsp[-3].expression),(yyvsp[-1].expression)), (yyloc));
 }
-#line 3057 "parser.tab.cc"
-    break;
-
-  case 189: /* EXPRESSION_RULE: EXPRESSION_RULE '+' EXPRESSION_RULE  */
-#line 452 "scanner_parser/parser.yy"
-                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"+"), (yyloc)); }
-#line 3063 "parser.tab.cc"
-    break;
-
-  case 190: /* EXPRESSION_RULE: EXPRESSION_RULE '-' EXPRESSION_RULE  */
-#line 453 "scanner_parser/parser.yy"
-                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"-"), (yyloc)); }
-#line 3069 "parser.tab.cc"
-    break;
-
-  case 191: /* EXPRESSION_RULE: EXPRESSION_RULE '*' EXPRESSION_RULE  */
-#line 454 "scanner_parser/parser.yy"
-                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"*"), (yyloc)); }
-#line 3075 "parser.tab.cc"
-    break;
-
-  case 192: /* EXPRESSION_RULE: EXPRESSION_RULE '/' EXPRESSION_RULE  */
-#line 455 "scanner_parser/parser.yy"
-                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"/"), (yyloc)); }
-#line 3081 "parser.tab.cc"
-    break;
-
-  case 193: /* EXPRESSION_RULE: EXPRESSION_RULE '%' EXPRESSION_RULE  */
-#line 456 "scanner_parser/parser.yy"
-                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"%"), (yyloc)); }
 #line 3087 "parser.tab.cc"
     break;
 
-  case 194: /* EXPRESSION_RULE: EXPRESSION_RULE LESS EXPRESSION_RULE  */
-#line 457 "scanner_parser/parser.yy"
-                                           { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"<"), (yyloc)); }
+  case 189: /* EXPRESSION_RULE: EXPRESSION_RULE '+' EXPRESSION_RULE  */
+#line 482 "scanner_parser/parser.yy"
+                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"+"), (yyloc)); }
 #line 3093 "parser.tab.cc"
     break;
 
-  case 195: /* EXPRESSION_RULE: EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE  */
-#line 458 "scanner_parser/parser.yy"
-                                                    { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"<="), (yyloc)); }
+  case 190: /* EXPRESSION_RULE: EXPRESSION_RULE '-' EXPRESSION_RULE  */
+#line 483 "scanner_parser/parser.yy"
+                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"-"), (yyloc)); }
 #line 3099 "parser.tab.cc"
     break;
 
-  case 196: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER EXPRESSION_RULE  */
-#line 459 "scanner_parser/parser.yy"
-                                              { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),">"), (yyloc)); }
+  case 191: /* EXPRESSION_RULE: EXPRESSION_RULE '*' EXPRESSION_RULE  */
+#line 484 "scanner_parser/parser.yy"
+                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"*"), (yyloc)); }
 #line 3105 "parser.tab.cc"
     break;
 
-  case 197: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE  */
-#line 460 "scanner_parser/parser.yy"
-                                                       { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),">="), (yyloc)); }
+  case 192: /* EXPRESSION_RULE: EXPRESSION_RULE '/' EXPRESSION_RULE  */
+#line 485 "scanner_parser/parser.yy"
+                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"/"), (yyloc)); }
 #line 3111 "parser.tab.cc"
     break;
 
-  case 198: /* EXPRESSION_RULE: EXPRESSION_RULE EQUAL EXPRESSION_RULE  */
-#line 461 "scanner_parser/parser.yy"
-                                            { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"=="), (yyloc)); }
+  case 193: /* EXPRESSION_RULE: EXPRESSION_RULE '%' EXPRESSION_RULE  */
+#line 486 "scanner_parser/parser.yy"
+                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"%"), (yyloc)); }
 #line 3117 "parser.tab.cc"
     break;
 
-  case 199: /* EXPRESSION_RULE: EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE  */
-#line 462 "scanner_parser/parser.yy"
-                                                { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"!="), (yyloc)); }
+  case 194: /* EXPRESSION_RULE: EXPRESSION_RULE LESS EXPRESSION_RULE  */
+#line 487 "scanner_parser/parser.yy"
+                                           { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"<"), (yyloc)); }
 #line 3123 "parser.tab.cc"
     break;
 
-  case 200: /* EXPRESSION_RULE: EXPRESSION_RULE OR EXPRESSION_RULE  */
-#line 463 "scanner_parser/parser.yy"
-                                         { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"||"), (yyloc)); }
+  case 195: /* EXPRESSION_RULE: EXPRESSION_RULE LESS_OR_EQUAL EXPRESSION_RULE  */
+#line 488 "scanner_parser/parser.yy"
+                                                    { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"<="), (yyloc)); }
 #line 3129 "parser.tab.cc"
     break;
 
-  case 201: /* EXPRESSION_RULE: EXPRESSION_RULE AND EXPRESSION_RULE  */
-#line 464 "scanner_parser/parser.yy"
-                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"&&"), (yyloc)); }
+  case 196: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER EXPRESSION_RULE  */
+#line 489 "scanner_parser/parser.yy"
+                                              { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),">"), (yyloc)); }
 #line 3135 "parser.tab.cc"
     break;
 
-  case 202: /* EXPRESSION_RULE: '-' EXPRESSION_RULE  */
-#line 465 "scanner_parser/parser.yy"
-                                       { (yyval.expression)=located(new AST_UNARY_EXPRESSION_RULE((yyvsp[0].expression),"-"), (yyloc)); }
+  case 197: /* EXPRESSION_RULE: EXPRESSION_RULE GREATER_OR_EQUAL EXPRESSION_RULE  */
+#line 490 "scanner_parser/parser.yy"
+                                                       { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),">="), (yyloc)); }
 #line 3141 "parser.tab.cc"
     break;
 
-  case 203: /* EXPRESSION_RULE: '(' EXPRESSION_RULE ')'  */
-#line 466 "scanner_parser/parser.yy"
-                              { (yyval.expression)=(yyvsp[-1].expression); located((yyval.expression), (yyloc)); }
+  case 198: /* EXPRESSION_RULE: EXPRESSION_RULE EQUAL EXPRESSION_RULE  */
+#line 491 "scanner_parser/parser.yy"
+                                            { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"=="), (yyloc)); }
 #line 3147 "parser.tab.cc"
     break;
 
-  case 204: /* EXPRESSION_RULE: IDENTIFIER '(' EXPRESSION_LIST_OPT ')'  */
-#line 467 "scanner_parser/parser.yy"
-                                             { (yyval.expression)=located(new AST_FUNCTION_CALL_EXPRESSION(string((yyvsp[-3].string_val)),*(yyvsp[-1].expression_list)), (yyloc)); }
+  case 199: /* EXPRESSION_RULE: EXPRESSION_RULE NOT_EQUAL EXPRESSION_RULE  */
+#line 492 "scanner_parser/parser.yy"
+                                                { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"!="), (yyloc)); }
 #line 3153 "parser.tab.cc"
     break;
 
-  case 205: /* EXPRESSION_RULE: VARIABLE_RULE  */
-#line 468 "scanner_parser/parser.yy"
-                    { (yyval.expression)=(yyvsp[0].variable); }
+  case 200: /* EXPRESSION_RULE: EXPRESSION_RULE OR EXPRESSION_RULE  */
+#line 493 "scanner_parser/parser.yy"
+                                         { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"||"), (yyloc)); }
 #line 3159 "parser.tab.cc"
     break;
 
-  case 206: /* EXPRESSION_RULE: INT_LITERAL  */
-#line 469 "scanner_parser/parser.yy"
-                  { (yyval.expression)=located(new AST_LITERAL((yyvsp[0].int_val)), (yyloc)); }
+  case 201: /* EXPRESSION_RULE: EXPRESSION_RULE AND EXPRESSION_RULE  */
+#line 494 "scanner_parser/parser.yy"
+                                          { (yyval.expression)=located(new AST_BINARY_EXPRESSION_RULE((yyvsp[-2].expression),(yyvsp[0].expression),"&&"), (yyloc)); }
 #line 3165 "parser.tab.cc"
     break;
 
-  case 207: /* EXPRESSION_RULE: FLOAT_LITERAL  */
-#line 470 "scanner_parser/parser.yy"
-                    { (yyval.expression)=located(new AST_FLOAT_LITERAL((yyvsp[0].float_val)), (yyloc)); }
+  case 202: /* EXPRESSION_RULE: '-' EXPRESSION_RULE  */
+#line 495 "scanner_parser/parser.yy"
+                                       { (yyval.expression)=located(new AST_UNARY_EXPRESSION_RULE((yyvsp[0].expression),"-"), (yyloc)); }
 #line 3171 "parser.tab.cc"
     break;
 
-  case 208: /* EXPRESSION_RULE: STRING_LITERAL  */
-#line 471 "scanner_parser/parser.yy"
-                     { (yyval.expression)=located(new AST_STRING_LITERAL(string((yyvsp[0].string_val))), (yyloc)); }
+  case 203: /* EXPRESSION_RULE: '(' EXPRESSION_RULE ')'  */
+#line 496 "scanner_parser/parser.yy"
+                              { (yyval.expression)=(yyvsp[-1].expression); located((yyval.expression), (yyloc)); }
 #line 3177 "parser.tab.cc"
     break;
 
-  case 209: /* EXPRESSION_RULE: TRUE  */
-#line 472 "scanner_parser/parser.yy"
-           { (yyval.expression)=located(new AST_BOOL_LITERAL(true), (yyloc)); }
+  case 204: /* EXPRESSION_RULE: IDENTIFIER '(' EXPRESSION_LIST_OPT ')'  */
+#line 497 "scanner_parser/parser.yy"
+                                             { (yyval.expression)=located(new AST_FUNCTION_CALL_EXPRESSION(string((yyvsp[-3].string_val)),*(yyvsp[-1].expression_list)), (yyloc)); }
 #line 3183 "parser.tab.cc"
     break;
 
-  case 210: /* EXPRESSION_RULE: FALSE  */
-#line 473 "scanner_parser/parser.yy"
-            { (yyval.expression)=located(new AST_BOOL_LITERAL(false), (yyloc)); }
+  case 205: /* EXPRESSION_RULE: VARIABLE_RULE  */
+#line 498 "scanner_parser/parser.yy"
+                    { (yyval.expression)=(yyvsp[0].variable); }
 #line 3189 "parser.tab.cc"
     break;
 
-  case 211: /* EXPRESSION_LIST_OPT: EXPRESSION_LIST_RULE  */
-#line 476 "scanner_parser/parser.yy"
-                           { (yyval.expression_list)=(yyvsp[0].expression_list); }
+  case 206: /* EXPRESSION_RULE: INT_LITERAL  */
+#line 499 "scanner_parser/parser.yy"
+                  { (yyval.expression)=located(new AST_LITERAL((yyvsp[0].int_val)), (yyloc)); }
 #line 3195 "parser.tab.cc"
     break;
 
-  case 212: /* EXPRESSION_LIST_OPT: %empty  */
-#line 477 "scanner_parser/parser.yy"
-             { (yyval.expression_list)=shorthand_track_parser_node(new vector<AST_EXPRESSION_RULE*>()); }
+  case 207: /* EXPRESSION_RULE: FLOAT_LITERAL  */
+#line 500 "scanner_parser/parser.yy"
+                    { (yyval.expression)=located(new AST_FLOAT_LITERAL((yyvsp[0].float_val)), (yyloc)); }
 #line 3201 "parser.tab.cc"
     break;
 
-  case 213: /* EXPRESSION_LIST_RULE: EXPRESSION_LIST_RULE ',' EXPRESSION_RULE  */
-#line 480 "scanner_parser/parser.yy"
-                                               { (yyval.expression_list)=(yyvsp[-2].expression_list); (yyval.expression_list)->push_back((yyvsp[0].expression)); }
+  case 208: /* EXPRESSION_RULE: STRING_LITERAL  */
+#line 501 "scanner_parser/parser.yy"
+                     { (yyval.expression)=located(new AST_STRING_LITERAL(string((yyvsp[0].string_val))), (yyloc)); }
 #line 3207 "parser.tab.cc"
     break;
 
-  case 214: /* EXPRESSION_LIST_RULE: EXPRESSION_RULE  */
-#line 481 "scanner_parser/parser.yy"
-                      { (yyval.expression_list)=shorthand_track_parser_node(new vector<AST_EXPRESSION_RULE*>()); (yyval.expression_list)->push_back((yyvsp[0].expression)); }
+  case 209: /* EXPRESSION_RULE: TRUE  */
+#line 502 "scanner_parser/parser.yy"
+           { (yyval.expression)=located(new AST_BOOL_LITERAL(true), (yyloc)); }
 #line 3213 "parser.tab.cc"
     break;
 
-  case 215: /* VARIABLE_RULE: IDENTIFIER  */
-#line 484 "scanner_parser/parser.yy"
-                 { (yyval.variable)=located(new AST_SIMPLE_VARIABLE(string((yyvsp[0].string_val))), (yyloc)); }
+  case 210: /* EXPRESSION_RULE: FALSE  */
+#line 503 "scanner_parser/parser.yy"
+            { (yyval.expression)=located(new AST_BOOL_LITERAL(false), (yyloc)); }
 #line 3219 "parser.tab.cc"
     break;
 
-  case 216: /* VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE ']'  */
-#line 485 "scanner_parser/parser.yy"
-                                         { (yyval.variable)=located(new AST_ARRAY_VARIABLE(string((yyvsp[-3].string_val)),(yyvsp[-1].expression)), (yyloc)); }
+  case 211: /* EXPRESSION_LIST_OPT: EXPRESSION_LIST_RULE  */
+#line 506 "scanner_parser/parser.yy"
+                           { (yyval.expression_list)=(yyvsp[0].expression_list); }
 #line 3225 "parser.tab.cc"
     break;
 
-  case 217: /* READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE  */
-#line 488 "scanner_parser/parser.yy"
-                                                { (yyval.read_statement)=(yyvsp[-2].read_statement); (yyval.read_statement)->push_back((yyvsp[0].variable)); located((yyval.read_statement), (yyloc)); }
+  case 212: /* EXPRESSION_LIST_OPT: %empty  */
+#line 507 "scanner_parser/parser.yy"
+             { (yyval.expression_list)=shorthand_track_parser_node(new vector<AST_EXPRESSION_RULE*>()); }
 #line 3231 "parser.tab.cc"
     break;
 
-  case 218: /* READ_VARIABLE_LIST_RULE: VARIABLE_RULE  */
-#line 489 "scanner_parser/parser.yy"
-                    { (yyval.read_statement)=located(new AST_READ_RULE(), (yyloc)); (yyval.read_statement)->push_back((yyvsp[0].variable)); }
+  case 213: /* EXPRESSION_LIST_RULE: EXPRESSION_LIST_RULE ',' EXPRESSION_RULE  */
+#line 510 "scanner_parser/parser.yy"
+                                               { (yyval.expression_list)=(yyvsp[-2].expression_list); (yyval.expression_list)->push_back((yyvsp[0].expression)); }
 #line 3237 "parser.tab.cc"
     break;
 
-  case 219: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE  */
-#line 492 "scanner_parser/parser.yy"
-                                                   { (yyval.print_statement)=(yyvsp[-2].print_statement); (yyval.print_statement)->push_back((yyvsp[0].expression)); located((yyval.print_statement), (yyloc)); }
+  case 214: /* EXPRESSION_LIST_RULE: EXPRESSION_RULE  */
+#line 511 "scanner_parser/parser.yy"
+                      { (yyval.expression_list)=shorthand_track_parser_node(new vector<AST_EXPRESSION_RULE*>()); (yyval.expression_list)->push_back((yyvsp[0].expression)); }
 #line 3243 "parser.tab.cc"
     break;
 
-  case 220: /* PRINT_VARIABLE_LIST_RULE: EXPRESSION_RULE  */
-#line 493 "scanner_parser/parser.yy"
-                      { (yyval.print_statement)=located(new AST_PRINT_RULE(), (yyloc)); (yyval.print_statement)->push_back((yyvsp[0].expression)); }
+  case 215: /* VARIABLE_RULE: IDENTIFIER  */
+#line 514 "scanner_parser/parser.yy"
+                 { (yyval.variable)=located(new AST_SIMPLE_VARIABLE(string((yyvsp[0].string_val))), (yyloc)); }
 #line 3249 "parser.tab.cc"
     break;
 
+  case 216: /* VARIABLE_RULE: IDENTIFIER '[' EXPRESSION_RULE ']'  */
+#line 515 "scanner_parser/parser.yy"
+                                         { (yyval.variable)=located(new AST_ARRAY_VARIABLE(string((yyvsp[-3].string_val)),(yyvsp[-1].expression)), (yyloc)); }
+#line 3255 "parser.tab.cc"
+    break;
 
-#line 3253 "parser.tab.cc"
+  case 217: /* READ_VARIABLE_LIST_RULE: READ_VARIABLE_LIST_RULE ',' VARIABLE_RULE  */
+#line 518 "scanner_parser/parser.yy"
+                                                { (yyval.read_statement)=(yyvsp[-2].read_statement); (yyval.read_statement)->push_back((yyvsp[0].variable)); located((yyval.read_statement), (yyloc)); }
+#line 3261 "parser.tab.cc"
+    break;
+
+  case 218: /* READ_VARIABLE_LIST_RULE: VARIABLE_RULE  */
+#line 519 "scanner_parser/parser.yy"
+                    { (yyval.read_statement)=located(new AST_READ_RULE(), (yyloc)); (yyval.read_statement)->push_back((yyvsp[0].variable)); }
+#line 3267 "parser.tab.cc"
+    break;
+
+  case 219: /* PRINT_VARIABLE_LIST_RULE: PRINT_VARIABLE_LIST_RULE ',' EXPRESSION_RULE  */
+#line 522 "scanner_parser/parser.yy"
+                                                   { (yyval.print_statement)=(yyvsp[-2].print_statement); (yyval.print_statement)->push_back((yyvsp[0].expression)); located((yyval.print_statement), (yyloc)); }
+#line 3273 "parser.tab.cc"
+    break;
+
+  case 220: /* PRINT_VARIABLE_LIST_RULE: EXPRESSION_RULE  */
+#line 523 "scanner_parser/parser.yy"
+                      { (yyval.print_statement)=located(new AST_PRINT_RULE(), (yyloc)); (yyval.print_statement)->push_back((yyvsp[0].expression)); }
+#line 3279 "parser.tab.cc"
+    break;
+
+
+#line 3283 "parser.tab.cc"
 
       default: break;
     }
@@ -3447,7 +3477,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 495 "scanner_parser/parser.yy"
+#line 525 "scanner_parser/parser.yy"
 
 
 void yyerror(char const *s) {

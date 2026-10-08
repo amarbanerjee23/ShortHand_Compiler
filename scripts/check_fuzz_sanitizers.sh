@@ -127,6 +127,21 @@ build_target() {
     "${harness_object}" "${COMMON_OBJECTS[@]}" "${LLVM_LDFLAGS[@]}" -lfl -o "${binary}"
 }
 
+# Exercise repeated successful/failed parses and retained module ASTs under the
+# same instrumentation as the campaign. A short random run alone cannot detect
+# the former process-lifetime accumulation reliably.
+run_build parser_lifetime \
+  "${CLANGXX}" "${LLVM_CXXFLAGS[@]}" "${COMMON_FLAGS[@]}" \
+  "${ROOT_DIR}/tests/parser/ParserLifetime.cpp" "${COMMON_OBJECTS[@]}" \
+  "${LLVM_LDFLAGS[@]}" -lfl -o "${WORK_DIR}/parser_lifetime"
+if ! ASAN_OPTIONS="detect_leaks=1:halt_on_error=1:strict_string_checks=1" \
+  UBSAN_OPTIONS="halt_on_error=1:print_stacktrace=1" \
+  "${WORK_DIR}/parser_lifetime" >/tmp/shorthand_fuzz_lifetime.out 2>&1; then
+  tail -n 100 /tmp/shorthand_fuzz_lifetime.out >&2
+  exit 1
+fi
+tail -n 2 /tmp/shorthand_fuzz_lifetime.out
+
 build_target parser 1
 build_target module 2
 build_target semantic 3
@@ -157,7 +172,9 @@ run_reproducer() {
     >"${log}" 2>&1
   local status=$?
   set -e
-  cat "${log}"
+  # Retain the complete raw log in the uploaded artifact; avoid flooding the
+  # Actions job log with millions of expected malformed-input diagnostics.
+  tail -n 100 "${log}"
   return "${status}"
 }
 
@@ -169,9 +186,12 @@ fi
 run_target() {
   local name="$1"
   local binary="${WORK_DIR}/${name}_fuzz"
-  local corpus="${CORPUS_ROOT}/${name}"
+  local corpus="${WORK_DIR}/corpus-${name}"
   local log="/tmp/shorthand_fuzz_${name}.out"
   local -a budget
+  # libFuzzer grows its writable corpus. Keep the checked-in seed set unchanged
+  # so repeated invocations start from the same inputs.
+  cp -R "${CORPUS_ROOT}/${name}" "${corpus}"
   if [[ "${MAX_TOTAL_TIME}" =~ ^[0-9]+$ ]] && (( MAX_TOTAL_TIME > 0 )); then
     budget=(-max_total_time="${MAX_TOTAL_TIME}")
   else
@@ -192,7 +212,8 @@ run_target() {
   local status=$?
   set -e
 
-  cat "${log}"
+  # Complete diagnostics remain in the raw artifact, including sanitizer errors.
+  tail -n 100 "${log}"
   if (( status != 0 )); then
     echo "error: ${name} fuzz target failed with status ${status}" >&2
     echo "FUZZ_REPRO target=${name} seed=${SEED} artifact_dir=${ARTIFACT_DIR}" >&2

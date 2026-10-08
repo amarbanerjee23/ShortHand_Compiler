@@ -25,6 +25,7 @@
 #include "./ast/ModuleAST.h"
 #include "./module/ModuleResolver.h"
 #include "./parser/ParserLimits.h"
+#include "./parser/ParseSession.h"
 #include "./visitors/AST_Printer.h"
 #include "./visitors/DiagnosticCodes.h"
 #include "./visitors/Interpreter.h"
@@ -390,6 +391,9 @@ int main(int argc, char *argv[])
     std::string::size_type const p(base_filename.find_last_of('.'));
     std::string file_without_extension = base_filename.substr(0, p);
 
+    // Declared before the graph and all visitors so their AST references remain
+    // valid until they finish, including on early-error returns.
+    shorthand::parser::ParseSession parse_session;
     ParsedSourceUnit entry;
     if (!parse_source_unit(path, entry)) return finish_with(1);
 
