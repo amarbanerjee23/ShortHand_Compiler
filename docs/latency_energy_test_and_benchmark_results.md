@@ -19,7 +19,8 @@ Release artifact names use `release-bundle-*`, excluding `release-closeout-polic
 | Candidate selection and receipt negative controls | PASS: policy report excluded; missing/unexpected platform, missing receipt, stale revision, wrong OS/architecture, dirty source, missing check and tampered digest rejected |
 | Signed-release contract and existing closeout regression matrix | PASS locally, including 54 inherited closeout cases |
 | CI status hygiene and platform contract guard | PASS locally |
-| Native Windows x64 / macOS ARM64 / Linux ARM64 archive execution | Pending hosted checks on this PR; no pass claimed from a Linux runner |
+| Native Linux x64 / macOS ARM64 / Linux ARM64 archive execution | PASS on head `dbd84bcfb507927cee865100120ed934f52d6384`, CI run 37808859561; macOS and ARM64 retain explicit experimental scope |
+| Native Windows x64 archive execution | Build and archive creation passed on that head; checksum path conversion prevented execution. Correction below awaits hosted verification |
 | Full compiled tensor source path on Windows/macOS | Separate release blocker; this PR tests interpreted ONNX execution and native runtime consumers, not unqualified MLIR portability |
 
 The local build is a development tree based on the SHA above; its receipt is not a clean committed release qualification. Hosted results must be retained before marking the package PR ready. This change makes no latency, power, energy or GA claim. Full operational release qualification and source-to-native AI parity remain required as described in [cpu_release_packages.md](cpu_release_packages.md).
@@ -34,10 +35,21 @@ The local build is a development tree based on the SHA above; its receipt is not
 | Linux x64 archive | Ubuntu's LLVM 18 installation exposes `llc-18`; the consumer searched only for `llc`. Resolve the versioned binary first. |
 | Windows archive | The MSYS2 shell did not expose Git, needed for provenance. Install Git explicitly with the package-job dependencies. |
 | macOS/ARM64 inference | The production allowlist intentionally rejects non-Linux-x64 hosts. Test default rejection, then use the existing explicit experimental mode to collect native output evidence. Record the mode and require truthful telemetry; do not change the allowlist. |
-| Enterprise OTLP/Prometheus installation tests | These tests built only the previous installed targets. Build both newly installed CLIs before the complete install operation. |
+| Enterprise OTLP/Prometheus and runtime-package installation tests | These three tests built only the previous installed targets. Build both newly installed CLIs before the complete install operation; the third case was found by auditing all `cmake --install` call sites. |
 | CTest Makefile AI gate | A source assertion expected the former absolute ONNX link directory. Update it to the relocatable imported-target wiring, backed by the actual archive execution tests. |
 
-The ordinary Windows/macOS/ARM64 compiler jobs, toolchain matrix, reproducibility, security and both MLIR lanes passed on that first head. Updated native package and aggregate results remain pending until the amended commit is tested.
+The ordinary Windows/macOS/ARM64 compiler jobs, toolchain matrix, reproducibility, security and both MLIR lanes passed on that first head.
+
+## PR121 second hosted run and fixes
+
+[CI run 37808859561](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37808859561), on head `dbd84bcfb507927cee865100120ed934f52d6384`, passed the native Linux x64, Linux ARM64 and macOS ARM64 archive jobs. These jobs executed the installed interpreter, static/shared CPU consumers, compiled core source and missing-runtime negative from the relocated archives. The production guard passed before experimental inference on macOS/ARM64. Ordinary platform jobs, all four toolchain lanes, security, reproducibility, CTest parity, both MLIR lanes and latency/energy evidence also passed. Tooling and experiment-results workflows passed.
+
+Two remaining failures are corrected in this revision:
+
+- Windows built and staged the archive, but native CMake emitted a drive-letter checksum path that could not match the MSYS2 prefix removed by `sed`. Generate checksum entries from basenames and write LF endings explicitly. A regression fixture reproduces native Windows path and CRLF formatting; it fails with the previous producer and passes with the correction, while the archive-tamper and unsigned-publication negatives remain enforced.
+- Ubuntu CTest passed 22 of 23 tests; `runtime_production_packaging` still omitted the newly installed CLIs from its partial build. Add both targets, matching the two adapter fixtures fixed earlier.
+
+Windows execution, all-four candidate aggregation and the complete amended CI result remain pending. The archive scope does not include a minimal end-user Windows image rehearsal or full typed source-to-native AI parity.
 
 ## Energy and power result
 

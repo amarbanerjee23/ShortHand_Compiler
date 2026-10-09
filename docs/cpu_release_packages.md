@@ -15,6 +15,8 @@ These are controlled-beta candidate packages, not published or GA-qualified rele
 
 The archive bundles ONNX, not the complete LLVM toolchain or all operating-system/compiler dependencies. The tests run on clean hosted machines with the prerequisites above installed. Windows inference needs the bundled DLL directory on PATH; imported CMake targets provide the link dependency. No Python interpreter is required by the inference executable. Python is used only by qualification scripts.
 
+Windows also requires the [Visual C++ 2019 runtime required by ONNX Runtime](https://onnxruntime.ai/docs/install/). Hosted Windows images already include this dependency; the archive does not install it. A minimal end-user Windows installation still needs a separate clean-machine rehearsal with the documented prerequisites.
+
 All four ONNX SDK archive hashes are pinned in `scripts/install_ci_onnxruntime_cpu.sh`, taken from the [official ONNX Runtime 1.30.0 release asset metadata](https://api.github.com/repos/microsoft/onnxruntime/releases/tags/v1.30.0). Hashes are checked before extraction. CPU packages preserve the shared library's platform naming and installation-relative lookup path. CMake consumers use `find_package(ShortHand CONFIG REQUIRED)` and `ShortHand::runtime` or `ShortHand::runtime_shared`.
 
 ## Mandatory archive test

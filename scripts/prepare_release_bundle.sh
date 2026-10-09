@@ -98,11 +98,15 @@ cat > "${provenance}" <<JSON
 }
 JSON
 
-{
-  cmake -E sha256sum "${archive}"
-  cmake -E sha256sum "${sbom}"
-  cmake -E sha256sum "${provenance}"
-} | sed "s#  ${OUT_DIR}/#  #" > "${checksums}"
+(
+  cd "${OUT_DIR}"
+  for subject in "${stem}.tar" "${stem}.spdx.json" "${stem}.provenance.json"; do
+    # Native Windows CMake may emit drive-letter paths and CRLF. Only consume
+    # its digest, then write the portable basename and newline through Bash.
+    digest="$(cmake -E sha256sum "${subject}" | awk '{print $1}')"
+    printf '%s  %s\n' "${digest}" "${subject}"
+  done
+) > "${checksums}"
 
 cat > "${manifest}" <<EOF
 schema=shorthand.release.bundle.v2
