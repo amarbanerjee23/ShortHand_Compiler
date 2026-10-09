@@ -51,6 +51,12 @@ Two remaining failures are corrected in this revision:
 
 Windows execution, all-four candidate aggregation and the complete amended CI result remain pending. The archive scope does not include a minimal end-user Windows image rehearsal or full typed source-to-native AI parity.
 
+### Windows runtime selection follow-up
+
+On `bf65dffd5aa5d657eec996d8b915f9b18e0d596b`, [Windows job 113731439956](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37903540967/job/113731439956) passed archive verification, installed CLI execution, consumer compilation and default production refusal. Both inference consumers then loaded the machine's ONNX 1.17.1 instead of the bundled 1.30.0 and failed with an API-version mismatch. PATH priority cannot override the Windows system-directory search order.
+
+Consumers now stage the imported runtime DLLs beside their executables using CMake's runtime dependency list. Qualification checks the deployed ONNX hash against the extracted bundle and verifies the loaded module is app-local before inference. The package documentation includes the same deployment requirement and a CMake example. Native Windows verification remains required; no inference pass is inferred from compilation alone. macOS and Linux ARM64 archive execution passed on `bf65dff`.
+
 ## Energy and power result
 
 Packaging and explicit experimental execution establish no energy or latency improvement. Physical energy and GA claims remain blocked by the existing evidence policies.

@@ -13,11 +13,27 @@ These are controlled-beta candidate packages, not published or GA-qualified rele
 | macOS ARM64 | macOS 15 Apple Silicon | Homebrew LLVM 18, CMake, Ninja, OpenSSL 3 | Installed interpreter and static/shared C ABI |
 | Windows x64 | Windows Server 2025 | MSYS2 UCRT64 Clang/LLVM 22, CMake, Ninja, OpenSSL 3 | Installed interpreter and static/shared C ABI |
 
-The archive bundles ONNX, not the complete LLVM toolchain or all operating-system/compiler dependencies. The tests run on clean hosted machines with the prerequisites above installed. Windows inference needs the bundled DLL directory on PATH; imported CMake targets provide the link dependency. No Python interpreter is required by the inference executable. Python is used only by qualification scripts.
+The archive bundles ONNX, not the complete LLVM toolchain or all operating-system/compiler dependencies. The tests run on clean hosted machines with the prerequisites above installed. On Windows, deploy the bundled ONNX DLL and any shared ShortHand DLLs beside each consuming executable. Adding the package `bin` directory to PATH alone is insufficient: Windows can select an older ONNX in its system directory first. The installed CLIs already share their directory with the bundled ONNX DLL. No Python interpreter is required by the inference executable. Python is used only by qualification scripts.
 
 Windows also requires the [Visual C++ 2019 runtime required by ONNX Runtime](https://onnxruntime.ai/docs/install/). Hosted Windows images already include this dependency; the archive does not install it. A minimal end-user Windows installation still needs a separate clean-machine rehearsal with the documented prerequisites.
 
 All four ONNX SDK archive hashes are pinned in `scripts/install_ci_onnxruntime_cpu.sh`, taken from the [official ONNX Runtime 1.30.0 release asset metadata](https://api.github.com/repos/microsoft/onnxruntime/releases/tags/v1.30.0). Hashes are checked before extraction. CPU packages preserve the shared library's platform naming and installation-relative lookup path. CMake consumers use `find_package(ShortHand CONFIG REQUIRED)` and `ShortHand::runtime` or `ShortHand::runtime_shared`.
+
+For a Windows consumer using CMake 3.21 or newer, copy the runtime DLLs recorded in those imported targets after linking:
+
+```cmake
+find_package(ShortHand CONFIG REQUIRED)
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE ShortHand::runtime)
+if(WIN32)
+  add_custom_command(TARGET my_app POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "$<TARGET_RUNTIME_DLLS:my_app>" "$<TARGET_FILE_DIR:my_app>"
+    COMMAND_EXPAND_LISTS VERBATIM)
+endif()
+```
+
+This follows [CMake's runtime DLL deployment mechanism](https://cmake.org/cmake/help/v3.21/manual/cmake-generator-expressions.7.html#genex:TARGET_RUNTIME_DLLS) and [Windows DLL search order](https://learn.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-search-order). The native package test checks the deployed ONNX hash against the archive and inspects the module actually loaded by both consumers.
 
 ## Mandatory archive test
 

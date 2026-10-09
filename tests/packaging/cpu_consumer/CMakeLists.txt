@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21)
 project(InstalledCpuInference LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 find_package(ShortHand 1 CONFIG REQUIRED)
@@ -29,3 +29,13 @@ target_link_libraries(cpu_source PRIVATE ShortHand::runtime)
 add_test(NAME cpu_source COMMAND cpu_source)
 set_tests_properties(cpu_source PROPERTIES
   WORKING_DIRECTORY "${MODEL_DIRECTORY}" PASS_REGULAR_EXPRESSION "Installed compiled program: 42")
+if(WIN32)
+  # Windows searches the system directory before PATH. Stage the imported DLLs
+  # next to the consumers so a preinstalled older ONNX cannot shadow the bundle.
+  # These three executables share one output directory; copy once after linking.
+  add_custom_target(stage_cpu_runtime_dlls ALL
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+      "$<TARGET_RUNTIME_DLLS:cpu_shared>" "$<TARGET_FILE_DIR:cpu_shared>"
+    DEPENDS cpu_static cpu_shared cpu_source
+    COMMAND_EXPAND_LISTS VERBATIM)
+endif()

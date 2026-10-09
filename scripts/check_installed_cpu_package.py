@@ -99,6 +99,14 @@ def main():
                          f"-DMODEL_FILE={model_path}", f"-DMODEL_DIRECTORY={models}"]
             run([*configure, "-B", consumer], cwd=work, env=env)
             run(["cmake", "--build", consumer, "--parallel", "2"], cwd=work, env=env)
+            if suffix:
+                # PATH follows System32 in Windows DLL search order. Consumers
+                # deploy the imported runtime beside their executables and also
+                # verify that this is the module actually loaded by the process.
+                deployed = hashlib.sha256((consumer / "onnxruntime.dll").read_bytes()).digest()
+                bundled = hashlib.sha256((prefix / "bin/onnxruntime.dll").read_bytes()).digest()
+                if deployed != bundled:
+                    raise RuntimeError("consumer ONNX DLL differs from the release archive")
             qualification_mode = "existing_production_scope"
             if args.platform != "linux-x64":
                 # Exercise the current fail-closed production policy first.

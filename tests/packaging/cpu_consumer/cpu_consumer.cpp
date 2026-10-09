@@ -4,8 +4,28 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <filesystem>
+#endif
 
 int main(int argc, char **argv) {
+#ifdef _WIN32
+    wchar_t executable[32768] = {}, runtime[32768] = {};
+    const HMODULE module = GetModuleHandleW(L"onnxruntime.dll");
+    const DWORD exeLength = GetModuleFileNameW(nullptr, executable, 32768);
+    const DWORD dllLength = module ? GetModuleFileNameW(module, runtime, 32768) : 0;
+    std::error_code error;
+    if (!exeLength || exeLength >= 32768 || !dllLength || dllLength >= 32768 ||
+        !std::filesystem::equivalent(std::filesystem::path(executable).parent_path(),
+                                     std::filesystem::path(runtime).parent_path(), error) || error) {
+        std::cerr << "CPU consumer must load its app-local ONNX Runtime DLL\n";
+        return 10;
+    }
+    std::cout << "PASS loaded app-local ONNX Runtime DLL\n";
+#endif
     if ((argc != 2 && argc != 3) || short_runtime_reset() != SHORTHAND_RUNTIME_OK) return 1;
     if (short_ai_register_tensor("input", "float32", "1", "1", "1") ||
         short_ai_register_tensor("output", "float32", "1", "1", "1") ||
