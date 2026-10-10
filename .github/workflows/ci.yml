@@ -399,8 +399,6 @@ jobs:
         run: |
           set -euo pipefail
           packages=(
-            mingw-w64-ucrt-x86_64-clang
-            mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-openssl
@@ -419,6 +417,9 @@ jobs:
           done
           echo "MSYS2 dependency installation failed after four attempts" >&2
           exit 1
+
+      - name: Install pinned Windows LLVM 22 toolchain
+        run: bash scripts/install_ci_windows_llvm.sh
 
       - name: Record Windows UCRT64 environment
         run: |

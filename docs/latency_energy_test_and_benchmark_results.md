@@ -65,6 +65,16 @@ The retained [Windows archive receipt](https://github.com/amarbanerjee23/ShortHa
 
 The clean-source requirement and aggregate acceptance rules are unchanged. The corrected candidate receipts and final CI result still require hosted verification on the next revision. Native Windows/macOS experiments do not promote the production allowlist or establish full typed source-to-native AI parity.
 
+### Windows toolchain pin and deterministic cache recovery
+
+Head `94b2e5ec19544d65a1882252189c2af0a65f5eef` passed the three non-Windows native archive jobs and every other primary PR job in [PR CI 38030955404](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38030955404). Both Windows lanes stopped at the existing LLVM-major guard because the rolling MSYS2 repository had advanced to 23.1.3-1. The clean Windows source receipt therefore remains unverified on that head. Both workflows now acquire the six matching Clang/LLVM 22.1.8-3 packages from official MSYS2 archive URLs, check committed SHA-256 hashes and upstream detached signatures, and install them in one transaction. The LLVM 22 requirement is unchanged; other prerequisites still follow their configured repositories.
+
+[Push CI 38030953576](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38030953576) also exposed a scheduling assumption in the cache lifecycle test: all 4,000 worker calls could legitimately encounter a reset/registration gap, violating its unconditional requirement for at least one successful racing call. The PR invocation passed. The corrected test keeps 3,996 calls racing 64 resets, then requires each of the four workers to produce the exact final model output after registration completes. Reset-task exceptions reach waiting workers, and unexpected statuses, output mutation, torn results and post-reset cache recovery remain checked. This changes the test synchronization, not runtime behavior.
+
+Local validation used the actual Linux x64 runtime archive from `a7fa4cf` and ONNX Runtime 1.30.0 with the amended C++ harness, compiled by GCC 13.3. Four retained complete runs passed the full cache boundary/lifecycle suite. The normal-scheduling run recorded 3,499 successes and 501 registration-gap rejections; three single-CPU runs recorded 4,000/0, 1,153/2,847 and 2,473/1,527. Each completed 4,000 calls and 64 resets. These are correctness counts, not latency measurements. Hosted sanitizer execution on the amended head remains required.
+
+The signed-release contract, all 54 inherited closeout cases, platform contract, CI status hygiene, shell syntax and whitespace checks pass locally. All six pinned MSYS2 archive hashes and signatures verify locally against the upstream MSYS2 keyring; installation and native execution still require Windows CI. Final candidate aggregation and the mandatory CI aggregate remain pending on the amended head.
+
 ## Energy and power result
 
 Packaging and explicit experimental execution establish no energy or latency improvement. Physical energy and GA claims remain blocked by the existing evidence policies.

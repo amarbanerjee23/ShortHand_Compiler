@@ -30,6 +30,8 @@ The PR75 matrix targets the following full compiler/runtime environments:
 
 The Windows job uses the GitHub-hosted Windows image but executes the compiler build in a controlled MSYS2 UCRT64 toolchain so the Flex/Bison/LLVM dependencies and POSIX shell build helpers are explicit. A successful Windows runner allocation by itself is not qualification.
 
+The Windows compiler and CPU package lanes both pin Clang/LLVM 22.1.8-3 and its six matching MSYS2 packages through `scripts/install_ci_windows_llvm.sh`. SHA-256 checks and upstream detached-signature verification precede installation. Other prerequisites continue to use their configured package repositories.
+
 ### Unsupported or unqualified combinations
 
 The matrix does not claim support for:

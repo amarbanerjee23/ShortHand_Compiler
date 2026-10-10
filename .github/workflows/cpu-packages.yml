@@ -149,13 +149,15 @@ jobs:
         run: git config --local core.autocrlf false
       - name: Install qualified Windows dependencies
         run: |
-          packages=(mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils git)
+          packages=(mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils git)
           for attempt in 1 2 3 4; do
             if pacman -Syy --noconfirm --needed "${packages[@]}"; then exit 0; fi
             echo "MSYS2 dependency transaction failed (attempt ${attempt}/4)" >&2
             sleep "$((attempt * 15))"
           done
           exit 1
+      - name: Install pinned Windows LLVM 22 toolchain
+        run: bash scripts/install_ci_windows_llvm.sh
       - name: Acquire pinned ONNX Runtime CPU SDK
         run: |
           export PATH="/ucrt64/bin:/usr/bin:${PATH}"

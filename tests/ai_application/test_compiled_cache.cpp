@@ -126,13 +126,19 @@ void alternatingRegistrations(const char *identity,const char *negative) {
 void lifecycleStress(const char *identity,const char *negative) {
     short_runtime_reset(); registerModel(identity);
     std::promise<void> ready; auto start=ready.get_future().share();
+    std::promise<void> resetsComplete; auto recovered=resetsComplete.get_future().share();
     std::atomic<int> completed{0}, rejected{0};
     std::vector<std::future<void>> workers;
     for(int worker=0;worker<4;++worker) workers.push_back(std::async(std::launch::async,[&,worker]{
         start.wait();
         for(int n=0;n<1000;++n) {
+            // The first 999 calls race the reset/registration sequence. The last
+            // call must observe recovery, regardless of mutex scheduling fairness.
+            if(n==999) recovered.get();
             const float input=float(worker+n+1); float output=-999; int count=-1;
             const int status=short_ai_infer_f32("m","x",&input,1,"y",&output,1,&count);
+            if(n==999) check(status==SHORTHAND_RUNTIME_OK && count==1 && output==-input,
+                             "concurrent_lifecycle_worker_recovery");
             if(status==SHORTHAND_RUNTIME_OK) {
                 check(count==1 && (output==input || output==-input),"concurrent_lifecycle_torn_output");
                 ++completed;
@@ -144,14 +150,20 @@ void lifecycleStress(const char *identity,const char *negative) {
         }
     }));
     workers.push_back(std::async(std::launch::async,[&]{
-        start.wait();
-        for(int n=0;n<64;++n) {
-            short_runtime_reset(); registerModel(n%2?negative:identity);
-            infer(2,n%2?-2:2);
+        try {
+            start.wait();
+            for(int n=0;n<64;++n) {
+                short_runtime_reset(); registerModel(n%2?negative:identity);
+                infer(2,n%2?-2:2);
+            }
+            resetsComplete.set_value();
+        } catch(...) {
+            resetsComplete.set_exception(std::current_exception());
+            throw;
         }
     }));
     ready.set_value(); for(auto &worker:workers) worker.get();
-    check(completed+rejected==4000 && completed>0,"incomplete_lifecycle_stress");
+    check(completed+rejected==4000 && completed>=4,"incomplete_lifecycle_stress");
     short_runtime_reset(); registerModel(identity); infer(3,3); infer(4,4);
     check(telemetry("\"hit\":true") && telemetry("\"preparations\":1"),"lifecycle_recovery");
     std::cout<<"PASS cache concurrent lifecycle: 4000 calls, 64 resets; success="<<completed<<" registration_gap="<<rejected<<"\n";
