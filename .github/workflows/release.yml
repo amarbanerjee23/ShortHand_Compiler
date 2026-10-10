@@ -72,165 +72,25 @@ jobs:
           path: /tmp/shorthand_release_closeout.json
           if-no-files-found: error
 
-  linux-x64:
+  cpu-packages:
     needs: policy
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Install qualified Linux x64 dependencies
-        run: |
-          # Only Ubuntu packages are required here. An unrelated Chrome index
-          # hash mismatch must not prevent qualification dependencies installing.
-          test -s /etc/apt/sources.list.d/ubuntu.sources
-          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
-          sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang-18 cmake ninja-build
-      - name: Build, execute and stage Linux x64
-        env:
-          CC: clang-18
-          CXX: clang++-18
-        run: |
-          set -euo pipefail
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/usr/bin/llvm-config-18 -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF
-          cmake --build build-release --parallel 2
-          build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-linux-x64.out
-          diff -u tests/semantic/differential/core_control.expected /tmp/release-linux-x64.out
-          cmake --install build-release
-          LLVM_CONFIG=/usr/bin/llvm-config-18 bash scripts/check_mlir_dialect.sh
-          cmake --install build-mlir --prefix "$PWD/stage-release"
-          mkdir -p stage-release/bin
-          cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
-          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" linux-x64 "$PWD/stage-release" "$PWD/release-linux-x64"
-          bash scripts/verify_release_bundle.sh "$PWD/release-linux-x64"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: release-linux-x64
-          path: release-linux-x64/
-          if-no-files-found: error
-
-  linux-arm64:
-    needs: policy
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Install qualified Linux arm64 dependencies
-        run: |
-          # Only Ubuntu packages are required here. An unrelated Chrome index
-          # hash mismatch must not prevent qualification dependencies installing.
-          test -s /etc/apt/sources.list.d/ubuntu.sources
-          APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
-          sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 jq build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
-      - name: Build, execute and stage Linux arm64
-        run: |
-          set -euo pipefail
-          test "$(uname -m)" = aarch64
-          test "$(llvm-config --version | cut -d. -f1)" = 18
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release"
-          cmake --build build-release --parallel 2
-          build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-linux-arm64.out
-          diff -u tests/semantic/differential/core_control.expected /tmp/release-linux-arm64.out
-          cmake --install build-release
-          mkdir -p stage-release/bin
-          cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
-          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" linux-arm64 "$PWD/stage-release" "$PWD/release-linux-arm64"
-          bash scripts/verify_release_bundle.sh "$PWD/release-linux-arm64"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: release-linux-arm64
-          path: release-linux-arm64/
-          if-no-files-found: error
-
-  macos-arm64:
-    needs: policy
-    runs-on: macos-15
-    timeout-minutes: 70
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Install qualified macOS dependencies
-        run: |
-          brew install bison flex llvm@18 ninja openssl@3 jq
-          echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
-          echo "$(brew --prefix flex)/bin" >> "$GITHUB_PATH"
-          echo "$(brew --prefix llvm@18)/bin" >> "$GITHUB_PATH"
-          echo "$(brew --prefix openssl@3)/bin" >> "$GITHUB_PATH"
-          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> "$GITHUB_ENV"
-      - name: Build, execute and stage macOS arm64
-        env:
-          CC: /opt/homebrew/opt/llvm@18/bin/clang
-          CXX: /opt/homebrew/opt/llvm@18/bin/clang++
-        run: |
-          set -euo pipefail
-          test "$(uname -m)" = arm64
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config"
-          cmake --build build-release --parallel 2
-          build-release/short_hand tests/semantic/differential/core_control.short run > /tmp/release-macos-arm64.out
-          diff -u tests/semantic/differential/core_control.expected /tmp/release-macos-arm64.out
-          cmake --install build-release
-          mkdir -p stage-release/bin
-          cp build-release/short_hand build-release/green_ai_tool stage-release/bin/
-          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" macos-arm64 "$PWD/stage-release" "$PWD/release-macos-arm64"
-          bash scripts/verify_release_bundle.sh "$PWD/release-macos-arm64"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: release-macos-arm64
-          path: release-macos-arm64/
-          if-no-files-found: error
-
-  windows-x64:
-    needs: policy
-    runs-on: windows-2025
-    timeout-minutes: 80
-    env:
-      MSYSTEM: UCRT64
-      CHERE_INVOKING: 1
-    defaults:
-      run:
-        shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Install qualified Windows dependencies
-        run: |
-          pacman -S --noconfirm --needed mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils
-      - name: Build, execute and stage Windows x64
-        run: |
-          set -euo pipefail
-          export PATH="/ucrt64/bin:/usr/bin:${PATH}"
-          export CC=clang
-          export CXX=clang++
-          test "$(llvm-config --version | cut -d. -f1)" = 22
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe
-          cmake --build build-release --parallel 2
-          ./build-release/short_hand.exe tests/semantic/differential/core_control.short run > /tmp/release-windows-x64.out
-          diff -u tests/semantic/differential/core_control.expected /tmp/release-windows-x64.out
-          cmake --install build-release
-          mkdir -p stage-release/bin
-          cp build-release/short_hand.exe build-release/green_ai_tool.exe stage-release/bin/
-          bash scripts/prepare_release_bundle.sh "${{ needs.policy.outputs.version }}" windows-x64 "$PWD/stage-release" "$PWD/release-windows-x64"
-          bash scripts/verify_release_bundle.sh "$PWD/release-windows-x64"
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: release-windows-x64
-          path: release-windows-x64/
-          if-no-files-found: error
+    uses: ./.github/workflows/cpu-packages.yml
+    with:
+      version: ${{ needs.policy.outputs.version }}
 
   candidate:
-    needs: [policy, linux-x64, linux-arm64, macos-arm64, windows-x64]
+    needs: [policy, cpu-packages]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
         with:
-          pattern: release-*
+          pattern: release-bundle-*
           path: release-assets
       - name: Verify all unsigned candidate bundles
         run: |
           set -euo pipefail
-          for dir in release-assets/release-*; do
-            bash scripts/verify_release_bundle.sh "$dir"
-          done
+          python3 scripts/verify_release_candidates.py release-assets --revision "$GITHUB_SHA"
           if [[ "${{ needs.policy.outputs.publish }}" != "true" ]]; then
             echo 'DRY_RUN_ONLY: workflow_dispatch can build and verify candidates but cannot publish.'
           fi
@@ -270,8 +130,10 @@ jobs:
           fetch-depth: 0
       - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
         with:
-          pattern: release-*
+          pattern: release-bundle-*
           path: release-assets
+      - name: Require all native CPU receipts before attestation
+        run: python3 scripts/verify_release_candidates.py release-assets --revision "$GITHUB_SHA"
       - name: Revalidate protected environment after admission
         env:
           GH_TOKEN: ${{ github.token }}
@@ -293,39 +155,39 @@ jobs:
       - name: Attest Linux x64 build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.tar
+          subject-path: release-assets/release-bundle-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.tar
       - name: Attest Linux x64 SPDX SBOM
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.tar
-          sbom-path: release-assets/release-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.spdx.json
+          subject-path: release-assets/release-bundle-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.tar
+          sbom-path: release-assets/release-bundle-linux-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-x64.spdx.json
       - name: Attest Linux arm64 build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.tar
+          subject-path: release-assets/release-bundle-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.tar
       - name: Attest Linux arm64 SPDX SBOM
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.tar
-          sbom-path: release-assets/release-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.spdx.json
+          subject-path: release-assets/release-bundle-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.tar
+          sbom-path: release-assets/release-bundle-linux-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-linux-arm64.spdx.json
       - name: Attest macOS arm64 build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.tar
+          subject-path: release-assets/release-bundle-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.tar
       - name: Attest macOS arm64 SPDX SBOM
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.tar
-          sbom-path: release-assets/release-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.spdx.json
+          subject-path: release-assets/release-bundle-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.tar
+          sbom-path: release-assets/release-bundle-macos-arm64/shorthand-${{ needs.policy.outputs.version_no_v }}-macos-arm64.spdx.json
       - name: Attest Windows x64 build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
+          subject-path: release-assets/release-bundle-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
       - name: Attest Windows x64 SPDX SBOM
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
-          subject-path: release-assets/release-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
-          sbom-path: release-assets/release-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.spdx.json
+          subject-path: release-assets/release-bundle-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
+          sbom-path: release-assets/release-bundle-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.spdx.json
       - name: Cryptographically verify every artifact attestation
         env:
           GH_TOKEN: ${{ github.token }}

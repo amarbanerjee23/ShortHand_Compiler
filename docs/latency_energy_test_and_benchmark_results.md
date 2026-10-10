@@ -1,8 +1,97 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `3417f8ed261c32aa59f09080cc4d325b316edc0e`
+Comparison base: `813c899c10f016785f5c2280aaaaedfeced78f3d`
 
 ## Current PR evidence
+
+### CPU release packaging
+
+This change follows merged PR120 and repairs the release distribution path. The current comparison base is its master merge above; the first hosted run used the earlier stacked PR120 head. CMake now installs both primary CLIs, packages the enabled ONNX Runtime dependency with its license notices, and exports a relocatable ONNX CMake target. A single reusable workflow builds CPU archives for Linux x64, Linux ARM64, Windows x64 and macOS ARM64 for both normal CI and releases. The mandatory CI aggregate includes every native package job.
+
+The archive is extracted into a path containing spaces. The original SDK and build directories are temporarily hidden, other ONNX-containing loader paths are removed, and installed static/shared C ABI consumers must produce exact identity outputs for 42, -7.25, 0 and 1024.5. They also check warm route reuse, nonfinite-input rollback and reset. The installed interpreter must execute the real model and return 42; a core ShortHand source is compiled, linked and run separately. Removing the bundled ONNX library must make a fresh consumer configuration fail. Native receipts bind the archive SHA-256, platform, source revision, clean tracked source state, SDK version and required checks. Outside Linux x64, the probes first require default production-policy rejection, then exercise real inference through the existing explicit experimental override and record `experimental_native_candidate`. The current production support scope stays unchanged.
+
+Release artifact names use `release-bundle-*`, excluding `release-closeout-policy`. Candidate verification requires all four exact platforms and their matching receipts; missing platforms, wrong OS/architecture, stale revisions, skipped checks and altered archives are rejected. Publication repeats this verification before signing.
+
+| Validation | Result |
+| --- | --- |
+| Local Release build, LLVM 18 / ONNX Runtime 1.30.0 | PASS on the development working tree |
+| Relocated Linux x64 archive: installed CLIs, static/shared CPU outputs, core compilation, interpreter inference, missing-library negative | PASS locally; original build/SDK paths hidden |
+| Candidate selection and receipt negative controls | PASS: policy report excluded; missing/unexpected platform, missing receipt, stale revision, wrong OS/architecture, dirty source, missing check and tampered digest rejected |
+| Signed-release contract and existing closeout regression matrix | PASS locally, including 54 inherited closeout cases |
+| CI status hygiene and platform contract guard | PASS locally |
+| Native Linux x64 / macOS ARM64 / Linux ARM64 archive execution | PASS on head `dbd84bcfb507927cee865100120ed934f52d6384`, CI run 37808859561; macOS and ARM64 retain explicit experimental scope |
+| Native Windows x64 archive execution | PASS on `a7fa4cfeb46dd31ac90736c23c41d03f19d956fb`, including app-local DLL identity, both consumers, interpreter and missing-runtime negative; combined receipt acceptance still requires the checkout correction below |
+| Full compiled tensor source path on Windows/macOS | Separate release blocker; this PR tests interpreted ONNX execution and native runtime consumers, not unqualified MLIR portability |
+
+The local build is a development tree based on the SHA above; its receipt is not a clean committed release qualification. Hosted results must be retained before marking the package PR ready. This change makes no latency, power, energy or GA claim. Full operational release qualification and source-to-native AI parity remain required as described in [cpu_release_packages.md](cpu_release_packages.md).
+
+## PR121 first hosted run and fixes
+
+[CI run 37761804858](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37761804858), on initial head `9aa4e03b3f58fe60fb1fc45e12f743a776dceb4f`, caught these integration issues:
+
+| Failure | Root cause and correction |
+| --- | --- |
+| Evidence workflow | The required `Current PR evidence` heading was renamed. Restore the contracted heading; retain all required report sections. |
+| Linux x64 archive | Ubuntu's LLVM 18 installation exposes `llc-18`; the consumer searched only for `llc`. Resolve the versioned binary first. |
+| Windows archive | The MSYS2 shell did not expose Git, needed for provenance. Install Git explicitly with the package-job dependencies. |
+| macOS/ARM64 inference | The production allowlist intentionally rejects non-Linux-x64 hosts. Test default rejection, then use the existing explicit experimental mode to collect native output evidence. Record the mode and require truthful telemetry; do not change the allowlist. |
+| Enterprise OTLP/Prometheus and runtime-package installation tests | These three tests built only the previous installed targets. Build both newly installed CLIs before the complete install operation; the third case was found by auditing all `cmake --install` call sites. |
+| CTest Makefile AI gate | A source assertion expected the former absolute ONNX link directory. Update it to the relocatable imported-target wiring, backed by the actual archive execution tests. |
+
+The ordinary Windows/macOS/ARM64 compiler jobs, toolchain matrix, reproducibility, security and both MLIR lanes passed on that first head.
+
+## PR121 second hosted run and fixes
+
+[CI run 37808859561](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37808859561), on head `dbd84bcfb507927cee865100120ed934f52d6384`, passed the native Linux x64, Linux ARM64 and macOS ARM64 archive jobs. These jobs executed the installed interpreter, static/shared CPU consumers, compiled core source and missing-runtime negative from the relocated archives. The production guard passed before experimental inference on macOS/ARM64. Ordinary platform jobs, all four toolchain lanes, security, reproducibility, CTest parity, both MLIR lanes and latency/energy evidence also passed. Tooling and experiment-results workflows passed.
+
+Two remaining failures are corrected in this revision:
+
+- Windows built and staged the archive, but native CMake emitted a drive-letter checksum path that could not match the MSYS2 prefix removed by `sed`. Generate checksum entries from basenames and write LF endings explicitly. A regression fixture reproduces native Windows path and CRLF formatting; it fails with the previous producer and passes with the correction, while the archive-tamper and unsigned-publication negatives remain enforced.
+- Ubuntu CTest passed 22 of 23 tests; `runtime_production_packaging` still omitted the newly installed CLIs from its partial build. Add both targets, matching the two adapter fixtures fixed earlier.
+
+Windows execution, all-four candidate aggregation and the complete amended CI result remain pending. The archive scope does not include a minimal end-user Windows image rehearsal or full typed source-to-native AI parity.
+
+### Windows runtime selection follow-up
+
+On `bf65dffd5aa5d657eec996d8b915f9b18e0d596b`, [Windows job 113731439956](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37903540967/job/113731439956) passed archive verification, installed CLI execution, consumer compilation and default production refusal. Both inference consumers then loaded the machine's ONNX 1.17.1 instead of the bundled 1.30.0 and failed with an API-version mismatch. PATH priority cannot override the Windows system-directory search order.
+
+Consumers now stage the imported runtime DLLs beside their executables using CMake's runtime dependency list. Qualification checks the deployed ONNX hash against the extracted bundle and verifies the loaded module is app-local before inference. The package documentation includes the same deployment requirement and a CMake example. Native Windows verification remains required; no inference pass is inferred from compilation alone. macOS and Linux ARM64 archive execution passed on `bf65dff`.
+
+### Native package results and Windows receipt correction
+
+Head `a7fa4cfeb46dd31ac90736c23c41d03f19d956fb` passed all four native archive jobs in [PR CI 37904344364](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904344364) and [push CI 37904337310](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904337310). Windows executed four exact outputs through both C ABI consumers, verified the loaded app-local ONNX DLL, checked default production refusal, executed the compiled core source and interpreter inference, and passed the missing-runtime negative. All 18 primary PR CI jobs passed, including Ubuntu core, CTest parity, both MLIR lanes, security, reproducibility and latency/energy evidence. Only candidate receipt aggregation and its dependent aggregate failed.
+
+The retained [Windows archive receipt](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904337310/artifacts/11603534143) has matching source revision, native architecture, ONNX version and archive digest, but `source_dirty:true`. Its installed source header and documentation contain CRLF and match the committed LF bytes after normalization. Windows Git performed the checkout using its automatic conversion policy; the later MSYS2 Git status used a different default. The workflow now disables automatic conversion before checkout and records that policy locally for both Git installations. Qualification checks the tracked source before and after execution and fails with changed paths instead of emitting a misleading pass receipt. A regression reproduces the CRLF mismatch and verifies that actual staged and unstaged edits are still rejected; untracked build output remains excluded.
+
+The clean-source requirement and aggregate acceptance rules are unchanged. The corrected candidate receipts and final CI result still require hosted verification on the next revision. Native Windows/macOS experiments do not promote the production allowlist or establish full typed source-to-native AI parity.
+
+### Windows toolchain pin and deterministic cache recovery
+
+Head `94b2e5ec19544d65a1882252189c2af0a65f5eef` passed the three non-Windows native archive jobs and every other primary PR job in [PR CI 38030955404](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38030955404). Both Windows lanes stopped at the existing LLVM-major guard because the rolling MSYS2 repository had advanced to 23.1.3-1. The clean Windows source receipt therefore remains unverified on that head. Both workflows now acquire the six matching Clang/LLVM 22.1.8-3 packages from official MSYS2 archive URLs, check committed SHA-256 hashes and upstream detached signatures, and install them in one transaction. The LLVM 22 requirement is unchanged; other prerequisites still follow their configured repositories.
+
+[Push CI 38030953576](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38030953576) also exposed a scheduling assumption in the cache lifecycle test: all 4,000 worker calls could legitimately encounter a reset/registration gap, violating its unconditional requirement for at least one successful racing call. The PR invocation passed. The corrected test keeps 3,996 calls racing 64 resets, then requires each of the four workers to produce the exact final model output after registration completes. Reset-task exceptions reach waiting workers, and unexpected statuses, output mutation, torn results and post-reset cache recovery remain checked. This changes the test synchronization, not runtime behavior.
+
+Local validation used the actual Linux x64 runtime archive from `a7fa4cf` and ONNX Runtime 1.30.0 with the amended C++ harness, compiled by GCC 13.3. Four retained complete runs passed the full cache boundary/lifecycle suite. The normal-scheduling run recorded 3,499 successes and 501 registration-gap rejections; three single-CPU runs recorded 4,000/0, 1,153/2,847 and 2,473/1,527. Each completed 4,000 calls and 64 resets. These are correctness counts, not latency measurements. Hosted sanitizer execution on the amended head remains required.
+
+The signed-release contract, all 54 inherited closeout cases, platform contract, CI status hygiene, shell syntax and whitespace checks pass locally. All six pinned MSYS2 archive hashes and signatures verify locally against the upstream MSYS2 keyring; installation and native execution still require Windows CI. Final candidate aggregation and the mandatory CI aggregate remain pending on the amended head.
+
+The first pinned-toolchain invocation on `70aee8f2c07583db3b144db0f38f4daddd85467d`, [push CI 38065501834](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38065501834), exposed two installer integration issues. The ordinary Windows checkout converted the checksum manifest to CRLF, so its strict filename parser rejected the first entry. Explicit LF Git attributes now cover the installer and manifest. The CPU lane preserved LF and verified the first archive hash, but the hosted image's `pacman-key` helper rejected the command because of its keyring permission checks. Signature verification now runs inside the existing package-manager transaction, using a temporary configuration that explicitly requires trusted signatures for every local archive. The configuration must contain `LocalFileSigLevel = Required TrustedOnly` before installation proceeds; the global runner configuration and keyring remain unchanged. Download and hash checks still run for all six archives before installation. A local Git checkout regression with `core.autocrlf=true` confirms byte-identical installer/manifest files and successful parsing of all six entries. The amended cache harness passed the hosted application-boundary and prepared-cache sanitizer steps in the same push run; the complete profiling job was still in progress when this evidence was recorded. Native Windows verification of this correction remains pending.
+
+## Energy and power result
+
+Packaging and explicit experimental execution establish no energy or latency improvement. Physical energy and GA claims remain blocked by the existing evidence policies.
+
+## Reproduction
+
+Run `python3 tests/packaging/test_cpu_release_candidates.py`, `bash tests/ai_runtime/test_onnxruntime_backend_source.sh` and `bash scripts/check_signed_release_contract.sh`. Build/install the enabled CPU runtime with the pinned SDK, then run `scripts/prepare_release_bundle.sh` and `python3 scripts/check_installed_cpu_package.py ARCHIVE PLATFORM --sdk SDK --build BUILD --report REPORT`. `.github/workflows/cpu-packages.yml` contains the exact native OS commands and invokes the same archive verifier for CI and release candidates. Experimental-mode receipts must never be treated as production support promotion.
+
+## Verified PR120 hosted results
+
+PR120 head `69bc10e7084036986d099d3111d374a703898287` passed [CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222619), [tooling](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222201) and [extended fuzz/sanitizers](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222063). Seed 56 completed 1,129,345 parser, 635,611 module, 1,208,787 semantic and 1,188,143 lowering inputs, 181 seconds per stage. ASan/LSan/UBSan and mandatory runtime/training ThreadSanitizer passed. These hosted results close the local LeakSanitizer limitation recorded historically below.
+
+Comparison base: `3417f8ed261c32aa59f09080cc4d325b316edc0e`
+
+## Historical PR120 parser lifetime evidence
 
 This PR addresses the post-PR119 audit's parser memory blocker. Parser allocations previously survived until process exit, including nodes from failed parses. The CLI now owns one `ParseSession` for its full module graph, while every fuzz input has its own session. Session destruction releases AST allocations, scanner tokens and source ranges; nested temporary parses preserve outer graphs and roots.
 

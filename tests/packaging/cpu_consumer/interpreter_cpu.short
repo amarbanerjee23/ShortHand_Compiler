@@ -1,0 +1,2 @@
+int status;
+ai_infer("identity.onnx", "1", "42");

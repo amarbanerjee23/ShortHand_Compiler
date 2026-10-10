@@ -16,6 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  cpu-packages:
+    uses: ./.github/workflows/cpu-packages.yml
+
   latency-energy-evidence:
     uses: ./.github/workflows/runtime-profile.yml
 
@@ -396,8 +399,6 @@ jobs:
         run: |
           set -euo pipefail
           packages=(
-            mingw-w64-ucrt-x86_64-clang
-            mingw-w64-ucrt-x86_64-llvm
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-openssl
@@ -416,6 +417,9 @@ jobs:
           done
           echo "MSYS2 dependency installation failed after four attempts" >&2
           exit 1
+
+      - name: Install pinned Windows LLVM 22 toolchain
+        run: bash scripts/install_ci_windows_llvm.sh
 
       - name: Record Windows UCRT64 environment
         run: |
@@ -699,6 +703,7 @@ jobs:
       - security
       - mlir
       - latency-energy-evidence
+      - cpu-packages
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -717,6 +722,7 @@ jobs:
           test "${{ needs.security.result }}" = "success"
           test "${{ needs.mlir.result }}" = "success"
           test "${{ needs.latency-energy-evidence.result }}" = "success"
+          test "${{ needs.cpu-packages.result }}" = "success"
 
       - name: Publish event-specific CI status
         if: ${{ always() && !cancelled() }}

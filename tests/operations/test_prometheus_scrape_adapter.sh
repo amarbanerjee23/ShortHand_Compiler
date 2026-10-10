@@ -41,6 +41,7 @@ cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja \
 
 stage build
 cmake --build "${BUILD_DIR}" --parallel 2 --target \
+  short_hand green_ai_tool \
   shorthand_runtime shorthand_runtime_shared \
   shorthand_ai_bridge shorthand_ai_bridge_shared \
   shorthand_core shorthand_core_shared \

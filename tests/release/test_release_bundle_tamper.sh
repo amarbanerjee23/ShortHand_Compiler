@@ -28,4 +28,31 @@ if bash "${ROOT_DIR}/scripts/verify_release_bundle.sh" "${OUT}" --publication >/
   exit 1
 fi
 
-printf 'PASS release bundle checksum tamper and unsigned-publication negatives\n'
+# Native Windows CMake uses drive-letter paths and CRLF output even when called
+# from MSYS2 Bash. The published checksum file must still use portable basenames.
+mkdir -p "${TMP}/native-tools"
+cat > "${TMP}/native-tools/cmake" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == -E && "${2:-}" == sha256sum ]]; then
+  shift 2
+  for subject in "$@"; do
+    digest="$("${SHORTHAND_TEST_REAL_CMAKE}" -E sha256sum "${subject}" | awk '{print $1}')"
+    native_path="${subject}"
+    if [[ "${subject}" == /* ]]; then native_path="C:${subject}"; fi
+    printf '%s  %s\r\n' "${digest}" "${native_path}"
+  done
+else
+  exec "${SHORTHAND_TEST_REAL_CMAKE}" "$@"
+fi
+SH
+chmod +x "${TMP}/native-tools/cmake"
+cp "${STAGE}/bin/short_hand" "${STAGE}/bin/short_hand.exe"
+cp "${STAGE}/bin/green_ai_tool" "${STAGE}/bin/green_ai_tool.exe"
+export SHORTHAND_TEST_REAL_CMAKE="$(command -v cmake)"
+export PATH="${TMP}/native-tools:${PATH}"
+NATIVE_OUT="${TMP}/native output [checksum]"
+bash "${ROOT_DIR}/scripts/prepare_release_bundle.sh" v1.0.0 windows-x64 "${STAGE}" "${NATIVE_OUT}" >/tmp/shorthand_prepare_release_native.out
+bash "${ROOT_DIR}/scripts/verify_release_bundle.sh" "${NATIVE_OUT}" >/tmp/shorthand_verify_release_native.out
+
+printf 'PASS release bundle checksum tamper, unsigned-publication and native Windows checksum controls\n'

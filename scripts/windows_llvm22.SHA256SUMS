@@ -1,0 +1,6 @@
+e1ca84375717300f61d3261f4ec0db30416beaa87abdc30ab77fa7d88b2d1f01  mingw-w64-ucrt-x86_64-clang-22.1.8-3-any.pkg.tar.zst
+bbe5d9ec99e6c43e8764f4cef4edadb2acf6faa3d851de25e57c87b3e1f21a3b  mingw-w64-ucrt-x86_64-clang-libs-22.1.8-3-any.pkg.tar.zst
+ef8bb70e125cbaa8aea78b0b676e7faf7d032652d34b41a1f11c0bd4df1168da  mingw-w64-ucrt-x86_64-llvm-22.1.8-3-any.pkg.tar.zst
+b22437a27246bf17447061d5c7faea5f0e457aa9a65b89dad692fe767afb1d6a  mingw-w64-ucrt-x86_64-llvm-libs-22.1.8-3-any.pkg.tar.zst
+ccb3591fa7eb08c3c05aaf0db6150f1a08427c1e831637a8de0672b75c3888df  mingw-w64-ucrt-x86_64-llvm-tools-22.1.8-3-any.pkg.tar.zst
+351a125b9facde763dac694d93fff91b6f699729ddd53e0a753339041abb1478  mingw-w64-ucrt-x86_64-lld-22.1.8-3-any.pkg.tar.zst

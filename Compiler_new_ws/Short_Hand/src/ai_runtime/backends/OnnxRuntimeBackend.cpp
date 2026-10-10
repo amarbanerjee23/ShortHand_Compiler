@@ -2,6 +2,7 @@
 #include "../AI_Telemetry.h"
 
 #include <exception>
+#include <filesystem>
 #include <cstdlib>
 #include <stdexcept>
 #include <sstream>
@@ -159,7 +160,8 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         session_options.SetIntraOpNumThreads(1);
         session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_BASIC);
 
-        Ort::Session session(ortEnv(), model_path.c_str(), session_options);
+        const auto native_path = std::filesystem::u8path(model_path);
+        Ort::Session session(ortEnv(), native_path.c_str(), session_options);
         Ort::AllocatorWithDefaultOptions allocator;
 
         if (session.GetInputCount() == 0 || session.GetOutputCount() == 0) {
