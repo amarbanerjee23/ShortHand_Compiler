@@ -140,7 +140,13 @@ jobs:
       run:
         shell: 'C:\msys64\usr\bin\bash.exe -leo pipefail {0}'
     steps:
+      - name: Preserve source line endings across Windows and MSYS2 Git
+        shell: pwsh
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Record checkout normalization policy for both Git installations
+        shell: pwsh
+        run: git config --local core.autocrlf false
       - name: Install qualified Windows dependencies
         run: |
           packages=(mingw-w64-ucrt-x86_64-clang mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils git)

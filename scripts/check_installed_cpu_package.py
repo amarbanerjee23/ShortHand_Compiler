@@ -14,6 +14,15 @@ import uuid
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
+def clean_source_revision(root):
+    revision = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+    dirty = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain",
+                                     "--untracked-files=no"], text=True).strip()
+    if dirty:
+        raise RuntimeError("CPU qualification requires clean tracked source:\n" + dirty)
+    return revision
+
+
 def run(command, *, cwd, env, expect_failure=False):
     result = subprocess.run([str(x) for x in command], cwd=cwd, env=env,
                             text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -43,6 +52,7 @@ def main():
     report = args.report.resolve()
     report.parent.mkdir(parents=True, exist_ok=True)
     report.unlink(missing_ok=True)  # A failed attempt must never leave a stale pass.
+    revision = clean_source_revision(ROOT)
     if sdk in archive.parents or build in archive.parents or sdk in build.parents or build in sdk.parents:
         raise RuntimeError("archive, build and SDK must have independent locations")
     hidden = []
@@ -130,12 +140,13 @@ def main():
             output = run([*configure, "-B", work / "missing-runtime"], cwd=work, env=env, expect_failure=True)
             if "ShortHand_ONNXRUNTIME_LIBRARY" not in output:
                 raise RuntimeError("missing-runtime negative failed for an unrelated reason")
+            if clean_source_revision(ROOT) != revision:
+                raise RuntimeError("source revision changed during CPU qualification")
             receipt = {"schema": "shorthand.release.cpu_package.v1", "status": "pass",
                        "platform": args.platform, "native_os": native[0], "architecture": native[1],
                        "qualification_mode": qualification_mode,
                        "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
-                       "source_revision": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
-                       "source_dirty": bool(subprocess.check_output(["git", "-C", str(ROOT), "status", "--porcelain", "--untracked-files=no"], text=True).strip()),
+                       "source_revision": revision, "source_dirty": False,
                        "onnxruntime_version": (prefix / "share/shorthand/licenses/onnxruntime/VERSION_NUMBER").read_text().strip(),
                        "compiler_sha256": hashlib.sha256(compiler.read_bytes()).hexdigest(),
                        "checks": ["relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",

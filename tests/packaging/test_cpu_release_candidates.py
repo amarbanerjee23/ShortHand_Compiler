@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import pathlib
+import subprocess
 import tempfile
 import unittest
 
@@ -11,9 +12,44 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("candidates", ROOT / "scripts/verify_release_candidates.py")
 candidates = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(candidates)
+spec = importlib.util.spec_from_file_location("installed", ROOT / "scripts/check_installed_cpu_package.py")
+installed = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(installed)
 
 
 class Candidates(unittest.TestCase):
+    def test_source_checkout_rejects_normalization_mismatch_and_actual_edits(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            def git(*args):
+                return subprocess.check_output(["git", "-C", str(root), *args], text=True, stderr=subprocess.PIPE).strip()
+            git("init")
+            git("config", "user.name", "Package test")
+            git("config", "user.email", "package-test@example.invalid")
+            git("config", "core.autocrlf", "false")
+            source = root / "source.txt"
+            source.write_bytes(b"original\n")
+            git("add", "source.txt")
+            git("-c", "commit.gpgsign=false", "commit", "-m", "fixture")
+            revision = git("rev-parse", "HEAD")
+            self.assertEqual(installed.clean_source_revision(root), revision)
+            # A Windows Git checkout using autocrlf=true creates these bytes,
+            # which another Git using autocrlf=false must report as modified.
+            source.write_bytes(b"original\r\n")
+            with self.assertRaisesRegex(RuntimeError, "clean tracked source.*|source.txt"):
+                installed.clean_source_revision(root)
+            git("checkout", "--", "source.txt")
+            self.assertEqual(source.read_bytes(), b"original\n")
+            self.assertEqual(installed.clean_source_revision(root), revision)
+            (root / "untracked-build.log").write_text("build output")
+            self.assertEqual(installed.clean_source_revision(root), revision)
+            source.write_bytes(b"actual source change\n")
+            with self.assertRaisesRegex(RuntimeError, "source.txt"):
+                installed.clean_source_revision(root)
+            git("add", "source.txt")
+            with self.assertRaisesRegex(RuntimeError, "source.txt"):
+                installed.clean_source_revision(root)
+
     def test_selection_requires_all_bundles_and_ignores_policy_report(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)

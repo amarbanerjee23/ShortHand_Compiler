@@ -20,7 +20,7 @@ Release artifact names use `release-bundle-*`, excluding `release-closeout-polic
 | Signed-release contract and existing closeout regression matrix | PASS locally, including 54 inherited closeout cases |
 | CI status hygiene and platform contract guard | PASS locally |
 | Native Linux x64 / macOS ARM64 / Linux ARM64 archive execution | PASS on head `dbd84bcfb507927cee865100120ed934f52d6384`, CI run 37808859561; macOS and ARM64 retain explicit experimental scope |
-| Native Windows x64 archive execution | Build and archive creation passed on that head; checksum path conversion prevented execution. Correction below awaits hosted verification |
+| Native Windows x64 archive execution | PASS on `a7fa4cfeb46dd31ac90736c23c41d03f19d956fb`, including app-local DLL identity, both consumers, interpreter and missing-runtime negative; combined receipt acceptance still requires the checkout correction below |
 | Full compiled tensor source path on Windows/macOS | Separate release blocker; this PR tests interpreted ONNX execution and native runtime consumers, not unqualified MLIR portability |
 
 The local build is a development tree based on the SHA above; its receipt is not a clean committed release qualification. Hosted results must be retained before marking the package PR ready. This change makes no latency, power, energy or GA claim. Full operational release qualification and source-to-native AI parity remain required as described in [cpu_release_packages.md](cpu_release_packages.md).
@@ -56,6 +56,14 @@ Windows execution, all-four candidate aggregation and the complete amended CI re
 On `bf65dffd5aa5d657eec996d8b915f9b18e0d596b`, [Windows job 113731439956](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37903540967/job/113731439956) passed archive verification, installed CLI execution, consumer compilation and default production refusal. Both inference consumers then loaded the machine's ONNX 1.17.1 instead of the bundled 1.30.0 and failed with an API-version mismatch. PATH priority cannot override the Windows system-directory search order.
 
 Consumers now stage the imported runtime DLLs beside their executables using CMake's runtime dependency list. Qualification checks the deployed ONNX hash against the extracted bundle and verifies the loaded module is app-local before inference. The package documentation includes the same deployment requirement and a CMake example. Native Windows verification remains required; no inference pass is inferred from compilation alone. macOS and Linux ARM64 archive execution passed on `bf65dff`.
+
+### Native package results and Windows receipt correction
+
+Head `a7fa4cfeb46dd31ac90736c23c41d03f19d956fb` passed all four native archive jobs in [PR CI 37904344364](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904344364) and [push CI 37904337310](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904337310). Windows executed four exact outputs through both C ABI consumers, verified the loaded app-local ONNX DLL, checked default production refusal, executed the compiled core source and interpreter inference, and passed the missing-runtime negative. All 18 primary PR CI jobs passed, including Ubuntu core, CTest parity, both MLIR lanes, security, reproducibility and latency/energy evidence. Only candidate receipt aggregation and its dependent aggregate failed.
+
+The retained [Windows archive receipt](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904337310/artifacts/11603534143) has matching source revision, native architecture, ONNX version and archive digest, but `source_dirty:true`. Its installed source header and documentation contain CRLF and match the committed LF bytes after normalization. Windows Git performed the checkout using its automatic conversion policy; the later MSYS2 Git status used a different default. The workflow now disables automatic conversion before checkout and records that policy locally for both Git installations. Qualification checks the tracked source before and after execution and fails with changed paths instead of emitting a misleading pass receipt. A regression reproduces the CRLF mismatch and verifies that actual staged and unstaged edits are still rejected; untracked build output remains excluded.
+
+The clean-source requirement and aggregate acceptance rules are unchanged. The corrected candidate receipts and final CI result still require hosted verification on the next revision. Native Windows/macOS experiments do not promote the production allowlist or establish full typed source-to-native AI parity.
 
 ## Energy and power result
 
