@@ -21,13 +21,21 @@ while read -r digest name; do
       "https://repo.msys2.org/mingw/ucrt64/${name}${suffix}" -o "${archive}${suffix}"
   done
   printf '%s  %s\n' "${digest}" "${archive}" | sha256sum --check --strict -
-  pacman-key --verify "${archive}.sig" "${archive}"
   archives+=("${archive}")
   packages+=("${name%-22.1.8-3-any.pkg.tar.zst}")
 done < "${ROOT_DIR}/scripts/windows_llvm22.SHA256SUMS"
 [[ "${#archives[@]}" == 6 ]] || { echo 'error: Windows LLVM pin must contain all six packages' >&2; exit 1; }
 
-pacman -U --noconfirm "${archives[@]}"
+# Let the package manager verify signatures with its existing trusted keyring.
+# Local packages default to optional signatures; require trusted signatures for
+# this transaction without changing the runner's global pacman configuration.
+PACMAN_CONFIG="${WORK_DIR}/pacman.conf"
+sed -E 's/^[[:space:]]*LocalFileSigLevel[[:space:]]*=.*/LocalFileSigLevel = Required TrustedOnly/' \
+  /etc/pacman.conf > "${PACMAN_CONFIG}"
+grep -qx 'LocalFileSigLevel = Required TrustedOnly' "${PACMAN_CONFIG}" || {
+  echo 'error: cannot enforce trusted signatures for pinned Windows LLVM' >&2; exit 1;
+}
+pacman --config "${PACMAN_CONFIG}" -U --noconfirm "${archives[@]}"
 for package in "${packages[@]}"; do
   [[ "$(pacman -Q "${package}")" == "${package} 22.1.8-3" ]] || {
     echo "error: pinned Windows LLVM package version mismatch: ${package}" >&2; exit 1;
