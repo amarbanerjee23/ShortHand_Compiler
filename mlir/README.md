@@ -12,6 +12,8 @@ Generated `.inc` files live only in the build tree; the `.td` files are authorit
 The public textual contract is version 1.0.0 and replaces the uncompiled scaffold.
 There was no released MLIR syntax or ABI to preserve from that scaffold.
 
+The native package workflow additionally builds LLVM/MLIR 18 on Linux ARM64 and macOS ARM64 and pinned LLVM/MLIR 22 on Windows x64, with installed source/runtime tests. This does not expand the production support claim above. See [CPU release packages](../docs/cpu_release_packages.md).
+
 ## Build and qualify
 
 The qualified toolchain is LLVM/MLIR 18.x on Linux x64, C++17, CMake 3.20 or newer,

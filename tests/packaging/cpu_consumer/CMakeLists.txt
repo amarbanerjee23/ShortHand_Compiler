@@ -29,6 +29,24 @@ target_link_libraries(cpu_source PRIVATE ShortHand::runtime)
 add_test(NAME cpu_source COMMAND cpu_source)
 set_tests_properties(cpu_source PROPERTIES
   WORKING_DIRECTORY "${MODEL_DIRECTORY}" PASS_REGULAR_EXPRESSION "Installed compiled program: 42")
+# Exercise the verified typed tensor source path at both optimization levels.
+find_program(SHORTHAND_CLANG NAMES clang++-18 clang++ REQUIRED)
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cpu_tensor.ll"
+  COMMAND "${SHORTHAND_COMPILER}" "${CMAKE_CURRENT_SOURCE_DIR}/cpu_tensor.short"
+    compile-mlir --output "${CMAKE_CURRENT_BINARY_DIR}/cpu_tensor.ll"
+  DEPENDS cpu_tensor.short VERBATIM)
+foreach(level 0 2)
+  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cpu_tensor_O${level}.o"
+    COMMAND "${SHORTHAND_CLANG}" -c -O${level} cpu_tensor.ll -o cpu_tensor_O${level}.o
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/cpu_tensor.ll" VERBATIM)
+  add_executable(cpu_tensor_O${level} "${CMAKE_CURRENT_BINARY_DIR}/cpu_tensor_O${level}.o")
+  set_target_properties(cpu_tensor_O${level} PROPERTIES LINKER_LANGUAGE CXX)
+  target_link_libraries(cpu_tensor_O${level} PRIVATE ShortHand::runtime)
+  add_test(NAME cpu_tensor_O${level} COMMAND cpu_tensor_O${level})
+  set_tests_properties(cpu_tensor_O${level} PROPERTIES
+    WORKING_DIRECTORY "${MODEL_DIRECTORY}"
+    PASS_REGULAR_EXPRESSION "Installed typed inference completed")
+endforeach()
 if(WIN32)
   # Windows searches the system directory before PATH. Stage the imported DLLs
   # next to the consumers so a preinstalled older ONNX cannot shadow the bundle.
@@ -36,6 +54,6 @@ if(WIN32)
   add_custom_target(stage_cpu_runtime_dlls ALL
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "$<TARGET_RUNTIME_DLLS:cpu_shared>" "$<TARGET_FILE_DIR:cpu_shared>"
-    DEPENDS cpu_static cpu_shared cpu_source
+    DEPENDS cpu_static cpu_shared cpu_source cpu_tensor_O0 cpu_tensor_O2
     COMMAND_EXPAND_LISTS VERBATIM)
 endif()

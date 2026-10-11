@@ -4,7 +4,7 @@ Audit baseline: `3417f8ed261c32aa59f09080cc4d325b316edc0e` (merged GitHub PR119)
 
 The requested public CPU-inference scope includes Linux x64, Windows x64 and macOS ARM64. Windows and macOS require real ONNX Runtime execution from installed release payloads before their support claims can be promoted. Existing compiler portability checks do not provide that inference qualification. Linux ARM64 compiler packaging is retained; other CPU architectures and accelerator inference need separate numerical evidence.
 
-Implement and review the following changes sequentially. These are engineering acceptance conditions, not authorization to publish or declare GA.
+Implement and review the following changes sequentially. These are engineering acceptance conditions, not authorization to declare GA. The user separately authorized automatic installable development prereleases for successful builds on 2026-10-11.
 
 | Order | PR scope | Required exit evidence |
 | --- | --- | --- |
@@ -20,3 +20,7 @@ The current `linux-x64-cpu-v1` qualification, `controlled_beta` maturity and `pr
 ## Packaging implementation boundary
 
 PR120 passed hosted CI, tooling and the seed-56 extended sanitizer campaign and is merged in master (`813c899c10f016785f5c2280aaaaedfeced78f3d`). The following packaging slice introduces shared native archive qualification on all four existing package platforms; see [cpu_release_packages.md](cpu_release_packages.md). Its Windows/macOS scope covers installed interpreter inference and native C ABI consumers in the existing explicit experimental mode, after validating default refusal. Successful experiment receipts do not promote the production allowlist. Full typed `.short` source-to-native tensor execution on those platforms remains a required follow-up within the platform-qualification work, before public compiled-AI parity can be claimed. Keep this gate open even if package receipts pass.
+
+## Native build installer follow-up (2026-10-11)
+
+PR121 merged at `30bfee63809307c48b2de20ddb10d9c16666730d`; its final PR/push and merged-master mandatory CI matrices passed all 20 jobs. This follow-up adds LLVM/MLIR 22 compatibility on Windows, native target ABI/metadata handling, installed typed-source smoke tests at O0/O2, and native `.exe` / `.deb` / `.pkg` installation lifecycle gates. Successful trusted push builds publish unsigned development prereleases only after the complete CI matrix passes. See `cpu_release_packages.md` for prerequisites and the source tensor-value syntax limitation. Promotion of the production inference allowlist, arbitrary tensor-input source parity, clean end-user rehearsals and production governance remain explicit follow-up work.

@@ -58,7 +58,9 @@ struct Generator {
     LLVM::LLVMFuncOp function;
     bool invalid=false;
     Generator(MLIRContext &ctx,const sir::ProgramIR &program):p(program),b(&ctx),
-        module(ModuleOp::create(b.getUnknownLoc())),c{b,*module,b.getUnknownLoc()} {}
+        module(ModuleOp::create(b.getUnknownLoc())),c{b,*module,b.getUnknownLoc()} {
+        (*module)->setAttr("llvm.target_triple",b.getStringAttr(llvm::sys::getDefaultTargetTriple()));
+    }
     Location location(const sir::SourceRange &r) {
         return r.isKnown()?Location(FileLineColLoc::get(b.getContext(),r.begin.file,r.begin.line,r.begin.column)):b.getUnknownLoc();
     }
@@ -343,7 +345,7 @@ struct Generator {
         }
         case S::Kind::Evidence: {
             std::string text="shorthand.c3eco|"+s.name; for(const auto &str:s.strings) text+="|"+str;
-            auto g=c.stringGlobal(text,"__sh_evidence_"); g.setSectionAttr(b.getStringAttr("shorthand_ai_metadata"));break;
+            auto g=c.stringGlobal(text,"__sh_evidence_"); g.setSectionAttr(b.getStringAttr(metadataSection(*module)));break;
         }
         }
     }
