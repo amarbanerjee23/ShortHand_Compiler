@@ -13,7 +13,8 @@ The base is merged PR121. Its final PR and push CI matrices and merged-master ru
 | Candidate receipt negative controls | Local pass: missing/native/revision/dirty/hash/production-claim mutations |
 | Installer receipt negative controls | Local pass for all four platforms: byte tampering, stale revision, missing uninstall checks and unsafe paths rejected |
 | Build publication policy | Local pass: PR, PR-target, workflow-run, fork, tag and malformed identities rejected; reruns have distinct tags |
-| Native compilation, installer install/uninstall, full regression matrix | Required hosted CI gates; results pending for this new revision |
+| Initial hosted push run | Four toolchain lanes and macOS SDK lifecycle passed; new fixture required a leading declaration, and Windows LLVM definitions required argument splitting; both corrected |
+| Native compilation, installer install/uninstall, full regression matrix | Required hosted CI gates; awaiting corrected revision results |
 | Release upload/download integrity | Required before publication; no new release has yet been verified |
 
 The compiled source test uses zero-initialized typed tensors; separate interpreter and C ABI tests verify exact numeric output 42. Arbitrary typed tensor input values remain an API capability, not new source syntax. No platform is added to the default production allowlist.

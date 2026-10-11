@@ -1,3 +1,4 @@
+int status;
 tensor input float "1";
 tensor output float "1";
 model identity {

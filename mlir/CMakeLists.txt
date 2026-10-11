@@ -24,7 +24,9 @@ endif()
 
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include")
-add_definitions(${LLVM_DEFINITIONS})
+# LLVM exports command-line text, not a CMake list (notably on MSYS2).
+separate_arguments(SHORTHAND_LLVM_DEFINITIONS NATIVE_COMMAND "${LLVM_DEFINITIONS}")
+add_definitions(${SHORTHAND_LLVM_DEFINITIONS})
 add_subdirectory(include/ShortHand/IR)
 
 add_library(ShortHandMLIRDialect STATIC lib/ShortHandDialect.cpp)
