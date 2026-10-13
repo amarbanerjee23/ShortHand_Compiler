@@ -3,6 +3,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/SymbolTable.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
 
@@ -61,6 +62,22 @@ struct CodeBuilder {
         mlir::Block *block=b.getInsertionBlock();
         b.setInsertionPointToStart(&block->getParent()->front());
         return b.create<mlir::LLVM::AllocaOp>(loc,ptr(),type,integer(1,64));
+    }
+    mlir::Value gep(mlir::Type element, mlir::Value base,
+                    llvm::ArrayRef<mlir::LLVM::GEPArg> indices) {
+#if LLVM_VERSION_MAJOR >= 22
+        return b.create<mlir::LLVM::GEPOp>(loc,ptr(),element,base,indices,
+                                         mlir::LLVM::GEPNoWrapFlags::inbounds);
+#else
+        return b.create<mlir::LLVM::GEPOp>(loc,ptr(),element,base,indices,true);
+#endif
+    }
+    mlir::Block *entryBlock(mlir::LLVM::LLVMFuncOp fn) {
+#if LLVM_VERSION_MAJOR >= 22
+        return fn.addEntryBlock(b);
+#else
+        return fn.addEntryBlock();
+#endif
     }
     void failureBody(llvm::StringRef code, llvm::StringRef message) {
         std::string text;

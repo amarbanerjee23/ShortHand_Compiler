@@ -33,8 +33,11 @@ def digest(path):
 
 
 def gh(*args, check=True):
-    return subprocess.run(["gh", *map(str, args)], check=check, text=True,
-                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=900)
+    result = subprocess.run(["gh", *map(str, args)], check=False, text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=900)
+    if check and result.returncode:
+        raise RuntimeError(f"GitHub release operation failed: {result.stderr.strip()}")
+    return result
 
 
 def publish(root, tag, revision):
@@ -80,10 +83,11 @@ This release makes no measured energy-saving or certification claim.
         gh("api", f"repos/{REPOSITORY}/git/refs", "--method", "POST",
            "-f", f"ref=refs/tags/{tag}", "-f", f"sha={revision}")
         tagged = True
-        gh("release", "create", tag, *assets, "--repo", REPOSITORY, "--target", revision,
+        gh("release", "create", tag, "--repo", REPOSITORY, "--target", revision,
            "--title", f"ShortHand development {tag}", "--notes-file", notes,
            "--draft", "--verify-tag", "--prerelease", "--latest=false")
         created = True
+        gh("release", "upload", tag, *assets, "--repo", REPOSITORY)
         actual = json.loads(gh("api", f"repos/{REPOSITORY}/git/ref/tags/{tag}").stdout)
         if actual.get("object", {}).get("sha") != revision:
             raise ValueError("release tag does not identify the tested revision")

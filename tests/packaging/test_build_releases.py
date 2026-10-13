@@ -4,6 +4,9 @@ import hashlib
 import json
 import pathlib
 import sys
+import shutil
+import subprocess
+from unittest import mock
 import tempfile
 import unittest
 
@@ -28,6 +31,49 @@ class BuildReleases(unittest.TestCase):
                            ("GITHUB_RUN_ID", "1;cmd"), ("GITHUB_RUN_ATTEMPT", "0")):
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):
                 release.release_identity({**env, key: value})
+
+    def test_upload_corruption_rolls_back_draft_and_never_publishes(self):
+        for failure in (None, "corrupt", "upload"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as temporary:
+                root = pathlib.Path(temporary)
+                for platform in candidates.PLATFORMS:
+                    folder = root / ("release-bundle-" + platform)
+                    folder.mkdir()
+                    (folder / (platform + ".tar")).write_bytes(platform.encode())
+                calls, assets = [], []
+
+                def fake_gh(*args, check=True):
+                    calls.append(args)
+                    if args[:2] == ("release", "view") or (args[0] == "api" and not check):
+                        return subprocess.CompletedProcess(args, 1, "", "not found")
+                    if args[:2] == ("release", "upload"):
+                        if failure == "upload":
+                            raise RuntimeError("injected upload failure")
+                        assets.extend(pathlib.Path(p) for p in args[3:args.index("--repo")])
+                    if args[:2] == ("release", "download"):
+                        folder = pathlib.Path(args[args.index("--dir") + 1])
+                        for asset in assets:
+                            shutil.copyfile(asset, folder / asset.name)
+                        if failure == "corrupt":
+                            (folder / assets[0].name).write_bytes(b"corrupt")
+                    return subprocess.CompletedProcess(args, 0, json.dumps({"object": {"sha": "a" * 40}}), "")
+
+                with mock.patch.object(release, "gh", side_effect=fake_gh), \
+                     mock.patch.object(release.subprocess, "run") as verify, \
+                     mock.patch.dict(release.os.environ, {"GITHUB_RUN_ID": "123"}):
+                    if failure:
+                        with self.assertRaises((ValueError, RuntimeError)):
+                            release.publish(root, "build-123-1-aaaaaaaaaaaa", "a" * 40)
+                    else:
+                        release.publish(root, "build-123-1-aaaaaaaaaaaa", "a" * 40)
+                    self.assertIn("verify_release_candidates.py", verify.call_args.args[0][1])
+                self.assertEqual(any(c[:2] == ("release", "delete") for c in calls), bool(failure))
+                self.assertEqual(any(c[:2] == ("release", "edit") for c in calls), not failure)
+                creation = next(c for c in calls if c[:2] == ("release", "create"))
+                self.assertIn("--draft", creation)
+                self.assertIn("--verify-tag", creation)
+                self.assertIn("--prerelease", creation)
+                self.assertIn("--latest=false", creation)
 
     def test_installer_requires_native_lifecycle_and_exact_bytes(self):
         for platform in candidates.PLATFORMS:
