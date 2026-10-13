@@ -176,7 +176,10 @@ jobs:
           export CXX=clang++
           test "$(llvm-config --version | cut -d. -f1)" = 22
           cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/ucrt64/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
-          cmake --build build-release --parallel 2
+          if ! cmake --build build-release --parallel 2 > build-release/compile.log 2>&1; then
+            tail -n 100 build-release/compile.log
+            exit 1
+          fi
           cmake --install build-release
           bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" windows-x64 "$PWD/stage-release" "$PWD/release-windows-x64"
           bash scripts/verify_release_bundle.sh "$PWD/release-windows-x64"
@@ -186,6 +189,13 @@ jobs:
             --report "$PWD/release-windows-x64/shorthand-windows-x64.cpu-qualification.json"
           python3 scripts/build_native_installer.py "$PWD/release-windows-x64" windows-x64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release"
+      - name: Preserve native Windows compiler diagnostics
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-windows-build-log-${{ github.run_id }}
+          path: build-release/compile.log
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

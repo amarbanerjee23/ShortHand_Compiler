@@ -15,6 +15,7 @@ The base is merged PR121. Its final PR and push CI matrices and merged-master ru
 | Build publication policy | Local pass: PR, PR-target, workflow-run, fork, tag and malformed identities rejected; reruns have distinct tags |
 | Initial hosted push run | Four toolchain lanes and macOS SDK lifecycle passed; new fixture required a leading declaration, and Windows LLVM definitions required argument splitting; both corrected |
 | Hosted revision `86c5be1` | Push and PR matrices each passed 17 jobs; Linux x64/ARM64 and macOS installers completed their full native lifecycle. Windows exposed MLIR 22 GEP/entry-block API changes; compatibility added. Aggregate correctly failed and no release was published |
+| Revision `af5dfa1` native follow-up | Linux/macOS installers and both Linux MLIR regression lanes pass. Windows still fails before packaging; connector log retrieval returned transport errors, so its full compiler log is now preserved as a downloadable diagnostic artifact |
 | Final native Windows and complete matrix | Required hosted gates; awaiting updated revision results |
 | Release upload/download integrity | Local injected upload-error and downloaded-byte corruption tests pass: draft rollback occurs and publication is blocked. Actual publication remains pending |
 
