@@ -112,6 +112,15 @@ class BuildReleases(unittest.TestCase):
                 path = bundle / "fixture.installer-qualification.json"
                 path.write_text(json.dumps(report))
                 candidates.verify_installer(bundle, platform, "a" * 40)
+                # A directory iterator can spell the same parent differently.
+                aliases = [bundle / ".." / bundle.name / p.name for p in bundle.iterdir()]
+                with mock.patch.object(type(bundle), "iterdir", return_value=iter(aliases)):
+                    candidates.verify_installer(bundle, platform, "a" * 40)
+                extra = bundle / ("unexpected-setup" + suffix)
+                extra.write_bytes(b"not receipted")
+                with self.assertRaises(ValueError):
+                    candidates.verify_installer(bundle, platform, "a" * 40)
+                extra.unlink()
                 for key, value in (("status", "skip"), ("platform", "unknown"), ("production_claim", True),
                                    ("source_revision", "c" * 40), ("archive_sha256", "d" * 64),
                                    ("installer_sha256", "e" * 64), ("installer", "../" + name),

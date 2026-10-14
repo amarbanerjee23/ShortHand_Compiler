@@ -51,8 +51,11 @@ def verify_installer(bundle, platform, revision):
     suffix = ".exe" if platform.startswith("windows") else ".pkg" if platform.startswith("macos") else ".deb"
     if not name or pathlib.Path(name).name != name or ".." in name or not name.endswith("-setup" + suffix):
         raise ValueError("unsafe or incorrect installer name")
-    installers = [p for p in bundle.iterdir() if p.suffix in (".exe", ".deb", ".pkg")]
-    if installers != [bundle / name]:
+    # MSYS2 Python 3.14 can preserve backslashes from scandir while constructed
+    # Paths use forward slashes. Compare exact directory-entry names, not the
+    # differently spelled parent Paths; the receipted file is still hashed below.
+    installers = [p.name for p in bundle.iterdir() if p.suffix in (".exe", ".deb", ".pkg")]
+    if installers != [name]:
         raise ValueError("require exactly the receipted native installer")
     manifest = dict(line.split("=", 1) for line in next(bundle.glob("*.manifest")).read_text().splitlines())
     required = {"native_install", "exact_archive_payload", "installed_cpu_suite", "native_uninstall"}
