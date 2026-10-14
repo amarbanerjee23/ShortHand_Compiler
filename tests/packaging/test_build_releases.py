@@ -14,9 +14,23 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 import publish_build_release as release
 import verify_release_candidates as candidates
+import build_native_installer as installers
 
 
 class BuildReleases(unittest.TestCase):
+    def test_nsis_paths_keep_native_separators_and_unquoted_space_overrides(self):
+        exe = "C:/release files/setup.exe"
+        prefix = "C:/temporary files/installed with spaces"
+        expected_install = r'"C:\release files\setup.exe" /S /D=C:\temporary files\installed with spaces'
+        expected_uninstall = r'"C:\release files\setup.exe" /S _?=C:\temporary files\installed with spaces'
+        for uninstall, expected in ((False, expected_install), (True, expected_uninstall)):
+            command = installers.nsis_command(exe, prefix, uninstall=uninstall)
+            self.assertEqual(command, expected)
+            self.assertEqual(command.count('"'), 2)
+        with self.assertRaises(ValueError):
+            installers.nsis_command(exe, "relative/path")
+        self.assertEqual(installers.nsis_path("bin/nested/$value.dll"), r"bin\nested\$$value.dll")
+
     def test_only_trusted_pushes_have_immutable_release_identity(self):
         env = dict(GITHUB_EVENT_NAME="push", GITHUB_REPOSITORY=release.REPOSITORY,
                    GITHUB_REF="refs/heads/feature", GITHUB_SHA="a" * 40,

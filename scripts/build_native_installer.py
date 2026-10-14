@@ -34,16 +34,33 @@ def nsis_quote(value):
     return str(value).replace("$", "$$").replace('"', '$\\"')
 
 
+def nsis_path(value):
+    # MSYS2 Python can emit C:/ paths. NSIS validates roots and strips forward
+    # slashes at runtime, so both script paths and CLI overrides need backslashes.
+    return nsis_quote(pathlib.PureWindowsPath(value))
+
+
+def nsis_command(executable, prefix, *, uninstall=False):
+    executable, prefix = map(pathlib.PureWindowsPath, (executable, prefix))
+    if not executable.is_absolute() or not prefix.is_absolute():
+        raise ValueError("NSIS requires absolute Windows paths")
+    if '"' in str(executable) or '"' in str(prefix):
+        raise ValueError("invalid quote in NSIS path")
+    # NSIS consumes the entire unquoted remainder for /D= and _?=, including spaces.
+    override = "_?=" if uninstall else "/D="
+    return f'"{executable}" /S {override}{prefix}'
+
+
 def windows_script(payload, installer, version):
     # Delete only packaged files; retain any files subsequently created by users.
     files = sorted(p.relative_to(payload) for p in payload.rglob("*") if p.is_file())
     dirs = sorted((p.relative_to(payload) for p in payload.rglob("*") if p.is_dir()),
                   key=lambda p: len(p.parts), reverse=True)
-    deletion = "\n".join(f'  Delete "$INSTDIR\\{nsis_quote(p)}"' for p in files)
-    deletion += "\n" + "\n".join(f'  RMDir "$INSTDIR\\{nsis_quote(p)}"' for p in dirs)
+    deletion = "\n".join(f'  Delete "$INSTDIR\\{nsis_path(p)}"' for p in files)
+    deletion += "\n" + "\n".join(f'  RMDir "$INSTDIR\\{nsis_path(p)}"' for p in dirs)
     return f'''Unicode true
 Name "ShortHand {version}"
-OutFile "{nsis_quote(installer)}"
+OutFile "{nsis_path(installer)}"
 InstallDir "$LOCALAPPDATA\\Programs\\ShortHand"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
@@ -56,7 +73,7 @@ Section "ShortHand"
     MessageBox MB_OK "Uninstall the previous ShortHand installation first."
     Abort
   SetOutPath "$INSTDIR"
-  File /r "{nsis_quote(payload)}\\*"
+  File /r "{nsis_path(payload)}\\*"
   WriteUninstaller "$INSTDIR\\uninstall.exe"
   WriteRegStr HKCU "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\ShortHand" "DisplayName" "ShortHand {version}"
   WriteRegStr HKCU "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\ShortHand" "UninstallString" '$\\"$INSTDIR\\uninstall.exe$\\"'
@@ -103,8 +120,7 @@ def main():
             script = work / "installer.nsi"
             script.write_text(windows_script(payload, installer, version), encoding="utf-8")
             run(["makensis", str(script)])
-            # NSIS requires /D last, without quotes even when it contains spaces.
-            install = f'"{installer}" /S /D={prefix}'
+            install = nsis_command(installer, prefix)
         elif extension == ".deb":
             prefix = pathlib.Path("/opt/shorthand")
             package = work / "deb"
@@ -153,7 +169,7 @@ def main():
                     # Avoid NSIS's asynchronous copy-to-temp uninstaller behavior.
                     uninstaller = work / "uninstall.exe"
                     shutil.copy2(prefix / "uninstall.exe", uninstaller)
-                    run(f'"{uninstaller}" /S _?={prefix}')
+                    run(nsis_command(uninstaller, prefix, uninstall=True))
                 elif extension == ".deb":
                     run(["sudo", "dpkg", "--remove", "shorthand"])
                 elif extension == ".pkg":
