@@ -39,6 +39,12 @@ target_include_directories(ShortHandMLIRDialect PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_include_directories(ShortHandMLIRDialect SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 target_link_libraries(ShortHandMLIRDialect PUBLIC MLIRIR MLIRSupport MLIRSideEffectInterfaces MLIRLLVMDialect)
+# Match MSYS2's MLIR toolchain: GNU ld cannot resolve the large COFF objects
+# in the pinned LLVM 22 dialect archive. Propagate LLD to installed SDK users
+# as well as our own compiler and shorthand-opt executables.
+if(MINGW AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_link_options(ShortHandMLIRDialect INTERFACE -fuse-ld=lld)
+endif()
 set_target_properties(ShortHandMLIRDialect PROPERTIES EXPORT_NAME Dialect POSITION_INDEPENDENT_CODE ON)
 
 add_library(ShortHandMLIRLowering STATIC lib/SemanticVerifier.cpp lib/SemanticLowering.cpp lib/LowerToLLVM.cpp)

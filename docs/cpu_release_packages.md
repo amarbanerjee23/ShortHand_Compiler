@@ -19,6 +19,8 @@ Windows also requires the [Visual C++ 2019 runtime required by ONNX Runtime](htt
 
 Both Windows CI lanes install the six mutually dependent LLVM 22.1.8-3 packages with `scripts/install_ci_windows_llvm.sh`. Their official MSYS2 archive URLs and SHA-256 hashes are pinned; each detached signature must verify against the MSYS2 keyring before installation. The transaction requires `LocalFileSigLevel = Required TrustedOnly` in a temporary pacman configuration. This prevents a rolling repository update from silently changing the qualification toolchain. Other external dependencies still follow the documented package repositories.
 
+Windows MLIR builds and consumers use the pinned LLD linker through Clang's `-fuse-ld=lld`. The exported `ShortHandMLIR::Dialect` target propagates this requirement. This matches the [MSYS2 MLIR build configuration](https://github.com/msys2/MINGW-packages/blob/master/mingw-w64-mlir/PKGBUILD); GNU ld failed to link the pinned MLIR LLVM dialect archive in the native package lane.
+
 All four ONNX SDK archive hashes are pinned in `scripts/install_ci_onnxruntime_cpu.sh`, taken from the [official ONNX Runtime 1.30.0 release asset metadata](https://api.github.com/repos/microsoft/onnxruntime/releases/tags/v1.30.0). Hashes are checked before extraction. CPU packages preserve the shared library's platform naming and installation-relative lookup path. CMake consumers use `find_package(ShortHand CONFIG REQUIRED)` and `ShortHand::runtime` or `ShortHand::runtime_shared`.
 
 For a Windows consumer using CMake 3.21 or newer, copy the runtime DLLs recorded in those imported targets after linking:
