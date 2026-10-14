@@ -1,6 +1,6 @@
 # CPU package qualification
 
-These are controlled-beta candidate packages, not published or GA-qualified releases. CPU inference on Windows x64 and macOS ARM64 is required alongside Linux. A green compiler portability check alone does not qualify an AI package. The existing default production scope remains Linux x64. On the other three targets, qualification first verifies default refusal, then explicitly sets `SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE=1` for native experiments. Receipts identify `experimental_native_candidate`; they do not promote production support.
+These are controlled-beta CPU packages. Successful trusted push builds publish development prereleases through the channel below; these are not GA-qualified releases. CPU inference on Windows x64 and macOS ARM64 is required alongside Linux. A green compiler portability check alone does not qualify an AI package. The existing default production scope remains Linux x64. On the other three targets, qualification first verifies default refusal, then explicitly sets `SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE=1` for native experiments. Receipts identify `experimental_native_candidate`; they do not promote production support.
 
 ## Package contents and prerequisites
 

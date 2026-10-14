@@ -23,13 +23,18 @@ class BuildReleases(unittest.TestCase):
         prefix = "C:/temporary files/installed with spaces"
         expected_install = r'"C:\release files\setup.exe" /S /D=C:\temporary files\installed with spaces'
         expected_uninstall = r'"C:\release files\setup.exe" /S _?=C:\temporary files\installed with spaces'
-        for uninstall, expected in ((False, expected_install), (True, expected_uninstall)):
-            command = installers.nsis_command(exe, prefix, uninstall=uninstall)
-            self.assertEqual(command, expected)
-            self.assertEqual(command.count('"'), 2)
+        original_str = pathlib.PureWindowsPath.__str__
+        # MSYS2 Python 3.14 patches ntpath.sep; PureWindowsPath prints '/' too.
+        msys_str = lambda p: original_str(p).replace("\\", "/")
+        for formatter in (original_str, msys_str):
+            with mock.patch.object(pathlib.PureWindowsPath, "__str__", formatter):
+                for uninstall, expected in ((False, expected_install), (True, expected_uninstall)):
+                    command = installers.nsis_command(exe, prefix, uninstall=uninstall)
+                    self.assertEqual(command, expected)
+                    self.assertEqual(command.count('"'), 2)
+                self.assertEqual(installers.nsis_path("bin/nested/$value.dll"), r"bin\nested\$$value.dll")
         with self.assertRaises(ValueError):
             installers.nsis_command(exe, "relative/path")
-        self.assertEqual(installers.nsis_path("bin/nested/$value.dll"), r"bin\nested\$$value.dll")
 
     def test_only_trusted_pushes_have_immutable_release_identity(self):
         env = dict(GITHUB_EVENT_NAME="push", GITHUB_REPOSITORY=release.REPOSITORY,

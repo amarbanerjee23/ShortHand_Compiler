@@ -37,7 +37,8 @@ def nsis_quote(value):
 def nsis_path(value):
     # MSYS2 Python can emit C:/ paths. NSIS validates roots and strips forward
     # slashes at runtime, so both script paths and CLI overrides need backslashes.
-    return nsis_quote(pathlib.PureWindowsPath(value))
+    # PureWindowsPath also follows MSYS2's patched ntpath.sep in Python 3.14.
+    return nsis_quote(str(pathlib.PureWindowsPath(value)).replace("/", "\\"))
 
 
 def nsis_command(executable, prefix, *, uninstall=False):
@@ -46,6 +47,7 @@ def nsis_command(executable, prefix, *, uninstall=False):
         raise ValueError("NSIS requires absolute Windows paths")
     if '"' in str(executable) or '"' in str(prefix):
         raise ValueError("invalid quote in NSIS path")
+    executable, prefix = (str(p).replace("/", "\\") for p in (executable, prefix))
     # NSIS consumes the entire unquoted remainder for /D= and _?=, including spaces.
     override = "_?=" if uninstall else "/D="
     return f'"{executable}" /S {override}{prefix}'
@@ -121,6 +123,7 @@ def main():
             script.write_text(windows_script(payload, installer, version), encoding="utf-8")
             run(["makensis", str(script)])
             install = nsis_command(installer, prefix)
+            print(f"NSIS install command: {install}", flush=True)
         elif extension == ".deb":
             prefix = pathlib.Path("/opt/shorthand")
             package = work / "deb"
