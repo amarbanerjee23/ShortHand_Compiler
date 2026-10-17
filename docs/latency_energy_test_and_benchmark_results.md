@@ -1,8 +1,39 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `813c899c10f016785f5c2280aaaaedfeced78f3d`
+Comparison base: `30bfee63809307c48b2de20ddb10d9c16666730d`
 
 ## Current PR evidence
+
+### Native compilation and installable build releases
+
+The base is merged PR121. Its final PR and push CI matrices and merged-master run [38069633969](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38069633969) passed all 20 mandatory jobs. This PR adds native MLIR compilation in all four package lanes, target-specific metadata and diagnostic ABI handling, real compiled source inference at O0/O2, installer lifecycle qualification, and automatic development prereleases after a successful complete push CI run.
+
+| Validation | Current evidence |
+| --- | --- |
+| Candidate receipt negative controls | Local pass: missing/native/revision/dirty/hash/production-claim mutations |
+| Installer receipt negative controls | Local pass for all four platforms: byte tampering, stale revision, missing uninstall checks and unsafe paths rejected |
+| Build publication policy | Local pass: PR, PR-target, workflow-run, fork, tag and malformed identities rejected; reruns have distinct tags |
+| Initial hosted push run | Four toolchain lanes and macOS SDK lifecycle passed; new fixture required a leading declaration, and Windows LLVM definitions required argument splitting; both corrected |
+| Hosted revision `86c5be1` | Push and PR matrices each passed 17 jobs; Linux x64/ARM64 and macOS installers completed their full native lifecycle. Windows exposed MLIR 22 GEP/entry-block API changes; compatibility added. Aggregate correctly failed and no release was published |
+| Revision `af5dfa1` native follow-up | Linux/macOS installers and both Linux MLIR regression lanes pass. Windows still fails before packaging; connector log retrieval returned transport errors, so its full compiler log is now preserved as a downloadable diagnostic artifact |
+| Revision `5890c3d` Windows diagnostic | [Push run 38344446298](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38344446298) passed 17 jobs. Preserved log artifact `11787839500` confirms compilation passes; GNU ld fails in `libMLIRLLVMDialect.a` with unresolved symbols and COFF relocation overflows. Windows Clang MLIR targets now propagate `-fuse-ld=lld`, matching MSYS2's MLIR linker choice; hosted verification of this correction is pending |
+| Revision `cd7902d` Windows archive | [Push run 38510447930](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38510447930/job/115677481822) confirms LLD resolves the link failure. The installed Windows archive passes all five CTest consumers, typed source O0/O2, production refusal, missing-model checks and the numeric interpreter check. NSIS builds the installer but rejects the MSYS2-style forward-slash destination; normalize installer/uninstaller CLI and script paths to Windows backslashes. A local regression covers spaces and both unquoted override forms; native lifecycle verification remains pending |
+| Revision `0ceda2a` NSIS follow-up | [PR run 38511217850](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38511217850/job/115680183271) again passes the Windows archive suite but exposes MSYS2 Python 3.14's patched `ntpath.sep`: even `PureWindowsPath` prints forward slashes. The final NSIS boundary now explicitly replaces them; a local reproducer and regression simulate this behavior, and the regression also runs under native Windows Python before compilation |
+| Revision `46024c0` native preflight | [Push run 38512222972](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38512222972) and [PR run 38512226789](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38512226789) each pass 17 jobs. The Windows NSIS command regression passes; installer receipt fixtures expose a separate `scandir`/constructed-Path spelling mismatch in MSYS2 Python 3.14. Candidate verification now compares exact entry names and retains count/hash validation; regressions cover equivalent parent spelling and extra-installer rejection. Native lifecycle and publication remain pending |
+| Final native Windows and complete matrix | Required hosted gates; awaiting updated revision results |
+| Release upload/download integrity | Local injected upload-error and downloaded-byte corruption tests pass: draft rollback occurs and publication is blocked. Actual publication remains pending |
+
+The compiled source test uses zero-initialized typed tensors; separate interpreter and C ABI tests verify exact numeric output 42. Arbitrary typed tensor input values remain an API capability, not new source syntax. No platform is added to the default production allowlist.
+
+## Energy and power result
+
+This change adds packaging and qualification, not a claimed runtime speedup. The unchanged mandatory runtime-profile workflow continues collecting latency, allocation and modeled energy evidence on each push. No new measured joules/task or lower-power claim is made. Prior benchmark results below retain their original revision scope.
+
+## Reproduction
+
+Run `python3 tests/packaging/test_cpu_release_candidates.py`, `python3 tests/packaging/test_build_releases.py` and `bash scripts/check_signed_release_contract.sh`. Native end-to-end reproduction is `.github/workflows/cpu-packages.yml`; it runs `check_installed_cpu_package.py` against each archive, then `build_native_installer.py` against the actual native installer. Each successful lifecycle receipt binds installer/archive bytes to the exact tested revision.
+
+## Previous PR121 evidence (historical comparison base `813c899c10f016785f5c2280aaaaedfeced78f3d`)
 
 ### CPU release packaging
 

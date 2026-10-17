@@ -58,7 +58,9 @@ struct Generator {
     LLVM::LLVMFuncOp function;
     bool invalid=false;
     Generator(MLIRContext &ctx,const sir::ProgramIR &program):p(program),b(&ctx),
-        module(ModuleOp::create(b.getUnknownLoc())),c{b,*module,b.getUnknownLoc()} {}
+        module(ModuleOp::create(b.getUnknownLoc())),c{b,*module,b.getUnknownLoc()} {
+        (*module)->setAttr("llvm.target_triple",b.getStringAttr(llvm::sys::getDefaultTargetTriple()));
+    }
     Location location(const sir::SourceRange &r) {
         return r.isKnown()?Location(FileLineColLoc::get(b.getContext(),r.begin.file,r.begin.line,r.begin.column)):b.getUnknownLoc();
     }
@@ -126,7 +128,7 @@ struct Generator {
         Value negative=b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::slt,index,c.integer(0));
         Value high=b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::sge,index,c.integer(v.extent));
         failureIf(b.create<LLVM::OrOp>(c.loc,negative,high),"SHD7002","array index is outside declared bounds");
-        return b.create<LLVM::GEPOp>(c.loc,c.ptr(),v.storage,v.pointer,ArrayRef<LLVM::GEPArg>{0,index},true);
+        return c.gep(v.storage,v.pointer,ArrayRef<LLVM::GEPArg>{0,index});
     }
     Value safeString(Value value) {
         auto isNull=b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::eq,value,zero(c.ptr()));
@@ -200,7 +202,7 @@ struct Generator {
             auto end=b.create<LLVM::AddOp>(c.loc,offset64,length64);
             auto high=b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::sgt,end,c.integer(owner.extent,64));
             failureIf(b.create<LLVM::OrOp>(c.loc,negative,high),"SHD7002","slice exceeds its owner array");
-            auto pointer=b.create<LLVM::GEPOp>(c.loc,c.ptr(),owner.storage,owner.pointer,ArrayRef<LLVM::GEPArg>{0,offset64},true);
+            auto pointer=c.gep(owner.storage,owner.pointer,ArrayRef<LLVM::GEPArg>{0,offset64});
             auto value=op<ir::ValueOp>(TypeRange{composites.at(e.composite)},ValueRange{pointer,length64},{}).getResult();
             return b.create<UnrealizedConversionCastOp>(c.loc,TypeRange{type(e.type,e.composite)},ValueRange{value}).getResult(0);
         }
@@ -212,14 +214,14 @@ struct Generator {
             auto length=op<ir::ProjectOp>(TypeRange{b.getI64Type()},ValueRange{value},{attr("index",b.getI64IntegerAttr(1))}).getResult();
             Value index64=b.create<LLVM::SExtOp>(c.loc,b.getI64Type(),index);
             failureIf(b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::uge,index64,length),"SHD7002","slice index is outside bounds");
-            auto address=b.create<LLVM::GEPOp>(c.loc,c.ptr(),type(e.type),pointer,ArrayRef<LLVM::GEPArg>{index64},true);
+            auto address=c.gep(type(e.type),pointer,ArrayRef<LLVM::GEPArg>{index64});
             return b.create<LLVM::LoadOp>(c.loc,type(e.type),address);
         }
         case E::Kind::TensorIndex: {
             auto index=expr(e.operands[0]); auto tensor=tensors.at(e.name);
             failureIf(b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::uge,index,c.integer(tensor.getNumElements())),"SHD7002","tensor index is outside bounds");
             auto ptr=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+e.name));
-            auto address=b.create<LLVM::GEPOp>(c.loc,c.ptr(),tensorStorage(tensor),ptr,ArrayRef<LLVM::GEPArg>{0,index},true);
+            auto address=c.gep(tensorStorage(tensor),ptr,ArrayRef<LLVM::GEPArg>{0,index});
             auto value=b.create<LLVM::LoadOp>(c.loc,b.getF32Type(),address);
             return b.create<LLVM::FPExtOp>(c.loc,b.getF64Type(),value);
         }
@@ -343,7 +345,7 @@ struct Generator {
         }
         case S::Kind::Evidence: {
             std::string text="shorthand.c3eco|"+s.name; for(const auto &str:s.strings) text+="|"+str;
-            auto g=c.stringGlobal(text,"__sh_evidence_"); g.setSectionAttr(b.getStringAttr("shorthand_ai_metadata"));break;
+            auto g=c.stringGlobal(text,"__sh_evidence_"); g.setSectionAttr(b.getStringAttr(metadataSection(*module)));break;
         }
         }
     }
@@ -392,7 +394,7 @@ struct Generator {
         for(const auto &v:p.globals) { globals[v.name]=v; global(v.name,storage(v)); }
         for(const auto &f:p.functions) { SmallVector<Type> args; for(const auto &v:f.parameters) args.push_back(type(v.type,v.composite)); c.function(f.name,type(f.result,f.result_composite),args); }
         auto emitFunction=[&](LLVM::LLVMFuncOp fn,const std::vector<sir::Variable> &params,const S &body,bool main) {
-            function=fn; auto *entry=fn.addEntryBlock(); b.setInsertionPointToStart(entry); scopes.push_back({});
+            function=fn; auto *entry=c.entryBlock(fn); b.setInsertionPointToStart(entry); scopes.push_back({});
             for(std::size_t i=0;i<params.size();++i) { declare(params[i]); b.create<LLVM::StoreOp>(c.loc,entry->getArgument(i),scopes.back().at(params[i].name).pointer); }
             stmt(body);
             if(!terminated()) {

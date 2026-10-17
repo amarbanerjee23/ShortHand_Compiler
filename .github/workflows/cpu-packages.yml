@@ -47,6 +47,8 @@ jobs:
           python3 scripts/check_installed_cpu_package.py "$PWD/release-linux-x64/shorthand-${version#v}-linux-x64.tar" linux-x64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-linux-x64/shorthand-linux-x64.cpu-qualification.json"
+          python3 scripts/build_native_installer.py "$PWD/release-linux-x64" linux-x64 \
+            --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -66,7 +68,7 @@ jobs:
           test -s /etc/apt/sources.list.d/ubuntu.sources
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential flex bison libfl-dev llvm llvm-dev clang cmake ninja-build
+          sudo apt-get "${APT_SOURCES[@]}" install -y libssl-dev openssl python3 python3-venv jq build-essential flex bison libfl-dev llvm-18 llvm-18-dev libmlir-18-dev mlir-18-tools llvm-18-tools clang-18 cmake ninja-build
       - name: Acquire pinned ONNX Runtime CPU SDK
         run: |
           bash scripts/install_ci_onnxruntime_cpu.sh "$PWD/.onnxruntime-cpu"
@@ -74,8 +76,8 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = aarch64
-          test "$(llvm-config --version | cut -d. -f1)" = 18
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
+          test "$(llvm-config-18 --version | cut -d. -f1)" = 18
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/usr/bin/llvm-config-18 -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/usr/lib/llvm-18/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
           cmake --build build-release --parallel 2
           cmake --install build-release
           bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" linux-arm64 "$PWD/stage-release" "$PWD/release-linux-arm64"
@@ -84,6 +86,8 @@ jobs:
           python3 scripts/check_installed_cpu_package.py "$PWD/release-linux-arm64/shorthand-${version#v}-linux-arm64.tar" linux-arm64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-linux-arm64/shorthand-linux-arm64.cpu-qualification.json"
+          python3 scripts/build_native_installer.py "$PWD/release-linux-arm64" linux-arm64 \
+            --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -114,7 +118,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(uname -m)" = arm64
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config" -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG="$(brew --prefix llvm@18)/bin/llvm-config" -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR="$(brew --prefix llvm@18)/lib/cmake/mlir" -DSHORTHAND_MLIR_TESTING=OFF -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
           cmake --build build-release --parallel 2
           cmake --install build-release
           bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" macos-arm64 "$PWD/stage-release" "$PWD/release-macos-arm64"
@@ -123,6 +127,8 @@ jobs:
           python3 scripts/check_installed_cpu_package.py "$PWD/release-macos-arm64/shorthand-${version#v}-macos-arm64.tar" macos-arm64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-macos-arm64/shorthand-macos-arm64.cpu-qualification.json"
+          python3 scripts/build_native_installer.py "$PWD/release-macos-arm64" macos-arm64 \
+            --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:
@@ -149,7 +155,7 @@ jobs:
         run: git config --local core.autocrlf false
       - name: Install qualified Windows dependencies
         run: |
-          packages=(mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python openssl jq bison flex make diffutils git)
+          packages=(mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-openssl mingw-w64-ucrt-x86_64-python mingw-w64-ucrt-x86_64-nsis openssl jq bison flex make diffutils git)
           for attempt in 1 2 3 4; do
             if pacman -Syy --noconfirm --needed "${packages[@]}"; then exit 0; fi
             echo "MSYS2 dependency transaction failed (attempt ${attempt}/4)" >&2
@@ -157,7 +163,7 @@ jobs:
           done
           exit 1
       - name: Install pinned Windows LLVM 22 toolchain
-        run: bash scripts/install_ci_windows_llvm.sh
+        run: bash scripts/install_ci_windows_llvm.sh --with-mlir
       - name: Acquire pinned ONNX Runtime CPU SDK
         run: |
           export PATH="/ucrt64/bin:/usr/bin:${PATH}"
@@ -168,9 +174,13 @@ jobs:
           export PATH="/ucrt64/bin:/usr/bin:${PATH}"
           export CC=clang
           export CXX=clang++
+          python3 tests/packaging/test_build_releases.py
           test "$(llvm-config --version | cut -d. -f1)" = 22
-          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
-          cmake --build build-release --parallel 2
+          cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$PWD/stage-release" -DLLVM_CONFIG=/ucrt64/bin/llvm-config.exe -DSHORTHAND_BUILD_MLIR=ON -DMLIR_DIR=/ucrt64/lib/cmake/mlir -DSHORTHAND_MLIR_TESTING=OFF -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON -DONNXRUNTIME_ROOT="$PWD/.onnxruntime-cpu"
+          if ! cmake --build build-release --parallel 2 > build-release/compile.log 2>&1; then
+            tail -n 100 build-release/compile.log
+            exit 1
+          fi
           cmake --install build-release
           bash scripts/prepare_release_bundle.sh "${SHORTHAND_PACKAGE_VERSION}" windows-x64 "$PWD/stage-release" "$PWD/release-windows-x64"
           bash scripts/verify_release_bundle.sh "$PWD/release-windows-x64"
@@ -178,6 +188,15 @@ jobs:
           python3 scripts/check_installed_cpu_package.py "$PWD/release-windows-x64/shorthand-${version#v}-windows-x64.tar" windows-x64 \
             --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release" \
             --report "$PWD/release-windows-x64/shorthand-windows-x64.cpu-qualification.json"
+          python3 scripts/build_native_installer.py "$PWD/release-windows-x64" windows-x64 \
+            --sdk "$PWD/.onnxruntime-cpu" --build "$PWD/build-release"
+      - name: Preserve native Windows compiler diagnostics
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: native-windows-build-log-${{ github.run_id }}
+          path: build-release/compile.log
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         if: always()
         with:

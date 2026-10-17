@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(MLIR REQUIRED CONFIG)
-if(NOT LLVM_VERSION_MAJOR EQUAL 18)
-  message(FATAL_ERROR "ShortHand MLIR v1 requires LLVM/MLIR 18.x")
+if(NOT LLVM_VERSION_MAJOR EQUAL 18 AND NOT LLVM_VERSION_MAJOR EQUAL 22)
+  message(FATAL_ERROR "ShortHand MLIR v1 requires LLVM/MLIR 18.x or 22.x")
 endif()
 list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}" "${LLVM_CMAKE_DIR}")
 include(TableGen)
@@ -24,7 +24,9 @@ endif()
 
 include_directories(SYSTEM ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/include")
-add_definitions(${LLVM_DEFINITIONS})
+# LLVM exports command-line text, not a CMake list (notably on MSYS2).
+separate_arguments(SHORTHAND_LLVM_DEFINITIONS NATIVE_COMMAND "${LLVM_DEFINITIONS}")
+add_definitions(${SHORTHAND_LLVM_DEFINITIONS})
 add_subdirectory(include/ShortHand/IR)
 
 add_library(ShortHandMLIRDialect STATIC lib/ShortHandDialect.cpp)
@@ -37,6 +39,12 @@ target_include_directories(ShortHandMLIRDialect PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_include_directories(ShortHandMLIRDialect SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 target_link_libraries(ShortHandMLIRDialect PUBLIC MLIRIR MLIRSupport MLIRSideEffectInterfaces MLIRLLVMDialect)
+# Match MSYS2's MLIR toolchain: GNU ld cannot resolve the large COFF objects
+# in the pinned LLVM 22 dialect archive. Propagate LLD to installed SDK users
+# as well as our own compiler and shorthand-opt executables.
+if(MINGW AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_link_options(ShortHandMLIRDialect INTERFACE -fuse-ld=lld)
+endif()
 set_target_properties(ShortHandMLIRDialect PROPERTIES EXPORT_NAME Dialect POSITION_INDEPENDENT_CODE ON)
 
 add_library(ShortHandMLIRLowering STATIC lib/SemanticVerifier.cpp lib/SemanticLowering.cpp lib/LowerToLLVM.cpp)

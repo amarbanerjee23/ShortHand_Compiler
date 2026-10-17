@@ -192,11 +192,12 @@ struct LowerPass:PassWrapper<LowerPass,OperationPass<ModuleOp>> {
             if(!fn||!fn.isExternal()||fn.getFunctionType()!=LLVM::LLVMFunctionType::get(ret,args,variadic)) return module.emitError()<<"runtime ABI symbol conflict: "<<name;
             return success();
         };
+        const bool windows=targetTriple(module).isOSWindows();
         SmallVector<Type> modelArgs(8,ptr),tensorArgs(5,ptr),contractArgs(8,ptr),measureArgs(5,ptr);
         if(failed(check("short_ai_register_model",b.getI32Type(),modelArgs))||failed(check("short_ai_register_tensor",b.getI32Type(),tensorArgs))||
            failed(check("short_greenai_register_contract",b.getI32Type(),contractArgs))||failed(check("short_greenai_record_measurement",b.getI32Type(),measureArgs))||
            failed(check("short_ai_infer_f32",b.getI32Type(),{ptr,ptr,ptr,b.getI32Type(),ptr,ptr,b.getI32Type(),ptr}))||
-           failed(check("write",b.getI64Type(),{b.getI32Type(),ptr,b.getI64Type()}))||failed(check("exit",LLVM::LLVMVoidType::get(ctx),{b.getI32Type()}))) { signalPassFailure(); return; }
+           failed(check(windows?"_write":"write",b.getIntegerType(windows?32:64),{b.getI32Type(),ptr,b.getIntegerType(windows?32:64)}))||failed(check("exit",LLVM::LLVMVoidType::get(ctx),{b.getI32Type()}))) { signalPassFailure(); return; }
         LLVMTypeConverter converter(ctx);
         converter.addConversion([&](RankedTensorType type)->Type {
             if(!type.hasStaticShape()||type.getRank()==0||type.getEncoding()||type.getNumElements()<=0||type.getNumElements()>65536) return {};
@@ -216,10 +217,10 @@ struct LowerPass:PassWrapper<LowerPass,OperationPass<ModuleOp>> {
         module.walk([&](Operation *op) { if(isa<ir::ModelOp,ir::GreenAIContractOp>(op)) declarations.push_back(op); });
         for(auto *op:declarations) {
             b.setInsertionPoint(op); CodeBuilder c{b,module,op->getLoc()}; std::string text; llvm::raw_string_ostream stream(text); op->print(stream);
-            auto global=c.stringGlobal(text,"__sh_declaration_"); global.setSectionAttr(b.getStringAttr("shorthand_ai_metadata")); op->erase();
+            auto global=c.stringGlobal(text,"__sh_declaration_"); global.setSectionAttr(b.getStringAttr(metadataSection(module))); op->erase();
         }
         SmallVector<LLVM::GlobalOp> metadata;
-        for(auto global:module.getOps<LLVM::GlobalOp>()) if(global.getSection().value_or("")=="shorthand_ai_metadata") metadata.push_back(global);
+        for(auto global:module.getOps<LLVM::GlobalOp>()) if(global.getSection().value_or("")==metadataSection(module)) metadata.push_back(global);
         if(!metadata.empty()) {
             if(module.lookupSymbol("llvm.used")) { module.emitError("reserved llvm.used conflicts with retained ShortHand metadata"); signalPassFailure(); return; }
             b.setInsertionPointToEnd(module.getBody()); auto loc=module.getLoc(); auto array=LLVM::LLVMArrayType::get(ptr,metadata.size());

@@ -188,6 +188,24 @@ jobs:
         with:
           subject-path: release-assets/release-bundle-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.tar
           sbom-path: release-assets/release-bundle-windows-x64/shorthand-${{ needs.policy.outputs.version_no_v }}-windows-x64.spdx.json
+      - name: Attest native installer build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: |
+            release-assets/**/*.exe
+            release-assets/**/*.deb
+            release-assets/**/*.pkg
+      - name: Verify native installer attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r installer; do
+            gh attestation verify "$installer" -R "$GITHUB_REPOSITORY" \
+              --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" \
+              --format json > "${installer}.provenance.attestation.json"
+          done < <(find release-assets -type f \( -name '*.exe' -o -name '*.deb' -o -name '*.pkg' \) -print | LC_ALL=C sort)
       - name: Cryptographically verify every artifact attestation
         env:
           GH_TOKEN: ${{ github.token }}

@@ -3,8 +3,20 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/SymbolTable.h"
+#include "llvm/Config/llvm-config.h"
+#include "llvm/TargetParser/Host.h"
+#include "llvm/TargetParser/Triple.h"
 
 namespace shorthand::lowering {
+// Use the module target for both the C runtime ABI and object-file metadata.
+inline llvm::Triple targetTriple(mlir::ModuleOp module) {
+    auto attr=module->getAttrOfType<mlir::StringAttr>("llvm.target_triple");
+    return llvm::Triple(attr?attr.str():llvm::sys::getDefaultTargetTriple());
+}
+inline llvm::StringRef metadataSection(mlir::ModuleOp module) {
+    const auto triple=targetTriple(module);
+    return triple.isOSDarwin()?"__DATA,__sh_ai_meta":triple.isOSWindows()?".sh_ai":"shorthand_ai_metadata";
+}
 struct CodeBuilder {
     mlir::OpBuilder &b;
     mlir::ModuleOp module;
@@ -51,11 +63,29 @@ struct CodeBuilder {
         b.setInsertionPointToStart(&block->getParent()->front());
         return b.create<mlir::LLVM::AllocaOp>(loc,ptr(),type,integer(1,64));
     }
+    mlir::Value gep(mlir::Type element, mlir::Value base,
+                    llvm::ArrayRef<mlir::LLVM::GEPArg> indices) {
+#if LLVM_VERSION_MAJOR >= 22
+        return b.create<mlir::LLVM::GEPOp>(loc,ptr(),element,base,indices,
+                                         mlir::LLVM::GEPNoWrapFlags::inbounds);
+#else
+        return b.create<mlir::LLVM::GEPOp>(loc,ptr(),element,base,indices,true);
+#endif
+    }
+    mlir::Block *entryBlock(mlir::LLVM::LLVMFuncOp fn) {
+#if LLVM_VERSION_MAJOR >= 22
+        return fn.addEntryBlock(b);
+#else
+        return fn.addEntryBlock();
+#endif
+    }
     void failureBody(llvm::StringRef code, llvm::StringRef message) {
         std::string text;
         if(auto source=mlir::dyn_cast<mlir::FileLineColLoc>(loc)) text=source.getFilename().str()+":"+std::to_string(source.getLine())+":"+std::to_string(source.getColumn())+": ";
         text+=("error: ["+code+"] "+message+"\n").str();
-        call("write",b.getI64Type(),{integer(2),string(text),integer(text.size(),64)});
+        const bool windows=targetTriple(module).isOSWindows();
+        call(windows?"_write":"write",b.getIntegerType(windows?32:64),
+             {integer(2),string(text),integer(text.size(),windows?32:64)});
         call("exit",voidTy(),{integer(1)});
         b.create<mlir::LLVM::UnreachableOp>(loc);
     }

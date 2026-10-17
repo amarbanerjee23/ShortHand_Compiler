@@ -40,6 +40,7 @@ def main():
     parser.add_argument("--sdk", type=pathlib.Path, required=True)
     parser.add_argument("--build", type=pathlib.Path, required=True)
     parser.add_argument("--report", type=pathlib.Path, required=True)
+    parser.add_argument("--installed-prefix", type=pathlib.Path, help="Qualify a native installer destination (mutates it)")
     args = parser.parse_args()
     native = (platform.system(), platform.machine().lower())
     expected = {"linux-x64": ("Linux", {"x86_64", "amd64"}),
@@ -63,8 +64,9 @@ def main():
             hidden.append((path, destination))
         with tempfile.TemporaryDirectory(prefix="shorthand installed cpu ") as temporary:
             work = pathlib.Path(temporary)
-            prefix = work / "relocated SDK"
-            prefix.mkdir()
+            prefix = args.installed_prefix.resolve(strict=True) if args.installed_prefix else work / "relocated SDK"
+            if not args.installed_prefix:
+                prefix.mkdir()
             env = os.environ.copy()
             for name in ("PATH", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "LIBRARY_PATH", "CMAKE_PREFIX_PATH"):
                 if name in env:
@@ -78,7 +80,8 @@ def main():
             env.pop("SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE", None)
             # These paths must not select an unrelated installed ShortHand SDK.
             env.pop("ShortHand_DIR", None)
-            run(["cmake", "-E", "tar", "xf", archive], cwd=prefix, env=env)
+            if not args.installed_prefix:
+                run(["cmake", "-E", "tar", "xf", archive], cwd=prefix, env=env)
             suffix = ".exe" if native[0] == "Windows" else ""
             compiler = prefix / "bin" / ("short_hand" + suffix)
             green = prefix / "bin" / ("green_ai_tool" + suffix)
@@ -124,9 +127,25 @@ def main():
                 # promotion; they must never claim production qualification.
                 for kind in ("static", "shared"):
                     run([consumer / ("cpu_" + kind + suffix), model_path, "--expect-unqualified"], cwd=work, env=env)
+                output = run([consumer / ("cpu_tensor_O2" + suffix)], cwd=models, env=env, expect_failure=True)
+                if "SHD7030" not in output or "Installed typed inference completed" in output:
+                    raise RuntimeError("compiled typed source bypassed the production scope guard")
                 env["SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE"] = "1"
                 qualification_mode = "experimental_native_candidate"
             run(["ctest", "--test-dir", consumer, "--output-on-failure", "-V"], cwd=work, env=env)
+            for level in (0, 2):
+                executable = consumer / (f"cpu_tensor_O{level}" + suffix)
+                output = run([executable], cwd=models, env=env)
+                if "Installed typed inference completed" not in output:
+                    raise RuntimeError("compiled source did not complete real inference")
+                missing = work / "missing model"
+                missing.mkdir(exist_ok=True)
+                output = run([executable], cwd=missing, env=env, expect_failure=True)
+                if "SHD7030" not in output or "Installed typed inference completed" in output:
+                    raise RuntimeError("compiled source missing-model failure was not deterministic")
+            ir = (consumer / "cpu_tensor.ll").read_text()
+            if "short_ai_infer_f32" not in ir or "target triple" not in ir:
+                raise RuntimeError("typed source must lower to native tensor runtime calls")
             # The interpreter uses the non-prepared ORT path; compiled consumers
             # exercise the C ABI and prepared cache. Both must execute on Windows.
             output = run([compiler, fixture / "interpreter_cpu.short", "run"], cwd=models, env=env)
@@ -150,7 +169,7 @@ def main():
                        "onnxruntime_version": (prefix / "share/shorthand/licenses/onnxruntime/VERSION_NUMBER").read_text().strip(),
                        "compiler_sha256": hashlib.sha256(compiler.read_bytes()).hexdigest(),
                        "checks": ["relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",
-                                  "shared_cpu_numerics", "compiled_core_source", "interpreter_cpu", "nonfinite_rollback",
+                                  "shared_cpu_numerics", "compiled_core_source", "compiled_tensor_source_O0_O2", "compiled_missing_model_rejected", "interpreter_cpu", "nonfinite_rollback",
                                   "missing_runtime_rejected", "production_scope_guard"], "production_claim": False}
             report.write_text(json.dumps(receipt, indent=2) + "\n")
             print(f"PASS native installed CPU package {args.platform}")
