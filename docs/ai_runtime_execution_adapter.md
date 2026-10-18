@@ -142,3 +142,9 @@ The next runtime PR should move from hook-local JSON and telemetry fragments tow
 The public C ABI is unchanged. Internally, the bridge uses `AIRuntime::inferCachedInto` for a validated typed request. The generic prepared-output API retains public finite/shape/dtype checks; application-only validation tokens remain separate and cannot be forged by public callers.
 
 `AIRuntime` now caches the expensive discovered inventory and selected route. The cache key is invalidated by either a routing-policy environment signature change or a hardware-probe generation-token change. Tests inject a mutable generation token and require exactly one full probe for stable repeated calls plus a second probe after invalidation.
+
+## Synchronous borrowed input and deferred observations
+
+The C bridge binds a read-only FP32 view for the duration of synchronous inference. The caller must keep input storage alive and unchanged until return; the bridge clears the pointer on success, rejection and exception. Prepared and generic ONNX paths use that view, while `buildInputTensorBuffer` still creates owned storage. Output uses private scratch before committing, preserving exact and partial input/output overlap. C++ consumers must rebuild for the extended `TensorBuffer` layout; the public C ABI is unchanged.
+
+Bridge request JSON and the outer telemetry envelope are materialized only when queried. Descriptor and result snapshots own their strings, so intervening registrations cannot rewrite historical observations. Reset and failures clear stale request state; observability and OTLP invoke the same materializers. Backend telemetry remains eager. The observer-inclusive CI comparison measures all four JSON exporters inside each timed inference, separately from the default inference-only series.

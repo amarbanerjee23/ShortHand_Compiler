@@ -172,3 +172,7 @@ PR98 adds [realistic AI benchmark family qualification](ai_benchmark_families.md
 PR99 adds [the enterprise pilot and release-candidate contract](enterprise_pilot_release_candidate.md) and `shorthand.enterprise.pilot_rc.v1`: isolated install/reinstall/uninstall, transactional rollback, serving soak, inherited deployment/DR evidence and a deterministic compiler/C3-ECO blocker report. It closes the implementation gap for TST027 without claiming release eligibility, accelerator support, certification or energy superiority.
 
 PR100 adds [the lifecycle/cloud carbon boundary contract](c3eco_lifecycle_cloud_boundary.md) and `shorthand.c3eco.lifecycle_cloud_boundary.v1`: deterministic material data, storage, network, model, cloud and hardware-lifetime boundary validation with shared-resource allocation protection. It is candidate evidence only and does not change certification, comparative-energy or production claims.
+
+## Post-PR122 runtime optimization addendum
+
+The first slice in [the post-PR122 energy plan](post_pr122_energy_implementation_plan.md) adds synchronous borrowed FP32 input and lazy bridge observations. The frozen public C ABI and production allowlist are unchanged; internal C++ consumers must rebuild. This is not general model AOT, grammar unification, allocation-free training or a measured energy claim. Current validation is recorded in [the benchmark report](latency_energy_test_and_benchmark_results.md). The historical PR103 governance header above requires a coordinated closeout update, not an unsupported qualification promotion.

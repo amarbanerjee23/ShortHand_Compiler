@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -74,7 +75,12 @@ extern "C" int __wrap_short_ai_infer_f32(const char *model,const char *name,cons
 #endif
 int main(int argc,char **argv) {
     try {
-        check(argc==6,"usage: probe model batch expected.bin iterations blocks");
+        check(argc==6 || (argc==7 && std::string(argv[6])=="--observe-every-call"),
+              "usage: probe model batch expected.bin iterations blocks [--observe-every-call]");
+        const bool observe=argc==7;
+#if !SHORTHAND_GENERATED || SHORTHAND_RUNTIME_PHASE_PROFILE
+        check(!observe,"observer_control_requires_uninstrumented_generated_runner");
+#endif
         const int batch=std::stoi(argv[2]),iterations=std::stoi(argv[4]),blocks=std::stoi(argv[5]);
         check((batch==1||batch==16||batch==32) && iterations>0 && iterations<=4096 && blocks>=2 && blocks<=20,"invalid_protocol");
         expected.resize(batch*10); std::ifstream file(argv[3],std::ios::binary);
@@ -84,7 +90,21 @@ int main(int argc,char **argv) {
         const auto cold_start=Clock::now();
 #if SHORTHAND_GENERATED
         short_runtime_reset();
-        auto once=[] { check(shorthand_entry()==0,"generated_entry_failed"); };
+        auto once=[&] {
+            check(shorthand_entry()==0,"generated_entry_failed");
+            if (observe) {
+                // Consume every exporter inside the timed call. This control
+                // detects work moved to lazy observers rather than eliminated.
+                for (auto query : {short_runtime_last_infer_telemetry_json,
+                                   short_runtime_infer_bridge_request_json,
+                                   short_runtime_observability_json,
+                                   short_runtime_otlp_spans_json}) {
+                    const char *json=query();
+                    check(json && std::strstr(json,"\"schema\":") && std::strlen(json)>2,
+                          "missing_observer_payload");
+                }
+            }
+        };
 #else
         Direct direct(argv[1],batch); auto once=[&] { direct.run(); };
 #endif
@@ -116,6 +136,7 @@ int main(int argc,char **argv) {
         }
         check(calls==std::uint64_t(iterations)*blocks,"incomplete_execution");
         std::cout<<std::setprecision(17)<<"{\"schema\":\"shorthand.generated_infer.sample.v2\",\"success\":true,\"cold_session_ms\":"<<cold
+                 <<",\"observation_mode\":\""<<(observe?"every_call":"last_call_after_timing")<<"\""
                  <<",\"completed_calls\":"<<calls<<",\"completed_vectors\":"<<calls*batch
                  <<",\"iterations\":"<<iterations<<",\"batch\":"<<batch<<",\"threads\":1,\"warmups\":8,\"block_elapsed_ms\":[";
         for(std::size_t i=0;i<elapsed.size();++i) std::cout<<(i?",":"")<<elapsed[i];

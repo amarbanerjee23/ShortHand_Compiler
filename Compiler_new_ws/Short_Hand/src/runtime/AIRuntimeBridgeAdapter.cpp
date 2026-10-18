@@ -82,7 +82,7 @@ bool bridgeRequestIsExecutionReady(const ai::ModelSpec &model,
     if (model.output.element_type != ai::ElementType::Float32) return false;
     if (!ai::validateShape(model.input.shape) || !ai::validateShape(model.output.shape)) return false;
     if (!ai::validateInputMatchesShape(input)) return false;
-    if (input.f32_data.empty()) return false;
+    if (!input.f32Data() || !input.f32Size()) return false;
     if (output_capacity <= 0) return false;
     return static_cast<std::size_t>(output_capacity) >= model.output.element_count;
 }

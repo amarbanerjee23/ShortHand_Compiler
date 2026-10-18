@@ -19,7 +19,9 @@ from ci_energy_evidence import ComponentEnergySampler, cpu_identity
 
 BOUNDARY = ('compiled .short entry including zero tensor initialization, registration, inference, '
             'runtime validation/telemetry/logging and independent output verification; direct ORT '
-            'includes its prepared invocation and identical output verification; block wall clocks')
+            'includes its prepared invocation and identical output verification; block wall clocks. '
+            'The main series queries last-call JSON after timing; separate head/base observer controls '
+            'consume all four JSON exporters on every timed call.')
 PHASES = ('entry_residual', 'facade_lock', 'registration', 'bridge_validation', 'descriptor_input',
           'policy_refresh', 'hardware_probe', 'routing', 'runtime_validation', 'snapshot',
           'session_prepare', 'backend_other', 'ort_run', 'runtime_telemetry', 'bridge_output',
@@ -51,7 +53,11 @@ def command(argv, out, stem):
     return elapsed
 
 
-def validate_sample(sample, batch, iterations, blocks, runner='head', instrumented=False):
+def validate_sample(sample, batch, iterations, blocks, runner='head', instrumented=False, observe=False):
+    if not isinstance(sample, dict):
+        raise ValueError('invalid generated sample')
+    if sample.get('observation_mode', 'last_call_after_timing') != ('every_call' if observe else 'last_call_after_timing'):
+        raise ValueError('mismatched observation boundary')
     counts = ('batch', 'threads', 'iterations', 'warmups', 'completed_calls', 'completed_vectors')
     if (not isinstance(sample, dict) or any(type(sample.get(k)) is not int for k in counts)
             or sample.get('schema') != 'shorthand.generated_infer.sample.v2' or sample.get('success') is not True
@@ -114,7 +120,7 @@ def validate_profile(sample, batch):
                                 fraction_of_instrumented_total=totals[p] / total) for p in PHASES})
 
 
-def sample_run(argv, out, stem, batch, iterations, blocks, energy=False, runner='head'):
+def sample_run(argv, out, stem, batch, iterations, blocks, energy=False, runner='head', observe=False):
     sampler, joules, reason, samples = None, None, 'energy_run_not_requested', 0
     if energy:
         try:
@@ -133,7 +139,7 @@ def sample_run(argv, out, stem, batch, iterations, blocks, energy=False, runner=
             except (RuntimeError, OSError) as exc:
                 reason, joules = str(exc), None
     sample = json.loads((out / (stem + '.stdout')).read_text())
-    validate_sample(sample, batch, iterations, blocks, runner)
+    validate_sample(sample, batch, iterations, blocks, runner, observe=observe)
     if energy:
         # The process window includes cold preparation, eight warmups, timed
         # blocks, validation and teardown. All calls must pass before counting.
@@ -181,6 +187,7 @@ def capture(args):
                     unsupported_reason='compiled C ABI currently uses one ORT intra-op thread', observations=[], profiles=[])
     # No launch/cold/setup times are mixed into the resident block ratios.
     runners = ['head', 'base', 'direct', 'direct_all'] if base else ['head', 'direct', 'direct_all']
+    manifest['observer_observations'] = []
     manifest['runners'] = runners
     manifest['configurations'] = {runner: configuration(runner) for runner in runners}
     manifest['executables'] = {str(build / 'short_hand'): sha(build / 'short_hand'),
@@ -249,6 +256,16 @@ infer classifier(input) -> output;
             sample = sample_run([binaries[runner], model, str(batch), cell / 'expected.bin', str(args.iterations), str(args.blocks)],
                                 cell, stem, batch, args.iterations, args.blocks, runner=runner)
             manifest['observations'].append(dict(cell=cell.name, runner=runner, sequence=index, path=f'{cell.name}/{stem}.stdout'))
+        # Same head/base binaries, with all four JSON observers consumed inside
+        # each timed call. These measurements never mix with inference-only cells.
+        if base:
+            for index, runner in enumerate(['head', 'base', 'base', 'head'] * args.rounds):
+                stem = f'observed-{index:02}-{runner}'
+                sample_run([binaries[runner], model, str(batch), cell / 'expected.bin',
+                            str(args.iterations), str(args.blocks), '--observe-every-call'],
+                           cell, stem, batch, args.iterations, args.blocks, runner=runner, observe=True)
+                manifest['observer_observations'].append(dict(cell=cell.name, runner=runner,
+                    sequence=index, path=f'{cell.name}/{stem}.stdout'))
         # Component metering runs are separate from the latency sample series.
         for runner in runners:
             sample_run([binaries[runner], model, str(batch), cell / 'expected.bin', str(args.iterations), str(args.blocks)],
@@ -326,6 +343,7 @@ def replay(out, expected_digest):
                          head_direct_ratio=groups['head']['mean_ms_per_vector'] / groups['direct']['mean_ms_per_vector'],
                          head_direct_all_ratio=groups['head']['mean_ms_per_vector'] / groups['direct_all']['mean_ms_per_vector'],
                          direct_all_basic_ratio=groups['direct_all']['mean_ms_per_vector'] / groups['direct']['mean_ms_per_vector']))
+    observer_rows = replay_observers(out, manifest)
     profiles = manifest.get('profiles')
     if (not isinstance(profiles, list) or len(profiles) != 3
             or any(not isinstance(p, dict) or not isinstance(p.get('path'), str)
@@ -340,7 +358,7 @@ def replay(out, expected_digest):
                         boundary='exclusive phases of one warm compiled entry including independent output verification; clock overhead included')
     write(out / 'phases.json', phase_report)
     report = dict(schema='shorthand.generated_infer.report.v2', success=True,
-                  manifest_sha256=expected_digest, rows=rows, boundary=BOUNDARY,
+                  manifest_sha256=expected_digest, rows=rows, observer_rows=observer_rows, boundary=BOUNDARY,
                   latency_claim_authorized=False, energy_claim_authorized=False)
     write(out / 'report.json', report)
     lines = ['# Compiled FP32 observations', '', manifest['workload'], '', BOUNDARY, '',
@@ -350,6 +368,12 @@ def replay(out, expected_digest):
     for row in rows:
         ratio = f"{row['head_base_ratio']:.4f}" if row['head_base_ratio'] is not None else 'unavailable'
         lines.append(f"| {row['cell']} | {row['observations']['head']['mean_ms_per_vector']:.6f} | {ratio} | {row['head_direct_ratio']:.4f} | {row['head_direct_all_ratio']:.4f} | {row['direct_all_basic_ratio']:.4f} |")
+    if observer_rows:
+        lines += ['', '## JSON consumed on every inference', '',
+                  'Separate head/base ABBA controls include all four JSON exporters inside every timed call. This exposes deferred formatting cost. These rows do not compare against direct ORT.', '',
+                  '| Cell | Head ms/vector | Head/base with observers |', '|---|---:|---:|']
+        for row in observer_rows:
+            lines.append(f"| {row['cell']} | {row['head_ms_per_vector']:.6f} | {row['head_base_ratio']:.4f} |")
     lines += ['', '## Diagnostic phase profile', '',
               'Separate instrumented binary, 64 verified warm calls/cell. Exclusive phases sum to the instrumented total. Clock overhead is included, never subtracted. These are attribution observations, not latency or energy controls.', '',
               '| Phase | b1 mean ns/call | b16 mean ns/call | b32 mean ns/call |', '|---|---:|---:|---:|']
@@ -361,6 +385,38 @@ def replay(out, expected_digest):
               'These are zero-input inference vectors, not held-out digit accuracy or end-to-end serving measurements.', '']
     (out / 'GENERATED.md').write_text('\n'.join(lines))
     return report
+
+
+def replay_observers(out, manifest):
+    if 'observer_observations' not in manifest:
+        return []  # Historical v2 bundles predate this additional boundary.
+    records = manifest['observer_observations']
+    expected = 3 * 4 * manifest['rounds'] if 'base' in manifest['runners'] else 0
+    if (not isinstance(records, list) or len(records) != expected
+            or any(not isinstance(r, dict) or not isinstance(r.get('path'), str) for r in records)
+            or len({r['path'] for r in records}) != len(records)
+            or {r['path'] for r in records} & {r['path'] for r in manifest['observations']}):
+        raise ValueError('invalid observer matrix')
+    if not expected:
+        return []
+    rows = []
+    for batch in (1, 16, 32):
+        cell = f'b{batch}-t1'
+        matches = [r for r in records if r.get('cell') == cell]
+        sequence = ['head', 'base', 'base', 'head'] * manifest['rounds']
+        if len(matches) != len(sequence):
+            raise ValueError('incomplete observer cell')
+        values = {'head': [], 'base': []}
+        for index, (record, runner) in enumerate(zip(matches, sequence)):
+            if (record.get('runner') != runner or type(record.get('sequence')) is not int
+                    or record['sequence'] != index or record['path'] not in manifest['hashes']):
+                raise ValueError('invalid observer pairing or unhashed sample')
+            sample = json.loads((out / record['path']).read_text())
+            validate_sample(sample, batch, manifest['iterations'], manifest['blocks'], runner, observe=True)
+            values[runner].extend(t / (batch * sample['iterations']) for t in sample['block_elapsed_ms'])
+        head, base = (statistics.mean(values[r]) for r in ('head', 'base'))
+        rows.append(dict(cell=cell, head_ms_per_vector=head, head_base_ratio=head/base))
+    return rows
 
 
 def main():

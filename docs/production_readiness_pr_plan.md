@@ -229,3 +229,7 @@ The following strings are immutable audit history and are not active state:
 - PR79 - MLIR lowering passes and production RC gate
 
 PR102 reconciles all 25 historical findings in `docs/release_closeout_ledger.json`: 6 implemented contracts, 6 explicit scope decisions and 13 evidence-pending findings. Zero scheduled batches after PR102 does not authorize GA or erase these exits. The closeout validator and non-RC publication gate retain the no-go decision.
+
+## Post-PR122 optimization implementation sequence
+
+Merged PR122 is `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`. Follow [the audited runtime/compiler/training and evidence sequence](post_pr122_energy_implementation_plan.md) for the next implementation slices. The first slice removes the C bridge input copy and defers bridge JSON with observer-inclusive controls. Remaining immutable-artifact, grammar, AOT/fusion, training and energy-tuning work has explicit dependencies and exit evidence. This addendum does not replace the historical PR102/103 release-evidence authority or authorize GA/energy claims.
