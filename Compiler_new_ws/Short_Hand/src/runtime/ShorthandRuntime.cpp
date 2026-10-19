@@ -12,11 +12,13 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <map>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -103,7 +105,27 @@ void invalidate_bridge_registration() {
 int last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
 std::string last_infer_backend = "none";
 std::string last_infer_reason = "not_run";
+std::string last_infer_ai_telemetry_fragment;
+bool last_infer_telemetry_dirty = false;
 std::string last_infer_telemetry_json = "{}";
+
+enum class LazyBridgeRequestKind { None, CompiledMetadataOnly, TypedBuffer };
+struct LazyBridgeRequestState {
+    LazyBridgeRequestKind kind = LazyBridgeRequestKind::None;
+    ModelRecord model;
+    TensorRecord input;
+    TensorRecord output;
+    std::string backend;
+    int status = SHORTHAND_RUNTIME_NOT_EXECUTED;
+    std::string reason;
+    int input_count = 0;
+    int output_capacity = 0;
+    long long expected_input_elements = 0;
+    long long expected_output_elements = 0;
+    int output_count = 0;
+    bool dirty = false;
+};
+LazyBridgeRequestState lazy_bridge_request;
 std::string infer_bridge_request_json_cache = "{}";
 std::string observability_json_cache = "{}";
 std::string prometheus_metrics_cache = "";
@@ -113,7 +135,7 @@ const char *safe(const char *value) { return value ? value : ""; }
 std::string s(const char *value) { return std::string(safe(value)); }
 bool blank(const char *value) { return s(value).empty(); }
 
-bool infer_logging_enabled() {
+[[maybe_unused]] bool infer_logging_enabled() {
     const char *value=std::getenv("SHORTHAND_RUNTIME_INFER_LOG");
     if (!value || !*value) return false;
     const std::string enabled(value);
@@ -203,10 +225,11 @@ void set_last_infer(int status, const std::string &backend, const std::string &r
     last_infer_status = status;
     last_infer_backend = backend.empty() ? "none" : backend;
     last_infer_reason = reason.empty() ? "unspecified" : reason;
+    last_infer_ai_telemetry_fragment.clear();
+    last_infer_telemetry_dirty = true;
+    lazy_bridge_request.kind = LazyBridgeRequestKind::None;
+    lazy_bridge_request.dirty = false;
     infer_bridge_request_json_cache = "{}";
-    last_infer_telemetry_json = std::string("{\"schema\":\"shorthand.runtime.infer_telemetry.v1\",\"status\":\"") +
-        json_escape(status_name(status)) + "\",\"backend\":\"" + json_escape(last_infer_backend) +
-        "\",\"reason\":\"" + json_escape(last_infer_reason) + "\"}";
     update_stats(status);
 }
 
@@ -292,6 +315,73 @@ std::string build_typed_buffer_bridge_request(const ModelRecord &model,
     return out.str();
 }
 
+const std::string &materialize_last_infer_telemetry_json() {
+    if (last_infer_telemetry_dirty) {
+        last_infer_telemetry_json.clear();
+        last_infer_telemetry_json.reserve(128 + last_infer_ai_telemetry_fragment.size());
+        last_infer_telemetry_json += "{\"schema\":\"shorthand.runtime.infer_telemetry.v1\",\"status\":\"";
+        last_infer_telemetry_json += json_escape(status_name(last_infer_status));
+        last_infer_telemetry_json += "\",\"backend\":\"";
+        last_infer_telemetry_json += json_escape(last_infer_backend);
+        last_infer_telemetry_json += "\",\"reason\":\"";
+        last_infer_telemetry_json += json_escape(last_infer_reason);
+        if (!last_infer_ai_telemetry_fragment.empty()) {
+            last_infer_telemetry_json += "\",\"ai_runtime_telemetry\":";
+            last_infer_telemetry_json += last_infer_ai_telemetry_fragment;
+            last_infer_telemetry_json += "}";
+        } else {
+            last_infer_telemetry_json += "\"}";
+        }
+        last_infer_telemetry_dirty = false;
+    }
+    return last_infer_telemetry_json;
+}
+
+const std::string &materialize_infer_bridge_request_json() {
+    if (lazy_bridge_request.dirty) {
+        if (lazy_bridge_request.kind == LazyBridgeRequestKind::CompiledMetadataOnly) {
+            infer_bridge_request_json_cache = build_compiled_infer_bridge_request(
+                lazy_bridge_request.model, lazy_bridge_request.input, lazy_bridge_request.output,
+                lazy_bridge_request.backend, lazy_bridge_request.status, lazy_bridge_request.reason);
+        } else if (lazy_bridge_request.kind == LazyBridgeRequestKind::TypedBuffer) {
+            infer_bridge_request_json_cache = build_typed_buffer_bridge_request(
+                lazy_bridge_request.model, lazy_bridge_request.input, lazy_bridge_request.output,
+                lazy_bridge_request.backend, lazy_bridge_request.status, lazy_bridge_request.reason,
+                lazy_bridge_request.input_count, lazy_bridge_request.output_capacity,
+                lazy_bridge_request.expected_input_elements, lazy_bridge_request.expected_output_elements,
+                lazy_bridge_request.output_count);
+        }
+        lazy_bridge_request.dirty = false;
+    }
+    return infer_bridge_request_json_cache;
+}
+
+void record_lazy_typed_buffer_bridge_request(const ModelRecord &model,
+                                             const TensorRecord &input,
+                                             const TensorRecord &output,
+                                             const std::string &backend,
+                                             int status,
+                                             const std::string &reason,
+                                             int input_count,
+                                             int output_capacity,
+                                             long long expected_input_elements,
+                                             long long expected_output_elements,
+                                             int output_count) {
+    lazy_bridge_request.kind = LazyBridgeRequestKind::TypedBuffer;
+    lazy_bridge_request.model = model;
+    lazy_bridge_request.input = input;
+    lazy_bridge_request.output = output;
+    lazy_bridge_request.backend = backend;
+    lazy_bridge_request.status = status;
+    lazy_bridge_request.reason = reason;
+    lazy_bridge_request.input_count = input_count;
+    lazy_bridge_request.output_capacity = output_capacity;
+    lazy_bridge_request.expected_input_elements = expected_input_elements;
+    lazy_bridge_request.expected_output_elements = expected_output_elements;
+    lazy_bridge_request.output_count = output_count;
+    lazy_bridge_request.dirty = true;
+}
+
 #if SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE
 shorthand::runtime_bridge::RuntimeBridgeModelInput bridge_model_input(const ModelRecord &model) {
     return {model.name.c_str(), model.format.c_str(), model.path.c_str(), model.task.c_str(), model.precision.c_str(), model.input_shape.c_str(), model.output_shape.c_str(), model.backend_preference.c_str(), true};
@@ -301,14 +391,10 @@ shorthand::runtime_bridge::RuntimeBridgeTensorInput bridge_tensor_input(const Te
     return {tensor.name.c_str(), tensor.element_type.c_str(), tensor.shape.c_str(), tensor.rank.c_str(), tensor.total_elements.c_str()};
 }
 
-void attach_ai_runtime_telemetry_if_available(int status,
-                                              const std::string &backend,
-                                              const std::string &reason,
-                                              const shorthand::ai::InferenceResult &result) {
+void attach_ai_runtime_telemetry_if_available(shorthand::ai::InferenceResult &result) {
     if (result.telemetry_json_fragment.empty()) return;
-    last_infer_telemetry_json = std::string("{\"schema\":\"shorthand.runtime.infer_telemetry.v1\",\"status\":\"") +
-        json_escape(status_name(status)) + "\",\"backend\":\"" + json_escape(backend) +
-        "\",\"reason\":\"" + json_escape(reason) + "\",\"ai_runtime_telemetry\":" + result.telemetry_json_fragment + "}";
+    last_infer_ai_telemetry_fragment = std::move(result.telemetry_json_fragment);
+    last_infer_telemetry_dirty = true;
 }
 
 int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
@@ -332,11 +418,17 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
     }
     const auto &model_spec=bridge_descriptor->spec;
     shorthand::ai::TensorBuffer local_input;
-    // Generated tensors are capped at 65536 elements. Larger legacy ABI
-    // requests retain temporary storage instead of growing resident scratch.
+    // Retain bounded descriptor metadata only. Input floats are borrowed for
+    // this synchronous invocation, including larger legacy ABI requests.
     auto &input_buffer=input_count<=65536?bridge_buffer:local_input;
     input_buffer.spec=model_spec.input;
-    input_buffer.f32_data.assign(input_values,input_values+input_count);
+    // Do not retain caller pointers after this invocation, including adapter
+    // rejection and exceptions caught by the public facade.
+    struct InputBorrow {
+        shorthand::ai::TensorBuffer &buffer;
+        ~InputBorrow() { buffer.clearExternalF32(); }
+    } borrow{input_buffer};
+    input_buffer.bindExternalF32(input_values,static_cast<std::size_t>(input_count));
     const std::string requested_backend = model.backend_preference.empty() ? "fallback" : model.backend_preference;
 
     if (!shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, output_capacity)) {
@@ -344,7 +436,7 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
         const std::string reason = "ai_runtime_adapter_request_not_execution_ready";
         set_last_infer(status, requested_backend, reason);
         *output_count = 0;
-        infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, requested_backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
+        record_lazy_typed_buffer_bridge_request(model, input, output, requested_backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
         if (infer_logging_enabled())
             std::fprintf(stderr,
                          "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=invalid_input backend_preference=%s reason=%s ai_runtime_bridge=rejected\n",
@@ -375,15 +467,15 @@ int execute_typed_buffer_through_ai_runtime(const ModelRecord &model,
             status = SHORTHAND_RUNTIME_RUNTIME_ERROR;
             reason = "ai_runtime_output_exceeds_registered_capacity";
         } else {
-            for (std::size_t i=0;i<result.output_elements;++i) output_values[i]=output_buffer[i];
+            std::memcpy(output_values, output_buffer.data(), result.output_elements * sizeof(float));
             *output_count=static_cast<int>(result.output_elements);
         }
     }
 
     SHORTHAND_PHASE_NEXT(bridge_telemetry_log);
     set_last_infer(status, backend, reason);
-    attach_ai_runtime_telemetry_if_available(status, backend, reason, result);
-    infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model, input, output, backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
+    attach_ai_runtime_telemetry_if_available(result);
+    record_lazy_typed_buffer_bridge_request(model, input, output, backend, status, reason, input_count, output_capacity, expected_input, expected_output, *output_count);
     if (infer_logging_enabled())
         std::fprintf(stderr,
                      "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=%s backend=%s reason=%s ai_runtime_bridge=attempted output_count=%d\n",
@@ -413,7 +505,10 @@ extern "C" int short_runtime_reset(void) {
     last_infer_status = SHORTHAND_RUNTIME_NOT_EXECUTED;
     last_infer_backend = "none";
     last_infer_reason = "not_run";
+    last_infer_ai_telemetry_fragment.clear();
+    last_infer_telemetry_dirty = false;
     last_infer_telemetry_json = "{}";
+    lazy_bridge_request = LazyBridgeRequestState{};
     infer_bridge_request_json_cache = "{}";
     observability_json_cache = "{}";
     prometheus_metrics_cache.clear();
@@ -433,10 +528,11 @@ extern "C" int short_runtime_infer_invalid_input_count(void) { return stats.infe
 extern "C" int short_runtime_last_infer_status(void) { return last_infer_status; }
 extern "C" const char *short_runtime_last_infer_backend(void) { return last_infer_backend.c_str(); }
 extern "C" const char *short_runtime_last_infer_reason(void) { return last_infer_reason.c_str(); }
-extern "C" const char *short_runtime_last_infer_telemetry_json(void) { return last_infer_telemetry_json.c_str(); }
-extern "C" const char *short_runtime_infer_bridge_request_json(void) { return infer_bridge_request_json_cache.c_str(); }
+extern "C" const char *short_runtime_last_infer_telemetry_json(void) { return materialize_last_infer_telemetry_json().c_str(); }
+extern "C" const char *short_runtime_infer_bridge_request_json(void) { return materialize_infer_bridge_request_json().c_str(); }
 
 extern "C" const char *short_runtime_observability_json(void) {
+    const auto &bridge_json = materialize_infer_bridge_request_json();
     std::ostringstream out;
     out << "{\"schema\":\"shorthand.runtime.observability.v1\""
         << ",\"models\":" << models.size()
@@ -451,7 +547,7 @@ extern "C" const char *short_runtime_observability_json(void) {
         << ",\"last_status\":\"" << json_escape(status_name(last_infer_status)) << "\""
         << ",\"last_backend\":\"" << json_escape(last_infer_backend) << "\""
         << ",\"last_reason\":\"" << json_escape(last_infer_reason) << "\""
-        << ",\"infer_bridge_request\":" << infer_bridge_request_json_cache << "}";
+        << ",\"infer_bridge_request\":" << bridge_json << "}";
     observability_json_cache = out.str();
     return observability_json_cache.c_str();
 }
@@ -487,6 +583,8 @@ extern "C" const char *short_runtime_prometheus_metrics(void) {
 }
 
 extern "C" const char *short_runtime_otlp_spans_json(void) {
+    const auto &telemetry_json = materialize_last_infer_telemetry_json();
+    const auto &bridge_json = materialize_infer_bridge_request_json();
     std::ostringstream out;
     out << "{\"schema\":\"shorthand.runtime.otlp_spans.v1\""
         << ",\"resource\":{\"service.name\":\"shorthand-runtime\"}"
@@ -505,8 +603,8 @@ extern "C" const char *short_runtime_otlp_spans_json(void) {
         << ",\"runtime.infer.invalid_input\":" << stats.infer_invalid_input
         << ",\"runtime.last_backend\":\"" << json_escape(last_infer_backend) << "\""
         << ",\"runtime.last_reason\":\"" << json_escape(last_infer_reason) << "\"}"
-        << ",\"last_infer_telemetry\":" << last_infer_telemetry_json
-        << ",\"infer_bridge_request\":" << infer_bridge_request_json_cache
+        << ",\"last_infer_telemetry\":" << telemetry_json
+        << ",\"infer_bridge_request\":" << bridge_json
         << "}]}";
     otlp_spans_json_cache = out.str();
     return otlp_spans_json_cache.c_str();
@@ -653,12 +751,14 @@ extern "C" int short_ai_infer(const char *model_name,
     const std::string backend = model_it->second.backend_preference.empty() ? "fallback" : model_it->second.backend_preference;
     const std::string reason = "ai_runtime_execution_bridge_pending";
     set_last_infer(status, backend, reason);
-    infer_bridge_request_json_cache = build_compiled_infer_bridge_request(model_it->second,
-                                                                          input_it->second,
-                                                                          output_it->second,
-                                                                          backend,
-                                                                          status,
-                                                                          "input_buffer_required_for_ai_runtime_execution");
+    lazy_bridge_request.kind = LazyBridgeRequestKind::CompiledMetadataOnly;
+    lazy_bridge_request.model = model_it->second;
+    lazy_bridge_request.input = input_it->second;
+    lazy_bridge_request.output = output_it->second;
+    lazy_bridge_request.backend = backend;
+    lazy_bridge_request.status = status;
+    lazy_bridge_request.reason = "input_buffer_required_for_ai_runtime_execution";
+    lazy_bridge_request.dirty = true;
     std::fprintf(stderr,
                  "[shorthand-runtime] infer model=%s input=%s output=%s status=not_executed backend_preference=%s reason=%s bridge_request=created\n",
                  model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str(), reason.c_str());
@@ -742,17 +842,17 @@ extern "C" int short_ai_infer_f32(const char *model_name,
     const std::string reason = "ai_runtime_typed_buffer_bridge_pending";
     set_last_infer(status, backend, reason);
     *output_count = 0;
-    infer_bridge_request_json_cache = build_typed_buffer_bridge_request(model_it->second,
-                                                                        input_it->second,
-                                                                        output_it->second,
-                                                                        backend,
-                                                                        status,
-                                                                        reason,
-                                                                        input_count,
-                                                                        output_capacity,
-                                                                        expected_input,
-                                                                        expected_output,
-                                                                        *output_count);
+    record_lazy_typed_buffer_bridge_request(model_it->second,
+                                            input_it->second,
+                                            output_it->second,
+                                            backend,
+                                            status,
+                                            reason,
+                                            input_count,
+                                            output_capacity,
+                                            expected_input,
+                                            expected_output,
+                                            *output_count);
     std::fprintf(stderr,
                  "[shorthand-runtime] infer_f32 model=%s input=%s output=%s status=not_executed backend_preference=%s reason=%s typed_buffer_bridge=created\n",
                  model_key.c_str(), input_key.c_str(), output_key.c_str(), backend.c_str(), reason.c_str());

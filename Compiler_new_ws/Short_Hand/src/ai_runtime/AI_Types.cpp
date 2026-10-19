@@ -22,6 +22,6 @@ std::vector<int64_t> parseShapeCsv(const std::string &csv){ std::vector<int64_t>
 std::vector<float> parseFloatCsv(const std::string &csv){ std::vector<float> r; std::stringstream ss(csv); std::string t; while(std::getline(ss,t,',')){ float value=0.0f; if(!parseFloatNoThrow(t,value)) return {}; r.push_back(value); } return r; }
 size_t productOfShape(const std::vector<int64_t> &s){ size_t p=1; for(auto d:s){ if(d<=0) return 0; p*=static_cast<size_t>(d); } return s.empty()?0:p; }
 bool validateShape(const std::vector<int64_t> &s){ return !s.empty() && productOfShape(s)>0; }
-bool validateInputMatchesShape(const TensorBuffer &i){ const auto n=productOfShape(i.spec.shape); if(n==0) return false; if(!i.f32_data.empty()) return i.f32_data.size()==n; if(!i.i8_data.empty()) return i.i8_data.size()==n; return true; }
+bool validateInputMatchesShape(const TensorBuffer &i){ const auto n=productOfShape(i.spec.shape); if(n==0) return false; if(i.hasF32()) return i.f32Data()!=nullptr && i.f32Size()==n; if(!i.i8_data.empty()) return i.i8_data.size()==n; return true; }
 bool backendSupportsFormat(const BackendCapabilities &c, ModelFormat f){ switch(f){ case ModelFormat::Onnx:return c.supports_onnx; case ModelFormat::TensorRTEngine:return c.supports_engine; case ModelFormat::TorchScript:return c.supports_torchscript; case ModelFormat::OpenVINOIR:return c.supports_openvino_ir; case ModelFormat::GGUF:return c.supports_gguf; case ModelFormat::Unknown:return false;} return false; }
 } // namespace shorthand::ai

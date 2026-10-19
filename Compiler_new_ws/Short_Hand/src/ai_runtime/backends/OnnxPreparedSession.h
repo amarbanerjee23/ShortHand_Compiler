@@ -80,14 +80,14 @@ private:
             if constexpr (Profiled) validation=Clock::now();
             if (!output || output_elements!=out_.element_count)
                 throw std::runtime_error("invalid_preallocated_output");
-            if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape ||
-                input.f32_data.size()!=in_.element_count)
+            if (input.f32Data()==nullptr || input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape ||
+                input.f32Size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
             if constexpr (!ApplicationValidated)
-                for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
+                for (std::size_t i=0;i<input.f32Size();++i) if (!std::isfinite(input.f32Data()[i])) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
             auto input_tensor=Ort::Value::CreateTensor<float>(
-                memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),
+                memory_,const_cast<float *>(input.f32Data()),input.f32Size(),
                 in_.shape.data(),in_.shape.size());
             auto output_tensor=Ort::Value::CreateTensor<float>(
                 memory_,output,output_elements,out_.shape.data(),out_.shape.size());
@@ -105,7 +105,7 @@ private:
                 throw std::runtime_error("prepared_output_shape_or_dtype_mismatch");
             r.status=InferenceStatus::Success; r.reason="executed"; r.output_elements=output_elements;
             if constexpr (Profiled) telemetry=Clock::now();
-            const auto record=timer.finish("success",r.reason,input.f32_data.size(),output_elements);
+            const auto record=timer.finish("success",r.reason,input.f32Size(),output_elements);
             if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
             else attachTelemetry(r,record);
             if constexpr (Profiled) {
@@ -127,7 +127,7 @@ private:
             }
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
-            const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
+            const auto record=timer.finish("runtime_error",r.reason,input.f32Size(),0);
             if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
             else attachTelemetry(r,record);
         }
@@ -143,12 +143,12 @@ private:
         r.selected_device_class="cpu"; r.selected_device_id="cpu:0"; TelemetryTimer timer("onnxruntime_cpu","prepared_inference");
         try {
             if constexpr (Profiled) validation=Clock::now();
-            if (input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape || input.f32_data.size()!=in_.element_count)
+            if (input.f32Data()==nullptr || input.spec.element_type!=ElementType::Float32 || input.spec.shape!=in_.shape || input.f32Size()!=in_.element_count)
                 throw std::runtime_error("prepared_input_shape_or_dtype_mismatch");
             if constexpr (!ApplicationValidated)
-                for (float v:input.f32_data) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_prepared_input");
+                for (std::size_t i=0;i<input.f32Size();++i) if (!std::isfinite(input.f32Data()[i])) throw std::runtime_error("nonfinite_prepared_input");
             if constexpr (Profiled) tensor_setup=Clock::now();
-            auto tensor=Ort::Value::CreateTensor<float>(memory_,const_cast<float *>(input.f32_data.data()),input.f32_data.size(),in_.shape.data(),in_.shape.size());
+            auto tensor=Ort::Value::CreateTensor<float>(memory_,const_cast<float *>(input.f32Data()),input.f32Size(),in_.shape.data(),in_.shape.size());
             const char *inputs[]={in_name_.c_str()}, *outputs[]={out_name_.c_str()};
             if constexpr (Profiled) invoke=Clock::now();
             std::vector<Ort::Value> values=[&]() -> std::vector<Ort::Value> {
@@ -163,7 +163,7 @@ private:
             const auto *data=values.front().GetTensorData<float>(); r.output_f32.assign(data,data+out_.element_count);
             r.status=InferenceStatus::Success; r.reason="executed";
             if constexpr (Profiled) telemetry=Clock::now();
-            const auto record=timer.finish("success",r.reason,input.f32_data.size(),r.output_f32.size());
+            const auto record=timer.finish("success",r.reason,input.f32Size(),r.output_f32.size());
             if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
             else attachTelemetry(r,record);
             if constexpr (Profiled) {
@@ -182,7 +182,7 @@ private:
             }
         } catch (const std::exception &e) {
             r.status=InferenceStatus::RuntimeError; r.reason=e.what(); r.output_f32.clear();
-            const auto record=timer.finish("runtime_error",r.reason,input.f32_data.size(),0);
+            const auto record=timer.finish("runtime_error",r.reason,input.f32Size(),0);
             if constexpr (ApplicationValidated) attachTelemetryScalars(r,record);
             else attachTelemetry(r,record);
         }

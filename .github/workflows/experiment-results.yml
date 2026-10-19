@@ -8,14 +8,20 @@ on:
       - 'agent/**'
     paths:
       - '.github/workflows/experiment-results.yml'
-      - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
+      - 'Compiler_new_ws/Short_Hand/src/**'
+      - 'mlir/**'
+      - 'tests/ai_benchmark/**'
+      - '.github/workflows/runtime-profile.yml'
       - 'experiments/energy/**'
       - 'scripts/install_ci_onnxruntime_cpu.sh'
       - 'tests/ai_application/**'
   pull_request:
     paths:
       - '.github/workflows/experiment-results.yml'
-      - 'Compiler_new_ws/Short_Hand/src/ai_runtime/**'
+      - 'Compiler_new_ws/Short_Hand/src/**'
+      - 'mlir/**'
+      - 'tests/ai_benchmark/**'
+      - '.github/workflows/runtime-profile.yml'
       - 'experiments/energy/**'
       - 'scripts/install_ci_onnxruntime_cpu.sh'
       - 'tests/ai_application/**'

@@ -75,6 +75,14 @@ void vectorBoundary(const std::filesystem::path &dir,int size) {
         for(int i=0;i<size;++i) check(input[i]==output[i+1],"vector_value_or_stale_scratch");
     }
     check(telemetry("\"hit\":true") && telemetry("\"preparations\":1"),"vector_preparation_count");
+    // A borrowed input may partially overlap the caller output. ORT writes
+    // private scratch and the bridge commits only after synchronous execution.
+    std::vector<float> overlap(size+2, -999);
+    for (int i=0;i<size;++i) overlap[i]=float(i%97);
+    int count=-1;
+    check(!short_ai_infer_f32("m","x",overlap.data(),size,"y",overlap.data()+1,size,&count),"partial_alias_infer");
+    check(count==size && overlap.back()==-999,"partial_alias_canary");
+    for (int i=0;i<size;++i) check(overlap[i+1]==float(i%97),"partial_alias_result");
     std::cout<<"PASS cache bridge input boundary "<<size<<" floats\n";
 }
 

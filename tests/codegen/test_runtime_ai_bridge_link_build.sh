@@ -12,6 +12,8 @@ cat > "${WORK_DIR}/runtime_ai_bridge_link_probe.cpp" <<'CPP'
 #include "ai_runtime/AI_Runtime.h"
 
 #include <cstring>
+#include <iostream>
+#include <string>
 
 int main() {
     if (std::strcmp(shorthand::runtime_bridge::bridgeAdapterContractVersion(),
@@ -47,10 +49,44 @@ int main() {
     auto input_buffer = shorthand::runtime_bridge::buildInputTensorBuffer(input, input_values, 4);
     if (!shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, 2)) return 10;
 
+    // The existing builder stays owning. Borrowing is explicit, synchronous
+    // and rejects null/count mismatches before any backend dereferences it.
+    input_values[0] = 42.0f;
+    if (input_buffer.f32Data() == input_values || input_buffer.f32Data()[0] != 1.0f) return 13;
+    input_buffer.bindExternalF32(input_values, 4);
+    if (!input_buffer.f32_data.empty() || input_buffer.f32Data() != input_values || input_buffer.f32Size() != 4) return 14;
+    if (!shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, 2)) return 15;
+    input_buffer.bindExternalF32(nullptr, 4);
+    if (shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, 2)) return 16;
+    input_buffer.bindExternalF32(input_values, 0);
+    if (shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, 2)) return 17;
+    input_buffer.bindExternalF32(input_values, 3);
+    if (shorthand::runtime_bridge::bridgeRequestIsExecutionReady(model_spec, input_buffer, 2)) return 18;
+    input_buffer.bindExternalF32(input_values, 4);
     auto result = runtime.infer(model_spec, input_buffer);
     if (result.status != shorthand::ai::InferenceStatus::NotExecuted) return 11;
     if (shorthand::runtime_bridge::runtimeStatusFromInferenceStatus(result.status) != SHORTHAND_RUNTIME_NOT_EXECUTED) return 12;
 
+    input_buffer.clearExternalF32();
+    if (input_buffer.hasF32() || input_buffer.f32Size() != 0) return 19;
+
+    // Capture a request, change registrations BEFORE the first observation,
+    // and require the observation to retain the call's original descriptors.
+    short_ai_infer_f32("classifier", "input", input_values, 4, "output", output_values, 2, &output_count);
+    short_ai_register_model("classifier", "onnx", "changed.onnx", "other", "float32", "1,4", "1,2", "onnxruntime_cpu");
+    short_ai_register_tensor("input", "int8", "99", "1", "99");
+    std::cout << "REQUEST " << short_runtime_infer_bridge_request_json() << '\n';
+    std::cout << "TELEMETRY " << short_runtime_last_infer_telemetry_json() << '\n';
+    std::cout << "OBSERVABILITY " << short_runtime_observability_json() << '\n';
+    std::cout << "OTLP " << short_runtime_otlp_spans_json() << '\n';
+    const std::string first = short_runtime_infer_bridge_request_json();
+    if (first != short_runtime_infer_bridge_request_json()) return 20;
+    short_ai_infer_f32("missing", "input", input_values, 4, "output", output_values, 2, &output_count);
+    std::cout << "REJECTED " << short_runtime_infer_bridge_request_json() << '\n';
+    std::cout << "REJECTED_TELEMETRY " << short_runtime_last_infer_telemetry_json() << '\n';
+    short_runtime_reset();
+    std::cout << "RESET " << short_runtime_infer_bridge_request_json() << '\n';
+    std::cout << "RESET_TELEMETRY " << short_runtime_last_infer_telemetry_json() << '\n';
     return 0;
 }
 CPP
@@ -79,6 +115,22 @@ ${CXX:-g++} -std=c++17 -Wall -Wextra -Wpedantic \
   "${SRC_DIR}/ai_runtime/backends/LlamaCppBackend.cpp" \
   -o "${WORK_DIR}/runtime_ai_bridge_link_probe"
 
-"${WORK_DIR}/runtime_ai_bridge_link_probe"
+"${WORK_DIR}/runtime_ai_bridge_link_probe" > "${WORK_DIR}/observations.txt"
+python3 - "${WORK_DIR}/observations.txt" <<'PYTEST'
+import json, pathlib, sys
+observations = dict(line.split(' ', 1) for line in pathlib.Path(sys.argv[1]).read_text().splitlines())
+rows = {name: json.loads(value) for name, value in observations.items()}
+request = rows['REQUEST']
+assert request['model']['path'] == 'models/classifier.onnx'
+assert request['input']['element_type'] == 'float32' and request['input']['shape'] == '1,4'
+assert request['input_element_count'] == 4 and request['output_count'] == 0
+assert rows['TELEMETRY']['status'] == 'not_executed'
+assert rows['OBSERVABILITY']['infer_bridge_request'] == request
+assert rows['OTLP']['spans'][0]['infer_bridge_request'] == request
+assert rows['OTLP']['spans'][0]['last_infer_telemetry'] == rows['TELEMETRY']
+assert rows['REJECTED'] == {} and rows['REJECTED_TELEMETRY']['status'] == 'model_not_found'
+assert rows['RESET'] == {} and rows['RESET_TELEMETRY'] == {}
+print('PASS borrowed input validation, owned adapter compatibility and deferred observation snapshots')
+PYTEST
 
 echo "PASS runtime AI bridge link build gate"

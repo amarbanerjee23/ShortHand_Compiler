@@ -1,8 +1,51 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `30bfee63809307c48b2de20ddb10d9c16666730d`
+Comparison base: `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`
 
 ## Current PR evidence
+
+### Borrowed input and deferred bridge observations
+
+The base is merged PR122. This PR implements the first bounded slice of the supplied post-PR122 proposal and records the corrected full sequence in [post_pr122_energy_implementation_plan.md](post_pr122_energy_implementation_plan.md). It removes the synchronous C bridge input-vector copy, introduces explicit read-only FP32 borrowing for ONNX prepared and path-based execution, and clears caller pointers on all exits. The owning adapter remains owning. Runtime-owned transactional output scratch, per-call model-content comparison, policy invalidation and the frozen public C ABI remain unchanged.
+
+Request JSON and the bridge telemetry envelope are formatted on demand from owned snapshots. Registrations may change before observation without corrupting the previous call's evidence. Backend telemetry is still generated; this is not an allocation-free or fully zero-copy inference claim. The proposal's unchecked model-binding hook, metadata-only file validation, unproved LLVM pointer forwarding and hard-coded zero-allocation training assertions are not included.
+
+| Validation | Observed result before hosted CI |
+|---|---|
+| Frozen public ABI v1 and real SDK execution bridge | PASS: exact 25-symbol manifest, frozen/current C consumers, successful ONNX execution and no-SDK failure behavior |
+| GCC normal and phase-profiled runtime archives with verified ONNX Runtime 1.30.0 | PASS, strict warnings enabled |
+| Real ONNX cache and ownership regression | PASS: mutable file replacement including preserved size/mtime, external weights, policy changes, reset/recovery, finite/capacity negatives, lifecycle concurrency, 65536/65537-element inputs and partial input/output overlap |
+| Real phase-profile isolation and failure paths | PASS; ordinary runtime archive contains no diagnostic symbols |
+| Borrowed input and observation snapshot regression | PASS: pointer identity, owning adapter compatibility, null/empty/wrong-count rejection, deferred registration snapshots, repeated query, observability/OTLP consistency, failure/reset clearing |
+| Generated-evidence regression suite | PASS, 17 tests; observer/head/base matrices remain separate; missing, duplicate, unhashed, misordered and wrong-boundary samples rejected |
+| Run-evidence and Markdown replay regressions | PASS, 4 tests |
+| Hosted native packages, full regression matrix, sanitizers and same-runner performance | PASS on runtime revision `ca62eca1dc33635fffeaa74cf613e19a373e6cdf`: 21 push CI jobs and 20 applicable PR CI jobs; both evidence collections complete with no missing items. See the retained [two-run results](benchmark_results/pr123-runtime-observations.md). |
+
+The compiled benchmark now retains an additional ABBA head/base series for b1-t1, b16-t1 and b32-t1 with all four JSON exporters consumed on every timed call. Its results appear separately in `GENERATED.md` and `report.json`; no observer measurements are mixed with inference-only or direct-ORT timings. The original diagnostic phase and component-energy boundaries remain separate. Existing `ci.yml` runs the evidence workflow on every push and PR; the extra experiment workflow now also reacts to compiler, MLIR and benchmark changes.
+
+### Verified hosted observations and installers
+
+The [committed result snapshot](benchmark_results/pr123-runtime-observations.md) records both hosted runs for runtime revision `ca62eca1dc33635fffeaa74cf613e19a373e6cdf` against the exact merged PR122 base. Compiled head/base mean-time ratios were 0.8643–0.8946 on the Intel push runner and 0.9091–0.9146 on the AMD PR runner. Consuming every JSON exporter on every timed call gave much smaller differences (ratios 0.9651–0.9948 across the two runs). The resident real-digit control had mixed small changes, and every cell's paired range crossed 1. Direct prepared ORT remained faster. These are descriptive observations from shared runners, not confidence-bound or language-wide performance claims.
+
+The [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-39146759972-1-ca62eca1dc33) published all 37 assets, including native Windows x64, Linux x64/ARM64 and macOS ARM64 installers. Its tag resolves to the tested runtime revision. The successful publisher verifies all four native lifecycle receipts and downloads the complete uploaded asset set for SHA-256 comparison before publication. Installers remain unsigned development candidates with the existing platform opt-in and production restrictions.
+
+## Energy and power result
+
+Both hosted capability probes found no readable CPU package/socket energy counters and no matching E2/E3 calibration/model inputs. The highest available energy evidence class is null, physical system energy was not measured, and no joule saving or lower-power claim is supported. Removing a copy and deferring serialization are engineering changes, not physical-energy measurements; latency is not converted to joules. No dedicated metered runner is assumed. Comparative energy, lowest-carbon, production-scope and certification flags remain false.
+
+The attached predictions of 1.05–1.15x overhead and 35–70% energy savings are unverified and are not reported as results. Historical PR117 ratios below are not a current PR122 baseline. See the new plan for same-artifact controls, calibration limits, quality constraints, independent confirmation, uncertainty and scoped claim wording.
+
+## Reproduction
+
+Use `.github/workflows/runtime-profile.yml` for the complete compiler/normal/profiled SDK builds and exact-base comparison. Run `bash scripts/check_runtime_ai_bridge_link_build.sh`, then set `ONNXRUNTIME_ROOT` to the verified SDK for `bash scripts/check_runtime_ai_bridge_execution_path.sh`. Run `tests/ai_application/test_compiled_cache.py BUILD SDK` and `tests/ai_application/test_runtime_phase_profile.py BUILD SDK` with the matching `CXX`. Run `python3 experiments/energy/test_generated_infer_evidence.py`, `test_ci_run_evidence.py` and `test_render_benchmark_markdown.py` from their full repository paths. `generated_infer_evidence.py --build BUILD --base-build BASE_BUILD --sdk SDK --head-sha SHA --base-sha BASE --output OUTPUT` captures both observation frequencies automatically; replay using the retained `manifest.sha256`. ASan/UBSan and TSan plus all four archive/installer lifecycle gates remain mandatory in CI.
+
+## Completed PR122 release baseline
+
+PR122 head `6923c7f378b36fff7fe59d702bba58fd19228acb` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38566168461), all 20 applicable [PR CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38566174171), and [tooling](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38566173888). The [public development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-38566168461-1-6923c7f378b3) includes 37 verified assets and native Windows x64, Linux x64/ARM64 and macOS ARM64 installers. Its tag and target revision were verified after publication. This closes the then-pending PR122 entries preserved historically below; it does not qualify the new runtime changes.
+
+Comparison base: `30bfee63809307c48b2de20ddb10d9c16666730d`
+
+## Historical PR122 evidence
 
 ### Native compilation and installable build releases
 

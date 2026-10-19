@@ -12,7 +12,31 @@ enum class BackendKind { TensorRT, OnnxRuntimeTensorRT, OnnxRuntimeCUDA, OnnxRun
 enum class InferenceStatus { Success, NotExecuted, BackendUnavailable, InvalidInput, RuntimeError };
 
 struct TensorSpec { std::string name; ElementType element_type = ElementType::Unknown; std::vector<int64_t> shape; bool dynamic = false; size_t element_count = 0; };
-struct TensorBuffer { TensorSpec spec; std::vector<float> f32_data; std::vector<int8_t> i8_data; };
+struct TensorBuffer {
+    TensorSpec spec;
+    std::vector<float> f32_data;
+    std::vector<int8_t> i8_data;
+    // Synchronous read-only borrow: storage must stay alive and unchanged until
+    // inference returns. Copies of a view borrow the same storage; owned
+    // buffers keep their existing vector semantics.
+    const float *external_f32_data = nullptr;
+    std::size_t external_f32_count = 0;
+    bool external_f32_bound = false;
+    void bindExternalF32(const float *data, std::size_t count) noexcept {
+        f32_data.clear();
+        external_f32_data = data;
+        external_f32_count = count;
+        external_f32_bound = true;
+    }
+    void clearExternalF32() noexcept {
+        external_f32_data = nullptr;
+        external_f32_count = 0;
+        external_f32_bound = false;
+    }
+    bool hasF32() const noexcept { return external_f32_bound || !f32_data.empty(); }
+    const float *f32Data() const noexcept { return external_f32_bound ? external_f32_data : f32_data.data(); }
+    std::size_t f32Size() const noexcept { return external_f32_bound ? external_f32_count : f32_data.size(); }
+};
 struct ModelSpec { std::string name; std::string path; ModelFormat format = ModelFormat::Unknown; std::string task; std::string precision; TensorSpec input; TensorSpec output; std::vector<BackendKind> backend_preference; bool compact = false; bool allow_fallback = true; std::string quality_metric; std::string quality_op; double quality_threshold = 0.0; };
 struct BackendCapabilities { BackendKind kind = BackendKind::Fallback; std::string name; bool available = false; bool supports_onnx = false; bool supports_engine = false; bool supports_torchscript = false; bool supports_openvino_ir = false; bool supports_gguf = false; std::vector<std::string> supported_precisions; std::string unavailable_reason; };
 struct InferenceResult {

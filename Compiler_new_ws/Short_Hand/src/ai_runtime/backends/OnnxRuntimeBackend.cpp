@@ -128,21 +128,21 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
     if (!validateInputMatchesShape(input)) {
         r.status = InferenceStatus::InvalidInput;
         r.reason = "input_shape_mismatch";
-        attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32_data.size(), 0));
+        attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32Size(), 0));
         return r;
     }
 
     if (model.format != ModelFormat::Onnx) {
         r.status = InferenceStatus::InvalidInput;
         r.reason = "onnxruntime_cpu_requires_onnx_model";
-        attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32_data.size(), 0));
+        attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32Size(), 0));
         return r;
     }
 
-    if (input.f32_data.empty()) {
+    if ((input.f32Data()==nullptr || input.f32Size()==0)) {
         r.status = InferenceStatus::InvalidInput;
         r.reason = "onnxruntime_cpu_currently_requires_float32_input";
-        attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32_data.size(), 0));
+        attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32Size(), 0));
         return r;
     }
 
@@ -152,7 +152,7 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         if (model_path.empty()) {
             r.status = InferenceStatus::InvalidInput;
             r.reason = "missing_model_path";
-            attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32_data.size(), 0));
+            attachTelemetry(r, telemetry_timer.finish("invalid_input", r.reason, input.f32Size(), 0));
             return r;
         }
 
@@ -167,7 +167,7 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         if (session.GetInputCount() == 0 || session.GetOutputCount() == 0) {
             r.status = InferenceStatus::RuntimeError;
             r.reason = "onnx_model_missing_input_or_output";
-            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
             return r;
         }
 
@@ -176,7 +176,7 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         if (input_name.empty() || output_name.empty()) {
             r.status = InferenceStatus::RuntimeError;
             r.reason = "onnxruntime_failed_to_read_io_names";
-            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
             return r;
         }
 
@@ -184,8 +184,8 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
         Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
             memory_info,
-            const_cast<float *>(input.f32_data.data()),
-            input.f32_data.size(),
+            const_cast<float *>(input.f32Data()),
+            input.f32Size(),
             input_shape.data(),
             input_shape.size());
 
@@ -202,7 +202,7 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         if (output_tensors.empty() || !output_tensors.front().IsTensor()) {
             r.status = InferenceStatus::RuntimeError;
             r.reason = "onnxruntime_output_not_tensor";
-            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
             return r;
         }
 
@@ -210,7 +210,7 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         if (type_info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT) {
             r.status = InferenceStatus::RuntimeError;
             r.reason = "onnxruntime_output_not_float32";
-            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
             return r;
         }
 
@@ -220,31 +220,31 @@ InferenceResult OnnxRuntimeBackend::infer(const ModelSpec &model, const TensorBu
         if (validateShape(model.output.shape) && type_info.GetShape()!=model.output.shape) {
             r.status = InferenceStatus::RuntimeError;
             r.reason = "onnxruntime_output_shape_mismatch";
-            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+            attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
             return r;
         }
         float *output_data = output_tensors.front().GetTensorMutableData<float>();
         r.output_f32.assign(output_data, output_data + count);
         r.status = InferenceStatus::Success;
         r.reason = "executed";
-        attachTelemetry(r, telemetry_timer.finish("success", r.reason, input.f32_data.size(), count));
+        attachTelemetry(r, telemetry_timer.finish("success", r.reason, input.f32Size(), count));
         r.evidence_json_fragment = "{\"runtime_backend\":\"onnxruntime_cpu\",\"provider\":\"CPUExecutionProvider\",\"inference_status\":\"success\",\"input_shape\":\"" + shapeToString(input_shape) + "\",\"output_elements\":" + std::to_string(count) + ",\"telemetry\":" + r.telemetry_json_fragment + "}";
         return r;
     } catch (const Ort::Exception &ex) {
         r.status = InferenceStatus::RuntimeError;
         r.reason = std::string("onnxruntime_exception:") + ex.what();
-        attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+        attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
         return r;
     } catch (const std::exception &ex) {
         r.status = InferenceStatus::RuntimeError;
         r.reason = std::string("std_exception:") + ex.what();
-        attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32_data.size(), 0));
+        attachTelemetry(r, telemetry_timer.finish("runtime_error", r.reason, input.f32Size(), 0));
         return r;
     }
 #else
     r.status = InferenceStatus::BackendUnavailable;
     r.reason = capabilities().unavailable_reason;
-    attachTelemetry(r, telemetry_timer.finish("backend_unavailable", r.reason, input.f32_data.size(), 0));
+    attachTelemetry(r, telemetry_timer.finish("backend_unavailable", r.reason, input.f32Size(), 0));
     return r;
 #endif
 }

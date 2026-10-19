@@ -54,6 +54,56 @@ class GeneratedEvidenceTest(unittest.TestCase):
         evidence.write(out / 'manifest.json', manifest)
         return evidence.replay(out, evidence.sha(out / 'manifest.json'))
 
+    def observer_bundle(self, out):
+        manifest = self.bundle(out)
+        manifest['runners'].insert(1, 'base')
+        manifest['configurations']['base'] = evidence.configuration('base')
+        manifest['observer_observations'] = []
+        for batch in (1, 16, 32):
+            for block in range(2):
+                name = f'b{batch}-base-{block}.json'
+                evidence.write(out / name, sample(batch, 'base'))
+                manifest['hashes'][name] = evidence.sha(out / name)
+                manifest['observations'].append(dict(cell=f'b{batch}-t1', runner='base', path=name))
+            for index, runner in enumerate(['head', 'base', 'base', 'head']):
+                name = f'observed-b{batch}-{index}-{runner}.json'
+                row = sample(batch, runner)
+                row['observation_mode'] = 'every_call'
+                if runner == 'base': row['block_elapsed_ms'] = [2.0, 2.2]
+                evidence.write(out / name, row)
+                manifest['hashes'][name] = evidence.sha(out / name)
+                manifest['observer_observations'].append(dict(cell=f'b{batch}-t1', runner=runner, sequence=index, path=name))
+        return manifest
+
+    def test_observers_are_separate_replayable_controls(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp); manifest = self.observer_bundle(out)
+            report = self.replay(out, manifest)
+            self.assertEqual(len(report['observer_rows']), 3)
+            self.assertTrue(all(r['head_base_ratio'] == 0.5 for r in report['observer_rows']))
+            self.assertTrue(all(r['head_base_ratio'] == 1.0 for r in report['rows']))
+            self.assertFalse(report['energy_claim_authorized'])
+            self.assertIn('JSON consumed on every inference', (out / 'GENERATED.md').read_text())
+
+    def test_rejects_missing_duplicate_unhashed_and_wrong_order_observers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp); manifest = self.observer_bundle(out)
+            broken = copy.deepcopy(manifest); broken['observer_observations'].pop()
+            with self.assertRaises(ValueError): self.replay(out, broken)
+            for key, value in [('path', 'missing'), ('path', manifest['observations'][0]['path']),
+                               ('sequence', True), ('sequence', 9), ('runner', 'direct'), ('cell', 'b16-t4')]:
+                broken = copy.deepcopy(manifest); broken['observer_observations'][0][key] = value
+                with self.subTest(key=key, value=value), self.assertRaises(ValueError): self.replay(out, broken)
+            broken = copy.deepcopy(manifest); broken['observer_observations'][1] = broken['observer_observations'][0]
+            with self.assertRaises(ValueError): self.replay(out, broken)
+            for mode in (None, 'last_call_after_timing'):
+                path = out / manifest['observer_observations'][0]['path']
+                row = sample(); row['observation_mode'] = mode
+                evidence.write(path, row)
+                manifest['hashes'][path.name] = evidence.sha(path)
+                with self.subTest(mode=mode), self.assertRaisesRegex(ValueError, 'observation boundary'):
+                    self.replay(out, manifest)
+
     def test_rejects_incomplete_or_nonfinite_observations(self):
         evidence.validate_sample(sample(), 1, 8, 2)
         for field, value in [('success', False), ('completed_calls', 15), ('completed_vectors', 15),
