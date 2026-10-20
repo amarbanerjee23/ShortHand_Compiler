@@ -22,3 +22,6 @@ python-numpy-baseline	2.3.5;wheel-sha256-pinned	build-tool	BSD-3-Clause	no	https
 python-flatbuffers-baseline	25.12.19;wheel-sha256-pinned	build-tool	Apache-2.0	no	https://github.com/google/flatbuffers
 python-packaging-baseline	26.3;wheel-sha256-pinned	build-tool	Apache-2.0 OR BSD-2-Clause	no	https://github.com/pypa/packaging
 python-protobuf-baseline	7.36.1;wheel-sha256-pinned	build-tool	BSD-3-Clause	no	https://github.com/protocolbuffers/protobuf
+python-onnx-aot	1.23.2;wheel-sha256-pinned	build-tool	Apache-2.0	no	https://github.com/onnx/onnx
+python-ml-dtypes-aot	0.5.4;wheel-sha256-pinned	build-tool	Apache-2.0 AND MPL-2.0	no	https://github.com/jax-ml/ml_dtypes
+python-typing-extensions-aot	4.15.0;wheel-sha256-pinned	build-tool	PSF-2.0	no	https://github.com/python/typing_extensions
