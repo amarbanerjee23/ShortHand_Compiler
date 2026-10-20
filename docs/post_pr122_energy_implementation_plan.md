@@ -1,7 +1,7 @@
 # Post-PR122 runtime optimization and energy evidence plan
 
 Baseline: merged PR122, `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`.
-Status: first runtime slice implemented in this PR; remaining slices require their own implementation and qualification.
+Status: R1 merged in PR123; remaining slices require their own implementation and qualification.
 Claim status: no measured energy reduction, general language superiority, GA or certification claim.
 
 ## Objective and scope
@@ -34,6 +34,10 @@ Output still goes to runtime-owned scratch and is copied to caller memory only o
 The bridge retains owned observation state and materializes request JSON and the outer inference-telemetry envelope on demand. Backend telemetry is still produced by the existing runtime. Observability and OTLP exporters trigger the same materialization, and repeated queries reuse the result. Reset and failed inference clear old request state. No model embedding, compiler alias rewrite, registration hoisting, training optimization or precision relaxation is included in this slice.
 
 The compiled evidence runner additionally measures head/base with all four JSON exporters consumed on every timed inference. This makes deferred formatting cost visible. These controls have separate raw files and report rows; they never enter the inference-only series or direct-ORT comparisons. Replay rejects incomplete, duplicate, unhashed, misordered or incorrectly labelled observer samples. The existing 17-phase diagnostic partition remains separate from uninstrumented performance measurements.
+
+## Post-PR123 AOT feasibility update
+
+The [Argon proposal review](argon_aot_energy_proposal_review.md) adds a bounded, opt-in static FP32 MatMul+Add backend experiment and corrects ambiguous RAPL counter-wrap handling. The experiment emits C++17 source and compares its native artifact against prepared ORT; it is not ONNX-to-MLIR or `.short` lowering. R2/R3 remain prerequisites for integrated R5, including the identical-artifact ShortHand/C++ comparison. Initial observations include slower AOT cells at batches 16 and 32; no default backend, language superiority or energy claim changes.
 
 ## Sequenced implementation work
 

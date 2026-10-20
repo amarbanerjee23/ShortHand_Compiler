@@ -424,29 +424,49 @@ class RaplSampler:
         self._total_uj = 0
         self._samples = 0
         self._last_time: Optional[float] = None
+        self._previous_begin: Optional[float] = None
         self._previous: Optional[Dict[str, int]] = None
 
-    def _values(self) -> Tuple[float, Dict[str, int]]:
-        return time.monotonic(), {str(d["path"]): _read_counter(pathlib.Path(str(d["path"]))) for d in self.domains}
+    def _values(self) -> Tuple[float, float, Dict[str, int]]:
+        begin = time.monotonic()
+        values = {str(d["path"]): _read_counter(pathlib.Path(str(d["path"]))) for d in self.domains}
+        return begin, time.monotonic(), values
 
     def _sample_once(self) -> None:
-        now, current = self._values()
+        begin, now, current = self._values()
+        if not math.isfinite(begin) or not math.isfinite(now) or begin > now:
+            raise RuntimeError("non_monotonic_rapl_sampling")
+        for d in self.domains:
+            value, rng = current[str(d["path"])], int(d["max_energy_range_uj"])
+            if not 0 <= value < rng:
+                raise RuntimeError("rapl_counter_out_of_range")
         if self._last_time is None or self._previous is None:
             self._last_time, self._previous = now, current
+            self._previous_begin = begin
             self._samples = 1
             return
-        dt = now - self._last_time
-        if dt <= 0:
+        # Bound every domain's gap by the previous read start and current read
+        # end, including time spent reading sysfs and scheduler stalls.
+        dt = now - self._previous_begin
+        if dt <= 0 or begin < self._last_time:
             raise RuntimeError("non_monotonic_rapl_sampling")
+        increment = 0
         for d in self.domains:
             key = str(d["path"])
             old, new = self._previous[key], current[key]
             rng = int(d["max_energy_range_uj"])
+            # A small observed delta can hide one or more complete wraps. The
+            # actual sampling gap, including scheduler stalls, must rule them
+            # out under the declared conservative power bound.
+            if dt * self.max_power >= rng / 1e6:
+                raise RuntimeError("rapl_wrap_interval_unqualified")
             delta = new - old if new >= old else rng - old + new
             if delta < 0 or delta / 1e6 > dt * self.max_power:
                 raise RuntimeError("rapl_delta_exceeds_conservative_power_bound")
-            self._total_uj += delta
+            increment += delta
+        self._total_uj += increment
         self._previous, self._last_time = current, now
+        self._previous_begin = begin
         self._samples += 1
 
     def start(self) -> None:

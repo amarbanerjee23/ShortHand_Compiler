@@ -3,6 +3,7 @@ import json
 import pathlib
 import tempfile
 import unittest
+from unittest import mock
 
 import ci_energy_evidence as energy
 
@@ -118,6 +119,41 @@ class EnergyEvidenceTest(unittest.TestCase):
             self.assertEqual(len(domains), 1)
             self.assertTrue(domains[0]["contributes"])
             self.assertEqual(domains[0]["max_energy_range_uj"], 100)
+
+    def test_rapl_wrap_bound_and_counter_range(self):
+        # Synthetic counters never establish hardware energy evidence. A long
+        # actual gap can hide full wraps even when the observed delta is tiny.
+        domain = dict(path='/test/counter', contributes=True, readable=True,
+                      max_energy_range_uj=1_000_000_000)
+        def sample(values):
+            with mock.patch.object(energy, 'discover_rapl', return_value=[domain]):
+                sampler = energy.RaplSampler()
+            with mock.patch.object(sampler, '_values', side_effect=[
+                    (t, t, {'/test/counter': v}) for t, v in values]):
+                for _ in values:
+                    sampler._sample_once()
+            return sampler
+        wrapped = sample([(1.0, 999_999_900), (1.01, 100)])
+        self.assertEqual(wrapped._total_uj, 200)
+        for values, reason in [
+                ([(1.0, 100), (2.0, 200)], 'wrap_interval_unqualified'),
+                ([(1.0, 100), (1.5, 100)], 'wrap_interval_unqualified'),
+                ([(1.0, 1_000_000_000)], 'counter_out_of_range'),
+                ([(1.0, 100), (1.01, 1_000_000_000)], 'counter_out_of_range'),
+                ([(1.0, -1)], 'counter_out_of_range'),
+                ([(1.0, 100), (1.0, 200)], 'non_monotonic'),
+                ([(1.0, 100), (1.01, 50_000_100)], 'power_bound')]:
+            with self.subTest(values=values), self.assertRaisesRegex(RuntimeError, reason):
+                sample(values)
+
+        with mock.patch.object(energy, 'discover_rapl', return_value=[domain]):
+            sampler = energy.RaplSampler()
+        with mock.patch.object(sampler, '_values', side_effect=[
+                (1.0, 1.0, {'/test/counter': 100}),
+                (1.01, 2.0, {'/test/counter': 200})]):
+            sampler._sample_once()
+            with self.assertRaisesRegex(RuntimeError, 'wrap_interval_unqualified'):
+                sampler._sample_once()
 
     def test_amd_hwmon_discovers_socket_without_double_counting_cores(self):
         with tempfile.TemporaryDirectory() as d:

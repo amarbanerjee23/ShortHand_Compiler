@@ -1,0 +1,5 @@
+# Additional test-only dependencies; install after the locked AI baseline.
+# ONNX is a build/validation dependency, not a generated-binary dependency.
+onnx==1.23.2 --hash=sha256:7abf381d278f31ac62487fddedc9dd42da842dce94d5d43536836ee3efdf4a2b
+ml_dtypes==0.5.4 --hash=sha256:9ad459e99793fa6e13bd5b7e6792c8f9190b4e5a1b45c63aba14a4d0a7f1d5ff
+typing_extensions==4.15.0 --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548

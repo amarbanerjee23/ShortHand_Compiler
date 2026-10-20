@@ -23,6 +23,10 @@ The planned implementation roadmap is closed at merged GitHub PR102. PR103 is a 
 
 The active post-implementation roadmap is [the enterprise GA and C3-ECO evidence plan](post_pr102_enterprise_c3eco_release_plan.md), with machine-readable milestones in `post_pr102_evidence_plan.tsv`. It defines E1-E6 for protected release controls, representative workloads and quality, calibrated physical energy, lifecycle/carbon boundaries, independent reproduction/certification operations and the final enterprise GA decision. Evidence failures may result in narrowly scoped remediation PRs; no further feature PR is pre-authorized.
 
+## Post-PR123 bounded experiment
+
+The separately requested [Argon proposal review](argon_aot_energy_proposal_review.md) implements static FP32 CPU AOT feasibility and a CI RAPL counter-validity correction. It retains the existing compiler/runtime ABI and native installer release gates. R2/R3 integration, representative task quality and measured energy confirmation remain open; this experiment does not reopen or complete the historical production release sequence.
+
 ## Current baseline
 
 The closed PR83–PR102 release sequence and its counts below are distinct from
