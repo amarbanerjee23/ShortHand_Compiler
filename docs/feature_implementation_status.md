@@ -21,6 +21,10 @@ GitHub PR90 implements `shorthand.c3eco.assessment.v1`: structural profile/workb
 
 The compiler test audit records **36 implemented, 3 partial and 0 open** areas for the merged GitHub PR102 implementation baseline, 39 areas total. TST027 is an implemented fail-closed aggregate, PR100 adds declared lifecycle/cloud/hardware-boundary evidence, PR101 adds signed independent-pilot verification (TST038), and PR102 adds release claims/audit closeout (TST039); ShortHand remains a controlled beta because calibrated physical comparison evidence, complete standard-dataset/equivalent-baseline coverage across AI families, independent certification operations and the protected-release exercise remain incomplete.
 
+## Post-PR123 experimental work
+
+The [bounded AOT and energy-counter review](argon_aot_energy_proposal_review.md) adds an opt-in Linux CPU MatMul+Add source generator, native ORT comparisons and counter-wrap rejection tests. This is a backend experiment, not source-language AOT integration or an installed production feature. Mixed latency observations and unavailable local energy remain explicit in the [benchmark report](latency_energy_test_and_benchmark_results.md). The historical governance identifiers and production qualification state below are unchanged.
+
 ## Production truth authority
 
 The active state is machine-readable in `docs/production_truth.tsv`. C3-ECO readiness is tracked in `docs/c3eco_traceability.tsv` across mandatory gates G1-G14, scoring domains A-K and S9/S12. `scripts/check_production_truth.sh` fails on contradictory state, missing evidence, invalid traceability or unsupported production claims.

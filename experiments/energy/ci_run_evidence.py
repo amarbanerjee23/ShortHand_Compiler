@@ -26,6 +26,8 @@ REQUIRED = {
     'resident_native_and_python_controls': 'resident-baselines/summary.json',
     'energy_capabilities': 'ci-energy-probe.json',
     'resident_component_energy_or_unavailable': 'ci-energy/summary.json',
+    'bounded_aot_backend_observations': 'aot/report.json',
+    'bounded_aot_correctness_and_sanitizers': 'aot-tests.txt',
 }
 SCHEMAS = {
     'compiled_fp32_observations': 'shorthand.generated_infer.report.v2',
@@ -34,6 +36,7 @@ SCHEMAS = {
     'resident_native_and_python_controls': 'shorthand.energy.resident_baselines.v1',
     'energy_capabilities': 'shorthand.energy.ci_evidence.v1',
     'resident_component_energy_or_unavailable': 'shorthand.energy.ci_component_comparison.v1',
+    'bounded_aot_backend_observations': 'shorthand.aot.report.v1',
 }
 PASS_MARKERS = {
     'compiled_session_reuse_and_invalidation': 'PASS real ONNX cache reuse',
@@ -47,6 +50,7 @@ PASS_MARKERS = {
     'real_digit_application_correctness': 'live_onnx=1',
     'compiled_phase_execution_tests': 'PASS compiled phase profiling:',
     'compiled_phase_production_isolation': 'PASS phase profile isolation: production archive has no diagnostic symbols',
+    'bounded_aot_correctness_and_sanitizers': 'PASS bounded AOT contracts and ASan/UBSan',
 }
 
 

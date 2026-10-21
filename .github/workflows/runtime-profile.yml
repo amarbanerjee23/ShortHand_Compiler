@@ -57,6 +57,8 @@ jobs:
           python3 -m venv baseline-venv
           baseline-venv/bin/python -m pip install --require-hashes --only-binary=:all: --no-deps \
             -r tests/ai_application/requirements-ai-baseline-linux-x64-py312.txt
+          baseline-venv/bin/python -m pip install --require-hashes --only-binary=:all: --no-deps \
+            -r experiments/aot/requirements-linux-x64-py312.txt
           baseline-venv/bin/python -m pip freeze --all > profile-output/pip-freeze.txt
       - name: Build optimized real ONNX host
         run: |
@@ -162,6 +164,20 @@ jobs:
             --base-sha "$EVIDENCE_BASE_SHA" \
             --output "$PWD/profile-output/pr-runtime-delta"
           cat profile-output/pr-runtime-delta/PR_DELTA.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Qualify and benchmark the opt-in bounded AOT backend
+        run: |
+          set -euo pipefail
+          {
+            CXX=clang++-18 SHORTHAND_AOT_SANITIZERS=1 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+              baseline-venv/bin/python experiments/aot/test_compile_model.py
+            baseline-venv/bin/python experiments/aot/benchmark.py \
+              --sdk build-profile/onnxruntime-1.30.0 --cxx clang++-18 --output profile-output/aot
+            python3 experiments/aot/benchmark.py --output profile-output/aot \
+              --replay-sha256 "$(cat profile-output/aot/manifest.sha256)"
+            python3 experiments/aot/test_benchmark.py --bundle profile-output/aot
+            echo 'PASS bounded AOT contracts and ASan/UBSan'
+          } 2>&1 | tee profile-output/aot-tests.txt
+          cat profile-output/aot/AOT.md >> "$GITHUB_STEP_SUMMARY"
       - name: Capture all five diagnostic cells
         run: |
           set -euo pipefail

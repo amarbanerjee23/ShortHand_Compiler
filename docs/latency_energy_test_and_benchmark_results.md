@@ -1,10 +1,54 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`
+Comparison base: `44af710d7bf280a931b3d218299e11baf27a345c`
 
 ## Current PR evidence
 
-### Borrowed input and deferred bridge observations
+The base is merged PR123. The [Argon proposal review](argon_aot_energy_proposal_review.md) audits the supplied ideas and implements an opt-in static FP32 MatMul+Add CPU AOT experiment plus a validity fix for CI RAPL counter sampling. The experiment emits C++17 source and compares native arithmetic against prepared ORT BASIC/ALL using the same C++ host and checked nonzero inputs. It is not `.short`/MLIR AOT integration and does not alter default source compilation, runtime ABI, precision or model-path semantics.
+
+RAPL readings now include the full read-window/scheduling gap when deciding whether wraps can be disambiguated. A small positive delta after a long interval is rejected instead of being accepted as a small energy reading. No calibration, measured energy saving or power reduction is implied by this correction.
+
+| Validation | Local result before hosted CI |
+|---|---|
+| Bounded importer and native execution | PASS: 3 test methods with shape/opset/IR/encoding/external-data/unknown-field negatives; nonzero numerical oracle; aliasing, failure rollback and 100 concurrent-call cases |
+| AOT vs real ORT 1.30.0 | PASS: all 54 latency samples and nine separately executed energy-boundary samples have checked outputs; batches 1/16/32, one thread |
+| Hashed replay and corruption rejection | PASS: 5 tests; incomplete/duplicate/misordered/unhashed observations, artifact sizes, invalid energy/counts/times, incorrect digests and premature report publication rejected |
+| CI energy collector regressions | PASS: 11 tests, including ambiguous/single wraps, counter range, power bound and delayed read windows; synthetic counters are not measurements |
+| Run-evidence and Markdown replay | PASS: 4 tests; new AOT report and sanitizer success marker required |
+| Action pinning/status hygiene and diff whitespace | PASS |
+| Local sanitizer and full production-truth aggregate | Unavailable locally: LeakSanitizer cannot inspect `/proc`; full aggregate stops at missing `bison`. Hosted sanitizer/native/compiler gates remain mandatory, without skips added by this PR. |
+| Windows/Linux/macOS installer lifecycle and release | Existing CI gates retained; exact-head hosted execution and release publication are pending at initial PR creation. |
+
+### Initial hosted validation and dependency-policy correction
+
+Implementation revision `2d952d4b6e2b5d62ab77d29ccf56ab72f7c49957` completed the [push CI run](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39377992189) and [PR CI run](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39378037843). All compiler/toolchain, CTest parity, MLIR, reproducibility, AOT/profile and four native installer jobs passed. The [hosted AOT/profile job](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39377992189/job/118480359234) passed the importer/native suite with ASan/LSan/UBSan enabled, real AOT/ORT capture, all five replay tests and mandatory evidence validation. This resolves the local sanitizer-environment limitation for that revision.
+
+The overall CI result failed because `experiments/aot/requirements-linux-x64-py312.txt` was missing from the repository-owned dependency registry; the security job stopped before its remaining scans. The aggregate gate therefore blocked release publication. This follow-up registers that manifest and records ONNX 1.23.2, ml_dtypes 0.5.4 (including its bundled Eigen MPL-2.0 notice) and typing_extensions 4.15.0 as hash-pinned build/test dependencies, not redistributed language-runtime components. The existing security checks remain mandatory; the follow-up revision needs its own complete CI run.
+
+Retained exact-implementation evidence: [runtime profile artifact 12244735376](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39377992189/artifacts/12244735376), including the complete AOT bundle. Native release candidate artifacts were produced for all four targets, but no release was published from the failed aggregate. Hosted benchmark values are not substituted for the separately identified local observations below.
+
+### Local backend observations
+
+The [committed local benchmark Markdown](benchmark_results/argon-aot-local.md) records the final dependency capture and the earlier diagnostic pilot, provenance, all ratio ranges and compilation costs. On the final local GCC 13.3/AMD EPYC 9V74 capture, paired AOT/BASIC median ratios were **0.2073 / 2.7507 / 3.8656** for batches 1/16/32; paired AOT/ALL ratios were **0.1852 / 2.9874 / 4.4223**. Lower is faster. Batch 1 favored AOT; batches 16 and 32 favored ORT. These are short shared-host observations with a checked-call boundary, not a statistical superiority claim. AOT performs additional internal transactional checks, and compilation cost is outside resident timing.
+
+Manifest SHA-256: `96ae378688797fceb0a72348a059f38ca41fb7d4631f69de40bb8ccc0a97899a`. This identifies a working-tree capture based on the comparison base; it is not a claim that uncommitted source equals a published revision. CI produces fresh exact-checkout artifacts containing the full source diff, model/oracle/input bytes, generated source/object/binaries, commands, raw outputs, reports and digests. The final run/artifact links will be recorded in the PR after hosted checks finish; no hosted result is inferred from local tests.
+
+## Energy and power result
+
+All nine local AOT/ORT component-energy records are unavailable: `amd_hwmon_socket_energy_unavailable`. Measured joules and joules per verified vector are null. No dedicated meter, calibrated estimate, phase-energy attribution, power comparison, carbon reduction or energy break-even value is reported. The whole-child-process energy boundary includes setup, warmup, all verified calls and teardown; it is separate from resident latency and is not process-attributed even when CPU counters exist.
+
+The RAPL power bound is an explicit conservative assumption, not a calibration. Counter integrity and valid comparisons still require domain coverage, reset handling, host activity, uncertainty and independent repeated measurements. `latency_claim_authorized`, `energy_claim_authorized` and production superiority claims remain false.
+
+## Reproduction
+
+Follow the locked dependency, native compiler, sanitizer, capture and replay commands in [the proposal review](argon_aot_energy_proposal_review.md#reproduction). `runtime-profile.yml` executes them against Clang 18/ORT 1.30.0 on every normal push and PR. The existing generated `.short` head/base comparison and native installer matrix continue independently. Replay is standard-library-only and requires the expected root digest; a digest is not a signature or measurement-authenticity proof. Hosted raw evidence uses the existing 90-day retention policy.
+
+## Historical PR123 evidence
+
+Previous comparison base: `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`. The following results belong to the earlier borrowed-input/lazy-observation change, not the new AOT experiment.
+
+
+#### Borrowed input and deferred bridge observations
 
 The base is merged PR122. This PR implements the first bounded slice of the supplied post-PR122 proposal and records the corrected full sequence in [post_pr122_energy_implementation_plan.md](post_pr122_energy_implementation_plan.md). It removes the synchronous C bridge input-vector copy, introduces explicit read-only FP32 borrowing for ONNX prepared and path-based execution, and clears caller pointers on all exits. The owning adapter remains owning. Runtime-owned transactional output scratch, per-call model-content comparison, policy invalidation and the frozen public C ABI remain unchanged.
 
@@ -23,31 +67,31 @@ Request JSON and the bridge telemetry envelope are formatted on demand from owne
 
 The compiled benchmark now retains an additional ABBA head/base series for b1-t1, b16-t1 and b32-t1 with all four JSON exporters consumed on every timed call. Its results appear separately in `GENERATED.md` and `report.json`; no observer measurements are mixed with inference-only or direct-ORT timings. The original diagnostic phase and component-energy boundaries remain separate. Existing `ci.yml` runs the evidence workflow on every push and PR; the extra experiment workflow now also reacts to compiler, MLIR and benchmark changes.
 
-### Verified hosted observations and installers
+#### Verified hosted observations and installers
 
 The [committed result snapshot](benchmark_results/pr123-runtime-observations.md) records both hosted runs for runtime revision `ca62eca1dc33635fffeaa74cf613e19a373e6cdf` against the exact merged PR122 base. Compiled head/base mean-time ratios were 0.8643–0.8946 on the Intel push runner and 0.9091–0.9146 on the AMD PR runner. Consuming every JSON exporter on every timed call gave much smaller differences (ratios 0.9651–0.9948 across the two runs). The resident real-digit control had mixed small changes, and every cell's paired range crossed 1. Direct prepared ORT remained faster. These are descriptive observations from shared runners, not confidence-bound or language-wide performance claims.
 
 The [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-39146759972-1-ca62eca1dc33) published all 37 assets, including native Windows x64, Linux x64/ARM64 and macOS ARM64 installers. Its tag resolves to the tested runtime revision. The successful publisher verifies all four native lifecycle receipts and downloads the complete uploaded asset set for SHA-256 comparison before publication. Installers remain unsigned development candidates with the existing platform opt-in and production restrictions.
 
-## Energy and power result
+### Energy and power result
 
 Both hosted capability probes found no readable CPU package/socket energy counters and no matching E2/E3 calibration/model inputs. The highest available energy evidence class is null, physical system energy was not measured, and no joule saving or lower-power claim is supported. Removing a copy and deferring serialization are engineering changes, not physical-energy measurements; latency is not converted to joules. No dedicated metered runner is assumed. Comparative energy, lowest-carbon, production-scope and certification flags remain false.
 
 The attached predictions of 1.05–1.15x overhead and 35–70% energy savings are unverified and are not reported as results. Historical PR117 ratios below are not a current PR122 baseline. See the new plan for same-artifact controls, calibration limits, quality constraints, independent confirmation, uncertainty and scoped claim wording.
 
-## Reproduction
+### Reproduction
 
 Use `.github/workflows/runtime-profile.yml` for the complete compiler/normal/profiled SDK builds and exact-base comparison. Run `bash scripts/check_runtime_ai_bridge_link_build.sh`, then set `ONNXRUNTIME_ROOT` to the verified SDK for `bash scripts/check_runtime_ai_bridge_execution_path.sh`. Run `tests/ai_application/test_compiled_cache.py BUILD SDK` and `tests/ai_application/test_runtime_phase_profile.py BUILD SDK` with the matching `CXX`. Run `python3 experiments/energy/test_generated_infer_evidence.py`, `test_ci_run_evidence.py` and `test_render_benchmark_markdown.py` from their full repository paths. `generated_infer_evidence.py --build BUILD --base-build BASE_BUILD --sdk SDK --head-sha SHA --base-sha BASE --output OUTPUT` captures both observation frequencies automatically; replay using the retained `manifest.sha256`. ASan/UBSan and TSan plus all four archive/installer lifecycle gates remain mandatory in CI.
 
-## Completed PR122 release baseline
+### Completed PR122 release baseline
 
 PR122 head `6923c7f378b36fff7fe59d702bba58fd19228acb` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38566168461), all 20 applicable [PR CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38566174171), and [tooling](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38566173888). The [public development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-38566168461-1-6923c7f378b3) includes 37 verified assets and native Windows x64, Linux x64/ARM64 and macOS ARM64 installers. Its tag and target revision were verified after publication. This closes the then-pending PR122 entries preserved historically below; it does not qualify the new runtime changes.
 
 Comparison base: `30bfee63809307c48b2de20ddb10d9c16666730d`
 
-## Historical PR122 evidence
+### Historical PR122 evidence
 
-### Native compilation and installable build releases
+#### Native compilation and installable build releases
 
 The base is merged PR121. Its final PR and push CI matrices and merged-master run [38069633969](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38069633969) passed all 20 mandatory jobs. This PR adds native MLIR compilation in all four package lanes, target-specific metadata and diagnostic ABI handling, real compiled source inference at O0/O2, installer lifecycle qualification, and automatic development prereleases after a successful complete push CI run.
 
@@ -68,17 +112,17 @@ The base is merged PR121. Its final PR and push CI matrices and merged-master ru
 
 The compiled source test uses zero-initialized typed tensors; separate interpreter and C ABI tests verify exact numeric output 42. Arbitrary typed tensor input values remain an API capability, not new source syntax. No platform is added to the default production allowlist.
 
-## Energy and power result
+### Energy and power result
 
 This change adds packaging and qualification, not a claimed runtime speedup. The unchanged mandatory runtime-profile workflow continues collecting latency, allocation and modeled energy evidence on each push. No new measured joules/task or lower-power claim is made. Prior benchmark results below retain their original revision scope.
 
-## Reproduction
+### Reproduction
 
 Run `python3 tests/packaging/test_cpu_release_candidates.py`, `python3 tests/packaging/test_build_releases.py` and `bash scripts/check_signed_release_contract.sh`. Native end-to-end reproduction is `.github/workflows/cpu-packages.yml`; it runs `check_installed_cpu_package.py` against each archive, then `build_native_installer.py` against the actual native installer. Each successful lifecycle receipt binds installer/archive bytes to the exact tested revision.
 
-## Previous PR121 evidence (historical comparison base `813c899c10f016785f5c2280aaaaedfeced78f3d`)
+### Previous PR121 evidence (historical comparison base `813c899c10f016785f5c2280aaaaedfeced78f3d`)
 
-### CPU release packaging
+#### CPU release packaging
 
 This change follows merged PR120 and repairs the release distribution path. The current comparison base is its master merge above; the first hosted run used the earlier stacked PR120 head. CMake now installs both primary CLIs, packages the enabled ONNX Runtime dependency with its license notices, and exports a relocatable ONNX CMake target. A single reusable workflow builds CPU archives for Linux x64, Linux ARM64, Windows x64 and macOS ARM64 for both normal CI and releases. The mandatory CI aggregate includes every native package job.
 
@@ -99,7 +143,7 @@ Release artifact names use `release-bundle-*`, excluding `release-closeout-polic
 
 The local build is a development tree based on the SHA above; its receipt is not a clean committed release qualification. Hosted results must be retained before marking the package PR ready. This change makes no latency, power, energy or GA claim. Full operational release qualification and source-to-native AI parity remain required as described in [cpu_release_packages.md](cpu_release_packages.md).
 
-## PR121 first hosted run and fixes
+### PR121 first hosted run and fixes
 
 [CI run 37761804858](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37761804858), on initial head `9aa4e03b3f58fe60fb1fc45e12f743a776dceb4f`, caught these integration issues:
 
@@ -114,7 +158,7 @@ The local build is a development tree based on the SHA above; its receipt is not
 
 The ordinary Windows/macOS/ARM64 compiler jobs, toolchain matrix, reproducibility, security and both MLIR lanes passed on that first head.
 
-## PR121 second hosted run and fixes
+### PR121 second hosted run and fixes
 
 [CI run 37808859561](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37808859561), on head `dbd84bcfb507927cee865100120ed934f52d6384`, passed the native Linux x64, Linux ARM64 and macOS ARM64 archive jobs. These jobs executed the installed interpreter, static/shared CPU consumers, compiled core source and missing-runtime negative from the relocated archives. The production guard passed before experimental inference on macOS/ARM64. Ordinary platform jobs, all four toolchain lanes, security, reproducibility, CTest parity, both MLIR lanes and latency/energy evidence also passed. Tooling and experiment-results workflows passed.
 
@@ -125,13 +169,13 @@ Two remaining failures are corrected in this revision:
 
 Windows execution, all-four candidate aggregation and the complete amended CI result remain pending. The archive scope does not include a minimal end-user Windows image rehearsal or full typed source-to-native AI parity.
 
-### Windows runtime selection follow-up
+#### Windows runtime selection follow-up
 
 On `bf65dffd5aa5d657eec996d8b915f9b18e0d596b`, [Windows job 113731439956](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37903540967/job/113731439956) passed archive verification, installed CLI execution, consumer compilation and default production refusal. Both inference consumers then loaded the machine's ONNX 1.17.1 instead of the bundled 1.30.0 and failed with an API-version mismatch. PATH priority cannot override the Windows system-directory search order.
 
 Consumers now stage the imported runtime DLLs beside their executables using CMake's runtime dependency list. Qualification checks the deployed ONNX hash against the extracted bundle and verifies the loaded module is app-local before inference. The package documentation includes the same deployment requirement and a CMake example. Native Windows verification remains required; no inference pass is inferred from compilation alone. macOS and Linux ARM64 archive execution passed on `bf65dff`.
 
-### Native package results and Windows receipt correction
+#### Native package results and Windows receipt correction
 
 Head `a7fa4cfeb46dd31ac90736c23c41d03f19d956fb` passed all four native archive jobs in [PR CI 37904344364](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904344364) and [push CI 37904337310](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37904337310). Windows executed four exact outputs through both C ABI consumers, verified the loaded app-local ONNX DLL, checked default production refusal, executed the compiled core source and interpreter inference, and passed the missing-runtime negative. All 18 primary PR CI jobs passed, including Ubuntu core, CTest parity, both MLIR lanes, security, reproducibility and latency/energy evidence. Only candidate receipt aggregation and its dependent aggregate failed.
 
@@ -139,7 +183,7 @@ The retained [Windows archive receipt](https://github.com/amarbanerjee23/ShortHa
 
 The clean-source requirement and aggregate acceptance rules are unchanged. The corrected candidate receipts and final CI result still require hosted verification on the next revision. Native Windows/macOS experiments do not promote the production allowlist or establish full typed source-to-native AI parity.
 
-### Windows toolchain pin and deterministic cache recovery
+#### Windows toolchain pin and deterministic cache recovery
 
 Head `94b2e5ec19544d65a1882252189c2af0a65f5eef` passed the three non-Windows native archive jobs and every other primary PR job in [PR CI 38030955404](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38030955404). Both Windows lanes stopped at the existing LLVM-major guard because the rolling MSYS2 repository had advanced to 23.1.3-1. The clean Windows source receipt therefore remains unverified on that head. Both workflows now acquire the six matching Clang/LLVM 22.1.8-3 packages from official MSYS2 archive URLs, check committed SHA-256 hashes and upstream detached signatures, and install them in one transaction. The LLVM 22 requirement is unchanged; other prerequisites still follow their configured repositories.
 
@@ -151,21 +195,21 @@ The signed-release contract, all 54 inherited closeout cases, platform contract,
 
 The first pinned-toolchain invocation on `70aee8f2c07583db3b144db0f38f4daddd85467d`, [push CI 38065501834](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/38065501834), exposed two installer integration issues. The ordinary Windows checkout converted the checksum manifest to CRLF, so its strict filename parser rejected the first entry. Explicit LF Git attributes now cover the installer and manifest. The CPU lane preserved LF and verified the first archive hash, but the hosted image's `pacman-key` helper rejected the command because of its keyring permission checks. Signature verification now runs inside the existing package-manager transaction, using a temporary configuration that explicitly requires trusted signatures for every local archive. The configuration must contain `LocalFileSigLevel = Required TrustedOnly` before installation proceeds; the global runner configuration and keyring remain unchanged. Download and hash checks still run for all six archives before installation. A local Git checkout regression with `core.autocrlf=true` confirms byte-identical installer/manifest files and successful parsing of all six entries. The amended cache harness passed the hosted application-boundary and prepared-cache sanitizer steps in the same push run; the complete profiling job was still in progress when this evidence was recorded. Native Windows verification of this correction remains pending.
 
-## Energy and power result
+### Energy and power result
 
 Packaging and explicit experimental execution establish no energy or latency improvement. Physical energy and GA claims remain blocked by the existing evidence policies.
 
-## Reproduction
+### Reproduction
 
 Run `python3 tests/packaging/test_cpu_release_candidates.py`, `bash tests/ai_runtime/test_onnxruntime_backend_source.sh` and `bash scripts/check_signed_release_contract.sh`. Build/install the enabled CPU runtime with the pinned SDK, then run `scripts/prepare_release_bundle.sh` and `python3 scripts/check_installed_cpu_package.py ARCHIVE PLATFORM --sdk SDK --build BUILD --report REPORT`. `.github/workflows/cpu-packages.yml` contains the exact native OS commands and invokes the same archive verifier for CI and release candidates. Experimental-mode receipts must never be treated as production support promotion.
 
-## Verified PR120 hosted results
+### Verified PR120 hosted results
 
 PR120 head `69bc10e7084036986d099d3111d374a703898287` passed [CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222619), [tooling](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222201) and [extended fuzz/sanitizers](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/37726222063). Seed 56 completed 1,129,345 parser, 635,611 module, 1,208,787 semantic and 1,188,143 lowering inputs, 181 seconds per stage. ASan/LSan/UBSan and mandatory runtime/training ThreadSanitizer passed. These hosted results close the local LeakSanitizer limitation recorded historically below.
 
 Comparison base: `3417f8ed261c32aa59f09080cc4d325b316edc0e`
 
-## Historical PR120 parser lifetime evidence
+### Historical PR120 parser lifetime evidence
 
 This PR addresses the post-PR119 audit's parser memory blocker. Parser allocations previously survived until process exit, including nodes from failed parses. The CLI now owns one `ParseSession` for its full module graph, while every fuzz input has its own session. Session destruction releases AST allocations, scanner tokens and source ranges; nested temporary parses preserve outer graphs and roots.
 
@@ -189,17 +233,17 @@ Local validation on the working tree based on the exact merge above:
 
 The extended workflow now runs on parser/AST/harness PR changes as well as nightly. PR runs use the formerly failing seed 56, four stages of 180 seconds each, the unchanged 2,048 MiB RSS limit and mandatory leak/undefined-behavior checks. Its deterministic lifetime regression runs under the same instrumentation. Full diagnostics remain retained as artifacts while console output is bounded. Fuzzing grows a temporary copy of the checked-in seeds.
 
-## Energy and power result
+### Energy and power result
 
 This is a correctness and bounded-lifetime fix. RSS observations do not establish lower energy, power or end-to-end inference latency. No new physical-energy or production-readiness claim is made.
 
-## Reproduction
+### Reproduction
 
 Build the compiler with the normal CMake configuration, then run `bash scripts/check_parser_robustness.sh`, `bash scripts/check_module_resolution.sh`, `bash scripts/check_semantic_differential.sh`, `bash scripts/check_functions_control_error_semantics.sh` and `bash tests/diagnostics/test_source_diagnostics.sh`. Set `SHORTHAND_BIN` and `SHORTHAND_RUNTIME_LIB` to the built outputs when using an out-of-tree build. The standalone lifetime test is `bash scripts/check_parser_lifetime.sh`.
 
 On a runner supporting LeakSanitizer process inspection, execute `SHORTHAND_FUZZ_SEED=56 SHORTHAND_FUZZ_MAX_TOTAL_TIME=180 SHORTHAND_FUZZ_RUNS=0 bash scripts/check_fuzz_sanitizers.sh`. Preserve `/tmp/shorthand_fuzz_*.out`, build logs and crash artifacts. Hosted PR and extended-fuzz runs retain these automatically. The comparison base is the merged PR119 SHA above.
 
-## Historical PR119 implementation
+### Historical PR119 implementation
 
 PR119 comparison base: `9ef794f172423cebb6a83bfa75c06368da04ec72`.
 
@@ -216,17 +260,17 @@ New/expanded regression coverage requires:
 
 Hosted CI and same-run head/base measurements are pending for the final PR revision. No latency, power or energy reduction is claimed before those retained results exist.
 
-## Energy and power result
+### Energy and power result
 
 No physical energy result is asserted by this source change. CI must continue to report the highest valid E1/E2/E3 class or explicit unavailability. A routing-cache or latency improvement is not converted into joules. Lower-energy or lower-power language remains blocked unless the existing comparison policy produces a supported result at equal quality and boundary.
 
-## Reproduction
+### Reproduction
 
 The required runtime-profile workflow builds the ordinary and diagnostic runtime archives with the pinned ONNX Runtime SDK, runs the extended compiled cache and hardware-routing tests, executes the generated three-cell comparison, replays phase/evidence bundles, and retains the generated Markdown/raw artifacts. The comparison base for this PR is the merged PR118 commit above. The final tested head SHA and hosted artifact links will be appended after required CI executes.
 
 This report records the testing expansion and retained benchmark evidence for the prepared-runtime work. The historical PR115 and PR116 measurements use different comparison baselines. Their ratios must not be treated as repeats of the same experiment. The initial implementation is from [PR115](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/115), with the testing/reporting expansion in [PR116](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/116).
 
-## Historical PR118 phase-attribution evidence
+### Historical PR118 phase-attribution evidence
 
 Comparison base: `6d12270c11bec28159fb38dca4e825c7dd7e2f8a`
 
@@ -252,7 +296,7 @@ All previous cache, sanitizer, application correctness and required CI gates rem
 
 Local diagnostic smoke capture (uncommitted development build, not a head/base claim) found hardware probing plus routing accounted for 47.3–60.0% of instrumented time; ORT execution accounted for 5.9–9.2%. This suggests investigating redundant discovery and route/telemetry construction while preserving request-time policy and device qualification. It does not justify skipping those checks. Local ALL/BASIC latency ratios were 1.1777, 0.9907 and 1.0405 for batches 1, 16 and 32: no consistent benefit. All nine separate local energy runs reported `amd_hwmon_socket_energy_unavailable`, with joules and watts `null`. Hosted observations below will be the citable result for a committed source revision.
 
-## Historical PR117 implementation and evidence
+### Historical PR117 implementation and evidence
 
 Comparison base: `a5a3e020943ef2f9005b6a44f4c8024a8b58ef25`
 
@@ -272,7 +316,7 @@ The public C ABI, finite checks, output ownership and failure rollback remain in
 
 The new native regression alternates 100 calls across model/input/output names, independently tests mismatched input/output ranks with a fixed model name, rejects changed input shapes without touching the output, and repeats eight deny/recover policy cycles on the retained runtime. The rank test exposed a pre-existing uncached-fallback gap: an incompatible concrete output shape could still return success after preparation failed. This PR rejects that mismatch before copying any output. The test is retained in native and sanitizer CI. CI now requires this Markdown document to change in every PR and to identify that PR's exact base commit. The generated per-run report uses the selected base revision rather than assuming it reconstructs the session on every call.
 
-### PR117 retained hosted evidence
+#### PR117 retained hosted evidence
 
 Tested implementation: `0112838166cc62542d008a226498946e127dd11c`. Both runs compare it against the base above, which already includes prepared-session reuse. Each artifact's finalized index reports `status=complete` and `missing=[]`; every indexed file hash and the ZIP SHA-256 were verified after download.
 
@@ -319,13 +363,13 @@ Independent resident controls from the PR run (median µs/image, six blocks each
 
 Both runs reported energy unavailable: no readable CPU package/socket counters and no applicable E2/E3 runtime-feature calibration. There is no measured joules/task or watts result and no lower-energy or lower-power claim. The comparison buffer's increased retained memory is also not an energy measurement. The next practical experiments remain phase attribution, a separately identified tuned `ORT_ENABLE_ALL` control, and bounded fixed-shape AOT fusion under equal-quality checks.
 
-### Earlier prepared-runtime evidence
+#### Earlier prepared-runtime evidence
 
 The authoritative pre-expansion hosted bundle is [runtime-profile-36963499649-1](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36963499649/artifacts/11209171583). Its ZIP SHA-256 is `4c0c86316bc608f77f2ca6b437583e2af87b3de012cb9978543e1965858792bd`. Under the evidence schema used by that run, `run-evidence.json` reported `status=complete`, `missing=[]`, and 1,180 indexed files. Every indexed file hash was verified after download. The expanded checks in this change are required for subsequent runs and are reported separately below.
 
 The workflow keeps latency, power and energy claims disabled. The results below are evidence for the tested workload and boundary. They do not establish a language-wide result, a lower-power result, or superiority to optimized C++/ORT.
 
-## Expanded tests
+### Expanded tests
 
 The follow-up test expansion adds checks at the C ABI, resident workspace, evidence parser and sanitizer boundaries. The tests are wired into `runtime-profile.yml`, which is required for every push and pull request.
 
@@ -344,7 +388,7 @@ The follow-up test expansion adds checks at the C ABI, resident workspace, evide
 
 The local evidence regression command ran 45 Python tests across the profile, baseline, energy, comparison, runtime-delta, energy-status, evidence-index, generated-evidence and Markdown-report suites. The existing native qualification suite also passed with the real ONNX SDK and `live_onnx=1`.
 
-## Hosted compiled-runtime experiment
+### Hosted compiled-runtime experiment
 
 The compiled lane uses a real `.short` source program and a synthetic zero-input FP32 MatMul+Add graph. It validates every output vector against an independent pinned ONNX Runtime oracle. It measures one-thread batch sizes 1, 16 and 32. The timed boundary includes source initialization, registration, runtime validation, routing, telemetry/logging and output verification. The direct control uses a prepared C++/ORT invocation with matching output verification.
 
@@ -356,7 +400,7 @@ The compiled lane uses a real `.short` source program and a synthetic zero-input
 
 Against the repeated-session baseline, the prepared head ratio corresponds to 80.5–82.9% lower measured latency for these probes. The head path remains 10.3–28.3 times slower than direct prepared C++/ORT. This exposes runtime and generated-boundary overhead that remains to be reduced. The compiled lane is not a digit-accuracy benchmark and does not measure multi-threaded generated execution.
 
-## Hosted resident real-digit experiment
+### Hosted resident real-digit experiment
 
 The resident lane evaluates all 1,797 held-out Optdigits images. Head and base execute the same model, dataset, precision, backend, batch/thread cell and quality checks. Six balanced paired blocks are retained per cell.
 
@@ -370,7 +414,7 @@ The resident lane evaluates all 1,797 held-out Optdigits images. Head and base e
 
 The paired result is descriptive. Individual blocks include regressions, especially on shared hosted runners. No confidence-bound latency claim is authorized.
 
-## Resident controls
+### Resident controls
 
 The same hosted bundle includes independent native C++/ORT and Python/ORT controls. Values are resident median microseconds per image from six blocks; they are not energy measurements.
 
@@ -384,7 +428,7 @@ The same hosted bundle includes independent native C++/ORT and Python/ORT contro
 
 ShortHand's resident host remains slower than the direct C++/ORT control in these cells. The optimization slice improves the host path relative to its previous ShortHand baseline while leaving a measurable control gap.
 
-## Energy and power result
+### Energy and power result
 
 The hosted runner exposed no readable CPU package/socket energy counter and no matching E2/E3 calibration profile. The retained summary is:
 
@@ -399,7 +443,7 @@ claim_authorized=false
 
 The evidence pipeline records this as an unavailable measurement. It does not infer joules from latency, report zero joules, or authorize lower-power or lower-energy language. A future runner with a valid counter or matched calibration profile can populate the same schema without changing the benchmark protocol.
 
-## Latest expanded hosted validation
+### Latest expanded hosted validation
 
 The expanded checks passed in [PR116's required CI run](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36970175339) at revision `996550347dbd9bbfae4f79e55340ebf697ea2295`. The retained [runtime-profile artifact](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/36970175339/artifacts/11211791482) has ZIP SHA-256 `a7493b45edba7a046c744138c0d6a5fbb21210eed9f66df4f9187a75c29e7edb`. Its finalized evidence index reports `status=complete`, `missing=[]`, and 1,183 indexed files; every indexed file hash was verified after download.
 
@@ -421,7 +465,7 @@ This PR116 run corresponds to 0.3–0.9% lower head latency than its selected ba
 
 The latest resident paired median reductions were 0.21% (`b1-t1`), 0.44% (`b16-t1`), 3.06% (`b32-t1`), 0.27% (`b16-t2`) and −0.07% (`b16-t4`). Individual paired blocks included regressions. Energy remained unavailable with null joules and watts.
 
-## Reproduction
+### Reproduction
 
 The required workflow runs the following classes on every push and pull request:
 
@@ -437,6 +481,6 @@ The full workflow additionally rebuilds the exact PR head and base runtime, capt
 
 The retained artifact expires after 90 days under the current workflow policy. Archive the cited bundle before expiry when the result must remain independently citable.
 
-## Interpretation
+### Interpretation
 
 The prepared-session and workspace changes are practically effective for the measured repeated-session and resident-host boundaries. The compiled path still has substantial overhead relative to direct C++/ORT, so the evidence supports continued runtime and generated-code optimization. The present data does not support a claim that ShortHand consumes less power or energy than C++, because no joules/task observation was available. Lower latency alone is not evidence of lower watts or joules.
