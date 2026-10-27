@@ -1,8 +1,54 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `44af710d7bf280a931b3d218299e11baf27a345c`
+Comparison base: `cb25d880e76f6017d960bba14783715e87a7ea24`
 
 ## Current PR evidence
+
+This PR implements the R2 [owned immutable model capability](immutable_model_capability.md) on merged PR124. It verifies and owns bounded self-contained ONNX bytes once, prepares one CPU session per successful binding and reuses it behind a versioned internal handle. All calls and reset share the facade mutex; failed replacements preserve the prior slot, and released/replaced/reset handles reject. Input borrowing, private output scratch, finite validation and current routing policy remain enforced. The public C ABI, mutable-path content revalidation and default source lowering are unchanged.
+
+| Validation | Local result before hosted CI |
+|---|---|
+| Real ORT native immutable contracts | PASS: source ownership, digest validation, 25 envelope/graph negatives, failed replacement, 16 MiB boundary, bad I/O, aliasing, finite-output rollback and policy changes |
+| Concurrent lifecycle | PASS: 2,000 calls across four workers during 32 resets/replacements; stale handles reject without output mutation |
+| Existing mutable cache regressions | PASS: complete content replacement/preserved mtime, external weights, invalidation, recovery, argument matrix, overlap, size boundaries and concurrent reset |
+| Frozen C ABI | PASS: exact 25 symbols and frozen C consumer |
+| Evidence replay | PASS: 3 tests including nine corrupted-bundle variants and synthetic worker-thread trace parser controls; missing source snapshots reject even with a recomputed manifest digest. Synthetic traces are not measurements. |
+| Native candidate receipts | PASS: three receipt-validation tests; omission of immutable lifecycle evidence rejects |
+| Sanitizers | PASS: real runtime and contract driver with GCC ASan/UBSan. LeakSanitizer failed because local `/proc` inspection is blocked; the successful local rerun explicitly disabled leak detection. Hosted sanitizer execution remains mandatory. |
+| Model file-read tracing | Unavailable locally: ptrace is denied. CI requires real all-thread traces, a mutable positive control and an injected-read control; no structural assertion substitutes for those traces. |
+| Native installers and full compiler/security gates | Pending exact-head hosted CI at initial PR creation. The local feature-plan aggregate stops at the missing built compiler; it is not recorded as passing. Existing successful trusted-push development release publication remains enabled. |
+
+### Local timing observations
+
+The [committed pilot snapshot](benchmark_results/immutable-model-local.md) retains the table and manifest identity. On GCC 13.3 / ORT 1.30.0 / AMD EPYC 9V74, paired immutable/mutable median ratios were **0.6063 / 0.6066 / 0.1106** for 88 B / 64 KiB / 1 MiB snapshots. This compares internal native hosts with checked nonzero Identity outputs, six balanced pairs and 2,048 timed calls per process. The larger artifacts use doc-string padding to isolate byte-validation work. These are short shared-host observations, not neural-network quality results or a general language-performance claim.
+
+The immutable candidate includes its facade lock and transactional checks. The mutable control uses the existing AIRuntime cache with complete model-byte validation and private scratch. Cold preparation/first-call times, all 36 latency samples and six separate energy executions are retained. This is a working-tree pilot based on the comparison base, not a claim that the local tree equals a published commit. Hosted CI captures fresh evidence for its exact checkout.
+
+### Hosted implementation qualification
+
+Implementation revision `4f187ac8732cb1fb9c6cb01f8095d18bdf75cf4b` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/40464209029), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/40464288027), tooling and experiment-results. Native ownership/lifecycle, hidden shared symbols, real-runtime sanitizers, compiler/toolchain, security, reproducibility and all four native package/installer gates passed. The sanitizer log contains successful immutable contracts and concurrency with leak detection enabled and no fallback warning; the pinned vendor ORT binary itself is not instrumented. The retained run-evidence index is complete with no missing items.
+
+The [committed hosted snapshot](benchmark_results/immutable-model-hosted.md) records a real all-thread warm trace: immutable **0** model-I/O syscalls; mutable **16 opens / 32 reads**; injected-read control **16 opens / 16 reads** across 16 calls each. Uninstrumented paired median time ratios were **0.7162 / 0.6319 / 0.2122** for 88 B / 64 KiB / 1 MiB snapshots. These characterize the declared synthetic Identity boundary and do not establish general language performance or an energy reduction. All six separate hosted energy records are unavailable and retain null joules.
+
+The [runtime artifact](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/40464209029/artifacts/12715379427) retains the raw traces, source, executable, commands and timings. Its immutable manifest SHA-256 is `bae61d7fcac6b707f5c8e266c5a8cbf4bc12ab88dd1f15b2032dd6566ef4b47e`. The stricter follow-up replay validator and all three regression methods, including nine corruption variants, successfully replay this downloaded bundle. The [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-40464209029-1-4f187ac8732c) contains 37 assets, including Windows x64, Linux x64/arm64 and macOS arm64 installers; its tag resolves to the tested implementation revision.
+
+This supersedes the implementation's initial pending hosted status above. Subsequent commits tighten source-snapshot evidence validation and record these results without changing runtime code. Their own complete CI and release status will be linked in the PR; the implementation run is not presented as a test of a later commit.
+
+## Energy and power result
+
+All six local component-energy observations are unavailable (`amd_hwmon_socket_energy_unavailable`); measured joules and joules per verified call are null. Each separate child-process boundary includes setup, first call, eight warmups, 2,048 timed calls and teardown. No physical-system energy, calibrated estimate, power reduction, carbon benefit or energy amortization is claimed. All reduction/production claim flags remain false.
+
+## Reproduction
+
+Follow [the immutable capability contract and commands](immutable_model_capability.md#reproduction). The hosted runtime-profile job requires native contract/sanitizer markers, hidden-symbol validation and a replayed report with real trace verification. Installed archive and native installer checks execute the contract suite on Windows x64, Linux x64/arm64 and macOS arm64. The existing generated ShortHand head/base, AOT and real-application comparisons remain separate. Full raw evidence is retained for 90 days; final run, artifact and release links will be recorded in the PR.
+
+## Historical PR124 final status
+
+PR124 merged as the comparison base. Its final revision `29b3e44092f690ec93efd302bd0511535d369843` passed [push CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39465977274), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39465985522), security, tooling and experiment-results. The [runtime/AOT artifact](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/39465977274/artifacts/12286000514) and [development installer release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-39465977274-1-29b3e44092f6) completed. This supersedes the historical pending status below, which records its initial failed dependency-registration attempt.
+
+Historical PR124 comparison base: `44af710d7bf280a931b3d218299e11baf27a345c`
+
+### PR124 initial evidence
 
 The base is merged PR123. The [Argon proposal review](argon_aot_energy_proposal_review.md) audits the supplied ideas and implements an opt-in static FP32 MatMul+Add CPU AOT experiment plus a validity fix for CI RAPL counter sampling. The experiment emits C++17 source and compares native arithmetic against prepared ORT BASIC/ALL using the same C++ host and checked nonzero inputs. It is not `.short`/MLIR AOT integration and does not alter default source compilation, runtime ABI, precision or model-path semantics.
 
@@ -33,17 +79,17 @@ The [committed local benchmark Markdown](benchmark_results/argon-aot-local.md) r
 
 Manifest SHA-256: `96ae378688797fceb0a72348a059f38ca41fb7d4631f69de40bb8ccc0a97899a`. This identifies a working-tree capture based on the comparison base; it is not a claim that uncommitted source equals a published revision. CI produces fresh exact-checkout artifacts containing the full source diff, model/oracle/input bytes, generated source/object/binaries, commands, raw outputs, reports and digests. The final run/artifact links will be recorded in the PR after hosted checks finish; no hosted result is inferred from local tests.
 
-## Energy and power result
+### Energy and power result
 
 All nine local AOT/ORT component-energy records are unavailable: `amd_hwmon_socket_energy_unavailable`. Measured joules and joules per verified vector are null. No dedicated meter, calibrated estimate, phase-energy attribution, power comparison, carbon reduction or energy break-even value is reported. The whole-child-process energy boundary includes setup, warmup, all verified calls and teardown; it is separate from resident latency and is not process-attributed even when CPU counters exist.
 
 The RAPL power bound is an explicit conservative assumption, not a calibration. Counter integrity and valid comparisons still require domain coverage, reset handling, host activity, uncertainty and independent repeated measurements. `latency_claim_authorized`, `energy_claim_authorized` and production superiority claims remain false.
 
-## Reproduction
+### Reproduction
 
 Follow the locked dependency, native compiler, sanitizer, capture and replay commands in [the proposal review](argon_aot_energy_proposal_review.md#reproduction). `runtime-profile.yml` executes them against Clang 18/ORT 1.30.0 on every normal push and PR. The existing generated `.short` head/base comparison and native installer matrix continue independently. Replay is standard-library-only and requires the expected root digest; a digest is not a signature or measurement-authenticity proof. Hosted raw evidence uses the existing 90-day retention policy.
 
-## Historical PR123 evidence
+### Historical PR123 evidence
 
 Previous comparison base: `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`. The following results belong to the earlier borrowed-input/lazy-observation change, not the new AOT experiment.
 

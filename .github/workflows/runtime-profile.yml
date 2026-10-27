@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
-          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3 python3-venv time flex bison libfl-dev libssl-dev curl binutils
+          sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3 python3-venv time flex bison libfl-dev libssl-dev curl binutils strace
       - name: Install locked Python baseline
         run: |
           set -euo pipefail
@@ -72,7 +72,7 @@ jobs:
             -DLLVM_CONFIG=/usr/bin/llvm-config-18 \
             -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
             -DONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0"
-          cmake --build build-profile --parallel 2 --target short_hand shorthand_ai_qualify shorthand_runtime shorthand_runtime_profiled 2>&1 | tee profile-output/build.log
+          cmake --build build-profile --parallel 2 --target short_hand shorthand_ai_qualify shorthand_runtime shorthand_runtime_shared shorthand_runtime_profiled 2>&1 | tee profile-output/build.log
           cp build-profile/CMakeCache.txt profile-output/
           git rev-parse HEAD > profile-output/revision.txt
           sha256sum build-profile/shorthand_ai_qualify > profile-output/executable.sha256
@@ -97,6 +97,13 @@ jobs:
           } | tee profile-output/evidence-tests.txt
           python3 tests/ai_application/test_application.py "$PWD" "$PWD/build-profile/shorthand_ai_qualify" "$PWD/profile-output/tests" 1 | tee profile-output/application-tests.txt
           CXX=clang++-18 python3 tests/ai_application/test_compiled_cache.py build-profile build-profile/onnxruntime-1.30.0 2>&1 | tee profile-output/cache-tests.txt
+          CXX=clang++-18 python3 tests/ai_application/test_immutable_model.py --build build-profile --sdk build-profile/onnxruntime-1.30.0 2>&1 | tee profile-output/immutable-tests.txt
+          nm -DC --defined-only build-profile/libshorthand_runtime.so > profile-output/runtime-shared-symbols.txt
+          if grep -E 'immutable_v1|immutable_detail' profile-output/runtime-shared-symbols.txt; then
+            echo 'Private immutable symbols leaked into shared ABI' >&2
+            exit 1
+          fi
+          echo 'PASS immutable shared-library symbol isolation' | tee -a profile-output/immutable-tests.txt
           CXX=clang++-18 python3 tests/ai_application/test_runtime_phase_profile.py build-profile build-profile/onnxruntime-1.30.0 2>&1 | tee profile-output/phase-tests.txt
           CXX=clang++-18 SHORTHAND_AI_ENERGY_REQUIRE_ONNX=1 ONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0" \
             bash scripts/check_ai_energy_qualification.sh 2>&1 | tee profile-output/workspace-tests.txt
@@ -164,6 +171,15 @@ jobs:
             --base-sha "$EVIDENCE_BASE_SHA" \
             --output "$PWD/profile-output/pr-runtime-delta"
           cat profile-output/pr-runtime-delta/PR_DELTA.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Trace and benchmark immutable model ownership
+        run: |
+          set -euo pipefail
+          CXX=clang++-18 python3 experiments/energy/immutable_model_evidence.py \
+            --build build-profile --sdk build-profile/onnxruntime-1.30.0 --output profile-output/immutable
+          python3 experiments/energy/immutable_model_evidence.py --output profile-output/immutable \
+            --replay-sha256 "$(cat profile-output/immutable/manifest.sha256)"
+          python3 experiments/energy/test_immutable_model_evidence.py --bundle profile-output/immutable
+          cat profile-output/immutable/IMMUTABLE.md >> "$GITHUB_STEP_SUMMARY"
       - name: Qualify and benchmark the opt-in bounded AOT backend
         run: |
           set -euo pipefail

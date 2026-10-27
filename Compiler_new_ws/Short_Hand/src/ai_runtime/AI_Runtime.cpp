@@ -131,6 +131,20 @@ InferenceResult AIRuntime::infer(const ModelSpec &model, const TensorBuffer &inp
     return inferImpl(model,input,nullptr,nullptr,0);
 }
 
+InferenceResult AIRuntime::inferPreparedCPUInto(const ModelSpec &model,const TensorBuffer &input,
+    PreparedInference &session,float *output,std::size_t count) {
+    const auto resolved=routeForModel(model);
+    const auto &route=*resolved.route;
+    if(!route.selected || route.backend!=BackendKind::OnnxRuntimeCPU)
+        return attachHardwareEvidence(unavailableResult(route.reason),route);
+    if(!validateInputMatchesShape(input)) {
+        InferenceResult result;
+        result.status=InferenceStatus::InvalidInput; result.reason="input_shape_mismatch";
+        return attachHardwareEvidence(std::move(result),route);
+    }
+    return attachHardwareEvidence(session.runInto(input,output,count),route);
+}
+
 InferenceResult AIRuntime::inferCached(const ModelSpec &model,const TensorBuffer &input,PreparedInferenceCache &cache) {
     return inferImpl(model,input,&cache,nullptr,0);
 }

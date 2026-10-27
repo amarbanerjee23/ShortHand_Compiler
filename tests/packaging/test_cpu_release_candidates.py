@@ -79,6 +79,10 @@ class Candidates(unittest.TestCase):
             path = bundle / "test.cpu-qualification.json"
             path.write_text(json.dumps(report))
             candidates.verify_receipt(bundle, "windows-x64", revision)
+            path.write_text(json.dumps({**report, 'checks': sorted(candidates.CHECKS - {'immutable_owned_snapshot_lifecycle'})}))
+            with self.assertRaisesRegex(ValueError, 'qualification'):
+                candidates.verify_receipt(bundle, 'windows-x64', revision)
+            path.write_text(json.dumps(report))
             mutations = {"status": "skip", "platform": "linux-x64", "native_os": "Linux", "architecture": "arm64",
                          "source_revision": "b" * 40, "archive_sha256": "0" * 64, "checks": [],
                          "onnxruntime_version": "0.0.0", "production_claim": True, "source_dirty": True,

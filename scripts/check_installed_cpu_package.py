@@ -8,6 +8,7 @@ import os
 import pathlib
 import platform
 import subprocess
+import sys
 import tempfile
 import uuid
 
@@ -105,11 +106,16 @@ def main():
             (models / "identity.onnx").write_bytes(model)
             model_path = models / "model with spaces.onnx"
             model_path.write_bytes(model)
+            run([sys.executable, ROOT / 'tests/ai_application/test_immutable_model.py',
+                 '--fixtures', models / 'immutable'], cwd=work, env=env)
+            if (prefix / 'include/shorthand/runtime/ImmutableModelInternal.h').exists():
+                raise RuntimeError('immutable internal API must not be installed')
             fixture = ROOT / "tests/packaging/cpu_consumer"
             consumer = work / "consumer"
             configure = ["cmake", "-S", fixture, "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
                          f"-DCMAKE_PREFIX_PATH={prefix}", f"-DPACKAGE_BIN={prefix / 'bin'}",
-                         f"-DMODEL_FILE={model_path}", f"-DMODEL_DIRECTORY={models}"]
+                         f"-DMODEL_FILE={model_path}", f"-DMODEL_DIRECTORY={models}",
+                         f"-DIMMUTABLE_FIXTURES={models / 'immutable'}"]
             run([*configure, "-B", consumer], cwd=work, env=env)
             run(["cmake", "--build", consumer, "--parallel", "2"], cwd=work, env=env)
             if suffix:
@@ -170,7 +176,8 @@ def main():
                        "compiler_sha256": hashlib.sha256(compiler.read_bytes()).hexdigest(),
                        "checks": ["relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",
                                   "shared_cpu_numerics", "compiled_core_source", "compiled_tensor_source_O0_O2", "compiled_missing_model_rejected", "interpreter_cpu", "nonfinite_rollback",
-                                  "missing_runtime_rejected", "production_scope_guard"], "production_claim": False}
+                                  "missing_runtime_rejected", "production_scope_guard",
+                                  "immutable_owned_snapshot_lifecycle"], "production_claim": False}
             report.write_text(json.dumps(receipt, indent=2) + "\n")
             print(f"PASS native installed CPU package {args.platform}")
     finally:

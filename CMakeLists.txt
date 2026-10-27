@@ -314,7 +314,8 @@ if(SHORTHAND_HAS_ONNXRUNTIME)
     list(APPEND runtime_targets shorthand_runtime_profiled)
   endif()
   foreach(runtime_target IN LISTS runtime_targets)
-    target_sources(${runtime_target} PRIVATE ${SHORTHAND_AI_RUNTIME_SOURCES} ${SRC_DIR}/runtime/AIRuntimeBridgeAdapter.cpp)
+    target_sources(${runtime_target} PRIVATE ${SHORTHAND_AI_RUNTIME_SOURCES} ${SRC_DIR}/runtime/AIRuntimeBridgeAdapter.cpp
+      ${SRC_DIR}/module/Sha256.cpp)
     target_compile_definitions(${runtime_target} PRIVATE SHORTHAND_RUNTIME_ENABLE_AI_RUNTIME_BRIDGE=1
       SHORTHAND_HAS_ONNXRUNTIME=1 SHORTHAND_HAS_TENSORRT=0 SHORTHAND_HAS_OPENVINO=0
       SHORTHAND_HAS_LIBTORCH=0 SHORTHAND_HAS_LLAMACPP=0 SHORTHAND_HAS_OPENBLAS=0 SHORTHAND_HAS_EIGEN=0)

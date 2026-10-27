@@ -28,6 +28,10 @@ REQUIRED = {
     'resident_component_energy_or_unavailable': 'ci-energy/summary.json',
     'bounded_aot_backend_observations': 'aot/report.json',
     'bounded_aot_correctness_and_sanitizers': 'aot-tests.txt',
+    'immutable_contract_and_lifecycle': 'immutable-tests.txt',
+    'immutable_shared_abi_isolation': 'immutable-tests.txt',
+    'immutable_sanitized_lifecycle': 'prepared-sanitizers.txt',
+    'immutable_latency_and_model_io': 'immutable/report.json',
 }
 SCHEMAS = {
     'compiled_fp32_observations': 'shorthand.generated_infer.report.v2',
@@ -37,6 +41,7 @@ SCHEMAS = {
     'energy_capabilities': 'shorthand.energy.ci_evidence.v1',
     'resident_component_energy_or_unavailable': 'shorthand.energy.ci_component_comparison.v1',
     'bounded_aot_backend_observations': 'shorthand.aot.report.v1',
+    'immutable_latency_and_model_io': 'shorthand.immutable_model.report.v1',
 }
 PASS_MARKERS = {
     'compiled_session_reuse_and_invalidation': 'PASS real ONNX cache reuse',
@@ -51,6 +56,9 @@ PASS_MARKERS = {
     'compiled_phase_execution_tests': 'PASS compiled phase profiling:',
     'compiled_phase_production_isolation': 'PASS phase profile isolation: production archive has no diagnostic symbols',
     'bounded_aot_correctness_and_sanitizers': 'PASS bounded AOT contracts and ASan/UBSan',
+    'immutable_contract_and_lifecycle': 'PASS immutable ownership, digest, envelope, rollback, policy and stale handles',
+    'immutable_shared_abi_isolation': 'PASS immutable shared-library symbol isolation',
+    'immutable_sanitized_lifecycle': 'PASS immutable concurrent lifecycle:',
 }
 
 
@@ -91,6 +99,8 @@ def finalize(out, job_status):
                     present = present and value.get('success') is True
                 if value.get('available') is False and 'energy' not in claim:
                     present = False
+                if claim == 'immutable_latency_and_model_io':
+                    present = present and value.get('model_io_trace_verified') is True
                 if any(v is not False for k, v in value.items()
                        if k.endswith(('_claim', '_claim_authorized', '_claim_eligible')) or k == 'claim_authorized'):
                     present = False

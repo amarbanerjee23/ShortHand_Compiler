@@ -45,6 +45,7 @@ run_sanitized() {
 }
 
 run_sanitized prepared-cache env CXX="$CXX_BIN" python3 "$ROOT_DIR/tests/ai_application/test_compiled_cache.py" "$BUILD_DIR" "$SDK" --sanitizers
+run_sanitized immutable-model env CXX="$CXX_BIN" python3 "$ROOT_DIR/tests/ai_application/test_immutable_model.py" --build "$BUILD_DIR" --sdk "$SDK" --sanitizers
 run_sanitized workspace "$BUILD_DIR/test-workspace-sanitized"
 echo 'PASS prepared cache and workspace ASan/UBSan (LSan enabled when runner permits it)'
 # ORT is the pinned vendor binary and is not itself sanitizer-instrumented.

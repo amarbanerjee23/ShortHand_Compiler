@@ -24,6 +24,8 @@ class RunEvidenceTest(unittest.TestCase):
                                  evidence_class=None,
                                  reason='test_meter_unavailable',
                                  hardware_measured_joules=None)
+                if claim == 'immutable_latency_and_model_io':
+                    value['model_io_trace_verified'] = True
                 evidence.write(path, value)
             else:
                 with path.open('a') as stream:
@@ -38,6 +40,13 @@ class RunEvidenceTest(unittest.TestCase):
             self.assertEqual(evidence.finalize(out, 'failure')['status'], 'incomplete')
             self.assertEqual(evidence.finalize(out, 'cancelled')['status'], 'incomplete')
             self.assertEqual(evidence.finalize(out, 'success')['status'], 'complete')
+            path = out / 'immutable/report.json'
+            value = json.loads(path.read_text())
+            value['model_io_trace_verified'] = False
+            evidence.write(path, value)
+            self.assertEqual(evidence.finalize(out, 'success')['status'], 'incomplete')
+            value['model_io_trace_verified'] = True
+            evidence.write(path, value)
             (out / 'generated-infer/report.json').write_text('{}')
             self.assertEqual(evidence.finalize(out, 'success')['status'], 'incomplete')
 

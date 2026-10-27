@@ -9,7 +9,7 @@ import subprocess
 PLATFORMS = ("linux-x64", "linux-arm64", "macos-arm64", "windows-x64")
 CHECKS = {"relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",
           "shared_cpu_numerics", "compiled_core_source", "compiled_tensor_source_O0_O2", "compiled_missing_model_rejected", "interpreter_cpu", "nonfinite_rollback",
-          "missing_runtime_rejected", "production_scope_guard"}
+          "missing_runtime_rejected", "production_scope_guard", "immutable_owned_snapshot_lifecycle"}
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
