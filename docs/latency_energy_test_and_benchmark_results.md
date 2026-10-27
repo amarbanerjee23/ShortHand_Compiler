@@ -12,7 +12,7 @@ This PR implements the R2 [owned immutable model capability](immutable_model_cap
 | Concurrent lifecycle | PASS: 2,000 calls across four workers during 32 resets/replacements; stale handles reject without output mutation |
 | Existing mutable cache regressions | PASS: complete content replacement/preserved mtime, external weights, invalidation, recovery, argument matrix, overlap, size boundaries and concurrent reset |
 | Frozen C ABI | PASS: exact 25 symbols and frozen C consumer |
-| Evidence replay | PASS: 3 tests including eight corrupted-bundle variants and synthetic worker-thread trace parser controls; synthetic traces are not measurements |
+| Evidence replay | PASS: 3 tests including nine corrupted-bundle variants and synthetic worker-thread trace parser controls; missing source snapshots reject even with a recomputed manifest digest. Synthetic traces are not measurements. |
 | Native candidate receipts | PASS: three receipt-validation tests; omission of immutable lifecycle evidence rejects |
 | Sanitizers | PASS: real runtime and contract driver with GCC ASan/UBSan. LeakSanitizer failed because local `/proc` inspection is blocked; the successful local rerun explicitly disabled leak detection. Hosted sanitizer execution remains mandatory. |
 | Model file-read tracing | Unavailable locally: ptrace is denied. CI requires real all-thread traces, a mutable positive control and an injected-read control; no structural assertion substitutes for those traces. |

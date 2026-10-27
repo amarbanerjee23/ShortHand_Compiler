@@ -24,6 +24,14 @@ MODES = ('immutable', 'mutable')
 BLOCKS = 6
 ITERATIONS = 2048
 TRACE_ITERATIONS = 16
+SOURCE_FILES = (
+    'tests/ai_application/test_immutable_model.cpp', 'tests/ai_application/test_immutable_model.py',
+    'experiments/energy/immutable_model_evidence.py', 'experiments/energy/ci_energy_evidence.py',
+    'Compiler_new_ws/Short_Hand/src/runtime/ImmutableModelInternal.h',
+    'Compiler_new_ws/Short_Hand/src/runtime/ImmutableOnnxEnvelope.h',
+    'Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp',
+    'Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp',
+)
 
 
 def require(condition, reason):
@@ -46,7 +54,8 @@ def sample(text, mode, iterations):
     require(value.get('mode') == mode and type(value.get('iterations')) is int and value['iterations'] == iterations
             and type(value.get('verified_calls')) is int and value['verified_calls'] == iterations + 9, 'wrong native workload')
     require(all(type(value.get(k)) is int and value[k] > 0 for k in ('warm_ns', 'cold_ns')), 'invalid native timing')
-    require(value.get('mutable_preparations') == (1 if mode == 'mutable' else 0), 'control preparation count')
+    require(type(value.get('mutable_preparations')) is int and
+            value['mutable_preparations'] == (1 if mode == 'mutable' else 0), 'control preparation count')
     return value
 
 
@@ -120,17 +129,11 @@ def capture(args):
                     source_diff='source.diff', observations=[], energy=[], traces=[],
                     latency_claim_authorized=False, energy_claim_authorized=False)
     (out / 'source.diff').write_bytes(subprocess.check_output(['git', 'diff', 'HEAD'], cwd=ROOT))
-    source_files = ['tests/ai_application/test_immutable_model.cpp', 'tests/ai_application/test_immutable_model.py',
-                    'experiments/energy/immutable_model_evidence.py', 'experiments/energy/ci_energy_evidence.py',
-                    'Compiler_new_ws/Short_Hand/src/runtime/ImmutableModelInternal.h',
-                    'Compiler_new_ws/Short_Hand/src/runtime/ImmutableOnnxEnvelope.h',
-                    'Compiler_new_ws/Short_Hand/src/runtime/RuntimeThreadSafeFacade.cpp',
-                    'Compiler_new_ws/Short_Hand/src/ai_runtime/AI_Runtime.cpp']
-    for source in source_files:
+    for source in SOURCE_FILES:
         path = out / 'source' / source
         path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / source, path)
-    manifest['sources'] = ['source/' + source for source in source_files]
+    manifest['sources'] = ['source/' + source for source in SOURCE_FILES]
     for cell in CELLS:
         model_path = out / 'fixtures' / (cell + '.onnx')
         for block in range(BLOCKS):
@@ -163,6 +166,8 @@ def replay(out, expected_digest):
     require(manifest.get('schema') == 'shorthand.immutable_model.bundle.v1' and manifest.get('cells') == list(CELLS)
             and manifest.get('iterations') == ITERATIONS and manifest.get('blocks') == BLOCKS
             and manifest.get('latency_claim_authorized') is False and manifest.get('energy_claim_authorized') is False, 'invalid manifest')
+    require(re.fullmatch(r'[0-9a-f]{40}', manifest.get('revision', '')) and
+            manifest.get('sources') == ['source/' + source for source in SOURCE_FILES], 'missing source provenance')
     hashes = manifest['hashes']
     def retained(name):
         p = pathlib.PurePosixPath(name)

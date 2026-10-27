@@ -31,7 +31,7 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(len(report['rows']), 3)
 
     def test_corruption_cannot_write_accepted_report(self):
-        mutations = ('omit_pair', 'swap_order', 'unhash_stdout', 'failed_call', 'wrong_command', 'invent_energy', 'missing_trace', 'raw_tamper')
+        mutations = ('omit_pair', 'swap_order', 'unhash_stdout', 'failed_call', 'wrong_command', 'invent_energy', 'missing_trace', 'missing_sources', 'raw_tamper')
         for mutation in mutations:
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 out = pathlib.Path(temporary)
@@ -64,6 +64,10 @@ class EvidenceTests(unittest.TestCase):
                     replace(name, value)
                 elif mutation == 'missing_trace':
                     manifest['traces'].pop()
+                elif mutation == 'missing_sources':
+                    for name in manifest['sources']:
+                        manifest['hashes'].pop(name)
+                    manifest['sources'] = []
                 else:
                     name = 'trace-immutable.strace'
                     (out / name).unlink(); (out / name).write_text('tampered')
