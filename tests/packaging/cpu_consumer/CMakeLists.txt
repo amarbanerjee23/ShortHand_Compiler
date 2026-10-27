@@ -15,6 +15,11 @@ foreach(kind static shared)
   endif()
   add_test(NAME cpu_${kind} COMMAND cpu_${kind} "${MODEL_FILE}")
 endforeach()
+# Qualify the source-private capability against the installed static archive.
+# The test imports its private header from the checkout; it is not an SDK API.
+add_executable(cpu_immutable ../../ai_application/test_immutable_model.cpp)
+target_link_libraries(cpu_immutable PRIVATE ShortHand::runtime)
+add_test(NAME cpu_immutable COMMAND cpu_immutable contracts "${IMMUTABLE_FIXTURES}")
 # Compile a ShortHand source with the installed compiler, then link its bitcode
 # against the installed CMake target (including transitive ONNX dependencies).
 find_program(SHORTHAND_COMPILER NAMES short_hand REQUIRED HINTS "${PACKAGE_BIN}" NO_DEFAULT_PATH)
@@ -54,6 +59,6 @@ if(WIN32)
   add_custom_target(stage_cpu_runtime_dlls ALL
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
       "$<TARGET_RUNTIME_DLLS:cpu_shared>" "$<TARGET_FILE_DIR:cpu_shared>"
-    DEPENDS cpu_static cpu_shared cpu_source cpu_tensor_O0 cpu_tensor_O2
+    DEPENDS cpu_static cpu_shared cpu_source cpu_tensor_O0 cpu_tensor_O2 cpu_immutable
     COMMAND_EXPAND_LISTS VERBATIM)
 endif()

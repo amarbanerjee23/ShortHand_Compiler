@@ -47,6 +47,11 @@ public:
     // remains request-scoped. Explicit-policy application runtimes opt in only.
     void refreshPolicyFromEnvironment();
     std::unique_ptr<PreparedInference> prepare(const ModelSpec &,const InferenceConfiguration &,std::string &error);
+    // Internal immutable binding path: caller owns the exact prepared CPU
+    // session and supplies private scratch. Rechecks current route/policy,
+    // retains input validation and hardware evidence, and never opens a model.
+    InferenceResult inferPreparedCPUInto(const ModelSpec &,const TensorBuffer &,
+                                        PreparedInference &,float *,std::size_t);
     std::vector<BackendCapabilities> capabilities() const;
 
 private:

@@ -1,7 +1,7 @@
 # Post-PR122 runtime optimization and energy evidence plan
 
 Baseline: merged PR122, `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`.
-Status: R1 merged in PR123; remaining slices require their own implementation and qualification.
+Status: R1 merged in PR123; bounded AOT feasibility merged in PR124; R2 owned runtime capability is implemented in the current PR and awaits its exact-head hosted qualification. R3–R8 remain separately sequenced.
 Claim status: no measured energy reduction, general language superiority, GA or certification claim.
 
 ## Objective and scope
@@ -55,6 +55,8 @@ These are dependency-ordered slices, not reserved GitHub PR numbers. Combine adj
 | R8: constrained energy tuning and release assessment | Qualified earlier candidates | Bounded schedule search with energy/latency/memory constraints and a replayable selected plan | Independent selection/confirmation data; energy-domain validity and uncertainty; held-out superiority tests; compilation/tuning amortization; fallback when no candidate qualifies; synchronized governance documents |
 
 ### R2 implementation details
+
+The current [internal v1 capability](immutable_model_capability.md) owns verified self-contained bytes and one prepared CPU session, checks current routing policy, serializes reset/replacement, and rejects stale handles. It does not install a new public header or change the C ABI. CI now requires traced zero model-path I/O with live positive controls, native lifecycle/sanitizer tests and installed static consumers on all four targets. Compiler-emitted sections, registration hoisting and source syntax remain future integration work; this ownership layer alone is not R5 AOT.
 
 Introduce a capability that owns a validated artifact or refers to a compiler-emitted immutable section with a documented lifetime. Validate format, byte length, SHA-256 and external dependencies before preparation; retain a generation identifier across model changes and reset. Do not reuse the current path identity as an implicit immutable promise. The mutable API must continue detecting content replacement without relying on metadata. Registration hoisting must preserve declaration order, error reporting, thread safety and behavior after `short_runtime_reset`; a global constructor alone is insufficient.
 
