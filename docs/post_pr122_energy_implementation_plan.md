@@ -1,7 +1,7 @@
 # Post-PR122 runtime optimization and energy evidence plan
 
 Baseline: merged PR122, `72142acd9750fe32b1d0e1f70b8dd06e25ba7430`.
-Status: R1 merged in PR123; bounded AOT feasibility merged in PR124; R2 owned runtime capability is implemented in the current PR and awaits its exact-head hosted qualification. R3–R8 remain separately sequenced.
+Status: R1 merged in PR123; bounded AOT feasibility merged in PR124; R2 owned runtime capability is implemented in PR125. Its initial implementation passed hosted qualification and published four native installers; evidence-validation/documentation follow-ups await their own final CI. See the [recorded hosted results](benchmark_results/immutable-model-hosted.md). R3–R8 remain separately sequenced.
 Claim status: no measured energy reduction, general language superiority, GA or certification claim.
 
 ## Objective and scope
