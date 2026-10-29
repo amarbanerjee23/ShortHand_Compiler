@@ -27,6 +27,8 @@ struct EnergySample {
     std::string reason = "telemetry_unavailable";
     double unix_seconds = 0;
     std::chrono::steady_clock::time_point monotonic;
+    // Powercap brackets its entire read, including scheduling/traversal delay.
+    std::chrono::steady_clock::time_point read_completed;
     std::vector<DomainReading> domains;
 };
 struct DomainMeasurement { DomainReading start, end; double joules = 0; };

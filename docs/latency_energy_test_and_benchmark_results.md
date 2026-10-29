@@ -1,8 +1,29 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `cb25d880e76f6017d960bba14783715e87a7ea24`
+Comparison base: `7ad856960a49a62b5a56197b348d8de3ea5f5ac8`
 
 ## Current PR evidence
+
+This is the single consolidated implementation PR following the October 2026 proposal audit. It is a draft until all bounded implementation packages and exact-head qualification are complete. This checkpoint fixes C++ powercap counter wrap qualification: the maximum possible gap includes the complete ending read, matching the conservative Python sampler. It also adds deterministic delayed-read, hidden-wrap, power-bound, changed-domain and invalid-window regressions.
+
+The existing session cache, PR123 borrowed input/output scratch and PR125 immutable capability are reused. Source tensors, bounded AOT integration, training worker reuse, diagnostics and package qualification will be added in independently tested commits on this same PR. Lossy precision and broader operator/adaptive work remain conditional follow-ups. No unimplemented item is represented as complete.
+
+Local validation: PASS `check_ai_energy_qualification.sh`: 65 native energy/planner/training assertions, 2,000 alternating workspace calls with 80 rollbacks, 38 qualification CLI cases, 28 application cases, 49 comparison-integrity cases and 13 benchmark-contract cases. This invocation used the host-only backend; it is not real ONNX or hardware energy evidence. Full exact-head CI and four native installer lanes are required before ready-for-review. The existing successful trusted-push development release workflow remains enabled.
+
+## Energy and power result
+
+The new counter fixtures are synthetic correctness tests, not hardware measurements. No timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim is authorized by this checkpoint. Unavailable measurements retain null energy values.
+
+## Reproduction
+
+Run `bash scripts/check_ai_energy_qualification.sh`. Its synthetic counter tests also exercise the bounded training and existing application qualification contracts. The real ONNX, sanitizers, compiler differential and native installer gates remain mandatory in CI. Each following implementation commit updates this report with its actual results and limitations.
+
+## Historical PR125 evidence
+
+
+Comparison base: `cb25d880e76f6017d960bba14783715e87a7ea24`
+
+### PR125 implementation evidence
 
 This PR implements the R2 [owned immutable model capability](immutable_model_capability.md) on merged PR124. It verifies and owns bounded self-contained ONNX bytes once, prepares one CPU session per successful binding and reuses it behind a versioned internal handle. All calls and reset share the facade mutex; failed replacements preserve the prior slot, and released/replaced/reset handles reject. Input borrowing, private output scratch, finite validation and current routing policy remain enforced. The public C ABI, mutable-path content revalidation and default source lowering are unchanged.
 
