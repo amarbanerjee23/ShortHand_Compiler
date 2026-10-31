@@ -6,17 +6,32 @@ Comparison base: `7ad856960a49a62b5a56197b348d8de3ea5f5ac8`
 
 This is the single consolidated implementation PR following the October 2026 proposal audit. It is a draft until all bounded implementation packages and exact-head qualification are complete. This checkpoint fixes C++ powercap counter wrap qualification: the maximum possible gap includes the complete ending read, matching the conservative Python sampler. It also adds deterministic delayed-read, hidden-wrap, power-bound, changed-domain and invalid-window regressions.
 
-The existing session cache, PR123 borrowed input/output scratch and PR125 immutable capability are reused. Source tensors, bounded AOT integration, training worker reuse, diagnostics and package qualification will be added in independently tested commits on this same PR. Lossy precision and broader operator/adaptive work remain conditional follow-ups. No unimplemented item is represented as complete.
+The existing session cache, PR123 borrowed input/output scratch and PR125 immutable capability are reused. Source tensors, bounded AOT integration, diagnostics and package qualification will be added in independently tested commits on this same PR. Lossy precision and broader operator/adaptive work remain conditional follow-ups. No unimplemented item is represented as complete.
 
 Local validation: PASS `check_ai_energy_qualification.sh`: 65 native energy/planner/training assertions, 2,000 alternating workspace calls with 80 rollbacks, 38 qualification CLI cases, 28 application cases, 49 comparison-integrity cases and 13 benchmark-contract cases. This invocation used the host-only backend; it is not real ONNX or hardware energy evidence. Full exact-head CI and four native installer lanes are required before ready-for-review. The existing successful trusted-push development release workflow remains enabled.
 
+### Persistent bounded training checkpoint
+
+The fixed reference CNN now reuses per-sample gradient buffers and a bounded worker pool across all batches. Convolution and backward scratch use fixed-size arrays. Sample order, FP32 reduction, optimizer, RNG, data and public training configuration remain unchanged. Worker creation failure joins previously started threads; tasks finish before shutdown; exceptions are propagated at the batch boundary. This only qualifies the existing synthetic trainer.
+
+The [local observations](benchmark_results/persistent-training-local.json) retain all 44 runs, compiler identity and the full bundle digest. Both seeds (42 and 7), both thread counts and both versions produced bit-identical final parameter hashes, loss and accuracy. Seed 42 reached 1.0 accuracy and final loss 0.016677837818861008. Timing uses separate executables without allocation instrumentation and includes data initialization, training, validation and worker teardown; it excludes destruction of the returned result. The source ablation links both trainer versions against identical common support code and the same host.
+
+| Threads | Base C++ new calls | Candidate C++ new calls | Median paired candidate/base time |
+|---|---:|---:|---:|
+| 1 | 10,729 | 521 | 0.9198 |
+| 2 | 11,241 | 527 | 0.8804 |
+
+Allocation counts cover ordinary C++ `new`/`new[]` during the training call, not all malloc/aligned allocations or whole-process memory. A separately injected 64-byte allocation is detected as exactly one additional call in all four cells. Six balanced timing pairs per cell are descriptive shared-host observations; no general reduction claim is authorized.
+
+Validation: the existing 65 numerical/energy/planner assertions and application gate pass. The worker test passes 402 batches with bounded construction, task exception recovery, partial construction cleanup, concurrent callers and idempotent shutdown. Two replay regression methods reject corrupted counts, quality, seed, time, parameters, omitted or modified source evidence and altered reports. The worker lifecycle test passes ASan/UBSan with leak detection disabled. Local LeakSanitizer cannot inspect `/proc`, so leak/race qualification remains mandatory in hosted CI. The runtime-profile job now captures and replays a fresh training comparison for each exact checkout, and its evidence index requires both the report and successful replay.
+
 ## Energy and power result
 
-The new counter fixtures are synthetic correctness tests, not hardware measurements. No timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim is authorized by this checkpoint. Unavailable measurements retain null energy values.
+The new counter fixtures are synthetic correctness tests, not hardware measurements. The training observations do not authorize a general timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim. Unavailable measurements retain null energy values.
 
 ## Reproduction
 
-Run `bash scripts/check_ai_energy_qualification.sh`. Its synthetic counter tests also exercise the bounded training and existing application qualification contracts. The real ONNX, sanitizers, compiler differential and native installer gates remain mandatory in CI. Each following implementation commit updates this report with its actual results and limitations.
+Run `bash scripts/check_ai_energy_qualification.sh`. Capture the training comparison with `python3 experiments/energy/training_runtime_delta.py --base 7ad856960a49a62b5a56197b348d8de3ea5f5ac8 --output training-evidence --cxx c++`, then run `python3 experiments/energy/test_training_runtime_delta.py --bundle training-evidence`. Its synthetic counter tests also exercise the bounded training and existing application qualification contracts. The real ONNX, sanitizers, compiler differential and native installer gates remain mandatory in CI. Each following implementation commit updates this report with its actual results and limitations.
 
 ## Historical PR125 evidence
 

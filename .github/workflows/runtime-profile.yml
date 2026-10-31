@@ -180,6 +180,14 @@ jobs:
             --replay-sha256 "$(cat profile-output/immutable/manifest.sha256)"
           python3 experiments/energy/test_immutable_model_evidence.py --bundle profile-output/immutable
           cat profile-output/immutable/IMMUTABLE.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Qualify persistent training workers against the comparison base
+        run: |
+          set -euo pipefail
+          python3 experiments/energy/training_runtime_delta.py --base "$EVIDENCE_BASE_SHA" \
+            --output profile-output/training --cxx clang++-18 | tee profile-output/training-tests.txt
+          python3 experiments/energy/test_training_runtime_delta.py --bundle profile-output/training \
+            2>&1 | tee -a profile-output/training-tests.txt
+          echo 'PASS persistent training evidence replay and corruption rejection' | tee -a profile-output/training-tests.txt
       - name: Qualify and benchmark the opt-in bounded AOT backend
         run: |
           set -euo pipefail

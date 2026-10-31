@@ -32,6 +32,8 @@ REQUIRED = {
     'immutable_shared_abi_isolation': 'immutable-tests.txt',
     'immutable_sanitized_lifecycle': 'prepared-sanitizers.txt',
     'immutable_latency_and_model_io': 'immutable/report.json',
+    'persistent_training_observations': 'training/report.json',
+    'persistent_training_evidence_replay': 'training-tests.txt',
 }
 SCHEMAS = {
     'compiled_fp32_observations': 'shorthand.generated_infer.report.v2',
@@ -42,6 +44,7 @@ SCHEMAS = {
     'resident_component_energy_or_unavailable': 'shorthand.energy.ci_component_comparison.v1',
     'bounded_aot_backend_observations': 'shorthand.aot.report.v1',
     'immutable_latency_and_model_io': 'shorthand.immutable_model.report.v1',
+    'persistent_training_observations': 'shorthand.training_delta.v1',
 }
 PASS_MARKERS = {
     'compiled_session_reuse_and_invalidation': 'PASS real ONNX cache reuse',
@@ -59,6 +62,7 @@ PASS_MARKERS = {
     'immutable_contract_and_lifecycle': 'PASS immutable ownership, digest, envelope, rollback, policy and stale handles',
     'immutable_shared_abi_isolation': 'PASS immutable shared-library symbol isolation',
     'immutable_sanitized_lifecycle': 'PASS immutable concurrent lifecycle:',
+    'persistent_training_evidence_replay': 'PASS persistent training evidence replay and corruption rejection',
 }
 
 
