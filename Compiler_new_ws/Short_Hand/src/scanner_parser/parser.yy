@@ -8,6 +8,8 @@
 #include "./parser/ParseSession.h"
 #include "./visitors/DiagnosticCodes.h"
 #include <vector>
+#include <charconv>
+#include <limits>
 #include <string>
 #include <unordered_set>
 static ModelDeclarationData current_model;
@@ -199,6 +201,8 @@ static std::string shorthand_decimal_text(double value) {
 %type <ai_infer> AI_INFER_RULE
 %type <model_decl> MODEL_DECLARATION
 %type <tensor_decl> TENSOR_DECLARATION
+%type <tensor_values> TENSOR_INITIALIZER TENSOR_VALUES
+%type <float_val> TENSOR_NUMBER
 %type <greenai_contract> GREENAI_CONTRACT
 %type <greenai_measure> GREENAI_MEASUREMENT
 %type <c3eco_decl> C3ECO_DECLARATION
@@ -221,7 +225,7 @@ static std::string shorthand_decimal_text(double value) {
 %right UMINUS
 
 %token <string_val> STRING_LITERAL IDENTIFIER AI_INFER_BUILTIN GREENAI_REPORT_BUILTIN
-%token <int_val> INT_LITERAL
+%token <integer_token> INT_LITERAL
 %token <float_val> FLOAT_LITERAL
 %token READ PRINT GOTO BREAK WHILE LOOP ELSE IF DEF
 %token INT FLOAT STRING VOID BOOL DOUBLE RETURN CONTINUE TRUE FALSE
@@ -396,11 +400,38 @@ INFER_STATEMENT:
       INFER IDENTIFIER '(' IDENTIFIER ')' ARROW IDENTIFIER ';' { $$=located(new AST_INFER_STATEMENT(string($2),string($4),string($7)), @$); }
     | INFER IDENTIFIER '(' IDENTIFIER ')' GREATER IDENTIFIER ';' { $$=located(new AST_INFER_STATEMENT(string($2),string($4),string($7)), @$); };
 
-TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL ';' {
+TENSOR_DECLARATION: TENSOR IDENTIFIER PRECISION_NAME STRING_LITERAL TENSOR_INITIALIZER ';' {
     TensorDeclarationData d; d.name=$2; d.element_type=$3; d.shape_csv=string($4).substr(1,string($4).size()-2); d.dynamic=(d.shape_csv=="dynamic"); d.rank=d.dynamic?0:1;
-    long long total=1; if(!d.dynamic){ d.rank=0; size_t start=0; while(start<d.shape_csv.size()){ size_t pos=d.shape_csv.find(',',start); string part=d.shape_csv.substr(start,pos==string::npos?string::npos:pos-start); total*=atoll(part.c_str()); d.rank++; if(pos==string::npos) break; start=pos+1; }} d.total_elements=total;
+    long long total=1;
+    if(!d.dynamic) {
+        d.rank=0; size_t start=0;
+        while(start<d.shape_csv.size()) {
+            size_t pos=d.shape_csv.find(',',start); string part=d.shape_csv.substr(start,pos==string::npos?string::npos:pos-start);
+            const auto first=part.find_first_not_of(" \t\r\n"),last=part.find_last_not_of(" \t\r\n");
+            part=first==string::npos?string():part.substr(first,last-first+1);
+            if(!part.empty() && part[0]=='+') part.erase(0,1);
+            long long dimension=0; auto parsed=std::from_chars(part.data(),part.data()+part.size(),dimension);
+            if(parsed.ec!=std::errc() || parsed.ptr!=part.data()+part.size() || dimension<=0 || total>std::numeric_limits<long long>::max()/dimension) total=0;
+            else total*=dimension;
+            ++d.rank; if(pos==string::npos) break; start=pos+1;
+        }
+    }
+    d.total_elements=total;
+    if($5) { d.initialized=true; d.values=*$5; }
     $$=located(new AST_TENSOR_DECLARATION(d), @$);
 };
+TENSOR_INITIALIZER: %empty { $$=nullptr; }
+    | '=' '[' TENSOR_VALUES ']' { $$=$3; }
+    | '=' '[' ']' { $$=shorthand_parser_allocation_registry().track(new vector<double>()); };
+TENSOR_VALUES: TENSOR_NUMBER { $$=shorthand_parser_allocation_registry().track(new vector<double>{$1}); }
+    | TENSOR_VALUES ',' TENSOR_NUMBER {
+        if($1->size()>=65536) { yyerror("tensor initializer exceeds 65536 elements"); YYERROR; }
+        $$=$1; $$->push_back($3);
+    };
+TENSOR_NUMBER: INT_LITERAL { $$=$1.tensor; }
+    | FLOAT_LITERAL { $$=$1; }
+    | '-' INT_LITERAL %prec UMINUS { $$=-$2.tensor; }
+    | '-' FLOAT_LITERAL %prec UMINUS { $$=-$2; };
 
 MODEL_DECLARATION: MODEL IDENTIFIER '{' { current_model=ModelDeclarationData(); current_model.name=$2; } MODEL_FIELD_LIST '}' ';' { $$=located(new AST_MODEL_DECLARATION(current_model), @$); };
 MODEL_FIELD_LIST: MODEL_FIELD_LIST MODEL_FIELD | %empty;

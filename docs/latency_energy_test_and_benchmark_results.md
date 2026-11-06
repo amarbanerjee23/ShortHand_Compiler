@@ -25,6 +25,20 @@ Allocation counts cover ordinary C++ `new`/`new[]` during the training call, not
 
 Validation: the existing 65 numerical/energy/planner assertions and application gate pass. The worker test passes 402 batches with bounded construction, task exception recovery, partial construction cleanup, concurrent callers and idempotent shutdown. Two replay regression methods reject corrupted counts, quality, seed, time, parameters, omitted or modified source evidence and altered reports. The worker lifecycle test passes ASan/UBSan with leak detection disabled. Local LeakSanitizer cannot inspect `/proc`, so leak/race qualification remains mandatory in hosted CI. The runtime-profile job now captures and replays a fresh training comparison for each exact checkout, and its evidence index requires both the report and successful replay.
 
+### Hosted training qualification
+
+Revision `60cb216a1677ac8121d3818f4ed4d05b218db1b5` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/41181441139), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/41181444235), tooling and experiment-results. Compiler/conformance, numerical, TSan, ASan/LSan/UBSan, security, reproducibility, CTest, MLIR and all four native package lanes passed. This resolves the local leak/race limitation for that revision only.
+
+The [hosted profile job](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/41181441139/job/124479493204) retained the training manifest SHA-256 `e15db39eb91fce050860d8e53d767e1e5d6157e78bc1bf55a8549af7afbb220d`. Median paired candidate/base time ratios were 0.9119855645129279 (one thread) and 0.574383764783079 (two threads), with parameter/loss/accuracy parity, injected allocation controls and successful replay. These are separate hosted observations, not replacements for the local table. Hardware joules remain unavailable/null.
+
+The [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-41181441139-1-60cb216a1677) contains 37 assets, including Windows x64, Linux x64/arm64 and macOS arm64 installers. Its checks qualify the training checkpoint, not the following tensor changes.
+
+### Source tensor implementation checkpoint
+
+The [bounded source value contract](source_tensors.md) adds static FP32 initializers, checked flattened reads/stores and actual inference buffers across the interpreter, LLVM and MLIR backends. Declarations reset program-owned storage, preserve ordinary-array lookup and assignment evaluation order, and check execution readiness. A shared MLIR helper retains frozen-ABI status/count checks. Large tensor initialization uses memory operations instead of enormous aggregate stores. Model precision is canonicalized only for the new value path.
+
+The new mandatory differential suite passes locally: 213 commands across interpreter, LLVM and MLIR, including both native optimization levels. It checks nonzero real ONNX output, aliasing, 65,536-element storage/inference, FP32 rounding, lifecycle and deterministic failures using LLVM/MLIR 18 and ONNX Runtime 1.30.0. Native package consumers now require the checked values `43.5 43.5` at both optimization levels. Wider local compatibility checks are in progress and hosted qualification is pending. The successful training CI above is not represented as validation of this new code. AOT integration and diagnostic counters remain unfinished in this draft PR.
+
 ## Energy and power result
 
 The new counter fixtures are synthetic correctness tests, not hardware measurements. The training observations do not authorize a general timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim. Unavailable measurements retain null energy values.

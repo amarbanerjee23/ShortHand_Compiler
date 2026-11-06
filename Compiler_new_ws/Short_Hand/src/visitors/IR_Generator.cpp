@@ -2,6 +2,7 @@
 #include "DiagnosticCodes.h"
 #include "Symbol_Table.h"
 #include "../util/util.h"
+#include "../ai_runtime/AI_Types.h"
 
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Support/raw_ostream.h>
@@ -363,7 +364,10 @@ Value *IR_Generator::safeStringPointer(Value *value) {
 Value *IR_Generator::get_expression() {
     Value *v = ret;
     if (load_variable) {
-        v = typedLoad(v, parseType(load_type));
+        if(load_tensor) {
+            v=Builder.CreateFPExt(typedLoad(v,Type::getFloatTy(ShortGlobalContext)),f64Ty());
+            load_tensor=false;
+        } else v = typedLoad(v, parseType(load_type));
         ret_type = load_type;
         load_variable = 0;
     }
@@ -563,6 +567,14 @@ int IR_Generator::visit(AST_ASSIGNMENT_RULE *assignment_statement) {
     assignment_statement->variable->accept(*this);
     Value *variable_value = ret;
     const ShortType target_type = ret_type;
+    if(load_tensor) {
+        Value *maximum=ConstantFP::get(f64Ty(),std::numeric_limits<float>::max());
+        Value *minimum=ConstantFP::get(f64Ty(),-std::numeric_limits<float>::max());
+        emitRuntimeFailureIf(Builder.CreateOr(Builder.CreateFCmpUGT(expr_value,maximum),Builder.CreateFCmpULT(expr_value,minimum)),
+            diag::RuntimeInvalidState,"tensor store is outside the finite FP32 range");
+        ret=Builder.CreateStore(Builder.CreateFPTrunc(expr_value,Type::getFloatTy(ShortGlobalContext)),variable_value);
+        load_tensor=false; load_variable=0; return 0;
+    }
     expr_value = asExactLoweredType(expr_value, target_type);
     if (!expr_value) return 0;
     ret = Builder.CreateStore(expr_value, variable_value);
@@ -959,6 +971,7 @@ int IR_Generator::visit(AST_UNARY_EXPRESSION_RULE *unary_operator_expression) {
 }
 
 int IR_Generator::visit(AST_SIMPLE_VARIABLE *variable_single_int) {
+    load_tensor=false;
     string &var_name = variable_single_int->variable_name;
     ret = symbol_table_obj.return_locals(var_name);
     if (!ret) ret = module->getNamedGlobal(var_name);
@@ -974,6 +987,19 @@ int IR_Generator::visit(AST_ARRAY_VARIABLE *variable_array_int) {
     string &array_name = variable_array_int->array_name;
     variable_array_int->index->accept(*this);
     Value *index = get_expression();
+    load_tensor=false;
+    if(variable_array_int->tensor_element) {
+        auto *tensor=module->getNamedGlobal("__sh.tensor."+array_name);
+        auto *ready=module->getNamedGlobal("__sh.tensor.ready."+array_name);
+        if(!tensor || !ready) { ret=ShowError("Unknown tensor "+array_name); return 0; }
+        auto *array_type=cast<ArrayType>(tensor->getValueType());
+        emitRuntimeFailureIf(Builder.CreateNot(typedLoad(ready,i1Ty())),diag::RuntimeInvalidState,"tensor declaration has not executed");
+        emitRuntimeFailureIf(Builder.CreateICmpUGE(index,ConstantInt::get(i32Ty(),array_type->getNumElements())),
+            diag::RuntimeArrayBounds,"tensor index is outside bounds");
+        ret=Builder.CreateInBoundsGEP(array_type,tensor,{ConstantInt::get(i32Ty(),0),index});
+        load_tensor=true; load_variable=1; load_type=ShortType::Float; ret_type=ShortType::Float; is_expression=1;
+        return 0;
+    }
     Value *array_pointer = symbol_table_obj.return_locals(array_name);
     GlobalVariable *array_global = module->getNamedGlobal(array_name);
     if (array_pointer == nullptr) array_pointer = array_global;
@@ -1043,13 +1069,33 @@ int IR_Generator::visit(AST_MODEL_DECLARATION *n){
         ";backend_preference=" + backend_preference +
         ";compact=" + std::string(d.compact ? "true" : "false"));
     emitShortHandRuntimeCall("short_ai_register_model", {
-        d.name, d.format, stripQuotes(d.path), stripQuotes(d.task), d.precision,
+        d.name, d.format, stripQuotes(d.path), stripQuotes(d.task), d.source_tensor_values?"float32":d.precision,
         d.input_shape, d.output_shape, backend_preference});
     return 0;
 }
 
 int IR_Generator::visit(AST_TENSOR_DECLARATION *n){
     const auto &d = n->data;
+    if(shorthand::ai::parseElementType(d.element_type)==shorthand::ai::ElementType::Float32 &&
+       !d.dynamic && d.total_elements>0 && d.total_elements<=65536) {
+        auto *array=ArrayType::get(Type::getFloatTy(ShortGlobalContext),d.total_elements);
+        auto *tensor=module->getNamedGlobal("__sh.tensor."+d.name);
+        if(!tensor) tensor=new GlobalVariable(*module,array,false,GlobalValue::InternalLinkage,
+            ConstantAggregateZero::get(array),"__sh.tensor."+d.name);
+        auto *ready=module->getNamedGlobal("__sh.tensor.ready."+d.name);
+        if(!ready) ready=new GlobalVariable(*module,i1Ty(),false,GlobalValue::InternalLinkage,
+            ConstantInt::getFalse(ShortGlobalContext),"__sh.tensor.ready."+d.name);
+        std::vector<Constant *> values;
+        for(double value:d.values) values.push_back(ConstantFP::get(Type::getFloatTy(ShortGlobalContext),value));
+        const auto bytes=static_cast<std::uint64_t>(d.total_elements)*sizeof(float);
+        if(values.empty()) Builder.CreateMemSet(tensor,Builder.getInt8(0),bytes,MaybeAlign(alignof(float)));
+        else {
+            auto *initial=ConstantArray::get(array,values);
+            auto *constant=new GlobalVariable(*module,array,true,GlobalValue::PrivateLinkage,initial,"__sh.tensor.initial");
+            Builder.CreateMemCpy(tensor,MaybeAlign(alignof(float)),constant,MaybeAlign(alignof(float)),bytes);
+        }
+        Builder.CreateStore(ConstantInt::getTrue(ShortGlobalContext),ready);
+    }
     emitShortHandMetadata("tensor", d.name,
         "name=" + d.name + ";element_type=" + d.element_type +
         ";shape=" + d.shape_csv + ";rank=" + std::to_string(d.rank) +
@@ -1107,7 +1153,29 @@ int IR_Generator::visit(AST_INFER_STATEMENT *n){
     emitShortHandMetadata("infer", n->model_name,
         "model=" + n->model_name + ";input=" + n->input_name +
         ";output=" + n->output_name + ";compiled_runtime_hook=true");
-    emitShortHandRuntimeCall("short_ai_infer", {n->model_name, n->input_name, n->output_name});
+    const bool typed=(n->input_declaration && (n->input_declaration->initialized || n->input_declaration->accessed)) ||
+                     (n->output_declaration && (n->output_declaration->initialized || n->output_declaration->accessed));
+    if(typed) {
+        auto *input=module->getNamedGlobal("__sh.tensor."+n->input_name);
+        auto *output=module->getNamedGlobal("__sh.tensor."+n->output_name);
+        if(!input || !output) { ShowError("Value inference requires declared bounded tensors"); return 0; }
+        for(const auto &name:{n->input_name,n->output_name}) {
+            auto *ready=module->getNamedGlobal("__sh.tensor.ready."+name);
+            emitRuntimeFailureIf(Builder.CreateNot(typedLoad(ready,i1Ty())),diag::RuntimeInvalidState,"tensor declaration has not executed");
+        }
+        auto *input_type=cast<ArrayType>(input->getValueType()),*output_type=cast<ArrayType>(output->getValueType());
+        auto *count=createEntryBlockAlloca(Builder.GetInsertBlock()->getParent(),i32Ty(),"tensor_output_count");
+        Builder.CreateStore(ConstantInt::get(i32Ty(),0),count);
+        auto callee=module->getOrInsertFunction("short_ai_infer_f32",FunctionType::get(i32Ty(),
+            {i8PtrTy(),i8PtrTy(),i8PtrTy(),i32Ty(),i8PtrTy(),i8PtrTy(),i32Ty(),i8PtrTy()},false));
+        auto result=Builder.CreateCall(callee,{Builder.CreateGlobalStringPtr(n->model_name),Builder.CreateGlobalStringPtr(n->input_name),
+            input,ConstantInt::get(i32Ty(),input_type->getNumElements()),Builder.CreateGlobalStringPtr(n->output_name),
+            output,ConstantInt::get(i32Ty(),output_type->getNumElements()),count});
+        emitRuntimeFailureIf(Builder.CreateICmpNE(result,ConstantInt::get(i32Ty(),0)),diag::RuntimeInferenceFailure,"typed inference failed");
+        emitRuntimeFailureIf(Builder.CreateICmpNE(typedLoad(count,i32Ty()),ConstantInt::get(i32Ty(),output_type->getNumElements())),
+            diag::RuntimeInferenceFailure,"typed inference returned unexpected tensor size");
+        load_variable=0; load_tensor=false;
+    } else emitShortHandRuntimeCall("short_ai_infer", {n->model_name, n->input_name, n->output_name});
     return 0;
 }
 

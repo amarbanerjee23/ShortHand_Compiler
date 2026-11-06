@@ -44,6 +44,7 @@ private:
     llvm::Value * ret;
     llvm::Function * main_function;
     int load_variable;
+    bool load_tensor = false;
     int is_condition;
     int is_expression;
     std::string str_;

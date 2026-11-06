@@ -185,10 +185,14 @@ Calls evaluate arguments from left to right. Labels and conditional or unconditi
 precision_name     = "int8" | "int4" | "fp16" | "fp32"
                    | "bf16" | "fp64" | "float" ;
 tensor_declaration = "tensor" , identifier , precision_name ,
-                     string_literal , ";" ;
+                     string_literal , [ "=" , "[" , tensor_values , "]" ] , ";" ;
+tensor_values      = [ tensor_number , { "," , tensor_number } ] ;
+tensor_number      = [ "-" ] , ( integer_literal | float_literal ) ;
 ```
 
 The shape is syntactically a string. Shape validity and element-type support are semantic concerns. Aliases such as `float32`, `f32`, `float16`, `f16`, `bfloat16`, and `int32` are not scanner tokens in this contract.
+
+The optional value surface is bounded to static FP32 tensors; empty initializer lists are parsed but rejected semantically. See [source tensor values](source_tensors.md) for checked indexing, mutation, lifetime and inference rules.
 
 ## Model declarations
 

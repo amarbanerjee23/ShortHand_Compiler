@@ -71,9 +71,14 @@ struct AST_TYPED_ARRAY_DECLARATION {
     ShortType type = ShortType::Int;
 };
 
+// Preserve decimal magnitude for tensor literals without changing legacy Int32 conversion.
+struct AST_INTEGER_TOKEN { int legacy; double tensor; operator int() const { return legacy; } };
+
 union _NODE_
 {
     int int_val;
+    AST_INTEGER_TOKEN integer_token;
+    std::vector<double> *tensor_values;
     double float_val;
     char * string_val;
     AST_PROGRAM * program;
@@ -411,8 +416,8 @@ public:
 };
 
 struct QualityGuardrail { std::string metric; std::string op; double threshold; };
-struct ModelDeclarationData { std::string name, format, path, task, precision, input_shape, output_shape; std::vector<std::string> backend_preference; bool compact=false; bool has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
-struct TensorDeclarationData { std::string name, element_type, shape_csv; bool dynamic=false; int rank=0; long long total_elements=0; };
+struct ModelDeclarationData { std::string name, format, path, task, precision, input_shape, output_shape; std::vector<std::string> backend_preference; bool compact=false; bool source_tensor_values=false; bool has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
+struct TensorDeclarationData { std::string name, element_type, shape_csv; bool dynamic=false, initialized=false, accessed=false; int rank=0; long long total_elements=0; std::vector<double> values; };
 struct GreenAIContractData { std::string name, functional_unit, success_criteria, measurement_quality, data_quality, carbon_factor_scope, evidence_retention, claims_mode; std::vector<std::string> boundary; double carbon_factor=0, energy_budget_j=0, carbon_budget_gco2e=0; bool has_functional_unit=false, has_success_criteria=false, has_boundary=false, has_mq=false, has_dq=false, has_carbon_factor=false, has_quality_guardrail=false; QualityGuardrail quality_guardrail; };
 struct GreenAIMeasurementData { std::string workload, backend; int inferences=0; double watts=0, seconds=0; };
 
@@ -463,7 +468,7 @@ class AST_TENSOR_DECLARATION : public AST_STATEMENT_RULE { private: friend class
 class AST_GREENAI_CONTRACT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticIRBuilder; GreenAIContractData data; public: AST_GREENAI_CONTRACT(const GreenAIContractData &data); int accept(Visitor &); };
 class AST_GREENAI_MEASUREMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticIRBuilder; GreenAIMeasurementData data; public: AST_GREENAI_MEASUREMENT(const GreenAIMeasurementData &data); int accept(Visitor &); };
 class AST_C3ECO_DECLARATION : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticIRBuilder; C3EcoDeclarationData data; public: AST_C3ECO_DECLARATION(const C3EcoDeclarationData &data); int accept(Visitor &); };
-class AST_INFER_STATEMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticIRBuilder; std::string model_name,input_name,output_name; public: AST_INFER_STATEMENT(std::string m,std::string i,std::string o); int accept(Visitor &); };
+class AST_INFER_STATEMENT : public AST_STATEMENT_RULE { private: friend class Interpreter; friend class IR_Generator; friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticIRBuilder; std::string model_name,input_name,output_name; const TensorDeclarationData *input_declaration=nullptr,*output_declaration=nullptr; public: AST_INFER_STATEMENT(std::string m,std::string i,std::string o); int accept(Visitor &); };
 
 class AST_GREENAI_REPORT_RULE : public AST_STATEMENT_RULE
 {
@@ -562,6 +567,7 @@ private:
     friend class AST_Printer; friend class SemanticAnalyzer; friend class EvidenceEmitter; friend class SemanticIRBuilder;
     string array_name;
     AST_EXPRESSION_RULE* index;
+    bool tensor_element=false;
 public:
     AST_ARRAY_VARIABLE(string array_name, AST_EXPRESSION_RULE * index);
     int accept(Visitor &);

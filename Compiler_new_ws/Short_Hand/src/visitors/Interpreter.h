@@ -41,6 +41,7 @@ private:
     std::map<AST_FUNCTION_RULE *, std::string> function_sources;
     std::map<std::string, ModelDeclarationData> aiModels;
     std::map<std::string, TensorDeclarationData> aiTensors;
+    std::map<std::string, std::vector<float>> tensorValues;
 
     std::string entry_source;
     std::string active_source;

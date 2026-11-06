@@ -69,6 +69,8 @@ Beta-0.3 accepts `module`, `import` and `package` preamble declarations. Legacy 
 
 A tensor declaration records a canonical precision token and a shape string. A model declaration records format, path, task, precision, input and output shapes, ordered backend preferences, compact intent and an integer `>=` quality guardrail.
 
+Static FP32 tensors also support bounded literal initialization and checked flattened indexing/mutation. The [source tensor value contract](source_tensors.md) specifies conversion, lifetime, errors and real inference behavior across the interpreter, LLVM and MLIR backends.
+
 Canonical model formats are:
 
 `onnx`, `engine`, `torchscript`, `openvino_ir`, `gguf`.

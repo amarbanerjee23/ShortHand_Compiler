@@ -1,6 +1,7 @@
 #include "ShortHand/Conversion/Lowering.h"
 #include "ShortHand/IR/ShortHandOps.h"
 #include "LoweringSupport.h"
+#include "TensorRuntimeLowering.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Target/LLVMIR/Export.h"
 #include "mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h"
@@ -9,6 +10,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#include <limits>
 #include <ostream>
 
 using namespace mlir;
@@ -121,7 +123,19 @@ struct Generator {
         Block *bad=block(),*next=block(); b.create<LLVM::CondBrOp>(c.loc,condition,bad,next);
         b.setInsertionPointToStart(bad); c.failureBody(code,text); b.setInsertionPointToStart(next);
     }
+    void tensorReady(const std::string &name) {
+        auto ptr=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_ready_"+name));
+        auto ready=b.create<LLVM::LoadOp>(c.loc,b.getI1Type(),ptr);
+        failureIf(b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::eq,ready,zero(b.getI1Type())),"SHD7004","tensor declaration has not executed");
+    }
     Value pointer(const E &e) {
+        if(e.kind==E::Kind::TensorIndex) {
+            auto index=expr(e.operands[0]); auto tensor=tensors.at(e.name);
+            tensorReady(e.name);
+            failureIf(b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::uge,index,c.integer(tensor.getNumElements())),"SHD7002","tensor index is outside bounds");
+            auto ptr=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+e.name));
+            return c.gep(tensorStorage(tensor),ptr,ArrayRef<LLVM::GEPArg>{0,index});
+        }
         // Index evaluation precedes variable access, matching the reference backend.
         Value index; if(e.kind==E::Kind::Index) index=expr(e.operands[0]);
         auto v=lookup(e.name); if(e.kind==E::Kind::Variable) return v.pointer;
@@ -218,10 +232,7 @@ struct Generator {
             return b.create<LLVM::LoadOp>(c.loc,type(e.type),address);
         }
         case E::Kind::TensorIndex: {
-            auto index=expr(e.operands[0]); auto tensor=tensors.at(e.name);
-            failureIf(b.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::uge,index,c.integer(tensor.getNumElements())),"SHD7002","tensor index is outside bounds");
-            auto ptr=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+e.name));
-            auto address=c.gep(tensorStorage(tensor),ptr,ArrayRef<LLVM::GEPArg>{0,index});
+            auto address=pointer(e);
             auto value=b.create<LLVM::LoadOp>(c.loc,b.getF32Type(),address);
             return b.create<LLVM::FPExtOp>(c.loc,b.getF64Type(),value);
         }
@@ -244,7 +255,18 @@ struct Generator {
             if(s.lexical_scope) scopes.pop_back(); break;
         }
         case S::Kind::Declare:for(const auto &v:s.variables) declare(v);break;
-        case S::Kind::Assign: { Value value=expr(s.expressions[1]); auto target=pointer(s.expressions[0]); b.create<LLVM::StoreOp>(c.loc,value,target); break; }
+        case S::Kind::Assign: {
+            Value value=expr(s.expressions[1]); auto target=pointer(s.expressions[0]);
+            if(s.expressions[0].kind==E::Kind::TensorIndex) {
+                auto maximum=b.create<LLVM::ConstantOp>(c.loc,b.getF64Type(),b.getF64FloatAttr(std::numeric_limits<float>::max()));
+                auto minimum=b.create<LLVM::ConstantOp>(c.loc,b.getF64Type(),b.getF64FloatAttr(-std::numeric_limits<float>::max()));
+                auto high=b.create<LLVM::FCmpOp>(c.loc,LLVM::FCmpPredicate::ugt,value,maximum);
+                auto low=b.create<LLVM::FCmpOp>(c.loc,LLVM::FCmpPredicate::ult,value,minimum);
+                failureIf(b.create<LLVM::OrOp>(c.loc,high,low),"SHD7004","tensor store is outside the finite FP32 range");
+                value=b.create<LLVM::FPTruncOp>(c.loc,b.getF32Type(),value);
+            }
+            b.create<LLVM::StoreOp>(c.loc,value,target); break;
+        }
         case S::Kind::Update: {
             const auto &record=s.expressions[0]; auto loaded=expr(record),field=expr(s.expressions[1]); auto ct=composites.at(record.composite);
             auto value=b.create<UnrealizedConversionCastOp>(c.loc,TypeRange{ct},ValueRange{loaded}).getResult(0);
@@ -305,20 +327,30 @@ struct Generator {
             const auto &t=p.tensors[s.declaration]; auto tensor=tensors.at(t.name); auto elem=tensor.getElementType(); SmallVector<Attribute> values;
             for(double v:t.values) values.push_back(isa<FloatType>(elem)?Attribute(b.getFloatAttr(elem,v)):Attribute(b.getIntegerAttr(elem,static_cast<int64_t>(v))));
             if(values.empty()) values.push_back(isa<FloatType>(elem)?Attribute(b.getFloatAttr(elem,0.0)):Attribute(b.getIntegerAttr(elem,0)));
-            auto dense=DenseElementsAttr::get(tensor,values);
-            auto value=op<ir::TensorOp>(TypeRange{tensor},{},{attr("name",b.getStringAttr(t.name)),attr("value",dense)}).getResult();
-            auto converted=b.create<UnrealizedConversionCastOp>(c.loc,TypeRange{tensorStorage(tensor)},ValueRange{value}).getResult(0);
-            b.create<LLVM::StoreOp>(c.loc,converted,b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+t.name)));
+            auto dense=DenseElementsAttr::get(tensor,values).reshape(RankedTensorType::get({tensor.getNumElements()},elem));
+            LLVM::GlobalOp initial;
+            {
+                OpBuilder::InsertionGuard guard(b); b.setInsertionPointToEnd(module->getBody());
+                initial=b.create<LLVM::GlobalOp>(c.loc,tensorStorage(tensor),true,LLVM::Linkage::Private,"__sh_tensor_initial_"+t.name,Attribute());
+                auto *entry=new Block; initial.getInitializerRegion().push_back(entry); b.setInsertionPointToStart(entry);
+                auto value=b.create<LLVM::ConstantOp>(c.loc,tensorStorage(tensor),dense);
+                b.create<LLVM::ReturnOp>(c.loc,value.getResult());
+            }
+            auto target=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+t.name));
+            auto source=b.create<LLVM::AddressOfOp>(c.loc,initial);
+            // Storage copies keep O0 codegen bounded and reinitialize each execution.
+            b.create<LLVM::MemcpyOp>(c.loc,target,source,c.integer(tensor.getNumElements()*((elem.getIntOrFloatBitWidth()+7)/8),64),false);
+            b.create<LLVM::StoreOp>(c.loc,c.integer(1,1),b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_ready_"+t.name)));
             break;
         }
         case S::Kind::Infer: {
-            const auto &i=p.inferences[s.declaration]; auto input=tensors.at(i.input_tensor_name),output=tensors.at(i.output_tensor_name);
-            auto ptr=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+i.input_tensor_name));
-            auto loaded=b.create<LLVM::LoadOp>(c.loc,tensorStorage(input),ptr);
-            auto tensor=b.create<UnrealizedConversionCastOp>(c.loc,TypeRange{input},ValueRange{loaded}).getResult(0);
-            auto inferred=op<ir::InferOp>(TypeRange{output},ValueRange{tensor},{attr("model",FlatSymbolRefAttr::get(b.getContext(),"__sh_model_"+i.model_name))}).getResult();
-            auto array=b.create<UnrealizedConversionCastOp>(c.loc,TypeRange{tensorStorage(output)},ValueRange{inferred}).getResult(0);
-            b.create<LLVM::StoreOp>(c.loc,array,b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+i.output_tensor_name))); break;
+            const auto &i=p.inferences[s.declaration];
+            tensorReady(i.input_tensor_name); tensorReady(i.output_tensor_name);
+            auto input=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+i.input_tensor_name));
+            auto output=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+i.output_tensor_name));
+            inferTensorBuffers(c,models.at(i.model_name),input,output,
+                [&](Value bad,StringRef reason){failureIf(bad,"SHD7030",reason);});
+            break;
         }
         case S::Kind::Measurement: {
             const auto &m=p.measurements[s.declaration]; StringRef policy=m.backend;
@@ -362,7 +394,7 @@ struct Generator {
                 attr("format",b.getStringAttr(format(m.format))),attr("path",b.getStringAttr(m.path)),attr("task",b.getStringAttr(m.task)),
                 attr("quality_guardrail",b.getStringAttr(m.quality_guardrail)),attr("backend",policy),attr("shorthand.backend_preference",b.getStrArrayAttr(preferences))});
         }
-        for(const auto &t:p.tensors) { auto ty=tensorType(t.shape,t.element_type); if(!ty) return failure(); tensors[t.name]=ty; global("__sh_tensor_"+t.name,tensorStorage(ty)); }
+        for(const auto &t:p.tensors) { auto ty=tensorType(t.shape,t.element_type); if(!ty) return failure(); tensors[t.name]=ty; global("__sh_tensor_"+t.name,tensorStorage(ty)); global("__sh_tensor_ready_"+t.name,b.getI1Type()); }
         for(const auto &d:p.contracts) {
             c.loc=location(d.source_range);
             auto evidence=ir::EvidenceAttr::getChecked([&]{return emitError(c.loc);},b.getContext(),StringRef(d.measurement_quality),StringRef(d.data_quality),StringRef(d.claims_mode));
