@@ -3,9 +3,12 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "experiments/energy"))
+from event_diagnostics import validate_boundary
 
 
 def run(*args):
@@ -28,6 +31,7 @@ def main():
             binary = work / label
             run(*flags, *sanitizers, "-DSHORTHAND_RUNTIME_EVENT_PROFILE=1", source, "-o", binary)
             data = json.loads(run(binary))
+            validate_boundary(data)
             if data["scope"] != "calling_thread_user_space" or data["worker_threads_included"] is not False:
                 raise ValueError("incorrect event thread scope")
             for event in data["events"]:

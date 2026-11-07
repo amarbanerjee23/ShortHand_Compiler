@@ -89,6 +89,7 @@ jobs:
           python3 experiments/energy/test_pr_runtime_delta.py
           python3 experiments/energy/test_energy_status.py
           python3 experiments/energy/test_generated_infer_evidence.py
+          python3 experiments/energy/test_event_diagnostics.py
           python3 experiments/energy/test_ci_run_evidence.py
           python3 experiments/energy/test_render_benchmark_markdown.py
           python3 scripts/test_pr_benchmark_report.py

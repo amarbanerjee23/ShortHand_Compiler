@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import pathlib
+import event_diagnostics
 from typing import Any
 
 
@@ -39,6 +40,7 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
     evidence = read_json(profile / "run-evidence.json")
     generated = read_json(profile / "generated-infer/report.json")
     phases = read_json(profile / "generated-infer/phases.json")
+    events = event_diagnostics.validate_report(read_json(profile / "generated-infer/events.json"))
     resident = read_json(profile / "pr-runtime-delta/summary.json")
     energy = read_json(profile / "ci-energy/summary.json")
     required = ("cache-tests.txt", "workspace-tests.txt", "application-tests.txt",
@@ -85,6 +87,7 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
         "| Sanitizers | `prepared-sanitizers.txt` | instrumented prepared cache/workspace ASan/LSan/UBSan pass |",
         "| Evidence integrity | `evidence-tests.txt` | malformed samples, tampering, unsafe paths, meter failures and claim gating |",
         "| Compiled phase diagnostics | `phase-tests.txt` | cold/warm/reset, rejected calls, output rollback, policy, thread isolation, exception unwind; production archive has no profiling symbols |",
+        "| PMU diagnostics | `evidence-tests.txt`, `generated-infer/events.json` | fault-injected lifecycle, sanitizers, scope/scheduling, unavailable counts and separate workload captures |",
         "",
         "The cache test includes 2,000 sequential calls, 4,000 concurrent calls while 64 resets/re-registrations run, 65,536 and 65,537-float bridge requests, 16 MiB and 16 MiB+1 model snapshots, external-weight deletion/recovery, invalid argument matrices, output canaries and aliasing checks.",
         "",
@@ -109,6 +112,18 @@ def render(profile: pathlib.Path, run_url: str = "") -> str:
         ranked = sorted(row['phases'].items(), key=lambda p: p[1]['mean_ns_per_call'], reverse=True)[:3]
         top = '; '.join(f"{name}: {fmt(p['fraction_of_instrumented_total'] * 100, 1)}%" for name, p in ranked)
         lines.append(f"| {row['cell']} | {fmt(row['mean_instrumented_ns_per_call'], 1)} | {fmt(row['clock_pair_median_ns'], 1)} | {top} |")
+    lines += ["", "## Diagnostic performance events", "",
+              "These are separate instrumented executions. Events cover calling-thread user-space only; workers and kernel are excluded. "
+              "Counters have independent enable/disable windows. Raw counts, IDs and enabled/running times are retained; no scaled totals or joules are inferred. "
+              "Cold execution and warm batches remain separate, and the empty observer control is retained without subtraction. Generic cache misses are not labelled LLC misses.", "",
+              "| Cell | Cold counters available | Warm counters available | Unavailable reasons |", "|---|---:|---:|---|"]
+    for row in events['rows']:
+        sample = row['sample']
+        cold = sample['cold_boundary']['events']
+        warm = [event for block in sample['warm_blocks'] for event in block['events']]
+        reasons = sorted({f"{e['reason']} (errno {e['errno']})" for e in cold + warm if not e['available']})
+        lines.append(f"| {row['cell']} | {sum(e['available'] for e in cold)}/{len(cold)} | "
+                     f"{sum(e['available'] for e in warm)}/{len(warm)} | {'; '.join(reasons) or 'none'} |")
     lines += [
         "",
         "## Resident real-digit workload",

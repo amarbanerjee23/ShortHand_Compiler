@@ -7,6 +7,7 @@ import json
 import os
 import pathlib
 import subprocess
+import event_diagnostics
 
 REQUIRED = {
     'compiled_session_reuse_and_invalidation': 'cache-tests.txt',
@@ -22,6 +23,8 @@ REQUIRED = {
     'compiled_phase_attribution': 'generated-infer/phases.json',
     'compiled_phase_execution_tests': 'phase-tests.txt',
     'compiled_phase_production_isolation': 'phase-tests.txt',
+    'diagnostic_event_counters': 'generated-infer/events.json',
+    'diagnostic_event_lifecycle_and_isolation': 'evidence-tests.txt',
     'same_runner_head_base_observations': 'pr-runtime-delta/summary.json',
     'resident_native_and_python_controls': 'resident-baselines/summary.json',
     'energy_capabilities': 'ci-energy-probe.json',
@@ -38,6 +41,7 @@ REQUIRED = {
 SCHEMAS = {
     'compiled_fp32_observations': 'shorthand.generated_infer.report.v2',
     'compiled_phase_attribution': 'shorthand.generated_infer.phases.v1',
+    'diagnostic_event_counters': 'shorthand.generated_infer.event_report.v1',
     'same_runner_head_base_observations': 'shorthand.energy.pr_runtime_delta.v1',
     'resident_native_and_python_controls': 'shorthand.energy.resident_baselines.v1',
     'energy_capabilities': 'shorthand.energy.ci_evidence.v1',
@@ -58,6 +62,7 @@ PASS_MARKERS = {
     'real_digit_application_correctness': 'live_onnx=1',
     'compiled_phase_execution_tests': 'PASS compiled phase profiling:',
     'compiled_phase_production_isolation': 'PASS phase profile isolation: production archive has no diagnostic symbols',
+    'diagnostic_event_lifecycle_and_isolation': 'PASS event diagnostics: permission/fault paths, scheduling, descriptor lifecycle, live availability and isolation',
     'bounded_aot_correctness_and_sanitizers': 'PASS bounded AOT contracts and ASan/UBSan',
     'immutable_contract_and_lifecycle': 'PASS immutable ownership, digest, envelope, rollback, policy and stale handles',
     'immutable_shared_abi_isolation': 'PASS immutable shared-library symbol isolation',
@@ -105,6 +110,8 @@ def finalize(out, job_status):
                     present = False
                 if claim == 'immutable_latency_and_model_io':
                     present = present and value.get('model_io_trace_verified') is True
+                if claim == 'diagnostic_event_counters':
+                    event_diagnostics.validate_report(value)
                 if any(v is not False for k, v in value.items()
                        if k.endswith(('_claim', '_claim_authorized', '_claim_eligible')) or k == 'claim_authorized'):
                     present = False

@@ -16,6 +16,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts'))
 from create_digit_application_fixture import create
 from ci_energy_evidence import ComponentEnergySampler, cpu_identity
+import event_diagnostics
 
 BOUNDARY = ('compiled .short entry including zero tensor initialization, registration, inference, '
             'runtime validation/telemetry/logging and independent output verification; direct ORT '
@@ -77,7 +78,7 @@ def validate_sample(sample, batch, iterations, blocks, runner='head', instrument
         raise ValueError('mismatched ORT control configuration')
     if sample.get('instrumented') is not instrumented:
         raise ValueError('instrumentation cannot enter latency or energy controls')
-    if not instrumented and any(k in sample for k in ('phase_samples', 'clock_pair_median_ns')):
+    if not instrumented and any(k in sample for k in ('phase_samples', 'clock_pair_median_ns', 'event_profiles', 'warm_blocks')):
         raise ValueError('unexpected profiling data in uninstrumented sample')
     if runner in ('head', 'profiled'):
         cache = sample.get('last_runtime_telemetry', {}).get('ai_runtime_telemetry', {}).get('execution_evidence', {})
@@ -174,7 +175,7 @@ def capture(args):
     revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
     if args.head_sha and revision != args.head_sha:
         raise ValueError('head revision mismatch')
-    manifest = dict(schema='shorthand.generated_infer.bundle.v2', head_sha=revision,
+    manifest = dict(schema='shorthand.generated_infer.bundle.v3', head_sha=revision,
                     base_sha=args.base_sha, compiler_revision=revision,
                     comparison_scope='same generated object, different runtime archives; compiler changes not compared',
                     working_tree_diff_sha256=hashlib.sha256(subprocess.check_output(['git', 'diff', 'HEAD'], cwd=ROOT)).hexdigest(),
@@ -185,6 +186,10 @@ def capture(args):
                     latency_claim_authorized=False, energy_claim_authorized=False,
                     unsupported_compiled_cells=['b16-t2', 'b16-t4'],
                     unsupported_reason='compiled C ABI currently uses one ORT intra-op thread', observations=[], profiles=[])
+    manifest['event_profiles'] = []
+    (out / 'event-sources').mkdir()
+    for name in event_diagnostics.SOURCES:
+        (out / 'event-sources' / name).write_bytes((ROOT / 'experiments/energy' / name).read_bytes())
     # No launch/cold/setup times are mixed into the resident block ratios.
     runners = ['head', 'base', 'direct', 'direct_all'] if base else ['head', 'direct', 'direct_all']
     manifest['observer_observations'] = []
@@ -228,14 +233,15 @@ infer classifier(input) -> output;
         command([args.clang, '-O2', '-fno-fast-math', '-c', cell / 'inference.ll', '-o', cell / 'inference.o'], cell, 'compile-ir')
         command(['objcopy', '--redefine-sym', 'main=shorthand_entry', cell / 'inference.o'], cell, 'rename-entry')
         binaries = {}
-        for runner in [*runners, 'profiled']:
+        for runner in [*runners, 'profiled', 'events']:
             binary = cell / runner
             argv = [args.clang, '-std=c++17', '-O2', '-fno-fast-math', '-pthread',
                     '-DSHORTHAND_GENERATED=' + str(int(not runner.startswith('direct'))),
                     '-DSHORTHAND_ORT_ALL=' + str(int(runner == 'direct_all')),
                     '-DSHORTHAND_RUNTIME_PHASE_PROFILE=' + str(int(runner == 'profiled')),
+                    '-DSHORTHAND_RUNTIME_EVENT_PROFILE=' + str(int(runner == 'events')),
                     '-I' + str(ROOT / 'Compiler_new_ws/Short_Hand/src'), '-I' + str(sdk / 'include'),
-                    ROOT / 'experiments/energy/generated_infer_probe.cpp']
+                    out / 'event-sources/generated_infer_probe.cpp']
             if not runner.startswith('direct'):
                 archive = profiled_library if runner == 'profiled' else (base if runner == 'base' else build) / 'libshorthand_runtime.a'
                 argv += [cell / 'inference.o', archive,
@@ -275,6 +281,10 @@ infer classifier(input) -> output;
                  str(PROFILE_ITERATIONS), str(PROFILE_BLOCKS)], cell, 'phases')
         validate_profile(json.loads((cell / 'phases.stdout').read_text()), batch)
         manifest['profiles'].append(dict(cell=cell.name, path=f'{cell.name}/phases.stdout'))
+        command([binaries['events'], model, str(batch), cell / 'expected.bin',
+                 str(PROFILE_ITERATIONS), str(PROFILE_BLOCKS)], cell, 'events')
+        event_diagnostics.validate_sample(json.loads((cell / 'events.stdout').read_text()), batch)
+        manifest['event_profiles'].append(dict(cell=cell.name, path=f'{cell.name}/events.stdout'))
         if any(sha(path) != digest for path, digest in frozen.items()):
             raise ValueError('workload or executable changed during capture')
     if any(sha(pathlib.Path(path)) != digest for path, digest in manifest['executables'].items()):
@@ -289,7 +299,7 @@ def replay(out, expected_digest):
     if sha(out / 'manifest.json') != expected_digest:
         raise ValueError('manifest hash mismatch')
     manifest = json.loads((out / 'manifest.json').read_text())
-    if not isinstance(manifest, dict) or manifest.get('schema') != 'shorthand.generated_infer.bundle.v2':
+    if not isinstance(manifest, dict) or manifest.get('schema') not in ('shorthand.generated_infer.bundle.v2', 'shorthand.generated_infer.bundle.v3'):
         raise ValueError('invalid generated manifest')
     if manifest.get('runners') not in (['head', 'direct', 'direct_all'], ['head', 'base', 'direct', 'direct_all']):
         raise ValueError('invalid generated runners')
@@ -353,6 +363,9 @@ def replay(out, expected_digest):
             or {p['path'] for p in profiles} & {r['path'] for r in observations}):
         raise ValueError('invalid separate profiling matrix')
     phase_rows = [validate_profile(json.loads((out / p['path']).read_text()), int(p['cell'][1:-3])) for p in profiles]
+    event_report = event_diagnostics.replay(out, manifest, expected_digest) if manifest['schema'].endswith('.v3') else None
+    if event_report:
+        write(out / 'events.json', event_report)
     phase_report = dict(schema='shorthand.generated_infer.phases.v1', success=True, manifest_sha256=expected_digest,
                         rows=phase_rows, instrumented=True, latency_claim_authorized=False, energy_claim_authorized=False,
                         boundary='exclusive phases of one warm compiled entry including independent output verification; clock overhead included')
@@ -380,6 +393,11 @@ def replay(out, expected_digest):
     for phase in PHASES:
         by_cell = {r['cell']: r for r in phase_rows}
         lines.append('| ' + phase + ' | ' + ' | '.join(f"{by_cell[f'b{b}-t1']['phases'][phase]['mean_ns_per_call']:.1f}" for b in (1, 16, 32)) + ' |')
+    if event_report:
+        lines += ['', '## Diagnostic performance events', '', event_report['boundary'], '',
+                  'Separate executable and executions; no PMU counts enter the latency or energy controls. '
+                  'Raw counts, event IDs, enabled/running times, permission errors and unavailable fields '
+                  'are retained in `events.json`. No multiplexed estimate or joules conversion is made.', '']
     lines += ['', 'Energy is recorded separately in each `energy-*.energy.json`; unavailable counters produce null joules.',
               'b16-t2 and b16-t4 are unsupported for compiled hooks; all five real-digit cells remain in resident evidence.',
               'These are zero-input inference vectors, not held-out digit accuracy or end-to-end serving measurements.', '']
