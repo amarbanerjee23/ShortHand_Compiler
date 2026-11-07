@@ -194,6 +194,8 @@ jobs:
         run: |
           set -euo pipefail
           {
+            ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+              baseline-venv/bin/python tests/ai_application/test_native_aot_importer.py --cxx clang++-18 --sanitizers
             CXX=clang++-18 SHORTHAND_AOT_SANITIZERS=1 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
               baseline-venv/bin/python experiments/aot/test_compile_model.py
             baseline-venv/bin/python experiments/aot/benchmark.py \

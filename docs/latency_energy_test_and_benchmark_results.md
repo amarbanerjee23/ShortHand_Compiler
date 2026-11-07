@@ -47,6 +47,16 @@ The [optional experiment collector](performance_event_diagnostics.md) records ca
 
 The generated-inference evidence now builds a separate PMU executable and captures empty, cold and warm boundaries for batches 1/16/32. The versioned bundle retains raw counts/scheduling/errors and source snapshots; its replay validates every record and keeps PMU executions out of latency and energy comparisons. CI requires the report and its lifecycle/isolation test marker; benchmark Markdown renders per-cell availability. Local validation passes seven PMU replay/corruption test methods, 17 existing generated-evidence methods, the CI index and Markdown tests, and a real ORT 1.30.0 diagnostic control with 64 checked warm calls plus cold/empty captures. This local control uses the direct ORT runner and is not an exact-head compiled-source benchmark. Hosted generated-source execution, sanitizers and final installer gates remain pending for this integration checkpoint.
 
+### Hosted PMU integration qualification
+
+Revision `7d35313705732aacc79b2f275a977b2bc2b93526` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42351362555), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42351365193), extended fuzzing, tooling and experiment-results. The [profile job](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42351362555/job/128340079147) passed the native collector ASan/LSan/UBSan contracts, generated-source diagnostic capture, strict replay and mandatory evidence index. Its [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-42351362555-1-7d3531370573) contains 37 assets and installers for Windows x64, Linux x64/arm64 and macOS arm64. These checks qualify that revision, not later importer code.
+
+### Native AOT importer foundation
+
+The [native bounded importer](native_aot_importer.md) reads an owned, size-limited ONNX snapshot without Python, a protobuf SDK or an ONNX SDK. It retains exact model identity and FP32 constants, reuses the existing dependency-envelope check, and distinguishes supported affine graphs from graphs requiring independent real-backend validation and rejected artifacts. It does not yet emit or execute source AOT kernels. The default runtime and frozen ABI are unchanged.
+
+Local GCC 13.3 validation passes 60 snapshot cases, with dimensions and exact constant byte hashes checked against the pinned independent Python/ONNX oracle. Cases cover raw/float_data encoding, both bias orders, signed zero, subnormals, the 65,536-element and 16 MiB limits, ownership, malformed/unsafe data and valid/invalid unsupported operators. The same 60 cases pass locally under GCC ASan/UBSan with leak detection explicitly disabled because of the local `/proc` limitation. Hosted ASan/LSan/UBSan is mandatory. Exact-head hosted qualification, AOT source integration and activation/workspace execution remain pending.
+
 ## Energy and power result
 
 The new counter fixtures are synthetic correctness tests, not hardware measurements. The training observations do not authorize a general timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim. Unavailable measurements retain null energy values.
