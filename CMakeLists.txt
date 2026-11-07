@@ -207,6 +207,13 @@ function(shorthand_configure_installable_target target export_name)
   set_target_properties(${target} PROPERTIES EXPORT_NAME ${export_name})
 endfunction()
 
+# Standalone experimental AOT artifact support has no ONNX Runtime dependency.
+add_library(shorthand_aot_support STATIC ${SRC_DIR}/aot/AotSupport.cpp)
+shorthand_configure_installable_target(shorthand_aot_support aot_support)
+if(NOT MSVC)
+  target_compile_options(shorthand_aot_support PRIVATE -fno-fast-math -ffp-contract=off)
+endif()
+
 add_library(shorthand_runtime STATIC ${SHORTHAND_RUNTIME_SOURCES})
 shorthand_configure_installable_target(shorthand_runtime runtime)
 target_link_libraries(shorthand_runtime PUBLIC Threads::Threads)
@@ -449,6 +456,7 @@ else()
 endif()
 
 install(TARGETS
+  shorthand_aot_support
   shorthand_runtime
   shorthand_runtime_shared
   shorthand_ai_bridge
@@ -504,6 +512,8 @@ if(TARGET shorthand_otlp_exporter)
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 endif()
+
+install(FILES ${SRC_DIR}/aot/AotSupport.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/shorthand/aot)
 
 install(FILES
   ${SRC_DIR}/runtime/ShorthandRuntime.h

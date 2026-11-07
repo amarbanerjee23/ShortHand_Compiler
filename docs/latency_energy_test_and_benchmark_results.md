@@ -57,6 +57,12 @@ The [native bounded importer](native_aot_importer.md) reads an owned, size-limit
 
 Local GCC 13.3 validation passes 60 snapshot cases, with dimensions and exact constant byte hashes checked against the pinned independent Python/ONNX oracle. Cases cover raw/float_data encoding, both bias orders, signed zero, subnormals, the 65,536-element and 16 MiB limits, ownership, malformed/unsafe data and valid/invalid unsupported operators. The same 60 cases pass locally under GCC ASan/UBSan with leak detection explicitly disabled because of the local `/proc` limitation. Hosted ASan/LSan/UBSan is mandatory. Exact-head hosted qualification, AOT source integration and activation/workspace execution remain pending.
 
+### Native importer hosted qualification and AOT support
+
+Importer revision `6582469f2ae7de0fcd194aebec05f1b733ec3031` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42375574100), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42375577880), extended fuzzing, tooling and experiment-results. Its [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-42375574100-1-6582469f2ae7) has 37 assets, including all four native platform installers.
+
+The new [standalone AOT support](native_aot_execution.md) validates bounded aligned regions, disjoint workspace, finite input and transactional output, current CPU policy and the FP environment. Normal GCC and ASan/UBSan contract tests pass locally, including 1,000 allocation-free default-policy calls with a positive allocation control and 4,000 calls across four workers. Local leak detection was disabled. No generated source kernel or performance claim is qualified by these helper tests; compiler integration and exact-head hosted checks remain pending.
+
 ## Energy and power result
 
 The new counter fixtures are synthetic correctness tests, not hardware measurements. The training observations do not authorize a general timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim. Unavailable measurements retain null energy values.
