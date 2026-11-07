@@ -92,6 +92,7 @@ jobs:
           python3 experiments/energy/test_ci_run_evidence.py
           python3 experiments/energy/test_render_benchmark_markdown.py
           python3 scripts/test_pr_benchmark_report.py
+          CXX=clang++-18 SHORTHAND_EVENT_SANITIZERS=ON python3 tests/ai_application/test_perf_event_diagnostics.py
           baseline-venv/bin/python experiments/energy/test_experiments.py
           echo 'PASS evidence regression suites'
           } | tee profile-output/evidence-tests.txt
