@@ -63,6 +63,12 @@ Importer revision `6582469f2ae7de0fcd194aebec05f1b733ec3031` passed all 21 [push
 
 The new [standalone AOT support](native_aot_execution.md) validates bounded aligned regions, disjoint workspace, finite input and transactional output, current CPU policy and the FP environment. Normal GCC and ASan/UBSan contract tests pass locally, including 1,000 allocation-free default-policy calls with a positive allocation control and 4,000 calls across four workers. Local leak detection was disabled. No generated source kernel or performance claim is qualified by these helper tests; compiler integration and exact-head hosted checks remain pending.
 
+### PR126 install-gate repair
+
+Support checkpoint `daca07e050641d64c8e5fcb5ecc03c9f6a17f78e` passed compiler/toolchain, MLIR sanitizers, security, reproducibility, the evidence profile and all four native package jobs. Both [push CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42402950232) and [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42402953927) failed `ubuntu-core`: the Prometheus install fixture enumerated build targets and omitted the newly installed `libshorthand_aot_support.a`. The aggregate gate therefore failed and release publication was skipped. The new native AOT support sanitizer test itself passed in the profile job; this is not an all-green checkpoint.
+
+Prometheus, OTLP and production-packaging install fixtures now build the complete configured default target, removing the duplicated target inventories that caused the omission. Testing remains disabled only in these existing packaging configurations, as before. The production-packaging fixture additionally requires the installed AOT header/archive and compiles and runs a consumer linked to `ShortHand::aot_support`. All existing adapter, ABI and package checks remain mandatory. Shell syntax and whitespace validation pass locally; full installation and replacement hosted results are pending at this repair checkpoint. No latency or energy claim changes.
+
 ## Energy and power result
 
 The new counter fixtures are synthetic correctness tests, not hardware measurements. The training observations do not authorize a general timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim. Unavailable measurements retain null energy values.

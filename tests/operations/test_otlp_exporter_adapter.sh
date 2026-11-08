@@ -43,13 +43,9 @@ cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" -G Ninja \
   -DSHORTHAND_BUILD_PROMETHEUS_ADAPTER=OFF
 
 stage build
-cmake --build "${BUILD_DIR}" --parallel 2 --target \
-  short_hand green_ai_tool \
-  shorthand_runtime shorthand_runtime_shared \
-  shorthand_ai_bridge shorthand_ai_bridge_shared \
-  shorthand_core shorthand_core_shared \
-  shorthand_serving shorthand_serving_worker shorthand_lsp \
-  shorthand_c3eco_measure shorthand_c3eco_lifecycle_boundary shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify shorthand_otlp_exporter
+# Installation consumes the complete configured SDK. Build its default target
+# so newly installed libraries cannot be omitted by a second target inventory.
+cmake --build "${BUILD_DIR}" --parallel 2
 EXPORTER="${BUILD_DIR}/shorthand_otlp_exporter"
 [[ -x "${EXPORTER}" ]] || { echo "error: OTLP exporter executable was not produced" >&2; exit 1; }
 
