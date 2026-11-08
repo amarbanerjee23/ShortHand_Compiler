@@ -11,6 +11,8 @@ read -r -a FLAGS <<< "${AI_ENERGY_CXXFLAGS:--std=c++17 -O1 -Wall -Wextra -Wpedan
 ENERGY_SOURCES=("${SRC_DIR}/ai_runtime/ExecutionPlan.cpp" "${SRC_DIR}/ai_runtime/energy/"*.cpp "${SRC_DIR}/ai_runtime/training/TrainingQualification.cpp" "${SRC_DIR}/module/Sha256.cpp")
 "${CXX_BIN}" "${FLAGS[@]}" -pthread -I"${ROOT_DIR}" "${ROOT_DIR}/tests/ai_energy/test_energy.cpp" "${ENERGY_SOURCES[@]}" -o "${WORK_DIR}/test_energy"
 "${WORK_DIR}/test_energy" "${WORK_DIR}/counters"
+"${CXX_BIN}" "${FLAGS[@]}" -pthread -I"${ROOT_DIR}" "${ROOT_DIR}/tests/ai_energy/test_training_workers.cpp" -o "${WORK_DIR}/test_training_workers"
+"${WORK_DIR}/test_training_workers"
 
 # Host-only regression uses a deterministic prepared-session test double.
 # It is additional coverage, never a replacement for mandatory real ONNX tests.

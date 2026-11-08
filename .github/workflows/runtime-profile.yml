@@ -89,9 +89,11 @@ jobs:
           python3 experiments/energy/test_pr_runtime_delta.py
           python3 experiments/energy/test_energy_status.py
           python3 experiments/energy/test_generated_infer_evidence.py
+          python3 experiments/energy/test_event_diagnostics.py
           python3 experiments/energy/test_ci_run_evidence.py
           python3 experiments/energy/test_render_benchmark_markdown.py
           python3 scripts/test_pr_benchmark_report.py
+          CXX=clang++-18 SHORTHAND_EVENT_SANITIZERS=ON python3 tests/ai_application/test_perf_event_diagnostics.py
           baseline-venv/bin/python experiments/energy/test_experiments.py
           echo 'PASS evidence regression suites'
           } | tee profile-output/evidence-tests.txt
@@ -180,10 +182,22 @@ jobs:
             --replay-sha256 "$(cat profile-output/immutable/manifest.sha256)"
           python3 experiments/energy/test_immutable_model_evidence.py --bundle profile-output/immutable
           cat profile-output/immutable/IMMUTABLE.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Qualify persistent training workers against the comparison base
+        run: |
+          set -euo pipefail
+          python3 experiments/energy/training_runtime_delta.py --base "$EVIDENCE_BASE_SHA" \
+            --output profile-output/training --cxx clang++-18 | tee profile-output/training-tests.txt
+          python3 experiments/energy/test_training_runtime_delta.py --bundle profile-output/training \
+            2>&1 | tee -a profile-output/training-tests.txt
+          echo 'PASS persistent training evidence replay and corruption rejection' | tee -a profile-output/training-tests.txt
       - name: Qualify and benchmark the opt-in bounded AOT backend
         run: |
           set -euo pipefail
           {
+            ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+              baseline-venv/bin/python tests/ai_application/test_native_aot_importer.py --cxx clang++-18 --sanitizers
+            ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+              python3 tests/ai_application/test_native_aot_support.py --cxx clang++-18 --sanitizers
             CXX=clang++-18 SHORTHAND_AOT_SANITIZERS=1 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
               baseline-venv/bin/python experiments/aot/test_compile_model.py
             baseline-venv/bin/python experiments/aot/benchmark.py \

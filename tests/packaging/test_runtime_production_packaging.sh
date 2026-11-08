@@ -34,14 +34,9 @@ cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" \
   -DSHORTHAND_BUILD_TESTING=OFF
 
 stage build-artifacts
-cmake --build "${BUILD_DIR}" --parallel 2 --target \
-  short_hand green_ai_tool \
-  shorthand_runtime shorthand_runtime_shared \
-  shorthand_ai_bridge shorthand_ai_bridge_shared \
-  shorthand_core shorthand_core_shared \
-  shorthand_serving shorthand_serving_worker shorthand_lsp \
-  shorthand_c3eco_measure shorthand_c3eco_lifecycle_boundary shorthand_c3eco_assess shorthand_c3eco_audit shorthand_ai_qualify \
-  shorthand_prometheus_adapter shorthand_otlp_exporter
+# Installation consumes the complete configured SDK. Build its default target
+# so newly installed libraries cannot be omitted by a second target inventory.
+cmake --build "${BUILD_DIR}" --parallel 2
 
 stage install-artifacts
 cmake --install "${BUILD_DIR}"
@@ -66,6 +61,8 @@ require_installed '*/include/shorthand/abi/shorthand_runtime_abi_v1.h'
 require_installed '*/include/shorthand/abi/shorthand_core_ffi_v1.h'
 require_installed '*/include/shorthand/core/ShorthandCore.hpp'
 require_installed '*/include/shorthand/serving/ServingRuntime.h'
+require_installed '*/include/shorthand/aot/AotSupport.h'
+require_installed '*/libshorthand_aot_support.a'
 require_installed '*/libshorthand_runtime.a'
 require_installed '*/libshorthand_ai_bridge.a'
 require_installed '*/libshorthand_core.a'
@@ -195,6 +192,17 @@ fi
 
 stage create-consumers
 mkdir -p "${CONSUMER_DIR}"
+cat > "${CONSUMER_DIR}/aot_consumer.cpp" <<'CPP'
+#include <aot/AotSupport.h>
+int main() {
+    float output[2]={9.0f,9.0f}, workspace[2]={2.0f,3.0f};
+    if(sh_aot_v1_prepare(nullptr,2,output,2,workspace,2,2,2)!=1) return 60;
+    if(output[0]!=9.0f || output[1]!=9.0f) return 61;
+    if(sh_aot_v1_commit(output,2,workspace,2)!=0) return 62;
+    return output[0]==2.0f && output[1]==3.0f ? 0 : 63;
+}
+CPP
+
 cat > "${CONSUMER_DIR}/runtime_consumer.cpp" <<'CPP'
 #include <runtime/ShorthandRuntime.h>
 
@@ -276,6 +284,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(ShortHand 1 CONFIG REQUIRED)
 
+add_executable(aot_static aot_consumer.cpp)
+target_link_libraries(aot_static PRIVATE ShortHand::aot_support)
+
 add_executable(runtime_static runtime_consumer.cpp)
 target_link_libraries(runtime_static PRIVATE ShortHand::runtime)
 
@@ -315,6 +326,7 @@ stage build-cmake-consumers
 cmake --build "${CONSUMER_BUILD_DIR}" --parallel 2
 
 stage run-cmake-consumers
+"${CONSUMER_BUILD_DIR}/aot_static"
 "${CONSUMER_BUILD_DIR}/runtime_static"
 "${CONSUMER_BUILD_DIR}/runtime_shared"
 "${CONSUMER_BUILD_DIR}/bridge_static"

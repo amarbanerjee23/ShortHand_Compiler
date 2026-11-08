@@ -1,6 +1,7 @@
 #include "ShortHand/Conversion/Lowering.h"
 #include "ShortHand/IR/ShortHandOps.h"
 #include "LoweringSupport.h"
+#include "TensorRuntimeLowering.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
@@ -17,11 +18,6 @@ using namespace mlir;
 namespace shorthand::lowering {
 namespace {
 std::string number(double value) { std::ostringstream s; s<<std::setprecision(17)<<value; return s.str(); }
-std::string shape(RankedTensorType t) {
-    std::string result;
-    for(int64_t dim:t.getShape()) { if(!result.empty()) result+=','; result+=std::to_string(dim); }
-    return result;
-}
 void failIf(ConversionPatternRewriter &r,CodeBuilder &c,Value condition,StringRef reason,StringRef code="SHD7030") {
     Block *current=r.getInsertionBlock();
     Block *next=r.splitBlock(current,r.getInsertionPoint());
@@ -66,27 +62,10 @@ struct InferPattern:OpConversionPattern<ir::InferOp> {
         if(!input.getElementType().isF32()||!output.getElementType().isF32()) return op.emitOpError("runtime inference lowering requires float32 tensors");
         if(input.getNumElements()>65536||output.getNumElements()>65536) return op.emitOpError("runtime lowering supports at most 65536 elements per tensor");
         auto module=op->getParentOfType<ModuleOp>(); CodeBuilder c{r,module,op.getLoc()};
-        std::string preference=model.getBackend().getName().str();
-        if(auto prefs=model->getAttrOfType<ArrayAttr>("shorthand.backend_preference")) {
-            preference.clear(); for(auto pref:prefs) { if(!preference.empty()) preference+=','; preference+=cast<StringAttr>(pref).str(); }
-        }
-        auto status=callStrings(c,"short_ai_register_model",{model.getSymName().str(),model.getFormat().str(),model.getPath().str(),model.getTask().str(),"float32",shape(input),shape(output),preference});
-        checkStatus(r,c,status,"model registration failed");
-        std::string inputName=model.getSymName().str()+"_input_"+shape(input),outputName=model.getSymName().str()+"_output_"+shape(output);
-        status=callStrings(c,"short_ai_register_tensor",{inputName,"float32",shape(input),std::to_string(input.getRank()),std::to_string(input.getNumElements())});
-        checkStatus(r,c,status,"input registration failed");
-        status=callStrings(c,"short_ai_register_tensor",{outputName,"float32",shape(output),std::to_string(output.getRank()),std::to_string(output.getNumElements())});
-        checkStatus(r,c,status,"output registration failed");
         auto inputType=getTypeConverter()->convertType(input),outputType=getTypeConverter()->convertType(output);
-        Value inputBuffer=c.slot(inputType),outputBuffer=c.slot(outputType),count=c.slot(r.getI32Type());
+        Value inputBuffer=c.slot(inputType),outputBuffer=c.slot(outputType);
         r.create<LLVM::StoreOp>(c.loc,adapt.getInput(),inputBuffer);
-        r.create<LLVM::StoreOp>(c.loc,r.create<LLVM::ZeroOp>(c.loc,outputType),outputBuffer);
-        r.create<LLVM::StoreOp>(c.loc,c.integer(0),count);
-        status=c.call("short_ai_infer_f32",r.getI32Type(),{c.string(model.getSymName()),c.string(inputName),inputBuffer,c.integer(input.getNumElements()),
-            c.string(outputName),outputBuffer,c.integer(output.getNumElements()),count}).getResult();
-        checkStatus(r,c,status,"AI runtime did not execute inference");
-        auto actual=r.create<LLVM::LoadOp>(c.loc,r.getI32Type(),count);
-        failIf(r,c,r.create<LLVM::ICmpOp>(c.loc,LLVM::ICmpPredicate::ne,actual,c.integer(output.getNumElements())),"AI runtime returned an unexpected tensor size");
+        inferTensorBuffers(c,model,inputBuffer,outputBuffer,[&](Value bad,StringRef reason){failIf(r,c,bad,reason);});
         r.replaceOpWithNewOp<LLVM::LoadOp>(op,outputType,outputBuffer);
         return success();
     }

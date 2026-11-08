@@ -1,8 +1,88 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `cb25d880e76f6017d960bba14783715e87a7ea24`
+Comparison base: `7ad856960a49a62b5a56197b348d8de3ea5f5ac8`
 
 ## Current PR evidence
+
+This is the single consolidated implementation PR following the October 2026 proposal audit. It is a draft until all bounded implementation packages and exact-head qualification are complete. This checkpoint fixes C++ powercap counter wrap qualification: the maximum possible gap includes the complete ending read, matching the conservative Python sampler. It also adds deterministic delayed-read, hidden-wrap, power-bound, changed-domain and invalid-window regressions.
+
+The existing session cache, PR123 borrowed input/output scratch and PR125 immutable capability are reused. Source tensors, bounded AOT integration, diagnostics and package qualification will be added in independently tested commits on this same PR. Lossy precision and broader operator/adaptive work remain conditional follow-ups. No unimplemented item is represented as complete.
+
+Local validation: PASS `check_ai_energy_qualification.sh`: 65 native energy/planner/training assertions, 2,000 alternating workspace calls with 80 rollbacks, 38 qualification CLI cases, 28 application cases, 49 comparison-integrity cases and 13 benchmark-contract cases. This invocation used the host-only backend; it is not real ONNX or hardware energy evidence. Full exact-head CI and four native installer lanes are required before ready-for-review. The existing successful trusted-push development release workflow remains enabled.
+
+### Persistent bounded training checkpoint
+
+The fixed reference CNN now reuses per-sample gradient buffers and a bounded worker pool across all batches. Convolution and backward scratch use fixed-size arrays. Sample order, FP32 reduction, optimizer, RNG, data and public training configuration remain unchanged. Worker creation failure joins previously started threads; tasks finish before shutdown; exceptions are propagated at the batch boundary. This only qualifies the existing synthetic trainer.
+
+The [local observations](benchmark_results/persistent-training-local.json) retain all 44 runs, compiler identity and the full bundle digest. Both seeds (42 and 7), both thread counts and both versions produced bit-identical final parameter hashes, loss and accuracy. Seed 42 reached 1.0 accuracy and final loss 0.016677837818861008. Timing uses separate executables without allocation instrumentation and includes data initialization, training, validation and worker teardown; it excludes destruction of the returned result. The source ablation links both trainer versions against identical common support code and the same host.
+
+| Threads | Base C++ new calls | Candidate C++ new calls | Median paired candidate/base time |
+|---|---:|---:|---:|
+| 1 | 10,729 | 521 | 0.9198 |
+| 2 | 11,241 | 527 | 0.8804 |
+
+Allocation counts cover ordinary C++ `new`/`new[]` during the training call, not all malloc/aligned allocations or whole-process memory. A separately injected 64-byte allocation is detected as exactly one additional call in all four cells. Six balanced timing pairs per cell are descriptive shared-host observations; no general reduction claim is authorized.
+
+Validation: the existing 65 numerical/energy/planner assertions and application gate pass. The worker test passes 402 batches with bounded construction, task exception recovery, partial construction cleanup, concurrent callers and idempotent shutdown. Two replay regression methods reject corrupted counts, quality, seed, time, parameters, omitted or modified source evidence and altered reports. The worker lifecycle test passes ASan/UBSan with leak detection disabled. Local LeakSanitizer cannot inspect `/proc`, so leak/race qualification remains mandatory in hosted CI. The runtime-profile job now captures and replays a fresh training comparison for each exact checkout, and its evidence index requires both the report and successful replay.
+
+### Hosted training qualification
+
+Revision `60cb216a1677ac8121d3818f4ed4d05b218db1b5` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/41181441139), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/41181444235), tooling and experiment-results. Compiler/conformance, numerical, TSan, ASan/LSan/UBSan, security, reproducibility, CTest, MLIR and all four native package lanes passed. This resolves the local leak/race limitation for that revision only.
+
+The [hosted profile job](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/41181441139/job/124479493204) retained the training manifest SHA-256 `e15db39eb91fce050860d8e53d767e1e5d6157e78bc1bf55a8549af7afbb220d`. Median paired candidate/base time ratios were 0.9119855645129279 (one thread) and 0.574383764783079 (two threads), with parameter/loss/accuracy parity, injected allocation controls and successful replay. These are separate hosted observations, not replacements for the local table. Hardware joules remain unavailable/null.
+
+The [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-41181441139-1-60cb216a1677) contains 37 assets, including Windows x64, Linux x64/arm64 and macOS arm64 installers. Its checks qualify the training checkpoint, not the following tensor changes.
+
+### Source tensor implementation checkpoint
+
+The [bounded source value contract](source_tensors.md) adds static FP32 initializers, checked flattened reads/stores and actual inference buffers across the interpreter, LLVM and MLIR backends. Declarations reset program-owned storage, preserve ordinary-array lookup and assignment evaluation order, and check execution readiness. A shared MLIR helper retains frozen-ABI status/count checks. Large tensor initialization uses memory operations instead of enormous aggregate stores. Model precision is canonicalized only for the new value path.
+
+The new mandatory differential suite passes locally: 213 commands across interpreter, LLVM and MLIR, including both native optimization levels. It checks nonzero real ONNX output, aliasing, 65,536-element storage/inference, FP32 rounding, lifecycle and deterministic failures using LLVM/MLIR 18 and ONNX Runtime 1.30.0. Native package consumers now require the checked values `43.5 43.5` at both optimization levels. The existing source suite (213 commands), real runtime lowering, grammar matrix, parser robustness (31 cases/17 mutations), 100,000-parse lifetime check and semantic differential gate also pass locally.
+
+Revision `57a4e5854de609ef862101f19e24f3172f804d27` passed [push CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42259258710), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42259265815), extended fuzzing, tooling and experiment-results. All four native package lanes passed. Its [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-42259258710-1-57a4e5854de6) contains 37 assets including Windows x64, Linux x64/arm64 and macOS arm64 installers. These checks qualify the source tensor checkpoint only. AOT integration and diagnostic evidence integration remain unfinished in this draft PR.
+
+### Performance-event collector checkpoint
+
+The [optional experiment collector](performance_event_diagnostics.md) records caller-thread user-space CPU cycles, instructions and generic cache misses with kernel IDs, enabled/running times and explicit unavailable reasons. Other threads are excluded. Counts remain raw and are never converted to joules. Native fault injection tests cover partial setup, every operation failure, short reads, changed IDs, scheduling, cleanup and thread ownership; ordinary builds exclude the collector. The native fault-injection and ordinary-build isolation tests pass locally with GCC 13.3, both normally and with ASan/UBSan. Leak detection was explicitly disabled because this environment cannot inspect `/proc`; hosted ASan/LSan/UBSan remains mandatory. The live local probe reports all three events unavailable (`open_failed`, errno 2), with null counts. Synthetic fixtures are not hardware measurements.
+
+The generated-inference evidence now builds a separate PMU executable and captures empty, cold and warm boundaries for batches 1/16/32. The versioned bundle retains raw counts/scheduling/errors and source snapshots; its replay validates every record and keeps PMU executions out of latency and energy comparisons. CI requires the report and its lifecycle/isolation test marker; benchmark Markdown renders per-cell availability. Local validation passes seven PMU replay/corruption test methods, 17 existing generated-evidence methods, the CI index and Markdown tests, and a real ORT 1.30.0 diagnostic control with 64 checked warm calls plus cold/empty captures. This local control uses the direct ORT runner and is not an exact-head compiled-source benchmark. Hosted generated-source execution, sanitizers and final installer gates remain pending for this integration checkpoint.
+
+### Hosted PMU integration qualification
+
+Revision `7d35313705732aacc79b2f275a977b2bc2b93526` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42351362555), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42351365193), extended fuzzing, tooling and experiment-results. The [profile job](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42351362555/job/128340079147) passed the native collector ASan/LSan/UBSan contracts, generated-source diagnostic capture, strict replay and mandatory evidence index. Its [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-42351362555-1-7d3531370573) contains 37 assets and installers for Windows x64, Linux x64/arm64 and macOS arm64. These checks qualify that revision, not later importer code.
+
+### Native AOT importer foundation
+
+The [native bounded importer](native_aot_importer.md) reads an owned, size-limited ONNX snapshot without Python, a protobuf SDK or an ONNX SDK. It retains exact model identity and FP32 constants, reuses the existing dependency-envelope check, and distinguishes supported affine graphs from graphs requiring independent real-backend validation and rejected artifacts. It does not yet emit or execute source AOT kernels. The default runtime and frozen ABI are unchanged.
+
+Local GCC 13.3 validation passes 60 snapshot cases, with dimensions and exact constant byte hashes checked against the pinned independent Python/ONNX oracle. Cases cover raw/float_data encoding, both bias orders, signed zero, subnormals, the 65,536-element and 16 MiB limits, ownership, malformed/unsafe data and valid/invalid unsupported operators. The same 60 cases pass locally under GCC ASan/UBSan with leak detection explicitly disabled because of the local `/proc` limitation. Hosted ASan/LSan/UBSan is mandatory. Exact-head hosted qualification, AOT source integration and activation/workspace execution remain pending.
+
+### Native importer hosted qualification and AOT support
+
+Importer revision `6582469f2ae7de0fcd194aebec05f1b733ec3031` passed all 21 [push CI jobs](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42375574100), [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42375577880), extended fuzzing, tooling and experiment-results. Its [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-42375574100-1-6582469f2ae7) has 37 assets, including all four native platform installers.
+
+The new [standalone AOT support](native_aot_execution.md) validates bounded aligned regions, disjoint workspace, finite input and transactional output, current CPU policy and the FP environment. Normal GCC and ASan/UBSan contract tests pass locally, including 1,000 allocation-free default-policy calls with a positive allocation control and 4,000 calls across four workers. Local leak detection was disabled. No generated source kernel or performance claim is qualified by these helper tests; compiler integration and exact-head hosted checks remain pending.
+
+### PR126 install-gate repair
+
+Support checkpoint `daca07e050641d64c8e5fcb5ecc03c9f6a17f78e` passed compiler/toolchain, MLIR sanitizers, security, reproducibility, the evidence profile and all four native package jobs. Both [push CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42402950232) and [PR CI](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/42402953927) failed `ubuntu-core`: the Prometheus install fixture enumerated build targets and omitted the newly installed `libshorthand_aot_support.a`. The aggregate gate therefore failed and release publication was skipped. The new native AOT support sanitizer test itself passed in the profile job; this is not an all-green checkpoint.
+
+Prometheus, OTLP and production-packaging install fixtures now build the complete configured default target, removing the duplicated target inventories that caused the omission. Testing remains disabled only in these existing packaging configurations, as before. The production-packaging fixture additionally requires the installed AOT header/archive and compiles and runs a consumer linked to `ShortHand::aot_support`. All existing adapter, ABI and package checks remain mandatory. Shell syntax and whitespace validation pass locally; full installation and replacement hosted results are pending at this repair checkpoint. No latency or energy claim changes.
+
+## Energy and power result
+
+The new counter fixtures are synthetic correctness tests, not hardware measurements. The training observations do not authorize a general timing improvement, measured joules, energy saving, carbon reduction, GA or certification claim. Unavailable measurements retain null energy values.
+
+## Reproduction
+
+Run `bash scripts/check_ai_energy_qualification.sh`. Capture the training comparison with `python3 experiments/energy/training_runtime_delta.py --base 7ad856960a49a62b5a56197b348d8de3ea5f5ac8 --output training-evidence --cxx c++`, then run `python3 experiments/energy/test_training_runtime_delta.py --bundle training-evidence`. Its synthetic counter tests also exercise the bounded training and existing application qualification contracts. The real ONNX, sanitizers, compiler differential and native installer gates remain mandatory in CI. Each following implementation commit updates this report with its actual results and limitations.
+
+## Historical PR125 evidence
+
+
+Comparison base: `cb25d880e76f6017d960bba14783715e87a7ea24`
+
+### PR125 implementation evidence
 
 This PR implements the R2 [owned immutable model capability](immutable_model_capability.md) on merged PR124. It verifies and owns bounded self-contained ONNX bytes once, prepares one CPU session per successful binding and reuses it behind a versioned internal handle. All calls and reset share the facade mutex; failed replacements preserve the prior slot, and released/replaced/reset handles reject. Input borrowing, private output scratch, finite validation and current routing policy remain enforced. The public C ABI, mutable-path content revalidation and default source lowering are unchanged.
 

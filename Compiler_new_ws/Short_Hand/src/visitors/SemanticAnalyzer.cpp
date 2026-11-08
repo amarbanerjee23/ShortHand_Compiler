@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <utility>
+#include <limits>
 
 namespace diag = shorthand::diagnostics;
 
@@ -336,6 +337,21 @@ ShortType SemanticAnalyzer::expressionType(AST_EXPRESSION_RULE *expression) {
         ShortType type = ShortType::Void;
         bool is_array = false;
         if (!lookupType(array->array_name, type, is_array)) {
+            auto tensor=tensors.find(array->array_name);
+            if(tensor!=tensors.end()) {
+                const auto &d=tensor->second;
+                if(shorthand::ai::parseElementType(d.element_type)!=shorthand::ai::ElementType::Float32 ||
+                   d.dynamic || d.total_elements<=0 || d.total_elements>65536) {
+                    diagnostics.errorAtNode(array,diag::SemanticUnsupportedExecutableType,
+                        "tensor indexing requires static FP32 storage with at most 65536 elements");
+                    return ShortType::Void;
+                }
+                array->tensor_element=true;
+                tensor_nodes.at(array->array_name)->data.accessed=true;
+                if(expressionType(array->index)!=ShortType::Int)
+                    diagnostics.errorAtNode(array->index,diag::SemanticTypeMismatch,"tensor index must have type int");
+                return ShortType::Float;
+            }
             diagnostics.errorAtNode(array, diag::SemanticUndeclaredVariable,
                                     "undeclared array: " + array->array_name);
             return ShortType::Void;
@@ -544,6 +560,27 @@ int SemanticAnalyzer::visit(AST_PROGRAM *p) {
     if (p->decl_block) p->decl_block->accept(*this);
     if (p->functions) p->functions->accept(*this);
     if (p->code_block) p->code_block->accept(*this);
+    for(auto *infer:tensor_inferences) {
+        const auto *in=infer->input_declaration,*out=infer->output_declaration;
+        if((in && (in->initialized || in->accessed)) || (out && (out->initialized || out->accessed))) {
+            auto bounded=[](const TensorDeclarationData *d) {
+                return d && shorthand::ai::parseElementType(d->element_type)==shorthand::ai::ElementType::Float32 &&
+                    !d->dynamic && d->total_elements>0 && d->total_elements<=65536;
+            };
+            if(!bounded(in) || !bounded(out))
+                diagnostics.errorAtNode(infer,diag::SemanticUnsupportedExecutableType,
+                    "value inference requires declared static FP32 input and output tensors with at most 65536 elements");
+            else if(models.count(infer->model_name)) {
+                const auto &model=models.at(infer->model_name);
+                if(shorthand::ai::parseElementType(model.precision)!=shorthand::ai::ElementType::Float32 ||
+                   shorthand::ai::parseShapeCsv(model.input_shape)!=shorthand::ai::parseShapeCsv(in->shape_csv) ||
+                   shorthand::ai::parseShapeCsv(model.output_shape)!=shorthand::ai::parseShapeCsv(out->shape_csv))
+                    diagnostics.errorAtNode(infer,diag::SemanticUnsupportedExecutableType,
+                        "value inference requires matching static FP32 model and tensor signatures");
+                else model_nodes.at(infer->model_name)->data.source_tensor_values=true;
+            }
+        }
+    }
     validateC3EcoProfiles();
     return diagnostics.hasErrors() ? 1 : 0;
 }
@@ -754,6 +791,7 @@ int SemanticAnalyzer::visit(AST_MODEL_DECLARATION *n) {
     if (models.count(d.name))
         diagnostics.errorAtNode(n, diag::AIModelRedeclared, "model redeclared: " + d.name);
     models[d.name] = d;
+    model_nodes[d.name] = n;
 
     auto format = shorthand::ai::parseModelFormat(d.format);
     if (d.format.empty() || format == shorthand::ai::ModelFormat::Unknown)
@@ -797,6 +835,18 @@ int SemanticAnalyzer::visit(AST_TENSOR_DECLARATION *n) {
     if (tensors.count(n->data.name))
         diagnostics.errorAtNode(n, diag::AITensorRedeclared, "tensor redeclared: " + n->data.name);
     tensors[n->data.name] = n->data;
+    tensor_nodes[n->data.name] = n;
+    if(n->data.initialized) {
+        const auto &d=n->data;
+        if(shorthand::ai::parseElementType(d.element_type)!=shorthand::ai::ElementType::Float32 ||
+           d.dynamic || d.total_elements<=0 || d.total_elements>65536 ||
+           d.values.size()!=static_cast<std::size_t>(d.total_elements))
+            diagnostics.errorAtNode(n,diag::AITensorInvalidShape,
+                "tensor initializer requires matching static FP32 shape with at most 65536 elements");
+        for(double v:d.values) if(!std::isfinite(v) || std::abs(v)>std::numeric_limits<float>::max()) {
+            diagnostics.errorAtNode(n,diag::SemanticTypeMismatch,"tensor initializer is outside the finite FP32 range"); break;
+        }
+    }
     if (!validShape(n->data.shape_csv))
         diagnostics.errorAtNode(n, diag::AITensorInvalidShape, "invalid tensor shape for " + n->data.name);
     return 0;
@@ -1222,6 +1272,9 @@ void SemanticAnalyzer::validateC3EcoProfiles() {
 }
 
 int SemanticAnalyzer::visit(AST_INFER_STATEMENT *n) {
+    tensor_inferences.push_back(n);
+    if(tensor_nodes.count(n->input_name)) n->input_declaration=&tensor_nodes.at(n->input_name)->data;
+    if(tensor_nodes.count(n->output_name)) n->output_declaration=&tensor_nodes.at(n->output_name)->data;
     if (!models.count(n->model_name))
         diagnostics.errorAtNode(n, diag::AIInferUnknownModel, "infer references unknown model: " + n->model_name);
     if (!tensors.empty() && !tensors.count(n->input_name))
@@ -1316,6 +1369,8 @@ int SemanticAnalyzer::visit(AST_GOTO_STATEMENT_RULE *n) {
 int SemanticAnalyzer::visit(AST_READ_RULE *n) {
     for (auto *variable : n->variables) {
         const ShortType type = expressionType(variable);
+        if(auto *array=dynamic_cast<AST_ARRAY_VARIABLE *>(variable); array && array->tensor_element)
+            diagnostics.errorAtNode(variable,diag::SemanticTypeMismatch,"read into a scalar float and assign to the tensor element");
         if (type == ShortType::String) {
             diagnostics.errorAtNode(variable, diag::SemanticUnsupportedExecutableType,
                                     "read into string is unavailable until a bounded input-capacity syntax is declared");

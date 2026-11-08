@@ -75,6 +75,9 @@ private:
 
     std::map<std::string, ModelDeclarationData> models;
     std::map<std::string, TensorDeclarationData> tensors;
+    std::map<std::string, AST_TENSOR_DECLARATION *> tensor_nodes;
+    std::map<std::string, AST_MODEL_DECLARATION *> model_nodes;
+    std::vector<AST_INFER_STATEMENT *> tensor_inferences;
     std::map<std::string, GreenAIContractData> contracts;
     std::set<std::string> c3eco_declarations;
     std::vector<AST_C3ECO_DECLARATION *> c3eco_profile_nodes;

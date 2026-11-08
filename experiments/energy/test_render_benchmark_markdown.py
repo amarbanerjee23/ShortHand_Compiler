@@ -5,6 +5,7 @@ import tempfile
 import unittest
 
 import render_benchmark_markdown as report
+from test_event_diagnostics import report_fixture
 
 
 class BenchmarkMarkdownTest(unittest.TestCase):
@@ -13,6 +14,7 @@ class BenchmarkMarkdownTest(unittest.TestCase):
             root = pathlib.Path(tmp)
             (root / "ci-energy").mkdir()
             (root / "generated-infer").mkdir()
+            (root / "generated-infer/events.json").write_text(json.dumps(report_fixture()))
             (root / "pr-runtime-delta").mkdir()
             (root / "run-evidence.json").write_text(json.dumps(dict(revision="abc", status="incomplete", missing=[])))
             (root / "generated-infer/report.json").write_text(json.dumps(dict(
@@ -48,6 +50,8 @@ class BenchmarkMarkdownTest(unittest.TestCase):
             self.assertIn("selected base revision", value)
             self.assertIn("Head/ORT ALL", value)
             self.assertIn("routing: 50.0%", value)
+            self.assertIn("0/6", value)
+            self.assertIn("open_failed (errno 13)", value)
             self.assertIn("excluded from all latency ratios and energy runs", value)
             self.assertNotIn("faster than the repeated-session baseline", value)
             self.assertIn("Joules, joules per task and watts are therefore `null`/unavailable", value)
@@ -57,6 +61,7 @@ class BenchmarkMarkdownTest(unittest.TestCase):
             root = pathlib.Path(tmp)
             for directory in ("ci-energy", "generated-infer", "pr-runtime-delta"):
                 (root / directory).mkdir()
+            (root / "generated-infer/events.json").write_text(json.dumps(report_fixture()))
             (root / "run-evidence.json").write_text(json.dumps(dict(revision="abc", status="complete", missing=[])))
             (root / "generated-infer/report.json").write_text(json.dumps(dict(success=True, latency_claim_authorized=False, energy_claim_authorized=False, rows=[])))
             (root / 'generated-infer/phases.json').write_text(json.dumps(dict(success=True, instrumented=True, latency_claim_authorized=False, energy_claim_authorized=False, rows=[])))

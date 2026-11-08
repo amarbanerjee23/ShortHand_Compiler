@@ -12,6 +12,10 @@
 #include <stdexcept>
 #include <vector>
 #include "runtime/RuntimePhaseProfile.h"
+#include "PerfEventDiagnostics.h"
+#if SHORTHAND_RUNTIME_EVENT_PROFILE && SHORTHAND_RUNTIME_PHASE_PROFILE
+#error Event and phase diagnostics require separate executables
+#endif
 #ifndef SHORTHAND_ORT_ALL
 #define SHORTHAND_ORT_ALL 0
 #endif
@@ -87,6 +91,12 @@ int main(int argc,char **argv) {
         file.read(reinterpret_cast<char *>(expected.data()),expected.size()*sizeof(float));
         check(bool(file) && file.peek()==std::char_traits<char>::eof(),"invalid_oracle");
         for(float v:expected) check(std::isfinite(v),"nonfinite_oracle");
+#if SHORTHAND_RUNTIME_EVENT_PROFILE
+        check(!observe,"event_profile_cannot_be_an_observer_control");
+        shorthand::event_profile::Capture<> empty_capture;
+        const auto empty_events=empty_capture.finish();
+        shorthand::event_profile::Capture<> cold_capture;
+#endif
         const auto cold_start=Clock::now();
 #if SHORTHAND_GENERATED
         short_runtime_reset();
@@ -109,6 +119,11 @@ int main(int argc,char **argv) {
         Direct direct(argv[1],batch); auto once=[&] { direct.run(); };
 #endif
         once(); const double cold=ms(cold_start);
+#if SHORTHAND_RUNTIME_EVENT_PROFILE
+        const auto cold_events=cold_capture.finish();
+        std::vector<shorthand::event_profile::Sample> event_blocks;
+        event_blocks.reserve(blocks);
+#endif
         for(int i=0;i<8;++i) once();
         calls=0; std::vector<double> elapsed;
 #if SHORTHAND_RUNTIME_PHASE_PROFILE
@@ -122,6 +137,9 @@ int main(int argc,char **argv) {
         std::sort(clock_pairs.begin(),clock_pairs.end());
 #endif
         for(int block=0;block<blocks;++block) {
+#if SHORTHAND_RUNTIME_EVENT_PROFILE
+            shorthand::event_profile::Capture<> capture;
+#endif
             const auto begin=Clock::now();
             for(int i=0;i<iterations;++i) {
 #if SHORTHAND_RUNTIME_PHASE_PROFILE
@@ -133,8 +151,27 @@ int main(int argc,char **argv) {
 #endif
             }
             elapsed.push_back(ms(begin));
+#if SHORTHAND_RUNTIME_EVENT_PROFILE
+            event_blocks.push_back(capture.finish());
+#endif
         }
         check(calls==std::uint64_t(iterations)*blocks,"incomplete_execution");
+#if SHORTHAND_RUNTIME_EVENT_PROFILE
+        (void)cold;
+        std::cout<<"{\"schema\":\"shorthand.generated_infer.events.v1\",\"success\":true"
+                 <<",\"diagnostic_only\":true,\"instrumented\":true,\"energy_claim_authorized\":false"
+                 <<",\"latency_claim_authorized\":false,\"hardware_measured_joules\":null"
+                 <<",\"batch\":"<<batch<<",\"iterations\":"<<iterations<<",\"completed_calls\":"<<calls
+                 <<",\"threads\":1,\"warmups\":8,\"cold_calls\":1,\"empty_calls\":0,\"empty_boundary\":";
+        shorthand::event_profile::json(std::cout,empty_events);
+        std::cout<<",\"cold_boundary\":"; shorthand::event_profile::json(std::cout,cold_events);
+        std::cout<<",\"warm_blocks\":[";
+        for(std::size_t i=0;i<event_blocks.size();++i) {
+            if(i) std::cout<<',';
+            shorthand::event_profile::json(std::cout,event_blocks[i]);
+        }
+        std::cout<<"]}\n";
+#else
         std::cout<<std::setprecision(17)<<"{\"schema\":\"shorthand.generated_infer.sample.v2\",\"success\":true,\"cold_session_ms\":"<<cold
                  <<",\"observation_mode\":\""<<(observe?"every_call":"last_call_after_timing")<<"\""
                  <<",\"completed_calls\":"<<calls<<",\"completed_vectors\":"<<calls*batch
@@ -166,5 +203,6 @@ int main(int argc,char **argv) {
         std::cout<<"false";
 #endif
         std::cout<<"}\n";
+#endif
     } catch(const std::exception &e) { std::cerr<<e.what()<<"\n"; return 1; }
 }

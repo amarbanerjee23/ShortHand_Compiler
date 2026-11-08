@@ -25,6 +25,9 @@ sir::TensorShape shape(const std::string &text) {
     std::istringstream in(text);
     std::string item;
     while (std::getline(in, item, ',')) {
+        const auto first=item.find_first_not_of(" \t\r\n"),last=item.find_last_not_of(" \t\r\n");
+        item=first==std::string::npos?std::string():item.substr(first,last-first+1);
+        if(!item.empty() && item.front()=='+') item.erase(0,1);
         std::int64_t n = 0;
         auto parsed = std::from_chars(item.data(), item.data()+item.size(), n);
         if (parsed.ec != std::errc{} || parsed.ptr != item.data()+item.size() || n <= 0) return {};
@@ -118,7 +121,7 @@ SemanticIRBuilder::Expr SemanticIRBuilder::expression(AST_EXPRESSION_RULE *node)
     else if (auto *n=dynamic_cast<AST_FLOAT_LITERAL *>(node)) { e.kind=Expr::Kind::Float; e.type=Type::Float64; e.decimal=n->value; }
     else if (auto *n=dynamic_cast<AST_STRING_LITERAL *>(node)) { e.kind=Expr::Kind::String; e.type=Type::String; e.name=unquote(n->string_literal); }
     else if (auto *n=dynamic_cast<AST_SIMPLE_VARIABLE *>(node)) { e.kind=Expr::Kind::Variable; e.name=n->variable_name; e.type=variableType(e.name); }
-    else if (auto *n=dynamic_cast<AST_ARRAY_VARIABLE *>(node)) { e.kind=Expr::Kind::Index; e.name=n->array_name; e.type=variableType(e.name); e.operands.push_back(expression(n->index)); }
+    else if (auto *n=dynamic_cast<AST_ARRAY_VARIABLE *>(node)) { e.kind=n->tensor_element?Expr::Kind::TensorIndex:Expr::Kind::Index; e.name=n->array_name; e.type=n->tensor_element?Type::Float64:variableType(e.name); e.operands.push_back(expression(n->index)); }
     else if (auto *n=dynamic_cast<AST_BINARY_EXPRESSION_RULE *>(node)) {
         e.kind=Expr::Kind::Binary; e.opcode=n->op;
         e.operands.push_back(expression(n->left)); e.operands.push_back(expression(n->right));
@@ -180,6 +183,7 @@ SemanticIRBuilder::Stmt SemanticIRBuilder::statement(AST_STATEMENT_RULE *node) {
     } else if (auto *n=dynamic_cast<AST_TENSOR_DECLARATION *>(node)) {
         s.kind=Stmt::Kind::Tensor; s.declaration=result_.tensors.size(); const auto &d=n->data;
         result_.tensors.emplace_back(d.name,element(d.element_type),shape(d.shape_csv),s.source_range);
+        result_.tensors.back().values=d.values;
     } else if (auto *n=dynamic_cast<AST_INFER_STATEMENT *>(node)) {
         s.kind=Stmt::Kind::Infer; s.declaration=result_.inferences.size(); result_.inferences.emplace_back(n->model_name,n->input_name,n->output_name,s.source_range);
     } else if (auto *n=dynamic_cast<AST_GREENAI_CONTRACT *>(node)) {

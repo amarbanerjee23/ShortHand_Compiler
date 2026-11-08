@@ -264,7 +264,7 @@ C3OPTGAP [ \t\r\n]*
 }
 [0-9][0-9]* {
     if (!shorthand_accept_token_size()) return ETOK;
-    yylval.int_val = atoi(yytext);
+    yylval.integer_token = {atoi(yytext), strtod(yytext, nullptr)};
     fprintf(flex_output, "integer literal: %s\n", yytext);
     return INT_LITERAL;
 }

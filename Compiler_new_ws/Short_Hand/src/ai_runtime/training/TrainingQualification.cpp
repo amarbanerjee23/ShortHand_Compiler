@@ -1,10 +1,12 @@
 #include "TrainingQualification.h"
+#include "PersistentWorkers.h"
 #include "../ExecutionPlan.h"
 #include <algorithm>
 #include <cmath>
 #include <exception>
 #include <stdexcept>
 #include <thread>
+#include <memory>
 namespace shorthand::ai {
 namespace {
 std::uint32_t nextRandom(std::uint32_t &s) { s^=s<<13; s^=s>>17; s^=s<<5; return s; }
@@ -18,9 +20,10 @@ std::vector<Example> dataset(unsigned count,std::uint32_t seed) {
     }
     return result;
 }
-std::vector<float> convolution(const std::vector<float> &in,unsigned channels,unsigned side,unsigned filters,
+template<unsigned channels,unsigned side,unsigned filters>
+std::array<float,filters*(side-2)*(side-2)> convolution(const std::array<float,channels*side*side> &in,
                                const std::vector<float> &w,std::size_t offset) {
-    unsigned width=side-2; std::vector<float> out(filters*width*width); auto bias=offset+filters*channels*9;
+    constexpr unsigned width=side-2; std::array<float,filters*width*width> out{}; auto bias=offset+filters*channels*9;
     for (unsigned f=0;f<filters;++f) for (unsigned y=0;y<width;++y) for (unsigned x=0;x<width;++x) {
         float sum=w[bias+f];
         for (unsigned c=0;c<channels;++c) for (unsigned ky=0;ky<3;++ky) for (unsigned kx=0;kx<3;++kx)
@@ -29,9 +32,11 @@ std::vector<float> convolution(const std::vector<float> &in,unsigned channels,un
     }
     return out;
 }
-std::vector<float> backward(const std::vector<float> &in,const std::vector<float> &out,const std::vector<float> &derivative,
-    unsigned channels,unsigned side,unsigned filters,const std::vector<float> &w,std::size_t offset,std::vector<float> &gradient) {
-    unsigned width=side-2; auto bias=offset+filters*channels*9; std::vector<float> input_derivative(in.size());
+template<unsigned channels,unsigned side,unsigned filters>
+std::array<float,channels*side*side> backward(const std::array<float,channels*side*side> &in,
+    const std::array<float,filters*(side-2)*(side-2)> &out,const std::array<float,filters*(side-2)*(side-2)> &derivative,
+    const std::vector<float> &w,std::size_t offset,std::vector<float> &gradient) {
+    constexpr unsigned width=side-2; auto bias=offset+filters*channels*9; std::array<float,channels*side*side> input_derivative{};
     for (unsigned f=0;f<filters;++f) for (unsigned y=0;y<width;++y) for (unsigned x=0;x<width;++x) {
         auto o=(f*width+y)*width+x; float d=out[o]>0?derivative[o]:0; gradient[bias+f]+=d;
         for (unsigned c=0;c<channels;++c) for (unsigned ky=0;ky<3;++ky) for (unsigned kx=0;kx<3;++kx) {
@@ -57,7 +62,9 @@ ReferenceCNN::ReferenceCNN(std::uint32_t seed):parameters(parameter_count) {
 float ReferenceCNN::lossAndGradient(const std::array<float,64> &image,unsigned label,std::vector<float> *gradient,unsigned *prediction) const {
     if (label>1 || parameters.size()!=parameter_count) throw std::runtime_error("invalid_cnn_input");
     for (float v:image) if (!std::isfinite(v)) throw std::runtime_error("nonfinite_cnn_input");
-    const std::vector<float> in(image.begin(),image.end()); auto a=convolution(in,1,8,4,parameters,0), b=convolution(a,4,6,8,parameters,40);
+    const auto &in=image;
+    auto a=convolution<1,8,4>(in,parameters,0);
+    auto b=convolution<4,6,8>(a,parameters,40);
     std::array<float,8> pool{};
     for (unsigned c=0;c<8;++c) for (unsigned i=0;i<16;++i) pool[c]+=b[c*16+i]/16.0f;
     std::array<float,2> logits{parameters[352],parameters[353]};
@@ -68,13 +75,15 @@ float ReferenceCNN::lossAndGradient(const std::array<float,64> &image,unsigned l
     if (!std::isfinite(loss)) throw std::runtime_error("nonfinite_training_loss");
     if (!gradient) return loss;
     gradient->assign(parameter_count,0); std::array<float,2> d{e0/(e0+e1),e1/(e0+e1)}; d[label]-=1;
-    std::vector<float> pd(8),bd(b.size());
+    std::array<float,8> pd{};
+    std::array<float,128> bd{};
     for (unsigned o=0;o<2;++o) {
         (*gradient)[352+o]=d[o];
         for (unsigned c=0;c<8;++c) { (*gradient)[336+o*8+c]=d[o]*pool[c]; pd[c]+=d[o]*parameters[336+o*8+c]; }
     }
     for (unsigned c=0;c<8;++c) for (unsigned i=0;i<16;++i) bd[c*16+i]=pd[c]/16.0f;
-    auto ad=backward(a,b,bd,4,6,8,parameters,40,*gradient); (void)backward(in,a,ad,1,8,4,parameters,0,*gradient); return loss;
+    auto ad=backward<4,6,8>(a,b,bd,parameters,40,*gradient);
+    (void)backward<1,8,4>(in,a,ad,parameters,0,*gradient); return loss;
 }
 TrainingOutcome trainCpuQualification(const TrainingConfiguration &c,energy::EnergyCollector &collector) {
     if (!c.epochs || c.epochs>100 || c.samples<8 || c.samples>4096 || c.validation_samples<2 || c.validation_samples>4096 ||
@@ -85,23 +94,22 @@ TrainingOutcome trainCpuQualification(const TrainingConfiguration &c,energy::Ene
     try {
         auto data=dataset(c.samples,c.seed^0x12345678U), validation=dataset(c.validation_samples,c.seed^0x87654321U);
         ReferenceCNN model(c.seed); out.initial_loss=evaluate(model,validation).first;
+        std::vector<std::vector<float>> gradients(c.batch_size,std::vector<float>(ReferenceCNN::parameter_count));
+        std::vector<float> losses(c.batch_size);
+        unsigned batch_start=0;
+        auto worker=[&](unsigned t) {
+            for(unsigned i=t;i<c.batch_size;i+=c.threads)
+                losses[i]=model.lossAndGradient(data[batch_start+i].image,data[batch_start+i].label,&gradients[i]);
+        };
+        std::unique_ptr<training_detail::PersistentWorkers> workers;
+        if(c.threads>1) workers=std::make_unique<training_detail::PersistentWorkers>(c.threads,worker);
+        out.epochs.reserve(c.epochs);
+        out.steps.reserve(static_cast<std::size_t>(c.epochs)*(c.samples/c.batch_size));
         for (unsigned epoch=0;epoch<c.epochs;++epoch) {
             auto epoch_start=collector.begin(); double loss=0;
             for (unsigned start=0;start<c.samples;start+=c.batch_size) {
-                auto step_start=collector.begin(); std::vector<std::vector<float>> gradients(c.batch_size);
-                std::vector<float> losses(c.batch_size); std::vector<std::exception_ptr> errors(c.threads);
-                auto worker=[&](unsigned t) {
-                    try { for (unsigned i=t;i<c.batch_size;i+=c.threads) losses[i]=model.lossAndGradient(data[start+i].image,data[start+i].label,&gradients[i]); }
-                    catch (...) { errors[t]=std::current_exception(); }
-                };
-                if (c.threads==1) worker(0);
-                else {
-                    std::vector<std::thread> workers;
-                    try { for (unsigned t=0;t<c.threads;++t) workers.emplace_back(worker,t); }
-                    catch (...) { for (auto &t:workers) t.join(); throw; }
-                    for (auto &t:workers) t.join();
-                }
-                for (const auto &e:errors) if (e) std::rethrow_exception(e);
+                auto step_start=collector.begin(); batch_start=start;
+                if(workers) workers->run(); else worker(0);
                 // Fixed-order FP32 reduction keeps optimizer semantics identical.
                 for (std::size_t p=0;p<model.parameters.size();++p) {
                     float sum=0; for (unsigned i=0;i<c.batch_size;++i) sum+=gradients[i][p];

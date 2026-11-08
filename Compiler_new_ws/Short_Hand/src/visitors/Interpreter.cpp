@@ -5,6 +5,8 @@
 #include "DiagnosticCodes.h"
 
 #include <cstdint>
+#include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -358,6 +360,14 @@ int Interpreter::visit(AST_ASSIGNMENT_RULE *assignment_statement)
     if (runtime_failed) return 1;
     assignment_statement->variable->accept(*this);
     if (runtime_failed) return 1;
+    if (auto *tensor=dynamic_cast<AST_ARRAY_VARIABLE *>(assignment_statement->variable); tensor && tensor->tensor_element) {
+        if(!std::isfinite(value.float_value) || std::abs(value.float_value)>std::numeric_limits<float>::max()) {
+            runtimeError(assignment_statement,diag::RuntimeInvalidState,"tensor store is outside the finite FP32 range");
+            return 1;
+        }
+        tensorValues.at(str).at(num)=static_cast<float>(value.float_value);
+        return 0;
+    }
     if (assignment_statement->variable->type == "array") {
         if (!writeArray(str, num, value)) {
             runtimeError(assignment_statement, diag::RuntimeArrayBounds,
@@ -742,6 +752,17 @@ int Interpreter::visit(AST_ARRAY_VARIABLE *variable)
     num = evaluate(variable->index).int_value;
     str = variable->array_name;
     if (runtime_failed) return 0;
+    if(variable->tensor_element) {
+        auto values=tensorValues.find(str);
+        if(values==tensorValues.end()) {
+            runtimeError(variable,diag::RuntimeInvalidState,"tensor declaration has not executed"); return 0;
+        }
+        if(num<0 || static_cast<std::size_t>(num)>=values->second.size()) {
+            runtimeError(variable,diag::RuntimeArrayBounds,"tensor index is outside bounds"); return 0;
+        }
+        current_value=defaultValue(ShortType::Float);
+        current_value.float_value=values->second[num]; return 0;
+    }
     RuntimeValue value;
     if (!readArray(str, num, value)) {
         runtimeError(variable, diag::RuntimeArrayBounds,
@@ -802,6 +823,12 @@ int Interpreter::visit(AST_MODEL_DECLARATION *n)
 int Interpreter::visit(AST_TENSOR_DECLARATION *n)
 {
     aiTensors[n->data.name] = n->data;
+    const auto &d=n->data;
+    if(shorthand::ai::parseElementType(d.element_type)==shorthand::ai::ElementType::Float32 &&
+       !d.dynamic && d.total_elements>0 && d.total_elements<=65536) {
+        auto &values=tensorValues[d.name]; values.assign(d.total_elements,0.0f);
+        std::transform(d.values.begin(),d.values.end(),values.begin(),[](double v){return static_cast<float>(v);});
+    }
     return 0;
 }
 
@@ -824,8 +851,13 @@ int Interpreter::visit(AST_C3ECO_DECLARATION *)
 
 int Interpreter::visit(AST_INFER_STATEMENT *n)
 {
+    const bool typed=(n->input_declaration && (n->input_declaration->initialized || n->input_declaration->accessed)) ||
+                     (n->output_declaration && (n->output_declaration->initialized || n->output_declaration->accessed));
     auto modelIt = aiModels.find(n->model_name);
     auto tensorIt = aiTensors.find(n->input_name);
+    if(typed && (modelIt==aiModels.end() || tensorValues.count(n->input_name)==0 || tensorValues.count(n->output_name)==0)) {
+        runtimeError(n,diag::RuntimeInvalidState,"inference declaration has not executed"); return 1;
+    }
     if (modelIt == aiModels.end()) {
         cout << "AI inference error: model=" << n->model_name << " runtime_backend=fallback reason=unknown_model" << endl;
         return 1;
@@ -835,14 +867,25 @@ int Interpreter::visit(AST_INFER_STATEMENT *n)
         return 1;
     }
     auto model = toModelSpec(modelIt->second);
+    if(typed) { model.precision="float32"; model.allow_fallback=false; }
     shorthand::ai::TensorBuffer input;
     input.spec.name = tensorIt->second.name;
     input.spec.element_type = shorthand::ai::parseElementType(tensorIt->second.element_type);
     input.spec.shape = shorthand::ai::parseShapeCsv(tensorIt->second.shape_csv);
     input.spec.element_count = shorthand::ai::productOfShape(input.spec.shape);
-    input.f32_data.assign(input.spec.element_count, 0.0f);
+    if(typed) input.f32_data=tensorValues.at(n->input_name);
+    else input.f32_data.assign(input.spec.element_count, 0.0f);
     shorthand::ai::AIRuntime runtime;
     auto result = runtime.infer(model, input);
+    if(typed) {
+        if(result.status!=shorthand::ai::InferenceStatus::Success ||
+           result.output_f32.size()!=tensorValues.at(n->output_name).size() ||
+           !std::all_of(result.output_f32.begin(),result.output_f32.end(),[](float v){return std::isfinite(v);})) {
+            runtimeError(n,diag::RuntimeInferenceFailure,"typed inference failed: "+result.reason); return 1;
+        }
+        tensorValues.at(n->output_name)=result.output_f32;
+        return 0;
+    }
     if (result.status == shorthand::ai::InferenceStatus::Success) {
         cout << "AI inference success: model=" << n->model_name
              << " runtime_backend=" << result.backend_name

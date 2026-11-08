@@ -39,8 +39,10 @@ PowercapEnergyCollector::PowercapEnergyCollector(Instrument i)
     : PowercapEnergyCollector("/sys/class/powercap", std::move(i), EvidenceClass::Measured) {}
 PowercapEnergyCollector::PowercapEnergyCollector(fs::path p, Instrument i, EvidenceClass e)
     : root_(std::move(p)), instrument_(std::move(i)), evidence_class_(e) {}
-PowercapEnergyCollector PowercapEnergyCollector::forTesting(const fs::path &p, Instrument i) {
-    return PowercapEnergyCollector(p, std::move(i), EvidenceClass::SyntheticTest);
+PowercapEnergyCollector PowercapEnergyCollector::forTesting(const fs::path &p, Instrument i, Clock clock) {
+    PowercapEnergyCollector result(p, std::move(i), EvidenceClass::SyntheticTest);
+    if (clock) result.clock_ = std::move(clock);
+    return result;
 }
 std::vector<DomainReading> PowercapEnergyCollector::readDomains() const {
     std::error_code ec;
@@ -80,9 +82,10 @@ std::vector<DomainReading> PowercapEnergyCollector::readDomains() const {
     return out;
 }
 EnergySample PowercapEnergyCollector::begin() {
-    EnergySample s; s.unix_seconds = unixSeconds(); s.monotonic = std::chrono::steady_clock::now();
+    EnergySample s; s.unix_seconds = unixSeconds(); s.monotonic = clock_();
     try { s.domains = readDomains(); s.available = true; s.reason = "counter_sampled"; }
     catch (const std::exception &e) { s.reason = e.what(); }
+    s.read_completed = clock_();
     return s;
 }
 EnergyMeasurement PowercapEnergyCollector::end(const EnergySample &a, std::uint64_t count) {
@@ -90,10 +93,15 @@ EnergyMeasurement PowercapEnergyCollector::end(const EnergySample &a, std::uint6
     const auto b = begin(); EnergyMeasurement m; m.source_kind = "rapl"; m.instrument = instrument_;
     m.start_unix_seconds = a.unix_seconds; m.end_unix_seconds = b.unix_seconds;
     m.elapsed_seconds = std::chrono::duration<double>(b.monotonic - a.monotonic).count();
-    m.functional_units = count; m.sample_count = 2; m.maximum_sample_gap_seconds = m.elapsed_seconds;
+    m.functional_units = count; m.sample_count = 2;
+    m.maximum_sample_gap_seconds = std::chrono::duration<double>(b.read_completed - a.monotonic).count();
     m.reason = !a.available ? a.reason : b.reason;
     if (!a.available || !b.available) return m;
     try {
+        if (a.read_completed < a.monotonic || b.monotonic < a.read_completed ||
+            b.read_completed < b.monotonic || m.elapsed_seconds <= 0)
+            throw std::runtime_error("invalid_counter_read_window");
+        const double maximum_gap = m.maximum_sample_gap_seconds;
         if (a.domains.size() != b.domains.size()) throw std::runtime_error("powercap_domains_changed");
         for (std::size_t i = 0; i < a.domains.size(); ++i) {
             const auto &x = a.domains[i], &y = b.domains[i];
@@ -101,10 +109,13 @@ EnergyMeasurement PowercapEnergyCollector::end(const EnergySample &a, std::uint6
                 throw std::runtime_error("powercap_domains_changed");
             const double j = static_cast<double>(counterDelta(x.counter_uj, y.counter_uj, x.range_uj)) / 1000000.0;
             if (x.contributes) {
-                if (evidence_class_ == EvidenceClass::Measured && (!x.range_uj || !std::isfinite(instrument_.maximum_power_w) ||
-                    instrument_.maximum_power_w <= 0 || m.elapsed_seconds * instrument_.maximum_power_w >= double(*x.range_uj) / 1000000.0))
+                // Positive deltas can hide complete wraps. Synthetic fixtures
+                // with a supplied power bound exercise the production rule too.
+                if ((evidence_class_ == EvidenceClass::Measured || instrument_.maximum_power_w != 0) &&
+                    (!x.range_uj || !std::isfinite(instrument_.maximum_power_w) || instrument_.maximum_power_w <= 0 ||
+                     maximum_gap * instrument_.maximum_power_w >= double(*x.range_uj) / 1000000.0))
                     throw std::runtime_error("counter_wrap_interval_unqualified");
-                if (instrument_.maximum_power_w > 0 && j > m.elapsed_seconds * instrument_.maximum_power_w)
+                if (instrument_.maximum_power_w > 0 && j > maximum_gap * instrument_.maximum_power_w)
                     throw std::runtime_error("counter_delta_exceeds_validated_power_bound");
                 m.joules += j;
             }

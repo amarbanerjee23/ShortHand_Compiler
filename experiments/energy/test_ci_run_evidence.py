@@ -4,6 +4,7 @@ import pathlib
 import tempfile
 import unittest
 import ci_run_evidence as evidence
+from test_event_diagnostics import report_fixture
 
 
 class RunEvidenceTest(unittest.TestCase):
@@ -26,6 +27,8 @@ class RunEvidenceTest(unittest.TestCase):
                                  hardware_measured_joules=None)
                 if claim == 'immutable_latency_and_model_io':
                     value['model_io_trace_verified'] = True
+                if claim == 'diagnostic_event_counters':
+                    value = report_fixture()
                 evidence.write(path, value)
             else:
                 with path.open('a') as stream:
@@ -71,6 +74,12 @@ class RunEvidenceTest(unittest.TestCase):
                 self.assertIs(result[key + '_reduction_claim_authorized'], False)
             self.assertIn('ci-energy/summary.json', result['hashes'])
             self.assertTrue((out / 'EVIDENCE.md').exists())
+            events_path = out / evidence.REQUIRED['diagnostic_event_counters']
+            corrupted = json.loads(events_path.read_text())
+            corrupted['rows'][0]['sample']['empty_boundary']['events'][0]['raw_count'] = 0
+            evidence.write(events_path, corrupted)
+            self.assertIn('diagnostic_event_counters', evidence.finalize(out, 'success')['missing'])
+            evidence.write(events_path, report_fixture())
             path.write_text('{broken')
             self.assertEqual(evidence.finalize(out, 'success')['status'], 'incomplete')
 

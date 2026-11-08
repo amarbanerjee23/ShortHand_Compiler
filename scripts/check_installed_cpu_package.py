@@ -144,6 +144,8 @@ def main():
                 output = run([executable], cwd=models, env=env)
                 if "Installed typed inference completed" not in output:
                     raise RuntimeError("compiled source did not complete real inference")
+                if "Installed tensor values 43.5 43.5" not in output:
+                    raise RuntimeError("compiled source did not preserve nonzero tensor values")
                 missing = work / "missing model"
                 missing.mkdir(exist_ok=True)
                 output = run([executable], cwd=missing, env=env, expect_failure=True)

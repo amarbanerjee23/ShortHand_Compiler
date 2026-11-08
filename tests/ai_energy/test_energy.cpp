@@ -68,6 +68,35 @@ int main(int argc,char **argv) {
         auto measurement=collector.end(start,2);
         check(measurement.available && measurement.joules==2 && measurement.domains.size()==2,"no_nested_double_count");
         check(!measurement.claimEligible() && measurement.evidence_class==EvidenceClass::SyntheticTest,"fake_rapl_claim_block");
+        // At 1 W the 10 J range would appear safe using only the 2 s start
+        // timestamp gap. A delayed ending read permits an unseen full wrap.
+        auto bounded=instrument(); bounded.maximum_power_w=1;
+        auto timed=[&](std::vector<int> seconds) {
+            return PowercapEnergyCollector::forTesting(root,bounded,
+                [seconds=std::move(seconds),index=std::size_t{0}]() mutable {
+                    return std::chrono::steady_clock::time_point{}+std::chrono::seconds(seconds.at(index++));
+                });
+        };
+        auto delayed=timed({0,1,2,12}); auto delayedStart=delayed.begin();
+        write(package/"energy_uj","2000000\n");
+        auto hiddenWrap=delayed.end(delayedStart,1);
+        check(!hiddenWrap.available && hiddenWrap.reason=="counter_wrap_interval_unqualified" &&
+              hiddenWrap.maximum_sample_gap_seconds==12 && hiddenWrap.joules==0,"delayed_read_hidden_positive_wrap");
+        auto exactBound=timed({0,1,2,10}); auto exactStart=exactBound.begin();
+        check(exactBound.end(exactStart,1).reason=="counter_wrap_interval_unqualified","exact_wrap_bound_rejected");
+        auto qualified=timed({0,1,2,3}); auto qualifiedStart=qualified.begin();
+        write(package/"energy_uj","4500000\n"); auto qualifiedResult=qualified.end(qualifiedStart,1);
+        check(qualifiedResult.available && qualifiedResult.joules==2.5 &&
+              qualifiedResult.maximum_sample_gap_seconds==3 && !qualifiedResult.claimEligible(),"full_window_power_bound");
+        auto reset=timed({0,1,2,3}); auto resetStart=reset.begin();
+        write(package/"energy_uj","0\n");
+        check(reset.end(resetStart,1).reason=="counter_delta_exceeds_validated_power_bound","implausible_reset_rejected");
+        auto changed=timed({0,1,2,3}); auto changedStart=changed.begin();
+        write(package/"max_energy_range_uj","20000000\n");
+        check(changed.end(changedStart,1).reason=="powercap_domains_changed","counter_range_change_rejected");
+        write(package/"max_energy_range_uj","10000000\n");
+        auto backwards=timed({0,2,1,3}); auto backwardsStart=backwards.begin();
+        check(backwards.end(backwardsStart,1).reason=="invalid_counter_read_window","overlapping_counter_windows_rejected");
         write(package/"energy_uj","nan\n"); check(!collector.begin().available,"malformed_telemetry");
         write(package/"energy_uj","0\n"); write(package/"name","package-0\tspoof\n"); check(!collector.begin().available,"control_character");
         write(package/"name","package-0\n");

@@ -58,7 +58,7 @@ struct Verifier {
     }
     bool exprImpl(const E &e,bool lvalue) {
         if(e.type!=T::Void&&!valueType(e.type,e.composite)) return fail("invalid expression type identity");
-        if(lvalue && e.kind!=E::Kind::Variable && e.kind!=E::Kind::Index) return fail("assignment/input requires a variable");
+        if(lvalue && e.kind!=E::Kind::Variable && e.kind!=E::Kind::Index && e.kind!=E::Kind::TensorIndex) return fail("assignment/input requires a variable");
         for(const auto &arg:e.operands) if(!expr(arg)) return false;
         switch(e.kind) {
         case E::Kind::Integer: return (e.type==T::Int32&&e.operands.empty())||fail("invalid integer expression");
@@ -149,7 +149,7 @@ struct Verifier {
         }
         case S::Kind::Expression: return count(1);
         case S::Kind::Read:
-            for(const auto &e:s.expressions) if(!expr(e,true)||!numeric(e.type)) return fail("unsupported read target");
+            for(const auto &e:s.expressions) if(e.kind==E::Kind::TensorIndex||!expr(e,true)||!numeric(e.type)) return fail("unsupported read target");
             return !s.expressions.empty()||fail("empty read");
         case S::Kind::Print:
             for(const auto &e:s.expressions) if(!scalar(e.type)) return fail("cannot print void");
@@ -233,7 +233,15 @@ struct Verifier {
             }
         }
         for(const auto &c:p.contracts) if(!identifier(c.name)||!contractNames.insert(c.name).second) return fail("duplicate/invalid contract");
-        for(const auto &i:p.inferences) if(!modelNames.count(i.model_name)||!tensorNames.count(i.input_tensor_name)||!tensorNames.count(i.output_tensor_name)) return fail("unresolved inference reference");
+        for(const auto &i:p.inferences) {
+            if(!modelNames.count(i.model_name)||!tensorNames.count(i.input_tensor_name)||!tensorNames.count(i.output_tensor_name)) return fail("unresolved inference reference");
+            const sir::ModelOp *model=nullptr; const sir::TensorOp *input=nullptr,*output=nullptr;
+            for(const auto &m:p.models) if(m.name==i.model_name) model=&m;
+            for(const auto &t:p.tensors) { if(t.name==i.input_tensor_name) input=&t; if(t.name==i.output_tensor_name) output=&t; }
+            if(model->precision!=sir::ElementType::Float32 || input->element_type!=sir::ElementType::Float32 || output->element_type!=sir::ElementType::Float32 ||
+               input->shape.dims!=model->input_shape.dims || output->shape.dims!=model->output_shape.dims)
+                return fail("runtime inference requires matching static FP32 model and tensor signatures");
+        }
         for(const auto &m:p.measurements) if(!contractNames.count(m.workload)) return fail("unresolved measurement contract");
         for(const auto &f:p.functions) {
             scopes.push_back({}); result=f.result; resultComposite=f.result_composite;

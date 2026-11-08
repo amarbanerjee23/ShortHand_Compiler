@@ -7,6 +7,7 @@ import json
 import os
 import pathlib
 import subprocess
+import event_diagnostics
 
 REQUIRED = {
     'compiled_session_reuse_and_invalidation': 'cache-tests.txt',
@@ -22,26 +23,34 @@ REQUIRED = {
     'compiled_phase_attribution': 'generated-infer/phases.json',
     'compiled_phase_execution_tests': 'phase-tests.txt',
     'compiled_phase_production_isolation': 'phase-tests.txt',
+    'diagnostic_event_counters': 'generated-infer/events.json',
+    'diagnostic_event_lifecycle_and_isolation': 'evidence-tests.txt',
     'same_runner_head_base_observations': 'pr-runtime-delta/summary.json',
     'resident_native_and_python_controls': 'resident-baselines/summary.json',
     'energy_capabilities': 'ci-energy-probe.json',
     'resident_component_energy_or_unavailable': 'ci-energy/summary.json',
     'bounded_aot_backend_observations': 'aot/report.json',
     'bounded_aot_correctness_and_sanitizers': 'aot-tests.txt',
+    'native_aot_importer_contracts': 'aot-tests.txt',
+    'native_aot_support_contracts': 'aot-tests.txt',
     'immutable_contract_and_lifecycle': 'immutable-tests.txt',
     'immutable_shared_abi_isolation': 'immutable-tests.txt',
     'immutable_sanitized_lifecycle': 'prepared-sanitizers.txt',
     'immutable_latency_and_model_io': 'immutable/report.json',
+    'persistent_training_observations': 'training/report.json',
+    'persistent_training_evidence_replay': 'training-tests.txt',
 }
 SCHEMAS = {
     'compiled_fp32_observations': 'shorthand.generated_infer.report.v2',
     'compiled_phase_attribution': 'shorthand.generated_infer.phases.v1',
+    'diagnostic_event_counters': 'shorthand.generated_infer.event_report.v1',
     'same_runner_head_base_observations': 'shorthand.energy.pr_runtime_delta.v1',
     'resident_native_and_python_controls': 'shorthand.energy.resident_baselines.v1',
     'energy_capabilities': 'shorthand.energy.ci_evidence.v1',
     'resident_component_energy_or_unavailable': 'shorthand.energy.ci_component_comparison.v1',
     'bounded_aot_backend_observations': 'shorthand.aot.report.v1',
     'immutable_latency_and_model_io': 'shorthand.immutable_model.report.v1',
+    'persistent_training_observations': 'shorthand.training_delta.v1',
 }
 PASS_MARKERS = {
     'compiled_session_reuse_and_invalidation': 'PASS real ONNX cache reuse',
@@ -55,10 +64,14 @@ PASS_MARKERS = {
     'real_digit_application_correctness': 'live_onnx=1',
     'compiled_phase_execution_tests': 'PASS compiled phase profiling:',
     'compiled_phase_production_isolation': 'PASS phase profile isolation: production archive has no diagnostic symbols',
+    'diagnostic_event_lifecycle_and_isolation': 'PASS event diagnostics: permission/fault paths, scheduling, descriptor lifecycle, live availability and isolation',
     'bounded_aot_correctness_and_sanitizers': 'PASS bounded AOT contracts and ASan/UBSan',
+    'native_aot_importer_contracts': 'PASS native AOT importer:',
+    'native_aot_support_contracts': 'PASS native AOT support:',
     'immutable_contract_and_lifecycle': 'PASS immutable ownership, digest, envelope, rollback, policy and stale handles',
     'immutable_shared_abi_isolation': 'PASS immutable shared-library symbol isolation',
     'immutable_sanitized_lifecycle': 'PASS immutable concurrent lifecycle:',
+    'persistent_training_evidence_replay': 'PASS persistent training evidence replay and corruption rejection',
 }
 
 
@@ -101,6 +114,8 @@ def finalize(out, job_status):
                     present = False
                 if claim == 'immutable_latency_and_model_io':
                     present = present and value.get('model_io_trace_verified') is True
+                if claim == 'diagnostic_event_counters':
+                    event_diagnostics.validate_report(value)
                 if any(v is not False for k, v in value.items()
                        if k.endswith(('_claim', '_claim_authorized', '_claim_eligible')) or k == 'claim_authorized'):
                     present = False

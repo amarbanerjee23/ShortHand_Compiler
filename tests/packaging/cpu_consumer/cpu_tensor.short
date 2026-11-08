@@ -1,5 +1,5 @@
 int status;
-tensor input float "1";
+tensor input float "1" = [42.5];
 tensor output float "1";
 model identity {
   format onnx;
@@ -13,5 +13,7 @@ model identity {
   quality_guardrail accuracy >= 1;
 };
 infer identity(input) -> output;
+output[0] = output[0] + 1.0;
 infer identity(output) -> input;
+print "Installed tensor values", output[0], input[0];
 print "Installed typed inference completed";

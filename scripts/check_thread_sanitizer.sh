@@ -134,3 +134,7 @@ printf 'PASS mandatory ThreadSanitizer race gate\n'
 TSAN_OPTIONS="halt_on_error=1:history_size=7:second_deadlock_stack=1" \
   timeout --signal=TERM --kill-after=2 120 "${WORK_DIR}/tsan_training"
 echo 'PASS mandatory CPU training ThreadSanitizer gate'
+"${CXX}" "${COMMON_FLAGS[@]}" -I"${ROOT_DIR}" "${ROOT_DIR}/tests/ai_energy/test_training_workers.cpp" -pie -o "${WORK_DIR}/tsan_training_workers"
+TSAN_OPTIONS="halt_on_error=1:history_size=7:second_deadlock_stack=1" \
+  timeout --signal=TERM --kill-after=2 120 "${WORK_DIR}/tsan_training_workers"
+echo 'PASS persistent training worker lifecycle ThreadSanitizer gate'
