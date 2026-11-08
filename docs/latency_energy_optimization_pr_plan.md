@@ -1,10 +1,17 @@
 # Latency and energy optimization PR plan
 
-Plan version: 2026-10-04, revision 6 — evidence-directed capability hot path and energy-contracted compiler roadmap
+Plan version: 2026-11-08, revision 7 — bounded native source AOT follow-up
 
-Implementation baseline: merged PR118, `master` at `9ef794f172423cebb6a83bfa75c06368da04ec72`
+Historical planning baseline: merged PR118, `master` at `9ef794f172423cebb6a83bfa75c06368da04ec72`
 
-Status: PR115–PR118 established prepared generated execution, bridge reuse, retained evidence, and phase attribution. PR119 is the active evidence-directed hot-path optimization. LE3 AOT/static-memory work and the energy-contracted training extension remain planned; no physical energy saving is claimed without valid E1/E2/E3 evidence.
+Status: PR126 is merged. The active follow-up completes bounded source AOT/hybrid integration and qualification in one PR. Remaining broader roadmap items retain their stated evidence gates.
+
+## Current bounded implementation status (2026-11-08)
+
+PR126 is merged at `2db9d1da7918ed816d499206df71b09d916725f5`. It delivered conservative counter windows, bounded persistent training, source FP32 tensors, isolated PMU diagnostics, native ONNX import and standalone AOT support. Its final checkpoint passed all 21 CI jobs and published all four native installer targets.
+
+One follow-up implements explicit source AOT/hybrid lowering, bounded transactional workspace, numerical and same-artifact C++ qualification, native installed consumers and this evidence update. Exact-head hosted qualification and source-path timing/read/allocation evidence are required before promoting performance claims. Broader operators, schedules, adaptive tuning and lossy precision remain conditional later work; unavailable joules cannot establish lower-energy or lowest-carbon claims.
+
 
 Planning PR: [GitHub PR114](https://github.com/amarbanerjee23/ShortHand_Compiler/pull/114)
 

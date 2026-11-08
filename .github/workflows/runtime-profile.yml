@@ -72,7 +72,7 @@ jobs:
             -DLLVM_CONFIG=/usr/bin/llvm-config-18 \
             -DSHORTHAND_ENABLE_ONNXRUNTIME=ON -DSHORTHAND_STRICT_OPTIONAL_BACKENDS=ON \
             -DONNXRUNTIME_ROOT="$PWD/build-profile/onnxruntime-1.30.0"
-          cmake --build build-profile --parallel 2 --target short_hand shorthand_ai_qualify shorthand_runtime shorthand_runtime_shared shorthand_runtime_profiled 2>&1 | tee profile-output/build.log
+          cmake --build build-profile --parallel 2 --target short_hand shorthand_ai_qualify shorthand_runtime shorthand_runtime_shared shorthand_runtime_profiled shorthand_aot_support 2>&1 | tee profile-output/build.log
           cp build-profile/CMakeCache.txt profile-output/
           git rev-parse HEAD > profile-output/revision.txt
           sha256sum build-profile/shorthand_ai_qualify > profile-output/executable.sha256
@@ -198,6 +198,8 @@ jobs:
               baseline-venv/bin/python tests/ai_application/test_native_aot_importer.py --cxx clang++-18 --sanitizers
             ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
               python3 tests/ai_application/test_native_aot_support.py --cxx clang++-18 --sanitizers
+            ORT_DISABLE_TELEMETRY=1 SHORTHAND_LLVM_CLANG=clang++-18 SHORTHAND_LLVM_OBJCOPY=llvm-objcopy-18 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+              baseline-venv/bin/python tests/mlir_lowering/test_aot_execution.py --build build-profile --sdk build-profile/onnxruntime-1.30.0 --sanitizers
             CXX=clang++-18 SHORTHAND_AOT_SANITIZERS=1 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
               baseline-venv/bin/python experiments/aot/test_compile_model.py
             baseline-venv/bin/python experiments/aot/benchmark.py \
