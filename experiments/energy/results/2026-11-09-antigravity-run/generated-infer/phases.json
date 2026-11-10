@@ -1,0 +1,242 @@
+{
+  "boundary": "exclusive phases of one warm compiled entry including independent output verification; clock overhead included",
+  "energy_claim_authorized": false,
+  "instrumented": true,
+  "latency_claim_authorized": false,
+  "manifest_sha256": "33e9da4503320ab380c6b1e4eebba8c965c35781ca5b62b745b730a094808feb",
+  "rows": [
+    {
+      "cell": "b1-t1",
+      "clock_pair_median_ns": 26,
+      "completed_calls": 64,
+      "mean_clock_reads_per_call": 40,
+      "mean_instrumented_ns_per_call": 32503.328125,
+      "phases": {
+        "backend_other": {
+          "fraction_of_instrumented_total": 0.05470160988321869,
+          "mean_ns_per_call": 1777.984375
+        },
+        "bridge_output": {
+          "fraction_of_instrumented_total": 0.0015248438501249632,
+          "mean_ns_per_call": 49.5625
+        },
+        "bridge_telemetry_log": {
+          "fraction_of_instrumented_total": 0.011456519116071286,
+          "mean_ns_per_call": 372.375
+        },
+        "bridge_validation": {
+          "fraction_of_instrumented_total": 0.005656632277560038,
+          "mean_ns_per_call": 183.859375
+        },
+        "descriptor_input": {
+          "fraction_of_instrumented_total": 0.003388595302500273,
+          "mean_ns_per_call": 110.140625
+        },
+        "entry_residual": {
+          "fraction_of_instrumented_total": 0.013969723292758963,
+          "mean_ns_per_call": 454.0625
+        },
+        "facade_lock": {
+          "fraction_of_instrumented_total": 0.004226009548060704,
+          "mean_ns_per_call": 137.359375
+        },
+        "hardware_probe": {
+          "fraction_of_instrumented_total": 0.22212677259492178,
+          "mean_ns_per_call": 7219.859375
+        },
+        "oracle": {
+          "fraction_of_instrumented_total": 0.0024997440165983003,
+          "mean_ns_per_call": 81.25
+        },
+        "ort_run": {
+          "fraction_of_instrumented_total": 0.08261653974857383,
+          "mean_ns_per_call": 2685.3125
+        },
+        "policy_refresh": {
+          "fraction_of_instrumented_total": 0.007850638372128238,
+          "mean_ns_per_call": 255.171875
+        },
+        "registration": {
+          "fraction_of_instrumented_total": 0.011902146559030253,
+          "mean_ns_per_call": 386.859375
+        },
+        "routing": {
+          "fraction_of_instrumented_total": 0.0010321058468531828,
+          "mean_ns_per_call": 33.546875
+        },
+        "runtime_telemetry": {
+          "fraction_of_instrumented_total": 0.052885930431162576,
+          "mean_ns_per_call": 1718.96875
+        },
+        "runtime_validation": {
+          "fraction_of_instrumented_total": 0.012591979763610745,
+          "mean_ns_per_call": 409.28125
+        },
+        "session_prepare": {
+          "fraction_of_instrumented_total": 0.0,
+          "mean_ns_per_call": 0.0
+        },
+        "snapshot": {
+          "fraction_of_instrumented_total": 0.5115702093968262,
+          "mean_ns_per_call": 16627.734375
+        }
+      }
+    },
+    {
+      "cell": "b16-t1",
+      "clock_pair_median_ns": 25,
+      "completed_calls": 64,
+      "mean_clock_reads_per_call": 40,
+      "mean_instrumented_ns_per_call": 34495.546875,
+      "phases": {
+        "backend_other": {
+          "fraction_of_instrumented_total": 0.06627168814815318,
+          "mean_ns_per_call": 2286.078125
+        },
+        "bridge_output": {
+          "fraction_of_instrumented_total": 0.0015033643382411227,
+          "mean_ns_per_call": 51.859375
+        },
+        "bridge_telemetry_log": {
+          "fraction_of_instrumented_total": 0.010594664619300951,
+          "mean_ns_per_call": 365.46875
+        },
+        "bridge_validation": {
+          "fraction_of_instrumented_total": 0.005739418357894928,
+          "mean_ns_per_call": 197.984375
+        },
+        "descriptor_input": {
+          "fraction_of_instrumented_total": 0.0024677098266759974,
+          "mean_ns_per_call": 85.125
+        },
+        "entry_residual": {
+          "fraction_of_instrumented_total": 0.014096475314974986,
+          "mean_ns_per_call": 486.265625
+        },
+        "facade_lock": {
+          "fraction_of_instrumented_total": 0.004052606427913023,
+          "mean_ns_per_call": 139.796875
+        },
+        "hardware_probe": {
+          "fraction_of_instrumented_total": 0.21501778988682868,
+          "mean_ns_per_call": 7417.15625
+        },
+        "oracle": {
+          "fraction_of_instrumented_total": 0.029954047510661476,
+          "mean_ns_per_call": 1033.28125
+        },
+        "ort_run": {
+          "fraction_of_instrumented_total": 0.07995869032008207,
+          "mean_ns_per_call": 2758.21875
+        },
+        "policy_refresh": {
+          "fraction_of_instrumented_total": 0.007775913104725927,
+          "mean_ns_per_call": 268.234375
+        },
+        "registration": {
+          "fraction_of_instrumented_total": 0.011666813877697076,
+          "mean_ns_per_call": 402.453125
+        },
+        "routing": {
+          "fraction_of_instrumented_total": 0.0011527756073587397,
+          "mean_ns_per_call": 39.765625
+        },
+        "runtime_telemetry": {
+          "fraction_of_instrumented_total": 0.05849351025834403,
+          "mean_ns_per_call": 2017.765625
+        },
+        "runtime_validation": {
+          "fraction_of_instrumented_total": 0.011135948254190418,
+          "mean_ns_per_call": 384.140625
+        },
+        "session_prepare": {
+          "fraction_of_instrumented_total": 0.0,
+          "mean_ns_per_call": 0.0
+        },
+        "snapshot": {
+          "fraction_of_instrumented_total": 0.48011858414695735,
+          "mean_ns_per_call": 16561.953125
+        }
+      }
+    },
+    {
+      "cell": "b32-t1",
+      "clock_pair_median_ns": 26,
+      "completed_calls": 64,
+      "mean_clock_reads_per_call": 40,
+      "mean_instrumented_ns_per_call": 36994.046875,
+      "phases": {
+        "backend_other": {
+          "fraction_of_instrumented_total": 0.07456816320531302,
+          "mean_ns_per_call": 2758.578125
+        },
+        "bridge_output": {
+          "fraction_of_instrumented_total": 0.0016332864367113121,
+          "mean_ns_per_call": 60.421875
+        },
+        "bridge_telemetry_log": {
+          "fraction_of_instrumented_total": 0.010562510268755234,
+          "mean_ns_per_call": 390.75
+        },
+        "bridge_validation": {
+          "fraction_of_instrumented_total": 0.0053974055791915845,
+          "mean_ns_per_call": 199.671875
+        },
+        "descriptor_input": {
+          "fraction_of_instrumented_total": 0.0028729284568167427,
+          "mean_ns_per_call": 106.28125
+        },
+        "entry_residual": {
+          "fraction_of_instrumented_total": 0.013866251284518329,
+          "mean_ns_per_call": 512.96875
+        },
+        "facade_lock": {
+          "fraction_of_instrumented_total": 0.0038207160864987145,
+          "mean_ns_per_call": 141.34375
+        },
+        "hardware_probe": {
+          "fraction_of_instrumented_total": 0.20798785615422075,
+          "mean_ns_per_call": 7694.3125
+        },
+        "oracle": {
+          "fraction_of_instrumented_total": 0.045680914032198594,
+          "mean_ns_per_call": 1689.921875
+        },
+        "ort_run": {
+          "fraction_of_instrumented_total": 0.08919171539001841,
+          "mean_ns_per_call": 3299.5625
+        },
+        "policy_refresh": {
+          "fraction_of_instrumented_total": 0.007173873836964478,
+          "mean_ns_per_call": 265.390625
+        },
+        "registration": {
+          "fraction_of_instrumented_total": 0.010377936652814494,
+          "mean_ns_per_call": 383.921875
+        },
+        "routing": {
+          "fraction_of_instrumented_total": 0.0010229686448706486,
+          "mean_ns_per_call": 37.84375
+        },
+        "runtime_telemetry": {
+          "fraction_of_instrumented_total": 0.04790424472856486,
+          "mean_ns_per_call": 1772.171875
+        },
+        "runtime_validation": {
+          "fraction_of_instrumented_total": 0.010472124104427275,
+          "mean_ns_per_call": 387.40625
+        },
+        "session_prepare": {
+          "fraction_of_instrumented_total": 0.0,
+          "mean_ns_per_call": 0.0
+        },
+        "snapshot": {
+          "fraction_of_instrumented_total": 0.46746710513811557,
+          "mean_ns_per_call": 17293.5
+        }
+      }
+    }
+  ],
+  "schema": "shorthand.generated_infer.phases.v1",
+  "success": true
+}

@@ -1,0 +1,14 @@
+{
+  "available": false,
+  "claim_authorized": false,
+  "comparative_energy_claim": false,
+  "component_energy_measured": false,
+  "evidence_class": null,
+  "highest_available_evidence_class": null,
+  "lowest_carbon_language_claim": false,
+  "official_certification_granted": false,
+  "physical_system_energy_measured": false,
+  "production_claim": false,
+  "reason": "readable CPU package/socket energy counters unavailable; E2/E3 profiles are not silently applied without the matching required runtime features",
+  "schema": "shorthand.energy.ci_component_comparison.v1"
+}

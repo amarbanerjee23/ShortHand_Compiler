@@ -1,0 +1,43 @@
+{
+  "baselines": [
+    "numpy",
+    "cpp17-o3",
+    "pytorch-eager",
+    "pytorch-compile"
+  ],
+  "comparative_energy_claim": false,
+  "external": {},
+  "hashes": {
+    "policy.json": "7065547a385ab4514249547db1c38bcb7abc0d57aecc674dffcce9c4701a2262",
+    "source/classifier.short": "b966a237441bf827bf5d6c50fa5058b098f061717087d052707a2800ad98f0ea",
+    "source/expected.json": "e5220f7e296a9279d1ef82e2f184126459e98723a774422ef52814026b3b261d",
+    "source/input.txt": "e9561ae453d0cdeeb0ee0d78dc48bf42a763b990193d30f683494cd76a4851dc",
+    "source/model.json": "7b01987979b64b8f864aa1b9dff8475c4342348d304c217042502714075e85ff"
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_csv": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "pairs": 30,
+  "profile": "torch",
+  "repetitions": 100,
+  "schema": "shorthand.energy.state-of-practice.plan.v1",
+  "scope": "UCI Optdigits FP64 nearest-centroid source workload on Linux x64 CPU",
+  "seed": 104,
+  "torch": {
+    "compile_cache": "warm-after-two-predeclared-warmups",
+    "python": "/home/antigravity/.venv/bin/python3",
+    "sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5",
+    "versions": {
+      "numpy": "2.3.5",
+      "numpy_record_sha256": "9934a67ff0f570b92eee775689cf940c4cf8f4cefa5682f900dc3609e622f85a",
+      "python": "3.12.16",
+      "torch": "2.9.1+cpu",
+      "torch_config_sha256": "a8e06abc2e9d85cbb98e138b330ab78399ec46cd1b2dd9d769a9837345190d25",
+      "torch_cuda_version": null,
+      "torch_git_version": "5811a8d7da873dd699ff6687092c225caffcf1bb",
+      "torch_record_sha256": "2f9ce86bfeaa8c4d5346336cc3aa64c8911a0c5d97337ad70d635618185f101d"
+    }
+  },
+  "warmups": 2
+}

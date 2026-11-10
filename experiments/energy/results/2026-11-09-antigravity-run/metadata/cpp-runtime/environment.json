@@ -1,0 +1,22 @@
+{
+  "affinity": [
+    0,
+    1
+  ],
+  "available_cpus": 2,
+  "clang_sha256": "71b0de1b06b1ffe3a68f1b15f3bfff1f80ba3351ac679be346fb515327494157",
+  "clang_version": "Debian clang version 14.0.6\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "completed_utc": "2026-11-09T18:50:37.493958+00:00",
+  "cpp_baseline_sha256": "30a0c5130225c26773de36aeade1fa6bdd2d4804f3fab607681029e49d31d3fb",
+  "implementation_sha256": {
+    "analysis.py": "9271bca684eb136df9befd3858d5b8dc143b3c560ce65582bd4461d822d6b238",
+    "campaign.py": "075b8e8c23fe3b776c230053d78d54a8d54e1b636d5e17167d11965e789f0006",
+    "cpp_onnx_baseline.cpp": "79da454795018284cd280dcfa7bd1a7784ef40475947b82e34a585c0a18c2364",
+    "runtime_state_of_practice.py": "5c0916512720ace35cbf702ce32ecc1c8454229fd78e52be892619df7a0df665"
+  },
+  "onnxruntime_library_sha256": "245a6f8c38127551057a1cd1ffd59f0a186a227ade4f3492dea2494eb565542e",
+  "onnxruntime_root": "/tmp/shorthand-onnxruntime-1.30.0",
+  "onnxruntime_version": "1.30.0",
+  "platform": "Linux-6.12.105+-x86_64-with-glibc2.36",
+  "tool_sha256": "e4ffa3220957ade11a5fb48001ef7866a75b0e9ac8247e1780c0884c8de4c0f9"
+}

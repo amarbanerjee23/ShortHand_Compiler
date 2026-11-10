@@ -1,0 +1,6342 @@
+{
+  "baseline_contract": "identical FP64 model/input/repetitions/predictions/checksum; whole process warm-OS-cache window",
+  "build_reports": [
+    {
+      "argv": [
+        "/home/antigravity/amarbanerjee23/ShortHand_Compiler/build/short_hand",
+        "/tmp/antigravity-campaign-run/source-r100/inputs/source/classifier.short",
+        "compile-mlir",
+        "--output",
+        "/tmp/antigravity-campaign-run/source-r100/build/shorthand.ll"
+      ],
+      "completed": 1,
+      "elapsed_ms": 82.07804300036514,
+      "end_unix_seconds": 1794249751.5678008,
+      "returncode": 0,
+      "start_unix_seconds": 1794249751.4857213,
+      "stderr": "shorthand-ir.stderr",
+      "stdout": "shorthand-ir.stdout"
+    },
+    {
+      "argv": [
+        "/usr/bin/clang++",
+        "/tmp/antigravity-campaign-run/source-r100/build/shorthand.ll",
+        "-O2",
+        "-fno-fast-math",
+        "-o",
+        "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+      ],
+      "completed": 1,
+      "elapsed_ms": 207.05596600009812,
+      "end_unix_seconds": 1794249751.7753792,
+      "returncode": 0,
+      "start_unix_seconds": 1794249751.5683212,
+      "stderr": "shorthand-link.stderr",
+      "stdout": "shorthand-link.stdout"
+    },
+    {
+      "argv": [
+        "/usr/bin/clang++",
+        "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.cpp",
+        "-std=c++17",
+        "-O3",
+        "-fno-fast-math",
+        "-o",
+        "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+      ],
+      "completed": 1,
+      "elapsed_ms": 432.79531999996834,
+      "end_unix_seconds": 1794249752.2087398,
+      "returncode": 0,
+      "start_unix_seconds": 1794249751.7759433,
+      "stderr": "cpp17-o3-build.stderr",
+      "stdout": "cpp17-o3-build.stdout"
+    }
+  ],
+  "comparative_energy_claim": false,
+  "expected": {
+    "accuracy": 0.8937117417918754,
+    "checksum": 822900,
+    "completed": 179700,
+    "predictions": [
+      1,
+      4,
+      0,
+      5,
+      7,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      8,
+      8,
+      5,
+      7,
+      9,
+      5,
+      4,
+      1,
+      1,
+      4,
+      9,
+      0,
+      8,
+      9,
+      1,
+      0,
+      9,
+      2,
+      3,
+      1,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      1,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      1,
+      1,
+      1,
+      7,
+      7,
+      3,
+      5,
+      9,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      1,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      7,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      1,
+      1,
+      7,
+      2,
+      1,
+      2,
+      2,
+      5,
+      5,
+      1,
+      8,
+      1,
+      4,
+      9,
+      0,
+      1,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      7,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      7,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      7,
+      6,
+      8,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      0,
+      8,
+      9,
+      3,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      5,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      8,
+      9,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      4,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      9,
+      2,
+      0,
+      2,
+      2,
+      6,
+      3,
+      3,
+      5,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      9,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      4,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      9,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      8,
+      1,
+      7,
+      5,
+      4,
+      4,
+      9,
+      2,
+      8,
+      2,
+      1,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      1,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      2,
+      2,
+      9,
+      4,
+      5,
+      6,
+      7,
+      1,
+      9,
+      0,
+      2,
+      2,
+      3,
+      7,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      2,
+      2,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      8,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      6,
+      7,
+      7,
+      3,
+      5,
+      6,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      6,
+      2,
+      6,
+      9,
+      3,
+      7,
+      9,
+      9,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      6,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      2,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      6,
+      9,
+      9,
+      1,
+      7,
+      6,
+      1,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      8,
+      1,
+      1,
+      4,
+      9,
+      0,
+      1,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      4,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      4,
+      4,
+      5,
+      6,
+      5,
+      0,
+      1,
+      8,
+      4,
+      8,
+      4,
+      1,
+      4,
+      7,
+      9,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      8,
+      4,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      1,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      8,
+      7,
+      4,
+      6,
+      3,
+      8,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      7,
+      0,
+      5,
+      3,
+      6,
+      4,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      8,
+      2,
+      5,
+      7,
+      4,
+      5,
+      4,
+      8,
+      8,
+      7,
+      9,
+      0,
+      8,
+      1,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      6,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      0,
+      7,
+      1,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      9,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      9,
+      2,
+      0,
+      2,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      8,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      1,
+      7,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      9,
+      8,
+      4,
+      9,
+      0,
+      1,
+      9,
+      1,
+      2,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      2,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      2,
+      2,
+      3,
+      4,
+      9,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      9,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      3,
+      7,
+      7,
+      3,
+      9,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      2,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      2,
+      7,
+      6,
+      3,
+      2,
+      2,
+      4,
+      6,
+      3,
+      2,
+      3,
+      9,
+      1,
+      7,
+      6,
+      9,
+      4,
+      3,
+      2,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      2,
+      7,
+      9,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      9,
+      7,
+      9,
+      5,
+      4,
+      4,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      3,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      7,
+      8,
+      2,
+      0,
+      8,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      9,
+      9,
+      1,
+      5,
+      0,
+      8,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      7,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      3,
+      5,
+      4,
+      2,
+      8,
+      4,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      5,
+      4,
+      1,
+      7,
+      7,
+      7,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      8,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      5,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      5,
+      8,
+      9,
+      8,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      9,
+      9,
+      7,
+      8,
+      3,
+      0,
+      1,
+      9,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      1,
+      5,
+      0,
+      9,
+      6,
+      2,
+      8,
+      9,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      0,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      9,
+      0,
+      9,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      9,
+      7,
+      7,
+      3,
+      5,
+      9,
+      0,
+      0,
+      2,
+      2,
+      7,
+      9,
+      2,
+      0,
+      9,
+      2,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      9,
+      5,
+      0,
+      9,
+      5,
+      2,
+      9,
+      2,
+      0,
+      0,
+      9,
+      7,
+      6,
+      3,
+      2,
+      9,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      9,
+      7,
+      6,
+      9,
+      4,
+      3,
+      9,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      9,
+      7,
+      9,
+      4,
+      4,
+      7,
+      2,
+      5,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      8,
+      4,
+      9,
+      0,
+      5,
+      9,
+      8,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      1,
+      8,
+      1,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      1,
+      7,
+      8,
+      9,
+      4,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      5,
+      8,
+      5,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      0,
+      2,
+      8,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      8,
+      7,
+      7,
+      7,
+      8,
+      4,
+      6,
+      6,
+      6,
+      8,
+      9,
+      1,
+      5,
+      0,
+      9,
+      5,
+      3,
+      8,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      8,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      3,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      2,
+      5,
+      7,
+      3,
+      5,
+      8,
+      4,
+      5,
+      0,
+      8,
+      5,
+      7,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      3,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      5,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      9,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      7,
+      5,
+      1,
+      0,
+      0,
+      2,
+      2,
+      7,
+      8,
+      2,
+      0,
+      1,
+      2,
+      6,
+      8,
+      8,
+      7,
+      3,
+      8,
+      4,
+      6,
+      6,
+      6,
+      4,
+      9,
+      8,
+      5,
+      0,
+      9,
+      5,
+      2,
+      8,
+      2,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      4,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      6,
+      8,
+      4,
+      5,
+      1,
+      4,
+      0,
+      5,
+      3,
+      6,
+      9,
+      6,
+      1,
+      7,
+      5,
+      4,
+      4,
+      7,
+      2,
+      8,
+      2,
+      2,
+      5,
+      7,
+      9,
+      5,
+      4,
+      8,
+      1,
+      4,
+      9,
+      0,
+      8,
+      9,
+      8,
+      0,
+      1,
+      1,
+      3,
+      4,
+      9,
+      6,
+      7,
+      8,
+      9,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      3,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      0,
+      9,
+      5,
+      5,
+      6,
+      5,
+      0,
+      3,
+      8,
+      9,
+      8,
+      4,
+      1,
+      7,
+      7,
+      3,
+      5,
+      1,
+      0,
+      0,
+      8,
+      1,
+      7,
+      8,
+      7,
+      0,
+      1,
+      1,
+      6,
+      3,
+      3,
+      7,
+      3,
+      3,
+      4,
+      6,
+      6,
+      6,
+      4,
+      8,
+      1,
+      5,
+      0,
+      9,
+      5,
+      1,
+      8,
+      1,
+      0,
+      0,
+      1,
+      7,
+      6,
+      3,
+      2,
+      1,
+      7,
+      1,
+      6,
+      3,
+      1,
+      3,
+      9,
+      1,
+      7,
+      1,
+      8,
+      4,
+      3
+    ]
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_file": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "pairs": [
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 15,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.90608699994482,
+        "end_unix_seconds": 1794249775.1730814,
+        "returncode": 0,
+        "start_unix_seconds": 1794249775.1131742,
+        "stderr": "pair-0-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-0-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.8894049997798,
+        "end_unix_seconds": 1794249775.112343,
+        "returncode": 0,
+        "start_unix_seconds": 1794249775.0464525,
+        "stderr": "pair-0-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-0-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 0,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7443.8854390000415,
+        "end_unix_seconds": 1794249782.6834009,
+        "returncode": 0,
+        "start_unix_seconds": 1794249775.2395139,
+        "stderr": "pair-1-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-1-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.89118899980895,
+        "end_unix_seconds": 1794249775.2387877,
+        "returncode": 0,
+        "start_unix_seconds": 1794249775.1738954,
+        "stderr": "pair-1-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-1-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 18,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.505765000267274,
+        "end_unix_seconds": 1794249782.7438738,
+        "returncode": 0,
+        "start_unix_seconds": 1794249782.684367,
+        "stderr": "pair-2-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-2-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.94243700010338,
+        "end_unix_seconds": 1794249782.8106763,
+        "returncode": 0,
+        "start_unix_seconds": 1794249782.7447329,
+        "stderr": "pair-2-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-2-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 19,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.70833099970696,
+        "end_unix_seconds": 1794249782.9354162,
+        "returncode": 0,
+        "start_unix_seconds": 1794249782.876707,
+        "stderr": "pair-3-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-3-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.56280199972753,
+        "end_unix_seconds": 1794249782.8759751,
+        "returncode": 0,
+        "start_unix_seconds": 1794249782.8114111,
+        "stderr": "pair-3-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-3-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 6,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1261.8153550001807,
+        "end_unix_seconds": 1794249784.263623,
+        "returncode": 0,
+        "start_unix_seconds": 1794249783.001806,
+        "stderr": "pair-4-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-4-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.76040399957128,
+        "end_unix_seconds": 1794249783.0009358,
+        "returncode": 0,
+        "start_unix_seconds": 1794249782.9361742,
+        "stderr": "pair-4-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-4-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 6,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.43711000008989,
+        "end_unix_seconds": 1794249784.3242154,
+        "returncode": 0,
+        "start_unix_seconds": 1794249784.264777,
+        "stderr": "pair-5-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-5-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.28966199994102,
+        "end_unix_seconds": 1794249784.3903134,
+        "returncode": 0,
+        "start_unix_seconds": 1794249784.3250227,
+        "stderr": "pair-5-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-5-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 26,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.50904900009846,
+        "end_unix_seconds": 1794249784.5162225,
+        "returncode": 0,
+        "start_unix_seconds": 1794249784.4567122,
+        "stderr": "pair-6-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-6-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.7645779999948,
+        "end_unix_seconds": 1794249784.4558773,
+        "returncode": 0,
+        "start_unix_seconds": 1794249784.3911116,
+        "stderr": "pair-6-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-6-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 5,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1231.7087669998728,
+        "end_unix_seconds": 1794249785.7486942,
+        "returncode": 0,
+        "start_unix_seconds": 1794249784.516984,
+        "stderr": "pair-7-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-7-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.3890400001037,
+        "end_unix_seconds": 1794249785.8160768,
+        "returncode": 0,
+        "start_unix_seconds": 1794249785.7496865,
+        "stderr": "pair-7-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-7-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 22,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 130.65749699990192,
+        "end_unix_seconds": 1794249785.9476497,
+        "returncode": 0,
+        "start_unix_seconds": 1794249785.816991,
+        "stderr": "pair-8-numpy-numpy.stderr",
+        "stdout": "pair-8-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.09712799970657,
+        "end_unix_seconds": 1794249786.0136464,
+        "returncode": 0,
+        "start_unix_seconds": 1794249785.9485476,
+        "stderr": "pair-8-numpy-shorthand.stderr",
+        "stdout": "pair-8-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 129.36603099979038,
+        "end_unix_seconds": 1794249786.2106545,
+        "returncode": 0,
+        "start_unix_seconds": 1794249786.0812874,
+        "stderr": "pair-9-numpy-numpy.stderr",
+        "stdout": "pair-9-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.02077800016559,
+        "end_unix_seconds": 1794249786.0805256,
+        "returncode": 0,
+        "start_unix_seconds": 1794249786.014504,
+        "stderr": "pair-9-numpy-shorthand.stderr",
+        "stdout": "pair-9-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 25,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1244.18354799991,
+        "end_unix_seconds": 1794249787.523241,
+        "returncode": 0,
+        "start_unix_seconds": 1794249786.2790556,
+        "stderr": "pair-10-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-10-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.5346790001422,
+        "end_unix_seconds": 1794249786.2780418,
+        "returncode": 0,
+        "start_unix_seconds": 1794249786.2115061,
+        "stderr": "pair-10-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-10-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1235.2032920002785,
+        "end_unix_seconds": 1794249788.8255525,
+        "returncode": 0,
+        "start_unix_seconds": 1794249787.5903473,
+        "stderr": "pair-11-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-11-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.28708699988783,
+        "end_unix_seconds": 1794249787.5895412,
+        "returncode": 0,
+        "start_unix_seconds": 1794249787.524253,
+        "stderr": "pair-11-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-11-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 28,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 60.46490799963067,
+        "end_unix_seconds": 1794249788.887024,
+        "returncode": 0,
+        "start_unix_seconds": 1794249788.8265579,
+        "stderr": "pair-12-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-12-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.22006199995667,
+        "end_unix_seconds": 1794249788.9541073,
+        "returncode": 0,
+        "start_unix_seconds": 1794249788.8878863,
+        "stderr": "pair-12-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-12-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 19,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 128.30254600021362,
+        "end_unix_seconds": 1794249789.148612,
+        "returncode": 0,
+        "start_unix_seconds": 1794249789.0203085,
+        "stderr": "pair-13-numpy-numpy.stderr",
+        "stdout": "pair-13-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.59704999997484,
+        "end_unix_seconds": 1794249789.019523,
+        "returncode": 0,
+        "start_unix_seconds": 1794249788.9549248,
+        "stderr": "pair-13-numpy-shorthand.stderr",
+        "stdout": "pair-13-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1229.9900189996151,
+        "end_unix_seconds": 1794249790.4447954,
+        "returncode": 0,
+        "start_unix_seconds": 1794249789.2148037,
+        "stderr": "pair-14-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-14-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.61244399997668,
+        "end_unix_seconds": 1794249789.214008,
+        "returncode": 0,
+        "start_unix_seconds": 1794249789.1493948,
+        "stderr": "pair-14-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-14-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 16,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.16032600023391,
+        "end_unix_seconds": 1794249790.5039062,
+        "returncode": 0,
+        "start_unix_seconds": 1794249790.445745,
+        "stderr": "pair-15-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-15-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 67.32281099993997,
+        "end_unix_seconds": 1794249790.5720909,
+        "returncode": 0,
+        "start_unix_seconds": 1794249790.504767,
+        "stderr": "pair-15-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-15-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 11,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1271.5218240000468,
+        "end_unix_seconds": 1794249791.8445253,
+        "returncode": 0,
+        "start_unix_seconds": 1794249790.5730023,
+        "stderr": "pair-16-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-16-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.79158499996629,
+        "end_unix_seconds": 1794249791.9103265,
+        "returncode": 0,
+        "start_unix_seconds": 1794249791.8455336,
+        "stderr": "pair-16-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-16-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 18,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7420.71581800019,
+        "end_unix_seconds": 1794249799.3319538,
+        "returncode": 0,
+        "start_unix_seconds": 1794249791.9112365,
+        "stderr": "pair-17-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-17-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.42975799993656,
+        "end_unix_seconds": 1794249799.398362,
+        "returncode": 0,
+        "start_unix_seconds": 1794249799.332931,
+        "stderr": "pair-17-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-17-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 19,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7492.860465000376,
+        "end_unix_seconds": 1794249806.892091,
+        "returncode": 0,
+        "start_unix_seconds": 1794249799.3992293,
+        "stderr": "pair-18-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-18-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.57235499985836,
+        "end_unix_seconds": 1794249806.9587994,
+        "returncode": 0,
+        "start_unix_seconds": 1794249806.8932254,
+        "stderr": "pair-18-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-18-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.69430699972872,
+        "end_unix_seconds": 1794249807.1530302,
+        "returncode": 0,
+        "start_unix_seconds": 1794249807.0253344,
+        "stderr": "pair-19-numpy-numpy.stderr",
+        "stdout": "pair-19-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.71560499994666,
+        "end_unix_seconds": 1794249807.0244446,
+        "returncode": 0,
+        "start_unix_seconds": 1794249806.9597278,
+        "stderr": "pair-19-numpy-shorthand.stderr",
+        "stdout": "pair-19-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 28,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1228.718862000278,
+        "end_unix_seconds": 1794249808.4481118,
+        "returncode": 0,
+        "start_unix_seconds": 1794249807.2193913,
+        "stderr": "pair-20-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-20-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.573006000046,
+        "end_unix_seconds": 1794249807.218471,
+        "returncode": 0,
+        "start_unix_seconds": 1794249807.153897,
+        "stderr": "pair-20-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-20-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 7,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 60.20883800010779,
+        "end_unix_seconds": 1794249808.5093384,
+        "returncode": 0,
+        "start_unix_seconds": 1794249808.4491284,
+        "stderr": "pair-21-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-21-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.29903199998444,
+        "end_unix_seconds": 1794249808.575472,
+        "returncode": 0,
+        "start_unix_seconds": 1794249808.5101724,
+        "stderr": "pair-21-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-21-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 9,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1229.0249250004308,
+        "end_unix_seconds": 1794249809.8706207,
+        "returncode": 0,
+        "start_unix_seconds": 1794249808.6415944,
+        "stderr": "pair-22-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-22-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.40121399964482,
+        "end_unix_seconds": 1794249808.6406283,
+        "returncode": 0,
+        "start_unix_seconds": 1794249808.5762258,
+        "stderr": "pair-22-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-22-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 7,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1236.4534199996342,
+        "end_unix_seconds": 1794249811.108257,
+        "returncode": 0,
+        "start_unix_seconds": 1794249809.8718019,
+        "stderr": "pair-23-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-23-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 63.69623499995214,
+        "end_unix_seconds": 1794249811.1729395,
+        "returncode": 0,
+        "start_unix_seconds": 1794249811.109242,
+        "stderr": "pair-23-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-23-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 18,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1238.5175490003348,
+        "end_unix_seconds": 1794249812.4781222,
+        "returncode": 0,
+        "start_unix_seconds": 1794249811.239603,
+        "stderr": "pair-24-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-24-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.05896699991354,
+        "end_unix_seconds": 1794249811.2388482,
+        "returncode": 0,
+        "start_unix_seconds": 1794249811.173788,
+        "stderr": "pair-24-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-24-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 6,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 130.27965399987806,
+        "end_unix_seconds": 1794249812.675542,
+        "returncode": 0,
+        "start_unix_seconds": 1794249812.5452614,
+        "stderr": "pair-25-numpy-numpy.stderr",
+        "stdout": "pair-25-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.27516999994987,
+        "end_unix_seconds": 1794249812.5443752,
+        "returncode": 0,
+        "start_unix_seconds": 1794249812.4790988,
+        "stderr": "pair-25-numpy-shorthand.stderr",
+        "stdout": "pair-25-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 25,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7393.527245999849,
+        "end_unix_seconds": 1794249820.1362705,
+        "returncode": 0,
+        "start_unix_seconds": 1794249812.7427413,
+        "stderr": "pair-26-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-26-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.32912200009378,
+        "end_unix_seconds": 1794249812.7419248,
+        "returncode": 0,
+        "start_unix_seconds": 1794249812.6765947,
+        "stderr": "pair-26-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-26-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 0,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1227.1249749996969,
+        "end_unix_seconds": 1794249821.3643756,
+        "returncode": 0,
+        "start_unix_seconds": 1794249820.1372492,
+        "stderr": "pair-27-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-27-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.56702200011932,
+        "end_unix_seconds": 1794249821.4299588,
+        "returncode": 0,
+        "start_unix_seconds": 1794249821.3653908,
+        "stderr": "pair-27-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-27-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 17,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.87372899997717,
+        "end_unix_seconds": 1794249821.5567126,
+        "returncode": 0,
+        "start_unix_seconds": 1794249821.430838,
+        "stderr": "pair-28-numpy-numpy.stderr",
+        "stdout": "pair-28-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.65141999979096,
+        "end_unix_seconds": 1794249821.622237,
+        "returncode": 0,
+        "start_unix_seconds": 1794249821.5575843,
+        "stderr": "pair-28-numpy-shorthand.stderr",
+        "stdout": "pair-28-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1228.9644800002861,
+        "end_unix_seconds": 1794249822.9174016,
+        "returncode": 0,
+        "start_unix_seconds": 1794249821.6884356,
+        "stderr": "pair-29-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-29-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.52685200019914,
+        "end_unix_seconds": 1794249821.687595,
+        "returncode": 0,
+        "start_unix_seconds": 1794249821.6230671,
+        "stderr": "pair-29-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-29-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 17,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1217.8143400001318,
+        "end_unix_seconds": 1794249824.1362305,
+        "returncode": 0,
+        "start_unix_seconds": 1794249822.9184148,
+        "stderr": "pair-30-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-30-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.11361200025567,
+        "end_unix_seconds": 1794249824.2015104,
+        "returncode": 0,
+        "start_unix_seconds": 1794249824.1373951,
+        "stderr": "pair-30-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-30-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 26,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.77830100008214,
+        "end_unix_seconds": 1794249824.3942394,
+        "returncode": 0,
+        "start_unix_seconds": 1794249824.2684603,
+        "stderr": "pair-31-numpy-numpy.stderr",
+        "stdout": "pair-31-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.35915499989642,
+        "end_unix_seconds": 1794249824.267694,
+        "returncode": 0,
+        "start_unix_seconds": 1794249824.202334,
+        "stderr": "pair-31-numpy-shorthand.stderr",
+        "stdout": "pair-31-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 3,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1219.2932889997792,
+        "end_unix_seconds": 1794249825.6143577,
+        "returncode": 0,
+        "start_unix_seconds": 1794249824.3950627,
+        "stderr": "pair-32-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-32-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.96863900019889,
+        "end_unix_seconds": 1794249825.6804059,
+        "returncode": 0,
+        "start_unix_seconds": 1794249825.615436,
+        "stderr": "pair-32-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-32-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 26,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1232.1091309995609,
+        "end_unix_seconds": 1794249826.9793265,
+        "returncode": 0,
+        "start_unix_seconds": 1794249825.7472155,
+        "stderr": "pair-33-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-33-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.08126300013828,
+        "end_unix_seconds": 1794249825.746284,
+        "returncode": 0,
+        "start_unix_seconds": 1794249825.681202,
+        "stderr": "pair-33-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-33-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 5,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7388.709487000142,
+        "end_unix_seconds": 1794249834.4352314,
+        "returncode": 0,
+        "start_unix_seconds": 1794249827.04652,
+        "stderr": "pair-34-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-34-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.11692300000504,
+        "end_unix_seconds": 1794249827.0456,
+        "returncode": 0,
+        "start_unix_seconds": 1794249826.9804816,
+        "stderr": "pair-34-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-34-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 13,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1231.8108629997369,
+        "end_unix_seconds": 1794249835.6680703,
+        "returncode": 0,
+        "start_unix_seconds": 1794249834.4362578,
+        "stderr": "pair-35-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-35-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.22601000006034,
+        "end_unix_seconds": 1794249835.7343187,
+        "returncode": 0,
+        "start_unix_seconds": 1794249835.6690917,
+        "stderr": "pair-35-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-35-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 9,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7432.482687000174,
+        "end_unix_seconds": 1794249843.2346337,
+        "returncode": 0,
+        "start_unix_seconds": 1794249835.8021493,
+        "stderr": "pair-36-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-36-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.18208500003675,
+        "end_unix_seconds": 1794249835.8013659,
+        "returncode": 0,
+        "start_unix_seconds": 1794249835.7351828,
+        "stderr": "pair-36-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-36-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 28,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7430.861362000087,
+        "end_unix_seconds": 1794249850.6665184,
+        "returncode": 0,
+        "start_unix_seconds": 1794249843.2356553,
+        "stderr": "pair-37-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-37-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.91812400008712,
+        "end_unix_seconds": 1794249850.7324624,
+        "returncode": 0,
+        "start_unix_seconds": 1794249850.6675427,
+        "stderr": "pair-37-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-37-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 26,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7347.778814999856,
+        "end_unix_seconds": 1794249858.081129,
+        "returncode": 0,
+        "start_unix_seconds": 1794249850.7333484,
+        "stderr": "pair-38-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-38-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.81486599998243,
+        "end_unix_seconds": 1794249858.1479769,
+        "returncode": 0,
+        "start_unix_seconds": 1794249858.082161,
+        "stderr": "pair-38-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-38-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 7,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7394.066338999892,
+        "end_unix_seconds": 1794249865.5429475,
+        "returncode": 0,
+        "start_unix_seconds": 1794249858.1488793,
+        "stderr": "pair-39-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-39-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.48684799963667,
+        "end_unix_seconds": 1794249865.6094577,
+        "returncode": 0,
+        "start_unix_seconds": 1794249865.5439696,
+        "stderr": "pair-39-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-39-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 3,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.68842400009817,
+        "end_unix_seconds": 1794249865.8032856,
+        "returncode": 0,
+        "start_unix_seconds": 1794249865.6755958,
+        "stderr": "pair-40-numpy-numpy.stderr",
+        "stdout": "pair-40-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.2629889998716,
+        "end_unix_seconds": 1794249865.6746776,
+        "returncode": 0,
+        "start_unix_seconds": 1794249865.6104136,
+        "stderr": "pair-40-numpy-shorthand.stderr",
+        "stdout": "pair-40-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 4,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1217.267050999908,
+        "end_unix_seconds": 1794249867.021414,
+        "returncode": 0,
+        "start_unix_seconds": 1794249865.804145,
+        "stderr": "pair-41-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-41-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.77190100006192,
+        "end_unix_seconds": 1794249867.0882041,
+        "returncode": 0,
+        "start_unix_seconds": 1794249867.0224307,
+        "stderr": "pair-41-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-41-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 28,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.14655700028743,
+        "end_unix_seconds": 1794249867.2161994,
+        "returncode": 0,
+        "start_unix_seconds": 1794249867.089052,
+        "stderr": "pair-42-numpy-numpy.stderr",
+        "stdout": "pair-42-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.69524200019805,
+        "end_unix_seconds": 1794249867.2817311,
+        "returncode": 0,
+        "start_unix_seconds": 1794249867.217035,
+        "stderr": "pair-42-numpy-shorthand.stderr",
+        "stdout": "pair-42-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 9,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.65776100038056,
+        "end_unix_seconds": 1794249867.407428,
+        "returncode": 0,
+        "start_unix_seconds": 1794249867.3477693,
+        "stderr": "pair-43-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-43-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.4377240000722,
+        "end_unix_seconds": 1794249867.346974,
+        "returncode": 0,
+        "start_unix_seconds": 1794249867.2825353,
+        "stderr": "pair-43-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-43-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 17,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7433.098978000089,
+        "end_unix_seconds": 1794249874.8412585,
+        "returncode": 0,
+        "start_unix_seconds": 1794249867.4081576,
+        "stderr": "pair-44-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-44-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.08486199982144,
+        "end_unix_seconds": 1794249874.9073644,
+        "returncode": 0,
+        "start_unix_seconds": 1794249874.8422782,
+        "stderr": "pair-44-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-44-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.8143600002295,
+        "end_unix_seconds": 1794249875.1016302,
+        "returncode": 0,
+        "start_unix_seconds": 1794249874.9738145,
+        "stderr": "pair-45-numpy-numpy.stderr",
+        "stdout": "pair-45-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.74981200017282,
+        "end_unix_seconds": 1794249874.9729826,
+        "returncode": 0,
+        "start_unix_seconds": 1794249874.908227,
+        "stderr": "pair-45-numpy-shorthand.stderr",
+        "stdout": "pair-45-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7450.988566999968,
+        "end_unix_seconds": 1794249882.6177583,
+        "returncode": 0,
+        "start_unix_seconds": 1794249875.166768,
+        "stderr": "pair-46-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-46-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 63.0741750001107,
+        "end_unix_seconds": 1794249875.1659338,
+        "returncode": 0,
+        "start_unix_seconds": 1794249875.1028585,
+        "stderr": "pair-46-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-46-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 25,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 61.197810000066966,
+        "end_unix_seconds": 1794249882.6801403,
+        "returncode": 0,
+        "start_unix_seconds": 1794249882.6189406,
+        "stderr": "pair-47-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-47-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 63.9608850001423,
+        "end_unix_seconds": 1794249882.7451289,
+        "returncode": 0,
+        "start_unix_seconds": 1794249882.6811671,
+        "stderr": "pair-47-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-47-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 2,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1231.1249210001733,
+        "end_unix_seconds": 1794249884.0430355,
+        "returncode": 0,
+        "start_unix_seconds": 1794249882.811909,
+        "stderr": "pair-48-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-48-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.06927700002052,
+        "end_unix_seconds": 1794249882.811023,
+        "returncode": 0,
+        "start_unix_seconds": 1794249882.7459528,
+        "stderr": "pair-48-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-48-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.99126699974295,
+        "end_unix_seconds": 1794249884.2391953,
+        "returncode": 0,
+        "start_unix_seconds": 1794249884.1112027,
+        "stderr": "pair-49-numpy-numpy.stderr",
+        "stdout": "pair-49-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.1871180000162,
+        "end_unix_seconds": 1794249884.1102543,
+        "returncode": 0,
+        "start_unix_seconds": 1794249884.044066,
+        "stderr": "pair-49-numpy-shorthand.stderr",
+        "stdout": "pair-49-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 4,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 61.296703000152775,
+        "end_unix_seconds": 1794249884.3013232,
+        "returncode": 0,
+        "start_unix_seconds": 1794249884.2400255,
+        "stderr": "pair-50-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-50-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.4152770000801,
+        "end_unix_seconds": 1794249884.3667018,
+        "returncode": 0,
+        "start_unix_seconds": 1794249884.3022857,
+        "stderr": "pair-50-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-50-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 16,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7411.877451000237,
+        "end_unix_seconds": 1794249891.7793946,
+        "returncode": 0,
+        "start_unix_seconds": 1794249884.3675156,
+        "stderr": "pair-51-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-51-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.23005600001852,
+        "end_unix_seconds": 1794249891.8457017,
+        "returncode": 0,
+        "start_unix_seconds": 1794249891.7804706,
+        "stderr": "pair-51-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-51-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.301203999893914,
+        "end_unix_seconds": 1794249891.9725997,
+        "returncode": 0,
+        "start_unix_seconds": 1794249891.9132974,
+        "stderr": "pair-52-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-52-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.89205900036177,
+        "end_unix_seconds": 1794249891.912451,
+        "returncode": 0,
+        "start_unix_seconds": 1794249891.846558,
+        "stderr": "pair-52-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-52-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 29,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1226.4828359998319,
+        "end_unix_seconds": 1794249893.1998484,
+        "returncode": 0,
+        "start_unix_seconds": 1794249891.9733639,
+        "stderr": "pair-53-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-53-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.55796100019506,
+        "end_unix_seconds": 1794249893.2664077,
+        "returncode": 0,
+        "start_unix_seconds": 1794249893.2008483,
+        "stderr": "pair-53-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-53-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 11,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.97353599994676,
+        "end_unix_seconds": 1794249893.3932776,
+        "returncode": 0,
+        "start_unix_seconds": 1794249893.267303,
+        "stderr": "pair-54-numpy-numpy.stderr",
+        "stdout": "pair-54-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.9497029999111,
+        "end_unix_seconds": 1794249893.4590378,
+        "returncode": 0,
+        "start_unix_seconds": 1794249893.3940868,
+        "stderr": "pair-54-numpy-shorthand.stderr",
+        "stdout": "pair-54-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 21,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1221.7130920003,
+        "end_unix_seconds": 1794249894.7474556,
+        "returncode": 0,
+        "start_unix_seconds": 1794249893.5257409,
+        "stderr": "pair-55-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-55-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.09251199986466,
+        "end_unix_seconds": 1794249893.5249395,
+        "returncode": 0,
+        "start_unix_seconds": 1794249893.4598463,
+        "stderr": "pair-55-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-55-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 14,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 132.24637099983738,
+        "end_unix_seconds": 1794249894.9461362,
+        "returncode": 0,
+        "start_unix_seconds": 1794249894.8138888,
+        "stderr": "pair-56-numpy-numpy.stderr",
+        "stdout": "pair-56-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.59093900002699,
+        "end_unix_seconds": 1794249894.8130794,
+        "returncode": 0,
+        "start_unix_seconds": 1794249894.748487,
+        "stderr": "pair-56-numpy-shorthand.stderr",
+        "stdout": "pair-56-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 8,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 128.18765000019994,
+        "end_unix_seconds": 1794249895.1408882,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.0126991,
+        "stderr": "pair-57-numpy-numpy.stderr",
+        "stdout": "pair-57-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.74543900003482,
+        "end_unix_seconds": 1794249895.0118318,
+        "returncode": 0,
+        "start_unix_seconds": 1794249894.9470854,
+        "stderr": "pair-57-numpy-shorthand.stderr",
+        "stdout": "pair-57-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.02452700001959,
+        "end_unix_seconds": 1794249895.2669618,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.2079365,
+        "stderr": "pair-58-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-58-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.28848500011009,
+        "end_unix_seconds": 1794249895.2070384,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.1417487,
+        "stderr": "pair-58-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-58-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 0,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.80681199980609,
+        "end_unix_seconds": 1794249895.3275397,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.2677317,
+        "stderr": "pair-59-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-59-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.47465099993133,
+        "end_unix_seconds": 1794249895.3938022,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.3283267,
+        "stderr": "pair-59-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-59-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 5,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.153565999873535,
+        "end_unix_seconds": 1794249895.518844,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.4606893,
+        "stderr": "pair-60-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-60-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.04811000013433,
+        "end_unix_seconds": 1794249895.4597826,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.3947337,
+        "stderr": "pair-60-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-60-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 20,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7518.116414999895,
+        "end_unix_seconds": 1794249903.1036446,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.5855265,
+        "stderr": "pair-61-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-61-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.95763699967938,
+        "end_unix_seconds": 1794249895.584667,
+        "returncode": 0,
+        "start_unix_seconds": 1794249895.519708,
+        "stderr": "pair-61-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-61-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 21,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 60.069481000027736,
+        "end_unix_seconds": 1794249903.1649077,
+        "returncode": 0,
+        "start_unix_seconds": 1794249903.104837,
+        "stderr": "pair-62-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-62-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.76401400025134,
+        "end_unix_seconds": 1794249903.2315717,
+        "returncode": 0,
+        "start_unix_seconds": 1794249903.1658065,
+        "stderr": "pair-62-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-62-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 10,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7493.594205000136,
+        "end_unix_seconds": 1794249910.7926886,
+        "returncode": 0,
+        "start_unix_seconds": 1794249903.2990925,
+        "stderr": "pair-63-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-63-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.99263699990843,
+        "end_unix_seconds": 1794249903.2982824,
+        "returncode": 0,
+        "start_unix_seconds": 1794249903.2322888,
+        "stderr": "pair-63-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-63-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 16,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1239.8708219998298,
+        "end_unix_seconds": 1794249912.0335763,
+        "returncode": 0,
+        "start_unix_seconds": 1794249910.7937038,
+        "stderr": "pair-64-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-64-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.87037400004192,
+        "end_unix_seconds": 1794249912.1004217,
+        "returncode": 0,
+        "start_unix_seconds": 1794249912.03455,
+        "stderr": "pair-64-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-64-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 15,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1238.6166719998073,
+        "end_unix_seconds": 1794249913.4071944,
+        "returncode": 0,
+        "start_unix_seconds": 1794249912.1685758,
+        "stderr": "pair-65-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-65-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.37288599995372,
+        "end_unix_seconds": 1794249912.1677232,
+        "returncode": 0,
+        "start_unix_seconds": 1794249912.1013494,
+        "stderr": "pair-65-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-65-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 4,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7466.895798000223,
+        "end_unix_seconds": 1794249920.9401703,
+        "returncode": 0,
+        "start_unix_seconds": 1794249913.4732728,
+        "stderr": "pair-66-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-66-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.18542199980948,
+        "end_unix_seconds": 1794249913.4724464,
+        "returncode": 0,
+        "start_unix_seconds": 1794249913.40826,
+        "stderr": "pair-66-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-66-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 14,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 60.01697400006378,
+        "end_unix_seconds": 1794249921.0673487,
+        "returncode": 0,
+        "start_unix_seconds": 1794249921.007331,
+        "stderr": "pair-67-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-67-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.25003800015838,
+        "end_unix_seconds": 1794249921.0065107,
+        "returncode": 0,
+        "start_unix_seconds": 1794249920.9412591,
+        "stderr": "pair-67-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-67-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 11,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7401.243357999647,
+        "end_unix_seconds": 1794249928.469428,
+        "returncode": 0,
+        "start_unix_seconds": 1794249921.0681827,
+        "stderr": "pair-68-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-68-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.19898299984561,
+        "end_unix_seconds": 1794249928.5357046,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.4705045,
+        "stderr": "pair-68-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-68-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 13,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.82576900012282,
+        "end_unix_seconds": 1794249928.5953925,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.5365655,
+        "stderr": "pair-69-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-69-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.59850599958372,
+        "end_unix_seconds": 1794249928.6607542,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.5961547,
+        "stderr": "pair-69-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-69-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 23,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.46791799988205,
+        "end_unix_seconds": 1794249928.786818,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.727349,
+        "stderr": "pair-70-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-70-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.90065599973605,
+        "end_unix_seconds": 1794249928.7264352,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.661533,
+        "stderr": "pair-70-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-70-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 2,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7391.613285999938,
+        "end_unix_seconds": 1794249936.2441723,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.852557,
+        "stderr": "pair-71-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-71-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.21733700017285,
+        "end_unix_seconds": 1794249928.8517604,
+        "returncode": 0,
+        "start_unix_seconds": 1794249928.7875419,
+        "stderr": "pair-71-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-71-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 20,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 128.49239600018336,
+        "end_unix_seconds": 1794249936.3737948,
+        "returncode": 0,
+        "start_unix_seconds": 1794249936.245301,
+        "stderr": "pair-72-numpy-numpy.stderr",
+        "stdout": "pair-72-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.66273100042963,
+        "end_unix_seconds": 1794249936.440545,
+        "returncode": 0,
+        "start_unix_seconds": 1794249936.374881,
+        "stderr": "pair-72-numpy-shorthand.stderr",
+        "stdout": "pair-72-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 12,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7425.766192000083,
+        "end_unix_seconds": 1794249943.8671188,
+        "returncode": 0,
+        "start_unix_seconds": 1794249936.441351,
+        "stderr": "pair-73-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-73-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.52528199992958,
+        "end_unix_seconds": 1794249943.93491,
+        "returncode": 0,
+        "start_unix_seconds": 1794249943.8683832,
+        "stderr": "pair-73-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-73-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 4,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 129.15176900014558,
+        "end_unix_seconds": 1794249944.0650022,
+        "returncode": 0,
+        "start_unix_seconds": 1794249943.9358494,
+        "stderr": "pair-74-numpy-numpy.stderr",
+        "stdout": "pair-74-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.21259500004817,
+        "end_unix_seconds": 1794249944.13108,
+        "returncode": 0,
+        "start_unix_seconds": 1794249944.065866,
+        "stderr": "pair-74-numpy-shorthand.stderr",
+        "stdout": "pair-74-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 12,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.94701300031375,
+        "end_unix_seconds": 1794249944.2578585,
+        "returncode": 0,
+        "start_unix_seconds": 1794249944.1319103,
+        "stderr": "pair-75-numpy-numpy.stderr",
+        "stdout": "pair-75-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.83306199991057,
+        "end_unix_seconds": 1794249944.3245237,
+        "returncode": 0,
+        "start_unix_seconds": 1794249944.258689,
+        "stderr": "pair-75-numpy-shorthand.stderr",
+        "stdout": "pair-75-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 24,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1245.3350929999942,
+        "end_unix_seconds": 1794249945.636141,
+        "returncode": 0,
+        "start_unix_seconds": 1794249944.3908043,
+        "stderr": "pair-76-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-76-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.5934720000696,
+        "end_unix_seconds": 1794249944.3900325,
+        "returncode": 0,
+        "start_unix_seconds": 1794249944.3254378,
+        "stderr": "pair-76-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-76-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 12,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1240.7174959998883,
+        "end_unix_seconds": 1794249946.877861,
+        "returncode": 0,
+        "start_unix_seconds": 1794249945.637142,
+        "stderr": "pair-77-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-77-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.46312799991938,
+        "end_unix_seconds": 1794249946.9443707,
+        "returncode": 0,
+        "start_unix_seconds": 1794249946.878906,
+        "stderr": "pair-77-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-77-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 23,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 129.31692400024986,
+        "end_unix_seconds": 1794249947.1411343,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.0118163,
+        "stderr": "pair-78-numpy-numpy.stderr",
+        "stdout": "pair-78-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.5957980002313,
+        "end_unix_seconds": 1794249947.0109978,
+        "returncode": 0,
+        "start_unix_seconds": 1794249946.9454007,
+        "stderr": "pair-78-numpy-shorthand.stderr",
+        "stdout": "pair-78-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 3,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.01042100003906,
+        "end_unix_seconds": 1794249947.2009947,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.1419833,
+        "stderr": "pair-79-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-79-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.87728200020138,
+        "end_unix_seconds": 1794249947.2676885,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.2018101,
+        "stderr": "pair-79-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-79-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.63077300020814,
+        "end_unix_seconds": 1794249947.3929873,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.3333552,
+        "stderr": "pair-80-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-80-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.0658990000702,
+        "end_unix_seconds": 1794249947.3324766,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.26841,
+        "stderr": "pair-80-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-80-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 8,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1233.746341999904,
+        "end_unix_seconds": 1794249948.6929858,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.4592373,
+        "stderr": "pair-81-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-81-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.71285599991461,
+        "end_unix_seconds": 1794249947.4585063,
+        "returncode": 0,
+        "start_unix_seconds": 1794249947.3937743,
+        "stderr": "pair-81-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-81-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.91199500001676,
+        "end_unix_seconds": 1794249948.8186812,
+        "returncode": 0,
+        "start_unix_seconds": 1794249948.7597685,
+        "stderr": "pair-82-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-82-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.8275650000869,
+        "end_unix_seconds": 1794249948.7588665,
+        "returncode": 0,
+        "start_unix_seconds": 1794249948.6940377,
+        "stderr": "pair-82-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-82-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 29,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.80689000034545,
+        "end_unix_seconds": 1794249948.8792706,
+        "returncode": 0,
+        "start_unix_seconds": 1794249948.819463,
+        "stderr": "pair-83-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-83-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.52952600031858,
+        "end_unix_seconds": 1794249948.9455163,
+        "returncode": 0,
+        "start_unix_seconds": 1794249948.8799858,
+        "stderr": "pair-83-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-83-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 5,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.7428109997345,
+        "end_unix_seconds": 1794249949.0739722,
+        "returncode": 0,
+        "start_unix_seconds": 1794249948.9462283,
+        "stderr": "pair-84-numpy-numpy.stderr",
+        "stdout": "pair-84-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.62570200003393,
+        "end_unix_seconds": 1794249949.1404216,
+        "returncode": 0,
+        "start_unix_seconds": 1794249949.074795,
+        "stderr": "pair-84-numpy-shorthand.stderr",
+        "stdout": "pair-84-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 22,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 60.09314800030552,
+        "end_unix_seconds": 1794249949.2662945,
+        "returncode": 0,
+        "start_unix_seconds": 1794249949.2062006,
+        "stderr": "pair-85-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-85-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.1674769999554,
+        "end_unix_seconds": 1794249949.2054136,
+        "returncode": 0,
+        "start_unix_seconds": 1794249949.1412451,
+        "stderr": "pair-85-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-85-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 8,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.93233100005091,
+        "end_unix_seconds": 1794249949.391901,
+        "returncode": 0,
+        "start_unix_seconds": 1794249949.3329678,
+        "stderr": "pair-86-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-86-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.14930899993487,
+        "end_unix_seconds": 1794249949.3322158,
+        "returncode": 0,
+        "start_unix_seconds": 1794249949.2670658,
+        "stderr": "pair-86-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-86-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 20,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1232.5995159999366,
+        "end_unix_seconds": 1794249950.6252618,
+        "returncode": 0,
+        "start_unix_seconds": 1794249949.3926604,
+        "stderr": "pair-87-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-87-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.49465699981738,
+        "end_unix_seconds": 1794249950.6918266,
+        "returncode": 0,
+        "start_unix_seconds": 1794249950.6263306,
+        "stderr": "pair-87-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-87-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 15,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7411.941758000012,
+        "end_unix_seconds": 1794249958.1706917,
+        "returncode": 0,
+        "start_unix_seconds": 1794249950.7587473,
+        "stderr": "pair-88-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-88-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.08447800024442,
+        "end_unix_seconds": 1794249950.7577984,
+        "returncode": 0,
+        "start_unix_seconds": 1794249950.692713,
+        "stderr": "pair-88-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-88-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 19,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1217.0615249997354,
+        "end_unix_seconds": 1794249959.3887858,
+        "returncode": 0,
+        "start_unix_seconds": 1794249958.171722,
+        "stderr": "pair-89-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-89-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.75516299997253,
+        "end_unix_seconds": 1794249959.4546194,
+        "returncode": 0,
+        "start_unix_seconds": 1794249959.389863,
+        "stderr": "pair-89-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-89-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 11,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.98308900032134,
+        "end_unix_seconds": 1794249959.5144706,
+        "returncode": 0,
+        "start_unix_seconds": 1794249959.4554865,
+        "stderr": "pair-90-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-90-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.80846700014808,
+        "end_unix_seconds": 1794249959.580187,
+        "returncode": 0,
+        "start_unix_seconds": 1794249959.515378,
+        "stderr": "pair-90-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-90-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 23,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7427.3068630000125,
+        "end_unix_seconds": 1794249967.0083191,
+        "returncode": 0,
+        "start_unix_seconds": 1794249959.5810106,
+        "stderr": "pair-91-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-91-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.21464500019647,
+        "end_unix_seconds": 1794249967.0747614,
+        "returncode": 0,
+        "start_unix_seconds": 1794249967.0095456,
+        "stderr": "pair-91-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-91-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 2,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.19395600019561,
+        "end_unix_seconds": 1794249967.1338277,
+        "returncode": 0,
+        "start_unix_seconds": 1794249967.0756328,
+        "stderr": "pair-92-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-92-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 62.76209599991489,
+        "end_unix_seconds": 1794249967.1973202,
+        "returncode": 0,
+        "start_unix_seconds": 1794249967.1345572,
+        "stderr": "pair-92-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-92-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 14,
+      "order": [
+        "shorthand",
+        "pytorch-eager"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1216.6284899999482,
+        "end_unix_seconds": 1794249968.4799552,
+        "returncode": 0,
+        "start_unix_seconds": 1794249967.2633252,
+        "stderr": "pair-93-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-93-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.44856799998888,
+        "end_unix_seconds": 1794249967.2625186,
+        "returncode": 0,
+        "start_unix_seconds": 1794249967.198069,
+        "stderr": "pair-93-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-93-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 27,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7370.217371000308,
+        "end_unix_seconds": 1794249975.9188023,
+        "returncode": 0,
+        "start_unix_seconds": 1794249968.5485826,
+        "stderr": "pair-94-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-94-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 66.6178569999829,
+        "end_unix_seconds": 1794249968.547675,
+        "returncode": 0,
+        "start_unix_seconds": 1794249968.4810555,
+        "stderr": "pair-94-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-94-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 7,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 128.68518999994194,
+        "end_unix_seconds": 1794249976.0485492,
+        "returncode": 0,
+        "start_unix_seconds": 1794249975.9198623,
+        "stderr": "pair-95-numpy-numpy.stderr",
+        "stdout": "pair-95-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.82846500032247,
+        "end_unix_seconds": 1794249976.1152875,
+        "returncode": 0,
+        "start_unix_seconds": 1794249976.049458,
+        "stderr": "pair-95-numpy-shorthand.stderr",
+        "stdout": "pair-95-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 22,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1230.2591769998799,
+        "end_unix_seconds": 1794249977.3464036,
+        "returncode": 0,
+        "start_unix_seconds": 1794249976.1161427,
+        "stderr": "pair-96-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-96-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.6977429998733,
+        "end_unix_seconds": 1794249977.4134316,
+        "returncode": 0,
+        "start_unix_seconds": 1794249977.3477325,
+        "stderr": "pair-96-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-96-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 17,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.294212000168045,
+        "end_unix_seconds": 1794249977.5396972,
+        "returncode": 0,
+        "start_unix_seconds": 1794249977.480402,
+        "stderr": "pair-97-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-97-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.2884549999726,
+        "end_unix_seconds": 1794249977.479595,
+        "returncode": 0,
+        "start_unix_seconds": 1794249977.4143057,
+        "stderr": "pair-97-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-97-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 22,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7324.535001000186,
+        "end_unix_seconds": 1794249984.9306796,
+        "returncode": 0,
+        "start_unix_seconds": 1794249977.606143,
+        "stderr": "pair-98-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-98-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.85791600016455,
+        "end_unix_seconds": 1794249977.605303,
+        "returncode": 0,
+        "start_unix_seconds": 1794249977.5404444,
+        "stderr": "pair-98-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-98-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 6,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7395.316931999787,
+        "end_unix_seconds": 1794249992.3939147,
+        "returncode": 0,
+        "start_unix_seconds": 1794249984.998596,
+        "stderr": "pair-99-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-99-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.95122499993522,
+        "end_unix_seconds": 1794249984.9977033,
+        "returncode": 0,
+        "start_unix_seconds": 1794249984.931751,
+        "stderr": "pair-99-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-99-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-eager",
+      "index": 23,
+      "order": [
+        "pytorch-eager",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1211.0780610000802,
+        "end_unix_seconds": 1794249993.6060681,
+        "returncode": 0,
+        "start_unix_seconds": 1794249992.3949885,
+        "stderr": "pair-100-pytorch-eager-pytorch-eager.stderr",
+        "stdout": "pair-100-pytorch-eager-pytorch-eager.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.55391899999086,
+        "end_unix_seconds": 1794249993.6717572,
+        "returncode": 0,
+        "start_unix_seconds": 1794249993.607202,
+        "stderr": "pair-100-pytorch-eager-shorthand.stderr",
+        "stdout": "pair-100-pytorch-eager-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 9,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.86327099961636,
+        "end_unix_seconds": 1794249993.7985237,
+        "returncode": 0,
+        "start_unix_seconds": 1794249993.672659,
+        "stderr": "pair-101-numpy-numpy.stderr",
+        "stdout": "pair-101-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.47822700010875,
+        "end_unix_seconds": 1794249993.863794,
+        "returncode": 0,
+        "start_unix_seconds": 1794249993.799315,
+        "stderr": "pair-101-numpy-shorthand.stderr",
+        "stdout": "pair-101-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 15,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.88442700007363,
+        "end_unix_seconds": 1794249993.990471,
+        "returncode": 0,
+        "start_unix_seconds": 1794249993.8645854,
+        "stderr": "pair-102-numpy-numpy.stderr",
+        "stdout": "pair-102-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.9945420000222,
+        "end_unix_seconds": 1794249994.0563207,
+        "returncode": 0,
+        "start_unix_seconds": 1794249993.991325,
+        "stderr": "pair-102-numpy-shorthand.stderr",
+        "stdout": "pair-102-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 18,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.16527400021005,
+        "end_unix_seconds": 1794249994.1822717,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.0571053,
+        "stderr": "pair-103-numpy-numpy.stderr",
+        "stdout": "pair-103-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.53071500027363,
+        "end_unix_seconds": 1794249994.2477705,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.183239,
+        "stderr": "pair-103-numpy-shorthand.stderr",
+        "stdout": "pair-103-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 13,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.71766999963074,
+        "end_unix_seconds": 1794249994.439877,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.314158,
+        "stderr": "pair-104-numpy-numpy.stderr",
+        "stdout": "pair-104-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.69828099989172,
+        "end_unix_seconds": 1794249994.3133497,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.2486506,
+        "stderr": "pair-104-numpy-shorthand.stderr",
+        "stdout": "pair-104-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 21,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 126.16925499969511,
+        "end_unix_seconds": 1794249994.6322253,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.5060546,
+        "stderr": "pair-105-numpy-numpy.stderr",
+        "stdout": "pair-105-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.37841299975844,
+        "end_unix_seconds": 1794249994.5052123,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.4408326,
+        "stderr": "pair-105-numpy-shorthand.stderr",
+        "stdout": "pair-105-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 29,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7395.955862000392,
+        "end_unix_seconds": 1794250002.0290499,
+        "returncode": 0,
+        "start_unix_seconds": 1794249994.6330924,
+        "stderr": "pair-106-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-106-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.40514300038558,
+        "end_unix_seconds": 1794250002.094688,
+        "returncode": 0,
+        "start_unix_seconds": 1794250002.0302815,
+        "stderr": "pair-106-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-106-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 14,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7445.060806000129,
+        "end_unix_seconds": 1794250009.5405693,
+        "returncode": 0,
+        "start_unix_seconds": 1794250002.0955064,
+        "stderr": "pair-107-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-107-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.94479200000569,
+        "end_unix_seconds": 1794250009.6065598,
+        "returncode": 0,
+        "start_unix_seconds": 1794250009.5416138,
+        "stderr": "pair-107-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-107-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 13,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7374.453318000178,
+        "end_unix_seconds": 1794250017.0502124,
+        "returncode": 0,
+        "start_unix_seconds": 1794250009.6757574,
+        "stderr": "pair-108-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-108-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 67.5730609996208,
+        "end_unix_seconds": 1794250009.6750014,
+        "returncode": 0,
+        "start_unix_seconds": 1794250009.6074274,
+        "stderr": "pair-108-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-108-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 16,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 130.18713200017373,
+        "end_unix_seconds": 1794250017.181452,
+        "returncode": 0,
+        "start_unix_seconds": 1794250017.0512636,
+        "stderr": "pair-109-numpy-numpy.stderr",
+        "stdout": "pair-109-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.14944499986086,
+        "end_unix_seconds": 1794250017.247466,
+        "returncode": 0,
+        "start_unix_seconds": 1794250017.1823156,
+        "stderr": "pair-109-numpy-shorthand.stderr",
+        "stdout": "pair-109-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 1,
+      "order": [
+        "shorthand",
+        "pytorch-compile"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7405.668795000111,
+        "end_unix_seconds": 1794250024.7201838,
+        "returncode": 0,
+        "start_unix_seconds": 1794250017.3145137,
+        "stderr": "pair-110-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-110-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.2696410002136,
+        "end_unix_seconds": 1794250017.3135805,
+        "returncode": 0,
+        "start_unix_seconds": 1794250017.24831,
+        "stderr": "pair-110-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-110-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 0,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 127.28672900038873,
+        "end_unix_seconds": 1794250024.913798,
+        "returncode": 0,
+        "start_unix_seconds": 1794250024.7865102,
+        "stderr": "pair-111-numpy-numpy.stderr",
+        "stdout": "pair-111-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.15505199993277,
+        "end_unix_seconds": 1794250024.7854347,
+        "returncode": 0,
+        "start_unix_seconds": 1794250024.7212782,
+        "stderr": "pair-111-numpy-shorthand.stderr",
+        "stdout": "pair-111-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 12,
+      "order": [
+        "cpp17-o3",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 68.08920599996782,
+        "end_unix_seconds": 1794250024.982795,
+        "returncode": 0,
+        "start_unix_seconds": 1794250024.9147046,
+        "stderr": "pair-112-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-112-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.66488099977141,
+        "end_unix_seconds": 1794250025.0482595,
+        "returncode": 0,
+        "start_unix_seconds": 1794250024.9835937,
+        "stderr": "pair-112-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-112-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "cpp17-o3",
+      "index": 20,
+      "order": [
+        "shorthand",
+        "cpp17-o3"
+      ],
+      "peer": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 68.7286900001709,
+        "end_unix_seconds": 1794250025.1824296,
+        "returncode": 0,
+        "start_unix_seconds": 1794250025.1137,
+        "stderr": "pair-113-cpp17-o3-cpp17-o3.stderr",
+        "stdout": "pair-113-cpp17-o3-cpp17-o3.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 63.83670599961988,
+        "end_unix_seconds": 1794250025.112923,
+        "returncode": 0,
+        "start_unix_seconds": 1794250025.0490851,
+        "stderr": "pair-113-cpp17-o3-shorthand.stderr",
+        "stdout": "pair-113-cpp17-o3-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 29,
+      "order": [
+        "shorthand",
+        "numpy"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 126.15372900017974,
+        "end_unix_seconds": 1794250025.3748329,
+        "returncode": 0,
+        "start_unix_seconds": 1794250025.248678,
+        "stderr": "pair-114-numpy-numpy.stderr",
+        "stdout": "pair-114-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.534741999978,
+        "end_unix_seconds": 1794250025.2477882,
+        "returncode": 0,
+        "start_unix_seconds": 1794250025.1832523,
+        "stderr": "pair-114-numpy-shorthand.stderr",
+        "stdout": "pair-114-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 8,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7372.913423000227,
+        "end_unix_seconds": 1794250032.7485964,
+        "returncode": 0,
+        "start_unix_seconds": 1794250025.3756816,
+        "stderr": "pair-115-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-115-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.47901300018566,
+        "end_unix_seconds": 1794250032.8151555,
+        "returncode": 0,
+        "start_unix_seconds": 1794250032.7496753,
+        "stderr": "pair-115-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-115-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 3,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7391.68089299983,
+        "end_unix_seconds": 1794250040.2077215,
+        "returncode": 0,
+        "start_unix_seconds": 1794250032.8160386,
+        "stderr": "pair-116-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-116-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.16484700023284,
+        "end_unix_seconds": 1794250040.2739022,
+        "returncode": 0,
+        "start_unix_seconds": 1794250040.2087357,
+        "stderr": "pair-116-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-116-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 25,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 128.69777700007035,
+        "end_unix_seconds": 1794250040.403553,
+        "returncode": 0,
+        "start_unix_seconds": 1794250040.274854,
+        "stderr": "pair-117-numpy-numpy.stderr",
+        "stdout": "pair-117-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.33096699968155,
+        "end_unix_seconds": 1794250040.4698606,
+        "returncode": 0,
+        "start_unix_seconds": 1794250040.4045284,
+        "stderr": "pair-117-numpy-shorthand.stderr",
+        "stdout": "pair-117-numpy-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "pytorch-compile",
+      "index": 21,
+      "order": [
+        "pytorch-compile",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7483.919073999914,
+        "end_unix_seconds": 1794250047.954619,
+        "returncode": 0,
+        "start_unix_seconds": 1794250040.4706984,
+        "stderr": "pair-118-pytorch-compile-pytorch-compile.stderr",
+        "stdout": "pair-118-pytorch-compile-pytorch-compile.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 63.40940700010833,
+        "end_unix_seconds": 1794250048.0190485,
+        "returncode": 0,
+        "start_unix_seconds": 1794250047.9556375,
+        "stderr": "pair-118-pytorch-compile-shorthand.stderr",
+        "stdout": "pair-118-pytorch-compile-shorthand.stdout"
+      }
+    },
+    {
+      "baseline_name": "numpy",
+      "index": 2,
+      "order": [
+        "numpy",
+        "shorthand"
+      ],
+      "peer": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 125.61219600002005,
+        "end_unix_seconds": 1794250048.1455364,
+        "returncode": 0,
+        "start_unix_seconds": 1794250048.0199232,
+        "stderr": "pair-119-numpy-numpy.stderr",
+        "stdout": "pair-119-numpy-numpy.stdout"
+      },
+      "shorthand": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.41412600042895,
+        "end_unix_seconds": 1794250048.2107663,
+        "returncode": 0,
+        "start_unix_seconds": 1794250048.1463513,
+        "stderr": "pair-119-numpy-shorthand.stderr",
+        "stdout": "pair-119-numpy-shorthand.stdout"
+      }
+    }
+  ],
+  "profile": "torch",
+  "schema": "shorthand.energy.state-of-practice.capture.v1",
+  "success": true,
+  "warmups": [
+    {
+      "runner": "shorthand",
+      "trial": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 64.85811900029148,
+        "end_unix_seconds": 1794249752.2744343,
+        "returncode": 0,
+        "start_unix_seconds": 1794249752.2095752,
+        "stderr": "warmup-0-shorthand.stderr",
+        "stdout": "warmup-0-shorthand.stdout"
+      }
+    },
+    {
+      "runner": "numpy",
+      "trial": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 126.48764700043102,
+        "end_unix_seconds": 1794249752.4017708,
+        "returncode": 0,
+        "start_unix_seconds": 1794249752.2752817,
+        "stderr": "warmup-0-numpy.stderr",
+        "stdout": "warmup-0-numpy.stdout"
+      }
+    },
+    {
+      "runner": "cpp17-o3",
+      "trial": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 59.05621100009739,
+        "end_unix_seconds": 1794249752.4617302,
+        "returncode": 0,
+        "start_unix_seconds": 1794249752.4026735,
+        "stderr": "warmup-0-cpp17-o3.stderr",
+        "stdout": "warmup-0-cpp17-o3.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-eager",
+      "trial": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1222.4119260004045,
+        "end_unix_seconds": 1794249753.6849897,
+        "returncode": 0,
+        "start_unix_seconds": 1794249752.462576,
+        "stderr": "warmup-0-pytorch-eager.stderr",
+        "stdout": "warmup-0-pytorch-eager.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-compile",
+      "trial": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 12290.280489999986,
+        "end_unix_seconds": 1794249765.9763827,
+        "returncode": 0,
+        "start_unix_seconds": 1794249753.6861007,
+        "stderr": "warmup-0-pytorch-compile.stderr",
+        "stdout": "warmup-0-pytorch-compile.stdout"
+      }
+    },
+    {
+      "runner": "shorthand",
+      "trial": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/shorthand.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 65.39623100024983,
+        "end_unix_seconds": 1794249766.0428488,
+        "returncode": 0,
+        "start_unix_seconds": 1794249765.9774513,
+        "stderr": "warmup-1-shorthand.stderr",
+        "stdout": "warmup-1-shorthand.stdout"
+      }
+    },
+    {
+      "runner": "numpy",
+      "trial": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "numpy"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 129.59682199971212,
+        "end_unix_seconds": 1794249766.1732864,
+        "returncode": 0,
+        "start_unix_seconds": 1794249766.0436883,
+        "stderr": "warmup-1-numpy.stderr",
+        "stdout": "warmup-1-numpy.stdout"
+      }
+    },
+    {
+      "runner": "cpp17-o3",
+      "trial": {
+        "argv": [
+          "/tmp/antigravity-campaign-run/source-r100/build/cpp17-o3.bin"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 58.506802000010794,
+        "end_unix_seconds": 1794249766.2325978,
+        "returncode": 0,
+        "start_unix_seconds": 1794249766.17409,
+        "stderr": "warmup-1-cpp17-o3.stderr",
+        "stdout": "warmup-1-cpp17-o3.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-eager",
+      "trial": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-eager"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 1227.7509629998349,
+        "end_unix_seconds": 1794249767.4612608,
+        "returncode": 0,
+        "start_unix_seconds": 1794249766.2335086,
+        "stderr": "warmup-1-pytorch-eager.stderr",
+        "stdout": "warmup-1-pytorch-eager.stdout"
+      }
+    },
+    {
+      "runner": "pytorch-compile",
+      "trial": {
+        "argv": [
+          "/home/antigravity/.venv/bin/python3",
+          "/home/antigravity/amarbanerjee23/ShortHand_Compiler/experiments/energy/source_workload.py",
+          "--model",
+          "/tmp/antigravity-campaign-run/source-r100/inputs/source/model.json",
+          "--baseline",
+          "torch-compile"
+        ],
+        "completed": 179700,
+        "elapsed_ms": 7583.140662000005,
+        "end_unix_seconds": 1794249775.0453255,
+        "returncode": 0,
+        "start_unix_seconds": 1794249767.462183,
+        "stderr": "warmup-1-pytorch-compile.stderr",
+        "stdout": "warmup-1-pytorch-compile.stdout"
+      }
+    }
+  ]
+}

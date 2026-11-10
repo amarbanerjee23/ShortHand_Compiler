@@ -1,0 +1,31 @@
+{
+  "clang_version": "Debian clang version 14.0.6\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/bin\n",
+  "cpp_binary_sha256": "3a12ed05de457ee54b8f619485e3f12c601160274338a80c4db04e490b4dfc36",
+  "executable_sha256": {
+    "/home/antigravity/.venv/bin/python3": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5",
+    "/home/antigravity/amarbanerjee23/ShortHand_Compiler/build/short_hand": "fc95f2dc3edb37a41f9c158c14662c38e5c79f7f49c2bf46598312e627800744",
+    "/home/antigravity/amarbanerjee23/ShortHand_Compiler/build/shorthand_ai_qualify": "e4ffa3220957ade11a5fb48001ef7866a75b0e9ac8247e1780c0884c8de4c0f9",
+    "/usr/bin/clang++": "71b0de1b06b1ffe3a68f1b15f3bfff1f80ba3351ac679be346fb515327494157"
+  },
+  "external": {},
+  "platform": "Linux-6.12.105+-x86_64-with-glibc2.36",
+  "python": "3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]",
+  "source_binary_sha256": "d1142dc00d59055c9b6b1e3800d4628e99e9cbfa31b65c6e82536a7b734ed903",
+  "started_utc": "2026-11-09T18:42:27.252930+00:00",
+  "torch": {
+    "compile_cache": "warm-after-two-predeclared-warmups",
+    "python": "/home/antigravity/.venv/bin/python3",
+    "sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5",
+    "versions": {
+      "numpy": "2.3.5",
+      "numpy_record_sha256": "9934a67ff0f570b92eee775689cf940c4cf8f4cefa5682f900dc3609e622f85a",
+      "python": "3.12.16",
+      "torch": "2.9.1+cpu",
+      "torch_config_sha256": "a8e06abc2e9d85cbb98e138b330ab78399ec46cd1b2dd9d769a9837345190d25",
+      "torch_cuda_version": null,
+      "torch_git_version": "5811a8d7da873dd699ff6687092c225caffcf1bb",
+      "torch_record_sha256": "2f9ce86bfeaa8c4d5346336cc3aa64c8911a0c5d97337ad70d635618185f101d"
+    }
+  },
+  "torchinductor_cache": "/tmp/antigravity-campaign-run/source-r10/torch-inductor-cache"
+}

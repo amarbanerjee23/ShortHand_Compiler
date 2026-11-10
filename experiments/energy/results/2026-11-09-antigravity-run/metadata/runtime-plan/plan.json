@@ -1,0 +1,74 @@
+{
+  "comparative_energy_claim": false,
+  "compile_blocks": 3,
+  "compile_repetitions": 3,
+  "data_hashes": {
+    "tests/ai_application/data/optdigits.tes.csv": "6ebb3d2fee246a4e99363262ddf8a00a3c41bee6014c373ed9d9216ba7f651b8",
+    "tests/ai_application/data/optdigits.tra.csv": "e1b683cc211604fe8fd8c4417e6a69f31380e0c61d4af22e93cc21e9257ffedd"
+  },
+  "hashes": {
+    "ort-b1-t1/application.json": "3280fdbd5980441c549a31eff5c96670fc5e89ee317a493acd8868988ca74d78",
+    "ort-b1-t1/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b1-t1/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b1-t1/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b1-t1/qualification.json": "87b18f019b058d823eceda4ee6174d969a6e65796440169afa5a84f1795ef157",
+    "ort-b16-t1/application.json": "b5d3f0b754495011062cd6b2d29e8b14fb4828a1f361d0dec9635f9fd4dc3395",
+    "ort-b16-t1/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b16-t1/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b16-t1/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b16-t1/qualification.json": "64009ce29a6805cbec0b53965d678d8bec3f862b1c600a2033666354e7a1fc36",
+    "ort-b16-t2/application.json": "d669e2a6f62d180e119b0c7a578a9377754af913560a09460fc09ec310bc47c9",
+    "ort-b16-t2/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b16-t2/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b16-t2/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b16-t2/qualification.json": "4939c597c0de0e7c69e47a68c4f0457a30b5e0b4b91397d96901049f97c6634b",
+    "ort-b16-t4/application.json": "bf167de6aff157faa06130de2c65663fb22f997cb0613f7a1b6e0308091174aa",
+    "ort-b16-t4/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b16-t4/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b16-t4/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b16-t4/qualification.json": "e888a2aaa34e4773ed5e74f59f7eef6d3844491b65d134fd28de7570da4582c7",
+    "ort-b32-t1/application.json": "6715e94d430abf58f645ad128a966a93ef4a45de4eff9e95f4cdd350df2f9719",
+    "ort-b32-t1/digits.onnx": "7b15da5489fbb6cabafb002eb3301759a4354311c82b4312a758a6a99713231a",
+    "ort-b32-t1/digits.short": "b596f2fef56ab62cbf6cbee9792c54304c2f24a8c06a1b760d49bf9722af3707",
+    "ort-b32-t1/provenance.json": "e50147c222507e9cfae6407dca588b3d15492a5609d1b127bdd5943c32dfbed0",
+    "ort-b32-t1/qualification.json": "a37e856db422736abee367f6222c7c25f510399aede81e54675d5fd773ef9ea8",
+    "policy.json": "7065547a385ab4514249547db1c38bcb7abc0d57aecc674dffcce9c4701a2262",
+    "source/classifier.short": "b966a237441bf827bf5d6c50fa5058b098f061717087d052707a2800ad98f0ea",
+    "source/expected.json": "121b6bb285c83adc9debbcb35da9585fe3b9a2c5997276686e7a681a77be1e31",
+    "source/input.txt": "6b4331a27a81e6e0af0646480368103f04bae24bcb02c5b9b16aabf4d4d6fb85",
+    "source/model.json": "7b01987979b64b8f864aa1b9dff8475c4342348d304c217042502714075e85ff"
+  },
+  "lowest_carbon_language_claim": false,
+  "meter_csv": null,
+  "mode": "execution_only",
+  "official_certification_granted": false,
+  "runtime_cases": [
+    {
+      "application": "/tmp/antigravity-campaign-run/runtime-plan/ort-b1-t1/application.json",
+      "id": "ort-b1-t1"
+    },
+    {
+      "application": "/tmp/antigravity-campaign-run/runtime-plan/ort-b16-t1/application.json",
+      "id": "ort-b16-t1"
+    },
+    {
+      "application": "/tmp/antigravity-campaign-run/runtime-plan/ort-b32-t1/application.json",
+      "id": "ort-b32-t1"
+    },
+    {
+      "application": "/tmp/antigravity-campaign-run/runtime-plan/ort-b16-t2/application.json",
+      "id": "ort-b16-t2"
+    },
+    {
+      "application": "/tmp/antigravity-campaign-run/runtime-plan/ort-b16-t4/application.json",
+      "id": "ort-b16-t4"
+    }
+  ],
+  "runtime_pairs": 10,
+  "schema": "shorthand.energy.experiment.plan.v1",
+  "scope": "UCI Optdigits CPU classification only",
+  "seed": 104,
+  "source_baseline": "numpy",
+  "source_pairs": 30,
+  "warmups": 2
+}

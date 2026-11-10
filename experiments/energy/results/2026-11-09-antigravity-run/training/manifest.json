@@ -1,0 +1,28 @@
+{
+  "base": "7ad856960a49a62b5a56197b348d8de3ea5f5ac8",
+  "files": {
+    "base": "49ca5f7d7e380d5b58357c09e72220eef1cc3a2d66f9f478bbe8cac0ecc415a4",
+    "base-counts": "ca36c25ce007c0f308bb12737ecf03ad6847ce0bc4bb09e7f6da00afa7386f49",
+    "base.cpp": "7903772e6b9c1332f5a96a77dfebb0ba5fb26171534102eab3ef662723974253",
+    "candidate": "72e4e1bb4b945ff2f376bf2bea10bb4177294de51dae23fe3b4ae3657f384e10",
+    "candidate-counts": "bf76e372549f33550078ff695167687486a9edfb157301ee46a52e4764cada92",
+    "candidate.cpp": "b515b7f393cec90374bb7f05dcdd4f51e8ae29c983812fff9fc27de38de253cc",
+    "commands.json": "e4fda6a9cbe191073292b074f1f4fbf73ab636392db6de68e68e9669c96225bd",
+    "compiler.txt": "44c0cd7e0e95b534013aff5b2cbec52c2369057357e4afd2a115c377bd48c23f",
+    "host.cpp": "f4135654b3442e54206b9dc359e5728fef4b597af958636da688a7725996e3c8",
+    "observations.json": "a42627aff634dce39924d56e5a659bb0fea53b609c914f62fceac213b916451d",
+    "report.json": "f7b15a75439db9e4e57f7cad1d4633e89ff70b6252f7ffb49f104ad526bad95a",
+    "source.diff": "787705a35fca44dd8b1782eeec4276f08037435a33334c49861e6a103925e298",
+    "sources/ai_runtime/ExecutionPlan.cpp": "6ed6253674af13580bab5b701249a2fc8aded3437ece9c9f33f6d755a6d54155",
+    "sources/ai_runtime/ExecutionPlan.h": "563b12bdb193ecb95b9749d18915169755dc1730f135f791187c06c299f779d4",
+    "sources/ai_runtime/energy/EnergyMeasurement.cpp": "32977e02137e53dd3612200b67c7a098927daa85afb2cb9f78767dad0e31cb82",
+    "sources/ai_runtime/energy/EnergyMeasurement.h": "a131c6c534a398498abdb51e49f6b90e6a281141ba3254ec26470d4ac1cbb86e",
+    "sources/ai_runtime/training/PersistentWorkers.h": "cd721b34e7ac8a2da891709de88e43768ed6d5515e83d72e94892bac78ffeb35",
+    "sources/ai_runtime/training/TrainingQualification.h": "6da5bf838d41738f0a418ca3a5e34f9accf968b09ec46f234125e8f094c3106e",
+    "sources/module/Sha256.cpp": "81a0ce300b48ccd59dfc5b4f6b0c259a9a8e39b4c3892e1b63c1ac6c639243e0",
+    "sources/module/Sha256.h": "875558ead7c1473eab90a511a04ca5aabf311649c629a011a3c4c44a0593c5e8",
+    "training_runtime_delta.py": "87df1e04bd1762195e68d4624244349cf84dd3cce356c237e873520b2f33f83b"
+  },
+  "head": "2db9d1da7918ed816d499206df71b09d916725f5",
+  "schema": "shorthand.training_delta.bundle.v1"
+}

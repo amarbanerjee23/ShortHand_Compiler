@@ -1,0 +1,52 @@
+{
+  "boundary": "ci_capability_probe",
+  "claim_authorized": false,
+  "component_energy_measured": false,
+  "disallowed_substitutes": [
+    "elapsed_time",
+    "tdp",
+    "cpu_utilization",
+    "unmatched_reference_coefficients"
+  ],
+  "energy_savings_percent": null,
+  "evidence_class": null,
+  "highest_available_evidence_class": null,
+  "host": {
+    "amd_hwmon_domains": [],
+    "hardware": {
+      "cpu_family": "6",
+      "machine": "x86_64",
+      "microcode": "0x1",
+      "model": "143",
+      "model_name": "Intel(R) Xeon(R) Platinum 8481C",
+      "platform": "Linux-6.12.105+-x86_64-with-glibc2.36",
+      "processor": "",
+      "stepping": "8",
+      "vendor_id": "GenuineIntel"
+    },
+    "matching_profiles": {
+      "E2": null,
+      "E3": null
+    },
+    "perf": {
+      "path": null,
+      "perf_event_paranoid": 2
+    },
+    "platform": "Linux-6.12.105+-x86_64-with-glibc2.36",
+    "rapl_domains": []
+  },
+  "joules_per_completed_task": null,
+  "mode": "continuous_ci_evidence",
+  "physical_energy_measured": false,
+  "qualification_next_step": "Run the same benchmark in a separate instrumented pass. Prefer E1 hardware counters when supported; otherwise use only a hardware-matched validated E2/E3 profile and retain its uncertainty/provenance.",
+  "reason": "This runner exposes neither a qualified component-energy counter nor a matching validated calibration/analytical profile. Latency and correctness remain available; joules are intentionally not fabricated.",
+  "recorded_utc": "2026-11-09T18:17:27.806966+00:00",
+  "schema": "shorthand.energy.availability.v1",
+  "source": "unavailable",
+  "supported_evidence_classes": {
+    "E0": "externally calibrated whole-system physical measurement",
+    "E1": "hardware-reported component energy such as RAPL/NVML",
+    "E2": "architecture-matched calibrated counter model",
+    "E3": "explicit analytical operation/memory model"
+  }
+}

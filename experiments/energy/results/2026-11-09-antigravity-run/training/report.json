@@ -1,0 +1,41 @@
+{
+  "boundary": "training_call_including_initialization_validation_and_worker_teardown",
+  "energy_claim_authorized": false,
+  "joules": null,
+  "latency_claim_authorized": false,
+  "schema": "shorthand.training_delta.v1",
+  "success": true,
+  "threads": {
+    "1": {
+      "allocation_counts": {
+        "base": 10729,
+        "candidate": 521
+      },
+      "paired_time_ratio_median": 0.8256778284723332,
+      "paired_time_ratios": [
+        0.8736547166550661,
+        0.8158970182486996,
+        0.7956639599801872,
+        0.8415157216804228,
+        0.8074976888212744,
+        0.8354586386959666
+      ]
+    },
+    "2": {
+      "allocation_counts": {
+        "base": 11241,
+        "candidate": 527
+      },
+      "paired_time_ratio_median": 0.8659333503255185,
+      "paired_time_ratios": [
+        0.8051647768368225,
+        0.6384975515688711,
+        1.0104279134215277,
+        0.6582942916841208,
+        0.9267019238142146,
+        1.0481735316538472
+      ]
+    }
+  },
+  "workload": "fixed_synthetic_reference_cnn"
+}

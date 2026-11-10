@@ -9,7 +9,11 @@ The implementation goal is to keep the language syntax simple for end users whil
 For reproducible energy experiments against equivalent Python/NumPy/ONNX workloads,
 see [the experiment protocol and runner](experiments/energy/README.md). It covers
 compiled-source execution, batch/thread sweeps and compilation amortization;
-physical measurements are still required before reporting energy savings.
+physical measurements are still required before reporting energy savings. For the
+complete multi-tier SOTA execution latency, memory, phase-isolation, and C3Eco
+claim validation campaign, see [`SOTA_VALIDATION_REPORT.md`](SOTA_VALIDATION_REPORT.md)
+(archived under [`experiments/energy/results/2026-11-09-antigravity-run/`](experiments/energy/results/2026-11-09-antigravity-run/SOTA_VALIDATION_REPORT.md))
+and the end-to-end runner [`scripts/run_sota_validation_campaign.sh`](scripts/run_sota_validation_campaign.sh).
 
 The [latency and energy optimization PR plan](docs/latency_energy_optimization_pr_plan.md)
 tracks the evidence-directed runtime/compiler work through PR119. The companion

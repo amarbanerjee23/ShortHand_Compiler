@@ -1,0 +1,2 @@
+rapl_available=false reason=no_cpu_package_energy_domains
+gpu_energy_qualification=unavailable cpu_only=true
