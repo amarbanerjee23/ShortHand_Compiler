@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 500" width="100%" height="100%">
+  <title>Tiers 4 &amp; 5: Static Affine AOT Compilation &amp; Persistent Training Workers</title>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 10; }
+    .panel { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1.2; rx: 8; }
+    .title { font: 700 18px "Inter", "Segoe UI", system-ui, sans-serif; fill: #0f172a; }
+    .subtitle { font: 400 12px "Inter", "Segoe UI", system-ui, sans-serif; fill: #475569; }
+    .panel-title { font: 600 14px "Inter", "Segoe UI", system-ui, sans-serif; fill: #1e293b; }
+    .axis-label { font: 500 11px "Inter", "Segoe UI", system-ui, sans-serif; fill: #334155; }
+    .tick { font: 400 10.5px "JetBrains Mono", "Fira Code", monospace; fill: #475569; }
+    .val { font: 600 10px "JetBrains Mono", "Fira Code", monospace; fill: #0f172a; }
+    .note { font: 400 10.5px "Inter", "Segoe UI", system-ui, sans-serif; fill: #64748b; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 3,3; }
+    .axis { stroke: #94a3b8; stroke-width: 1.2; }
+  </style>
+  <rect class="bg" x="1" y="1" width="978" height="498" rx="10"/>
+  <text class="title" x="28" y="34">Tiers 4 &amp; 5 — Static Affine AOT Compilation &amp; Persistent Training Workers</text>
+  <text class="subtitle" x="28" y="54">Left: AOT C++17 vs. ONNX Runtime BASIC/ALL (aot/report.json) | Right: Persistent Worker Reuse Ablation (training/report.json)</text>
+  <rect class="panel" x="24" y="70" width="455" height="385" rx="8"/>
+  <text class="panel-title" x="40" y="96">A. Static Affine AOT vs. ORT Latency (µs/vector)</text>
+  <rect class="panel" x="501" y="70" width="455" height="385" rx="8"/>
+  <text class="panel-title" x="517" y="96">B. Persistent Training Workers: Allocations &amp; Latency Ratio</text>
+  <line class="grid" x1="120.0" y1="115" x2="120.0" y2="355"/>
+  <text class="tick" x="120.0" y="372" text-anchor="middle">0.0 µs</text>
+  <line class="grid" x1="183.0" y1="115" x2="183.0" y2="355"/>
+  <text class="tick" x="183.0" y="372" text-anchor="middle">0.3 µs</text>
+  <line class="grid" x1="246.0" y1="115" x2="246.0" y2="355"/>
+  <text class="tick" x="246.0" y="372" text-anchor="middle">0.6 µs</text>
+  <line class="grid" x1="309.0" y1="115" x2="309.0" y2="355"/>
+  <text class="tick" x="309.0" y="372" text-anchor="middle">0.9 µs</text>
+  <line class="grid" x1="372.0" y1="115" x2="372.0" y2="355"/>
+  <text class="tick" x="372.0" y="372" text-anchor="middle">1.2 µs</text>
+  <line class="grid" x1="435.0" y1="115" x2="435.0" y2="355"/>
+  <text class="tick" x="435.0" y="372" text-anchor="middle">1.5 µs</text>
+  <text class="axis-label" x="277.5" y="392" text-anchor="middle">Hot-Path Latency per Output Vector (µs/vector — lower is faster)</text>
+  <text class="axis-label" x="110" y="150" text-anchor="end">Batch 1</text>
+  <rect x="120" y="126" width="58.1" height="14" fill="#0284c7" rx="2"/>
+  <text class="val" x="183.1" y="137">AOT: 0.277 µs (0.21× vs BASIC)</text>
+  <rect x="120" y="144" width="270.8" height="14" fill="#0d9488" rx="2"/>
+  <text class="val" x="395.8" y="155">ORT BASIC: 1.290 µs</text>
+  <rect x="120" y="162" width="275.2" height="14" fill="#6366f1" rx="2"/>
+  <text class="val" x="400.2" y="173">ORT ALL: 1.310 µs</text>
+  <text class="axis-label" x="110" y="224" text-anchor="end">Batch 16</text>
+  <rect x="120" y="200" width="73.6" height="14" fill="#0284c7" rx="2"/>
+  <text class="val" x="198.6" y="211">AOT: 0.351 µs (2.28× vs BASIC)</text>
+  <rect x="120" y="218" width="32.3" height="14" fill="#0d9488" rx="2"/>
+  <text class="val" x="157.3" y="229">ORT BASIC: 0.154 µs</text>
+  <rect x="120" y="236" width="31.7" height="14" fill="#6366f1" rx="2"/>
+  <text class="val" x="156.7" y="247">ORT ALL: 0.151 µs</text>
+  <text class="axis-label" x="110" y="298" text-anchor="end">Batch 32</text>
+  <rect x="120" y="274" width="71.4" height="14" fill="#0284c7" rx="2"/>
+  <text class="val" x="196.4" y="285">AOT: 0.340 µs (2.82× vs BASIC)</text>
+  <rect x="120" y="292" width="25.7" height="14" fill="#0d9488" rx="2"/>
+  <text class="val" x="150.7" y="303">ORT BASIC: 0.122 µs</text>
+  <rect x="120" y="310" width="25.1" height="14" fill="#6366f1" rx="2"/>
+  <text class="val" x="150.1" y="321">ORT ALL: 0.119 µs</text>
+  <rect x="40" y="402" width="420" height="42" fill="#eff6ff" stroke="#93c5fd" rx="6"/>
+  <text class="val" x="52" y="420" fill="#1e3a8a">Cold-Start Init (b1): AOT = 0.00083 ms vs. ORT BASIC = 15.581 ms (~18,800× faster)</text>
+  <text class="axis-label" x="52" y="436">Batch 1: AOT is 4.69× faster; Batch 16–32: ORT multi-row SIMD GEMM is 2.28×–2.88× faster.</text>
+  <text class="axis-label" x="610" y="152" text-anchor="end">1 Thread</text>
+  <rect x="620" y="132" width="263.8" height="18" fill="#94a3b8" rx="3"/>
+  <text class="val" x="888.8" y="145">Cold Base: 10,729 allocs</text>
+  <rect x="620" y="156" width="12.8" height="18" fill="#10b981" rx="3"/>
+  <text class="val" x="637.8" y="169">Persistent: 521 allocs (-95.14%)</text>
+  <text class="axis-label" x="620" y="192">Paired Time Ratio Median: <tspan class="val" fill="#0f172a">0.8257×</tspan> (+17.43% time delta; range 0.796–0.874)</text>
+  <text class="axis-label" x="610" y="267" text-anchor="end">2 Threads</text>
+  <rect x="620" y="247" width="276.3" height="18" fill="#94a3b8" rx="3"/>
+  <text class="val" x="901.3" y="260">Cold Base: 11,241 allocs</text>
+  <rect x="620" y="271" width="13.0" height="18" fill="#10b981" rx="3"/>
+  <text class="val" x="638.0" y="284">Persistent: 527 allocs (-95.31%)</text>
+  <text class="axis-label" x="620" y="307">Paired Time Ratio Median: <tspan class="val" fill="#0f172a">0.8659×</tspan> (+13.41% time delta; range 0.638–1.048)</text>
+  <rect x="520" y="385" width="418" height="54" fill="#f8fafc" stroke="#cbd5e1" rx="6"/>
+  <text class="val" x="532" y="405">Synthetic Reference CNN (1,024 samples, 128 steps, seed 42)</text>
+  <text class="axis-label" x="532" y="425">Bit-identical final parameters SHA-256: 14e77024... | Final loss = 0.01667784</text>
+  <text class="note" x="28" y="480">PersistentWorkers.h eliminates 95.1%–95.3% of training heap allocations while preserving exact bit-level weight parity.</text>
+</svg>

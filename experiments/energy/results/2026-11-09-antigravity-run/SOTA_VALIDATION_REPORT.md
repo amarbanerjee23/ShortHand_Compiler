@@ -86,11 +86,23 @@ The table below synthesizes all six mandatory SOTA dimensions across the four ta
 | **4. SOTA Resident Python Baseline (ONNX Runtime + NumPy)** (`compare_ai_application_baselines.py`, `b1-t1` / `b16-t1`) | Outside inner trial window (`~45–90 ms` import + session) | `0.021707` / `0.022367` (`b1`)<br>`0.001739` / `0.001759` (`b16`) | `null` (no RAPL) | `null` (no RAPL) | `71.05 MB` | **`89.371%`** (`1606 / 1797`) |
 | **4b. SOTA Source Workloads: ShortHand LLVM `-O2` vs C++17 `-O3`, NumPy, PyTorch** (`source-r100`, whole-process warm OS cache) | Included in whole-process window | **ShortHand:** `0.000362` / `0.000369`<br>**C++17 `-O3`:** `0.000331` / `0.000379`<br>**NumPy:** `0.000711` / `0.000727`<br>**PyTorch Eager:** `0.006853` / `0.007022`<br>**`torch.compile`:** `0.041246` / `0.041701` | `null` (no RAPL) | `null` (no RAPL) | **ShortHand:** `3.64 MB`<br>**C++17:** `4.08 MB`<br>**NumPy:** `40.51 MB`<br>**PyTorch:** `226.75 MB` | **`89.371%`** (`1606 / 1797`) |
 
+![Cross-Tier Memory Footprint Comparison (Peak RSS in MB)](figures/fig5_memory_rss_comparison.svg)
+
+```mermaid
+xychart-beta
+    title "Cross-Tier Peak Resident Set Size (RSS Memory in MB — Lower is Smaller)"
+    x-axis ["AOT C++17", "ShortHand IR", "C++17 Source", "C++ ORT Probe", "SH Bridge", "C++ ORT App", "SH Immutable", "SH AIRuntime", "Py+NumPy", "Py+ORT", "Py+PyTorch"]
+    y-axis "Peak RSS Memory (MB)" 0 --> 240
+    bar [3.35, 3.64, 4.08, 26.09, 26.25, 26.36, 30.21, 31.31, 40.51, 71.05, 226.75]
+```
+
 ---
 
 ### 2.2 Tier 1 — Core ShortHand Source Workloads (`source-r10` & `source-r100`) vs. Historical Runs
 
 Whole-process warm-OS-cache timing across 30 randomized AB/BA process pairs per cell after 2 warmups (1,797 Optdigits test images × $R$ repetitions; accuracy = `89.371%` across all cells):
+
+![Tier 1 Core Source Workload Latency Comparison](figures/fig1_source_workload_comparison.svg)
 
 | Repetitions | Baseline | Current Run (`2026-11-09`) ShortHand Mean (`p50` / `p95`) [ms/img] | Current Run (`2026-11-09`) Baseline Mean (`p50` / `p95`) [ms/img] | Current Reduction % `[95% CI]` | Historical `35989782120` (`2026-09-24`) Reduction % `[95% CI]` | Historical `35747601906` (`2026-09-22`) Reduction % `[95% CI]` |
 | ---: | :--- | ---: | ---: | ---: | ---: | ---: |
@@ -108,6 +120,19 @@ Whole-process warm-OS-cache timing across 30 randomized AB/BA process pairs per 
 ### 2.3 Tier 2 — Resident SOTA Runtime Baselines (`python-runtime` & `cpp-runtime`)
 
 Resident-session inner-trial timing across 10 balanced process pairs × 3 inner trials × 10 repetitions of 1,797 Optdigits images (53,910 classifications per process; accuracy = `89.371%`):
+
+![Tier 2 Resident FP32 ONNX Runtime Host Comparison](figures/fig2_resident_onnx_runtime_comparison.svg)
+
+```mermaid
+xychart-beta
+    title "Tier 2 Resident ONNX Runtime Latency (µs/image — Lower is Faster)"
+    x-axis ["b1-t1", "b16-t1", "b16-t2", "b32-t1", "b16-t4 (4-vCPU)"]
+    y-axis "Mean Latency (µs/image)" 0 --> 23
+    bar [2.700, 0.576, 0.590, 0.509, 0.809]
+    bar [21.729, 1.738, 1.789, 1.047, 3.184]
+    bar [1.647, 0.313, 0.322, 0.271, 0.449]
+```
+*(Series 1 = ShortHand AIRuntime, Series 2 = Python + ONNX Runtime, Series 3 = Native C++17 + ONNX Runtime)*
 
 | Cell | Baseline | Current (`2026-11-09`) ShortHand Mean (`p50` / `p95`) [ms/img] | Current (`2026-11-09`) Baseline Mean (`p50` / `p95`) [ms/img] | Current Reduction % `[95% CI]` | Historical `35989782120` (`2026-09-24`) Reduction % `[95% CI]` |
 | :--- | :--- | ---: | ---: | ---: | ---: |
@@ -127,6 +152,8 @@ Resident-session inner-trial timing across 10 balanced process pairs × 3 inner 
 ---
 
 ### 2.4 Tier 3 — Phase-Isolation Attribution, Compiled Inference Bridge & Immutable Envelopes
+
+![Tier 3 Phase Attribution & Immutable Model Envelope](figures/fig3_phase_isolation_and_immutable_envelope.svg)
 
 #### A. Application Boundary Phase Attribution (`profile/b1-t1.json` .. `b32-t1.json`)
 
@@ -160,7 +187,11 @@ To eliminate the `~16.6 µs` mutable model-snapshot overhead, `ImmutableOnnxEnve
 
 ---
 
-### 2.5 Tier 4 — Persistent Training Workers (`training/report.json`)
+### 2.5 Tier 4 — Persistent Training Workers (`training/report.json`) & Tier 5 — Ahead-of-Time (AOT) Static Affine Compilation (`aot/report.json`)
+
+![Tiers 4 & 5 Static Affine AOT Compilation & Persistent Training Workers](figures/fig4_aot_and_persistent_training.svg)
+
+#### A. Tier 4 — Persistent Training Workers (`training/report.json`)
 
 Ablation of `PersistentWorkers.h` / `TorchTrainer.cpp` (`HEAD` `2db9d1da7918`) against cold-spawned worker baseline (`7ad856960a49`) on the fixed synthetic reference CNN (1,024 samples, 128 steps, seed 42, exact parameter SHA-256 `14e7702402037506ead26f41243b7274742675ef4222fc7ed0a7f6d763aeb8a8` and final loss `0.0166778378` across all runs):
 
@@ -169,9 +200,7 @@ Ablation of `PersistentWorkers.h` / `TorchTrainer.cpp` (`HEAD` `2db9d1da7918`) a
 | **1 Thread** | `10,729` | **`521`** | **`+95.14%`** | **`0.8257`** (`0.7957–0.8737`, **17.43% faster**, 6/6 blocks `< 1.0`) | `0.9198` (`0.7306–0.9320`, 8.02% faster) |
 | **2 Threads** | `11,241` | **`527`** | **`+95.31%`** | **`0.8659`** (`0.6385–1.0482`, **13.41% faster**, 4/6 blocks `< 1.0`) | `0.8804` (`0.5691–1.4807`, 11.96% faster) |
 
----
-
-### 2.6 Tier 5 — Ahead-of-Time (AOT) Static Affine Compilation (`aot/report.json`)
+#### B. Tier 5 — Ahead-of-Time (AOT) Static Affine Compilation (`aot/report.json`)
 
 Comparison of compile-time lifted C++17 static affine kernels (`StaticAffineModel.cpp`) against dynamic ONNX Runtime CPU (`ORT_ENABLE_BASIC` and `ORT_ENABLE_ALL`) on deterministic nonzero FP32 `[B, 64] -> [B, 10]` `MatMul+Add`:
 
@@ -212,3 +241,31 @@ Comparison of compile-time lifted C++17 static affine kernels (`StaticAffineMode
 4. **Claim 4 — Static Affine AOT Compilation vs. Dynamic Runtime Dispatch (`PARTIALLY VALIDATED`):**
    - **Code Citations:** `Compiler_new_ws/Short_Hand/src/aot/StaticAffineModel.cpp`, `Compiler_new_ws/Short_Hand/src/aot/AotSupport.cpp`, `experiments/aot/compile_model.py`, `experiments/aot/benchmark.py`.
    - **Evidence:** `aot/report.json` shows that lifting static FP32 `MatMul+Add` graphs into standalone C++17 object files (`5,760–6,008 bytes`) with caller-owned workspaces (`40–1,280 bytes`) cuts Peak RSS from `26.09 MB` to `3.35 MB` and outperforms ORT BASIC/ALL by **4.69×–4.76×** at `batch=1` (`0.000277 ms/vec` vs `0.001290 ms/vec`). At `batch=16` and `batch=32`, ORT's vectorized multi-row GEMM microkernels overtake the generated scalar C++ loops (`0.000154 ms/vec` vs `0.000351 ms/vec` at `b16`).
+
+5. **Claim 5 — Calibrated Hardware Energy Savings & Carbon Superiority (`UNVALIDATED — Claim-Safe Fail-Closed Verified`):**
+   - **Code Citations:** `Compiler_new_ws/Short_Hand/src/runtime/PowercapEnergyCollector.cpp`, `Compiler_new_ws/Short_Hand/src/runtime/EnergyMeasurement.cpp`, `Compiler_new_ws/Short_Hand/src/runtime/ExternalMeterCollector.cpp`, `experiments/energy/energy_status.py`, `experiments/energy/ci_energy_evidence.py`, `experiments/energy/ci_energy_compare.py`.
+   - **Evidence:** Both `metadata/energy-status.json` and `ci-energy/summary.json` confirm that in virtualized environments without readable RAPL domains (`rapl_available=false`, `domains=0`) or an external hardware power meter, ShortHand refuses to synthesize joules from elapsed time or TDP (`joules: null`, `energy_claim_authorized: false`, `comparative_energy_claim: false`, `lowest_carbon_language_claim: false`). Physical energy superiority claims remain unvalidated until executed on a dedicated bare-metal host with calibrated `powercap`/RAPL and external wall-power instrumentation.
+
+---
+
+## 4. Reproducibility & Generated Comparison Graphs
+
+All experimental campaigns and comparison graphs can be regenerated end-to-end from the repository root:
+
+```bash
+# Run the complete 7-step SOTA validation campaign (includes SVG graph generation):
+bash scripts/run_sota_validation_campaign.sh
+
+# Or regenerate the 5 SVG comparison graphs directly from an existing campaign bundle:
+python3 scripts/generate_sota_comparison_graphs.py \
+  --exp-dir experiments/energy/results/2026-11-09-antigravity-run \
+  --docs-fig-dir docs/benchmark_results/figures
+```
+
+| Figure File | Description |
+| :--- | :--- |
+| `fig1_source_workload_comparison.svg` | Tier 1 Core Source Workloads (`R=10` & `R=100` log10 latency & paired reduction % across ShortHand LLVM `-O2`, C++17 `-O3`, NumPy, PyTorch Eager, and `torch.compile`). |
+| `fig2_resident_onnx_runtime_comparison.svg` | Tier 2 Resident FP32 ONNX Runtime 1.30.0 Host Comparison (`b1-t1`, `b16-t1`, `b16-t2`, `b32-t1`, `b16-t4` mean/p95 latency & paired 95% bootstrap CIs). |
+| `fig3_phase_isolation_and_immutable_envelope.svg` | Tier 3 17-phase warm call attribution (`generated-infer/phases.json`) and `ImmutableOnnxEnvelope` vs. Mutable `88 B`, `64 KiB`, and `1 MiB` latency + `strace` syscall verification (`immutable/report.json`). |
+| `fig4_aot_and_persistent_training.svg` | Tiers 4 & 5 Static Affine AOT vs. ORT BASIC/ALL (`batch=1, 16, 32`) and Persistent Training Worker heap allocation & paired latency reduction (`training/report.json`). |
+| `fig5_memory_rss_comparison.svg` | Cross-tier Peak Resident Set Size (RSS [MB]) memory footprint comparison from `3.35 MB` (AOT C++17) to `226.75 MB` (PyTorch CPU). |

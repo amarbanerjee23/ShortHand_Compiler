@@ -34,6 +34,8 @@ Each row has 30 balanced randomized process pairs after two warmups. Timing incl
 | 100 | pytorch-eager | 0.000362 | 0.006857 | 94.72 | [94.70, 94.75] | 89.371 |
 | 100 | pytorch-compile | 0.000363 | 0.041279 | 99.12 | [99.12, 99.13] | 89.371 |
 
+![Source Workload Latency Comparison](figures/fig1_source_workload_comparison.svg)
+
 ## Runtime workload: FP32 ONNX Runtime 1.30.0 CPU
 
 The same FP32 ONNX model and raw dataset are used by Shorthand AIRuntime, Python/NumPy ONNX Runtime and the independent C++17 ONNX Runtime executable. This measures host integration overhead around the same inference backend, separately from the FP64 source experiment.
@@ -50,6 +52,16 @@ Ten balanced process pairs per cell; each process contains three resident-sessio
 | ort-b16-t1 | C++ / ONNX | 0.000582 | 0.000313 | -86.27 | [-88.53, -84.36] |
 | ort-b16-t2 | C++ / ONNX | 0.000593 | 0.000322 | -84.31 | [-89.81, -78.43] |
 | ort-b32-t1 | C++ / ONNX | 0.000505 | 0.000271 | -86.22 | [-89.94, -82.65] |
+
+![Resident ONNX Runtime Comparison](figures/fig2_resident_onnx_runtime_comparison.svg)
+
+## Specialized Claim & Memory Comparison Figures
+
+![Phase Isolation & Immutable Model Envelope](figures/fig3_phase_isolation_and_immutable_envelope.svg)
+
+![Static Affine AOT & Persistent Training Workers](figures/fig4_aot_and_persistent_training.svg)
+
+![Cross-Tier Peak RSS Memory Comparison](figures/fig5_memory_rss_comparison.svg)
 
 ## What the measurements show
 
@@ -68,6 +80,7 @@ This is one shared hosted-runner session with one small classifier. Startup cost
 - [summary.json](summary.json): exact numbers and all per-pair values used by the bootstrap.
 - [observations.json](observations.json): ordered pairs, raw durations, completed work and inner trial windows.
 - [metadata/](metadata/): frozen plans, source captures, build timings, environment, energy availability and original bundle digests.
+- [SOTA_VALIDATION_REPORT.md](SOTA_VALIDATION_REPORT.md): complete 5-tier SOTA comparison ledger and claim-by-claim validation report.
 - Full artifact: raw stdout/stderr, predictions/scores, binaries, LLVM IR and replay manifests.
 
 Reproduce with the `experiment-results` workflow, or follow [the experiment instructions](../../README.md). Use `run_verified.py` with the same pinned dependencies and built compiler. Real energy work requires the calibrated-energy protocol, an independently logging whole-host meter, and repeated dedicated-machine sessions.

@@ -415,9 +415,10 @@ for sub, files in keep.items():
 PYEOF
 
 # ------------------------------------------------------------------------------
-# Step 7: Cryptographically Verify Auditor Bundle & Seal SHA256SUMS.json
+# Step 7: Render Comparison Graphs, Verify Auditor Bundle & Seal SHA256SUMS.json
 # ------------------------------------------------------------------------------
-echo "[Step 7/7] Verifying C3Eco auditor bundle and sealing SHA256SUMS.json..."
+echo "[Step 7/7] Generating SOTA comparison SVG graphs, verifying C3Eco auditor bundle, and sealing SHA256SUMS.json..."
+python3 scripts/generate_sota_comparison_graphs.py --exp-dir "${EXP_DIR}"
 bash scripts/check_c3eco_auditor_bundle.sh
 
 python3 - "${EXP_DIR}" << 'PYEOF'
