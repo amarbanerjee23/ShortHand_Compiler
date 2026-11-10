@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 440" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 480" width="100%" height="100%">
   <title>SOTA Memory Footprint Comparison (Peak RSS in MB)</title>
   <style>
     .bg { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 10; }
@@ -13,53 +13,65 @@
     .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 3,3; }
     .axis { stroke: #94a3b8; stroke-width: 1.2; }
   </style>
-  <rect class="bg" x="1" y="1" width="978" height="438" rx="10"/>
-  <text class="title" x="28" y="34">Cross-Tier Memory Footprint Comparison — Peak Resident Set Size (RSS [MB])</text>
+  <rect class="bg" x="1" y="1" width="978" height="478" rx="10"/>
+  <text class="title" x="28" y="34">Cross-Language Memory Footprint — Peak Resident Set Size (RSS [MB])</text>
   <text class="subtitle" x="28" y="54">Measured via /usr/bin/time -f "%M" (ru_maxrss) on Linux x86_64 | Lower bars indicate smaller memory footprint</text>
-  <rect class="panel" x="24" y="70" width="932" height="325" rx="8"/>
-  <line class="grid" x1="310.0" y1="88" x2="310.0" y2="352"/>
-  <text class="tick" x="310.0" y="368" text-anchor="middle">0 MB</text>
-  <line class="grid" x1="387.1" y1="88" x2="387.1" y2="352"/>
-  <text class="tick" x="387.1" y="368" text-anchor="middle">50 MB</text>
-  <line class="grid" x1="464.2" y1="88" x2="464.2" y2="352"/>
-  <text class="tick" x="464.2" y="368" text-anchor="middle">100 MB</text>
-  <line class="grid" x1="541.2" y1="88" x2="541.2" y2="352"/>
-  <text class="tick" x="541.2" y="368" text-anchor="middle">150 MB</text>
-  <line class="grid" x1="618.3" y1="88" x2="618.3" y2="352"/>
-  <text class="tick" x="618.3" y="368" text-anchor="middle">200 MB</text>
-  <text class="axis-label" x="495.0" y="386" text-anchor="middle">Peak Resident Set Size (MB — linear scale)</text>
-  <text class="axis-label" x="300" y="105" text-anchor="end">ShortHand Static Affine AOT Binary (b16)</text>
-  <rect x="310" y="92" width="5.2" height="16" fill="#10b981" rx="3"/>
-  <text class="val" x="321.2" y="104">3.35 MB  <tspan class="note">(Zero ORT dependency; 640 B caller workspace)</tspan></text>
-  <text class="axis-label" x="300" y="128" text-anchor="end">ShortHand Native Source Binary (LLVM -O2)</text>
-  <rect x="310" y="115" width="5.6" height="16" fill="#0284c7" rx="3"/>
-  <text class="val" x="321.6" y="127">3.64 MB  <tspan class="note">(Embedded FP64 centroids; zero runtime SDK)</tspan></text>
-  <text class="axis-label" x="300" y="151" text-anchor="end">C++17 Native Source Baseline (-O3)</text>
-  <rect x="310" y="138" width="6.3" height="16" fill="#0d9488" rx="3"/>
-  <text class="val" x="322.3" y="150">4.08 MB  <tspan class="note">(Hand-written C++17 baseline)</tspan></text>
-  <text class="axis-label" x="300" y="174" text-anchor="end">C++17 Direct ONNX Runtime Probe (b16)</text>
-  <rect x="310" y="161" width="40.2" height="16" fill="#64748b" rx="3"/>
-  <text class="val" x="356.2" y="173">26.09 MB  <tspan class="note">(Standalone C++17 + libonnxruntime.so.1.30.0)</tspan></text>
-  <text class="axis-label" x="300" y="197" text-anchor="end">ShortHand Compiled Bridge + Session Cache</text>
-  <rect x="310" y="184" width="40.5" height="16" fill="#0ea5e9" rx="3"/>
-  <text class="val" x="356.5" y="196">26.25 MB  <tspan class="note">(short_ai_infer_f32 + OnnxPreparedSession)</tspan></text>
-  <text class="axis-label" x="300" y="220" text-anchor="end">C++17 ONNX Runtime Optdigits Baseline</text>
-  <rect x="310" y="207" width="40.6" height="16" fill="#475569" rx="3"/>
-  <text class="val" x="356.6" y="219">26.36 MB  <tspan class="note">(cpp_onnx_baseline.cpp full dataset runner)</tspan></text>
-  <text class="axis-label" x="300" y="243" text-anchor="end">ShortHand Immutable Model Envelope (1 MiB)</text>
-  <rect x="310" y="230" width="46.6" height="16" fill="#3b82f6" rx="3"/>
-  <text class="val" x="362.6" y="242">30.21 MB  <tspan class="note">(ImmutableOnnxEnvelope (vs 30.96 MB mutable))</tspan></text>
-  <text class="axis-label" x="300" y="266" text-anchor="end">ShortHand AIRuntime Resident App (b16)</text>
-  <rect x="310" y="253" width="48.3" height="16" fill="#6366f1" rx="3"/>
-  <text class="val" x="364.3" y="265">31.31 MB  <tspan class="note">(shorthand_ai_qualify application runner)</tspan></text>
-  <text class="axis-label" x="300" y="289" text-anchor="end">Python 3.12 + NumPy 2.3.5 Source Baseline</text>
-  <rect x="310" y="276" width="62.5" height="16" fill="#8b5cf6" rx="3"/>
-  <text class="val" x="378.5" y="288">40.51 MB  <tspan class="note">(source_workload.py --baseline numpy)</tspan></text>
-  <text class="axis-label" x="300" y="312" text-anchor="end">Python 3.12 + ONNX Runtime 1.30.0 Baseline</text>
-  <rect x="310" y="299" width="109.5" height="16" fill="#f59e0b" rx="3"/>
-  <text class="val" x="425.5" y="311">71.05 MB  <tspan class="note">(compare_ai_application_baselines.py worker)</tspan></text>
-  <text class="axis-label" x="300" y="335" text-anchor="end">Python 3.12 + PyTorch 2.9.1+cpu Baseline</text>
-  <rect x="310" y="322" width="349.6" height="16" fill="#e11d48" rx="3"/>
-  <text class="val" x="665.6" y="334">226.75 MB  <tspan class="note">(source_workload.py --baseline torch-eager)</tspan></text>
-  <text class="note" x="28" y="420">ShortHand Static Affine AOT (3.35 MB) uses 87.2% less RAM than C++ ORT (26.09 MB) and 95.3% less RAM than Python ORT (71.05 MB).</text>
+  <rect class="panel" x="24" y="70" width="932" height="365" rx="8"/>
+  <line class="grid" x1="310.0" y1="86" x2="310.0" y2="395"/>
+  <text class="tick" x="310.0" y="410" text-anchor="middle">0 MB</text>
+  <line class="grid" x1="387.1" y1="86" x2="387.1" y2="395"/>
+  <text class="tick" x="387.1" y="410" text-anchor="middle">50 MB</text>
+  <line class="grid" x1="464.2" y1="86" x2="464.2" y2="395"/>
+  <text class="tick" x="464.2" y="410" text-anchor="middle">100 MB</text>
+  <line class="grid" x1="541.2" y1="86" x2="541.2" y2="395"/>
+  <text class="tick" x="541.2" y="410" text-anchor="middle">150 MB</text>
+  <line class="grid" x1="618.3" y1="86" x2="618.3" y2="395"/>
+  <text class="tick" x="618.3" y="410" text-anchor="middle">200 MB</text>
+  <text class="axis-label" x="495.0" y="427" text-anchor="middle">Peak Resident Set Size (MB — linear scale)</text>
+  <text class="axis-label" x="300" y="100" text-anchor="end">ISO C11 Native Source Binary (GCC -O3)</text>
+  <rect x="310" y="88" width="4.0" height="14" fill="#059669" rx="3"/>
+  <text class="val" x="320.0" y="99">2.52 MB  <tspan class="note">(Static arrays + strtod; zero runtime SDK)</tspan></text>
+  <text class="axis-label" x="300" y="120" text-anchor="end">Optimized Safe Rust Source Binary (rustc -O3)</text>
+  <rect x="310" y="108" width="4.5" height="14" fill="#ea580c" rx="3"/>
+  <text class="val" x="320.5" y="119">2.93 MB  <tspan class="note">(rustc 1.99.1 #![forbid(unsafe_code)])</tspan></text>
+  <text class="axis-label" x="300" y="140" text-anchor="end">ISO C11 Native Source Binary (Clang -O3)</text>
+  <rect x="310" y="128" width="4.6" height="14" fill="#10b981" rx="3"/>
+  <text class="val" x="320.6" y="139">2.99 MB  <tspan class="note">(Static arrays + restrict pointers)</tspan></text>
+  <text class="axis-label" x="300" y="160" text-anchor="end">ShortHand Static Affine AOT Binary (b16)</text>
+  <rect x="310" y="148" width="5.2" height="14" fill="#0d9488" rx="3"/>
+  <text class="val" x="321.2" y="159">3.35 MB  <tspan class="note">(Zero ORT dependency; 640 B caller workspace)</tspan></text>
+  <text class="axis-label" x="300" y="180" text-anchor="end">Go 1.27.3 Native Source Binary (go build)</text>
+  <rect x="310" y="168" width="5.3" height="14" fill="#06b6d4" rx="3"/>
+  <text class="val" x="321.3" y="179">3.45 MB  <tspan class="note">(Go runtime + GC heap)</tspan></text>
+  <text class="axis-label" x="300" y="200" text-anchor="end">ShortHand Native Source Binary (LLVM -O2)</text>
+  <rect x="310" y="188" width="5.6" height="14" fill="#0284c7" rx="3"/>
+  <text class="val" x="321.6" y="199">3.64 MB  <tspan class="note">(Embedded FP64 centroids; zero runtime SDK)</tspan></text>
+  <text class="axis-label" x="300" y="220" text-anchor="end">C++17 Native Source Baseline (Clang++ -O3)</text>
+  <rect x="310" y="208" width="6.1" height="14" fill="#2563eb" rx="3"/>
+  <text class="val" x="322.1" y="219">3.93 MB  <tspan class="note">(constexpr std::array + iostream)</tspan></text>
+  <text class="axis-label" x="300" y="240" text-anchor="end">ISO C11 Direct OrtApi Resident Runner (b16)</text>
+  <rect x="310" y="228" width="38.4" height="14" fill="#14b8a6" rx="3"/>
+  <text class="val" x="354.4" y="239">24.91 MB  <tspan class="note">(Pure C11 OrtGetApiBase() + pre-bound OrtValue)</tspan></text>
+  <text class="axis-label" x="300" y="260" text-anchor="end">Native Rust OrtApi FFI Resident Runner (b16)</text>
+  <rect x="310" y="248" width="40.0" height="14" fill="#f97316" rx="3"/>
+  <text class="val" x="356.0" y="259">25.95 MB  <tspan class="note">(Rust 1.99.1 RAII Drop guard over OrtApi)</tspan></text>
+  <text class="axis-label" x="300" y="280" text-anchor="end">ShortHand Compiled Bridge + Session Cache</text>
+  <rect x="310" y="268" width="40.5" height="14" fill="#0ea5e9" rx="3"/>
+  <text class="val" x="356.5" y="279">26.25 MB  <tspan class="note">(short_ai_infer_f32 + OnnxPreparedSession)</tspan></text>
+  <text class="axis-label" x="300" y="300" text-anchor="end">C++17 ONNX Runtime Optdigits Baseline</text>
+  <rect x="310" y="288" width="40.6" height="14" fill="#475569" rx="3"/>
+  <text class="val" x="356.6" y="299">26.36 MB  <tspan class="note">(cpp_onnx_baseline.cpp Ort::Session)</tspan></text>
+  <text class="axis-label" x="300" y="320" text-anchor="end">ShortHand AIRuntime Resident App (b16)</text>
+  <rect x="310" y="308" width="48.3" height="14" fill="#6366f1" rx="3"/>
+  <text class="val" x="364.3" y="319">31.31 MB  <tspan class="note">(shorthand_ai_qualify application runner)</tspan></text>
+  <text class="axis-label" x="300" y="340" text-anchor="end">Python 3.12 + NumPy 2.3.5 Source Baseline</text>
+  <rect x="310" y="328" width="62.5" height="14" fill="#8b5cf6" rx="3"/>
+  <text class="val" x="378.5" y="339">40.51 MB  <tspan class="note">(source_workload.py --baseline numpy)</tspan></text>
+  <text class="axis-label" x="300" y="360" text-anchor="end">Python 3.12 + ONNX Runtime 1.30.0 Baseline</text>
+  <rect x="310" y="348" width="109.5" height="14" fill="#f59e0b" rx="3"/>
+  <text class="val" x="425.5" y="359">71.05 MB  <tspan class="note">(compare_ai_application_baselines.py worker)</tspan></text>
+  <text class="axis-label" x="300" y="380" text-anchor="end">Python 3.12 + PyTorch 2.9.1+cpu Baseline</text>
+  <rect x="310" y="368" width="349.6" height="14" fill="#e11d48" rx="3"/>
+  <text class="val" x="665.6" y="379">226.75 MB  <tspan class="note">(source_workload.py --baseline torch-eager)</tspan></text>
+  <text class="note" x="28" y="458">C11 (2.52 MB), Rust (2.93 MB), ShortHand AOT (3.35 MB), and ShortHand Native (3.64 MB) all stay under 4 MB RSS vs 71-227 MB in Python.</text>
 </svg>

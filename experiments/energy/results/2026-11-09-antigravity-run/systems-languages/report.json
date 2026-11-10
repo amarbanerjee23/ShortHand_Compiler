@@ -1,0 +1,644 @@
+{
+  "comparative_energy_claim": false,
+  "energy_claim_authorized": false,
+  "generated_utc": "2026-11-10T11:50:37.911608+00:00",
+  "joules": null,
+  "lowest_carbon_language_claim": false,
+  "platform": "Linux-6.12.105+-x86_64-with-glibc2.36",
+  "schema": "shorthand.systems_languages.sota_report.v1",
+  "toolchains": {
+    "cargo": "cargo 1.99.1 (5f94df478 2026-08-27)",
+    "clang": "Debian clang version 14.0.6",
+    "gcc": "gcc (Debian 12.2.0-14+deb12u1) 12.2.0",
+    "go": "go version go1.27.3 linux/amd64",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13)"
+  },
+  "track1_source_fp64": {
+    "build_and_memory": {
+      "c11-clang-o3": {
+        "binary_bytes": 20504,
+        "compile_ms": 120.26,
+        "description": "ISO C11 (Clang 14.0.6 -O3 -fno-fast-math, restrict + strtod)",
+        "estimated_startup_and_io_ms": 3.853,
+        "marginal_compute_ns_per_image": 241.4,
+        "peak_rss_mb": 2.99,
+        "sha256": "b9bd5230e01b33bf2e5c8d74c5688bfb7d2e9f74fc3d481b56ae46ded037f362"
+      },
+      "c11-gcc-o3": {
+        "binary_bytes": 20432,
+        "compile_ms": 78.4,
+        "description": "ISO C11 (GCC 12.2.0 -O3 -fno-fast-math, restrict + strtod)",
+        "estimated_startup_and_io_ms": 3.767,
+        "marginal_compute_ns_per_image": 283.71,
+        "peak_rss_mb": 2.52,
+        "sha256": "baabb3eb198a1ac506c475cb6950f8a83de23c7690d9e01789608157a11594a5"
+      },
+      "cpp17-clang-o3": {
+        "binary_bytes": 21488,
+        "compile_ms": 438.17,
+        "description": "C++17 (Clang++ 14.0.6 -O3 -fno-fast-math, constexpr array + iostream)",
+        "estimated_startup_and_io_ms": 11.143,
+        "marginal_compute_ns_per_image": 265.52,
+        "peak_rss_mb": 3.93,
+        "sha256": "39490f278908c7f9d0de9c69f0011cdb1b33ff9281e13cb27ced5398f3506abe"
+      },
+      "cpp17-gcc-o3": {
+        "binary_bytes": 21416,
+        "compile_ms": 405.44,
+        "description": "C++17 (G++ 12.2.0 -O3 -fno-fast-math, constexpr array + iostream)",
+        "estimated_startup_and_io_ms": 10.898,
+        "marginal_compute_ns_per_image": 306.55,
+        "peak_rss_mb": 4.09,
+        "sha256": "9ac3afbe7c75deece6c12c1dca201362e7f5a19343673093992b03aff1adbafd"
+      },
+      "go-native": {
+        "binary_bytes": 1536160,
+        "compile_ms": 59.73,
+        "description": "Go 1.27.3 (go build -ldflags='-s -w', GC systems baseline)",
+        "estimated_startup_and_io_ms": 2.877,
+        "marginal_compute_ns_per_image": 513.47,
+        "peak_rss_mb": 3.45,
+        "sha256": "a8a9ab7250b4a4642d49ec9ea4b49cfb7f3df09ad64f09679be5bcd50e370097"
+      },
+      "rust-safe-o3": {
+        "binary_bytes": 4578888,
+        "compile_ms": 196.35,
+        "description": "Safe Rust 1.99.1 (-C opt-level=3, #![forbid(unsafe_code)], FromStr)",
+        "estimated_startup_and_io_ms": 2.84,
+        "marginal_compute_ns_per_image": 272.43,
+        "peak_rss_mb": 2.96,
+        "sha256": "20b11dcc4bbef20501b9994cb98e508969a61f71f06bd84e40e254f769ca7dab"
+      },
+      "rust-simd-o3": {
+        "binary_bytes": 4556848,
+        "compile_ms": 172.8,
+        "description": "Optimized Safe Rust 1.99.1 (-C opt-level=3 -C target-cpu=x86-64-v3, fast scanner)",
+        "estimated_startup_and_io_ms": 1.933,
+        "marginal_compute_ns_per_image": 230.08,
+        "peak_rss_mb": 2.93,
+        "sha256": "4f0ceb7f5b141e9a88c8da0cad5ea64d6813094edf52082a347097751783d8a6"
+      },
+      "shorthand": {
+        "binary_bytes": 24944,
+        "compile_ms": 269.04,
+        "description": "ShortHand Compiler (compile-mlir + Clang++ 14.0.6 -O2 -fno-fast-math)",
+        "estimated_startup_and_io_ms": 8.628,
+        "marginal_compute_ns_per_image": 312.16,
+        "peak_rss_mb": 3.79,
+        "sha256": "d1142dc00d59055c9b6b1e3800d4628e99e9cbfa31b65c6e82536a7b734ed903"
+      }
+    },
+    "marginal_compute_ns_per_image": {
+      "c11-clang-o3": 241.4,
+      "c11-gcc-o3": 283.71,
+      "cpp17-clang-o3": 265.52,
+      "cpp17-gcc-o3": 306.55,
+      "go-native": 513.47,
+      "rust-safe-o3": 272.43,
+      "rust-simd-o3": 230.08,
+      "shorthand": 312.16
+    },
+    "pairs_per_cell": 30,
+    "r10": [
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "c11-clang-o3",
+        "baseline_mean_ms": 0.00045579168985139496,
+        "baseline_p50_ms": 0.0004551768224711058,
+        "baseline_p95_ms": 0.0004682865386677948,
+        "description": "ISO C11 (Clang 14.0.6 -O3 -fno-fast-math, restrict + strtod)",
+        "paired_bootstrap_95_ci": [
+          -74.95808600117206,
+          -71.87514617786796
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0007906106418159553,
+        "shorthand_p50_ms": 0.0007913768503267729,
+        "shorthand_p95_ms": 0.0008082431663959284,
+        "shorthand_reduction_percent": -73.4587662345761
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "c11-gcc-o3",
+        "baseline_mean_ms": 0.0004933336264183909,
+        "baseline_p50_ms": 0.0004917895103087925,
+        "baseline_p95_ms": 0.0005104519894307494,
+        "description": "ISO C11 (GCC 12.2.0 -O3 -fno-fast-math, restrict + strtod)",
+        "paired_bootstrap_95_ci": [
+          -61.53426869592826,
+          -59.40704849226635
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0007915081061027515,
+        "shorthand_p50_ms": 0.0007926097662664973,
+        "shorthand_p95_ms": 0.0008056369198715772,
+        "shorthand_reduction_percent": -60.44073700167401
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "cpp17-clang-o3",
+        "baseline_mean_ms": 0.0008856035596371718,
+        "baseline_p50_ms": 0.0008804833055099013,
+        "baseline_p95_ms": 0.0009379848942640236,
+        "description": "C++17 (Clang++ 14.0.6 -O3 -fno-fast-math, constexpr array + iostream)",
+        "paired_bootstrap_95_ci": [
+          9.405054812567059,
+          11.541336325990791
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0007930743943587137,
+        "shorthand_p50_ms": 0.0007917580968279073,
+        "shorthand_p95_ms": 0.0008065068558659515,
+        "shorthand_reduction_percent": 10.448147398635898
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "cpp17-gcc-o3",
+        "baseline_mean_ms": 0.0009130127527376933,
+        "baseline_p50_ms": 0.0009147579020614353,
+        "baseline_p95_ms": 0.000929871939354896,
+        "description": "C++17 (G++ 12.2.0 -O3 -fno-fast-math, constexpr array + iostream)",
+        "paired_bootstrap_95_ci": [
+          12.932345248111032,
+          14.213345962128498
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0007890432090500721,
+        "shorthand_p50_ms": 0.0007894175570549817,
+        "shorthand_p95_ms": 0.0008059864718830374,
+        "shorthand_reduction_percent": 13.578073615718422
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "rust-safe-o3",
+        "baseline_mean_ms": 0.0004304941513646613,
+        "baseline_p50_ms": 0.00043046597107031687,
+        "baseline_p95_ms": 0.0004551188285983856,
+        "description": "Safe Rust 1.99.1 (-C opt-level=3, #![forbid(unsafe_code)], FromStr)",
+        "paired_bootstrap_95_ci": [
+          -87.13449250111536,
+          -81.54341157327273
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0007928901817834505,
+        "shorthand_p50_ms": 0.0007870702559835544,
+        "shorthand_p95_ms": 0.0008294931747361713,
+        "shorthand_reduction_percent": -84.18140624442817
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "rust-simd-o3",
+        "baseline_mean_ms": 0.00033763405490789975,
+        "baseline_p50_ms": 0.00033387323316937844,
+        "baseline_p95_ms": 0.00036439831664305584,
+        "description": "Optimized Safe Rust 1.99.1 (-C opt-level=3 -C target-cpu=x86-64-v3, fast scanner)",
+        "paired_bootstrap_95_ci": [
+          -136.15879490240727,
+          -127.49644854668034
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0007830782563528317,
+        "shorthand_p50_ms": 0.0007857951864068401,
+        "shorthand_p95_ms": 0.0007939122676686298,
+        "shorthand_reduction_percent": -131.93106411213193
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "go-native",
+        "baseline_mean_ms": 0.0006735471749247168,
+        "baseline_p50_ms": 0.0006728776293927203,
+        "baseline_p95_ms": 0.0007018319003985486,
+        "description": "Go 1.27.3 (go build -ldflags='-s -w', GC systems baseline)",
+        "paired_bootstrap_95_ci": [
+          -23.78430890331995,
+          -17.13923766827923
+        ],
+        "repetitions": 10,
+        "shorthand_mean_ms": 0.0008059851344846593,
+        "shorthand_p50_ms": 0.0007926166666716319,
+        "shorthand_p95_ms": 0.000829882659990212,
+        "shorthand_reduction_percent": -19.662759267715014
+      }
+    ],
+    "r100": [
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "c11-clang-o3",
+        "baseline_mean_ms": 0.0002628416521981175,
+        "baseline_p50_ms": 0.000264397198108233,
+        "baseline_p95_ms": 0.0002746867659974219,
+        "description": "ISO C11 (Clang 14.0.6 -O3 -fno-fast-math, restrict + strtod)",
+        "paired_bootstrap_95_ci": [
+          -42.26208901275474,
+          -37.18692255317369
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.00036632947616399087,
+        "shorthand_p50_ms": 0.0003620128185870784,
+        "shorthand_p95_ms": 0.00039185228714536645,
+        "shorthand_reduction_percent": -39.372688118650686
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "c11-gcc-o3",
+        "baseline_mean_ms": 0.0003046683014285276,
+        "baseline_p50_ms": 0.0003054725542577613,
+        "baseline_p95_ms": 0.00030946678491964566,
+        "description": "ISO C11 (GCC 12.2.0 -O3 -fno-fast-math, restrict + strtod)",
+        "paired_bootstrap_95_ci": [
+          -18.414562505648924,
+          -16.918264918061166
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.0003585627525504284,
+        "shorthand_p50_ms": 0.00035836512520870357,
+        "shorthand_p95_ms": 0.0003662222064563116,
+        "shorthand_reduction_percent": -17.68954987085978
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "cpp17-clang-o3",
+        "baseline_mean_ms": 0.0003275303027265099,
+        "baseline_p50_ms": 0.0003283099415687846,
+        "baseline_p95_ms": 0.00033363728046803597,
+        "description": "C++17 (Clang++ 14.0.6 -O3 -fno-fast-math, constexpr array + iostream)",
+        "paired_bootstrap_95_ci": [
+          -10.76712784392473,
+          -9.431238216830518
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.00036066128621768575,
+        "shorthand_p50_ms": 0.00036066619365556613,
+        "shorthand_p95_ms": 0.00036512260768006366,
+        "shorthand_reduction_percent": -10.115394885718555
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "cpp17-gcc-o3",
+        "baseline_mean_ms": 0.00036719186180682366,
+        "baseline_p50_ms": 0.00036664771007208663,
+        "baseline_p95_ms": 0.00037637865720708744,
+        "description": "C++17 (G++ 12.2.0 -O3 -fno-fast-math, constexpr array + iostream)",
+        "paired_bootstrap_95_ci": [
+          1.5937389047048223,
+          2.8142057456982394
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.0003591291346687981,
+        "shorthand_p50_ms": 0.0003597063884247468,
+        "shorthand_p95_ms": 0.0003643198174734779,
+        "shorthand_reduction_percent": 2.1957804561222205
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "rust-safe-o3",
+        "baseline_mean_ms": 0.00028823986755708686,
+        "baseline_p50_ms": 0.0002867737395647645,
+        "baseline_p95_ms": 0.0003023166602687968,
+        "description": "Safe Rust 1.99.1 (-C opt-level=3, #![forbid(unsafe_code)], FromStr)",
+        "paired_bootstrap_95_ci": [
+          -25.490553199960075,
+          -22.96121439371508
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.00035817381617534366,
+        "shorthand_p50_ms": 0.0003587473233173836,
+        "shorthand_p95_ms": 0.000364943290763282,
+        "shorthand_reduction_percent": -24.262413527651994
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "rust-simd-o3",
+        "baseline_mean_ms": 0.00024083534650331696,
+        "baseline_p50_ms": 0.00023993281580365645,
+        "baseline_p95_ms": 0.00025627344268279743,
+        "description": "Optimized Safe Rust 1.99.1 (-C opt-level=3 -C target-cpu=x86-64-v3, fast scanner)",
+        "paired_bootstrap_95_ci": [
+          -50.06804937956058,
+          -46.52934936774555
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.00035750465739209315,
+        "shorthand_p50_ms": 0.00035822421535987883,
+        "shorthand_p95_ms": 0.00036474246828071405,
+        "shorthand_reduction_percent": -48.44359957236151
+      },
+      {
+        "accuracy_percent": 89.371,
+        "baseline": "go-native",
+        "baseline_mean_ms": 0.0005294806093489586,
+        "baseline_p50_ms": 0.0005289067473559454,
+        "baseline_p95_ms": 0.0005382853861997397,
+        "description": "Go 1.27.3 (go build -ldflags='-s -w', GC systems baseline)",
+        "paired_bootstrap_95_ci": [
+          31.379816988291275,
+          32.32999974699059
+        ],
+        "repetitions": 100,
+        "shorthand_mean_ms": 0.00036087216471914613,
+        "shorthand_p50_ms": 0.00036124361157547713,
+        "shorthand_p95_ms": 0.0003677207423481623,
+        "shorthand_reduction_percent": 31.84412075772347
+      }
+    ],
+    "schema": "shorthand.systems_languages.track1_source.v1"
+  },
+  "track2_resident_ort_fp32": {
+    "binary_bytes": {
+      "c11-ort-capi": 20936,
+      "rust-ort-ffi": 4615352
+    },
+    "cells": [
+      {
+        "accuracy_percent": 89.371,
+        "batch": 1,
+        "c11_ort_capi_ms": {
+          "init_ms_p50": 2.6135194999999998,
+          "mean": 0.0012897064,
+          "p50": 0.001294135,
+          "p95": 0.0013117002,
+          "shorthand_vs_c11_reduction_pct": -106.49345957765313
+        },
+        "cell": "ort-b1-t1",
+        "cpp17_ort_cxxapi_ms": {
+          "mean": 0.0016474271804859952,
+          "p50": 0.0016490839176405117,
+          "p95": 0.001665156362455945,
+          "shorthand_vs_cpp17_reduction_pct": -61.65566498476531
+        },
+        "python_ort_ms": {
+          "mean": 0.02172903812464937,
+          "p50": 0.021706624271933567,
+          "p95": 0.022203362007051183,
+          "shorthand_vs_python_reduction_pct": 87.57648707046573
+        },
+        "rust_ort_ffi_ms": {
+          "init_ms_p50": 16.010545,
+          "mean": 0.0012988252,
+          "p50": 0.0012917215,
+          "p95": 0.00133138835,
+          "shorthand_vs_rust_reduction_pct": -105.04370901907399
+        },
+        "shorthand_airuntime_ms": {
+          "mean": 0.0026631593637544055,
+          "p50": 0.0026681484325728065,
+          "p95": 0.0027040216731589687
+        },
+        "threads": 1
+      },
+      {
+        "accuracy_percent": 89.371,
+        "batch": 16,
+        "c11_ort_capi_ms": {
+          "init_ms_p50": 2.5922195,
+          "mean": 0.0001826868,
+          "p50": 0.00018258549999999998,
+          "p95": 0.00018571085,
+          "shorthand_vs_c11_reduction_pct": -218.80058691377062
+        },
+        "cell": "ort-b16-t1",
+        "cpp17_ort_cxxapi_ms": {
+          "mean": 0.00031266992765720643,
+          "p50": 0.0003120235206826192,
+          "p95": 0.0003204912576516416,
+          "shorthand_vs_cpp17_reduction_pct": -86.26882187803614
+        },
+        "python_ort_ms": {
+          "mean": 0.0017384973307369204,
+          "p50": 0.001738858838808243,
+          "p95": 0.0017588064561235987,
+          "shorthand_vs_python_reduction_pct": 66.88386869379505
+        },
+        "rust_ort_ffi_ms": {
+          "init_ms_p50": 16.2555905,
+          "mean": 0.0001887738,
+          "p50": 0.0001879405,
+          "p95": 0.00019189755,
+          "shorthand_vs_rust_reduction_pct": -208.52088087117292
+        },
+        "shorthand_airuntime_ms": {
+          "mean": 0.0005824065906139863,
+          "p50": 0.0005829274624373957,
+          "p95": 0.0005894619968465962
+        },
+        "threads": 1
+      },
+      {
+        "accuracy_percent": 89.371,
+        "batch": 16,
+        "c11_ort_capi_ms": {
+          "init_ms_p50": 2.6888285,
+          "mean": 0.00018371499999999999,
+          "p50": 0.000183294,
+          "p95": 0.00019192299999999999,
+          "shorthand_vs_c11_reduction_pct": -222.56263006230168
+        },
+        "cell": "ort-b16-t2",
+        "cpp17_ort_cxxapi_ms": {
+          "mean": 0.0003215189352624745,
+          "p50": 0.00031907465219810794,
+          "p95": 0.0003386917464292339,
+          "shorthand_vs_cpp17_reduction_pct": -84.31136422344369
+        },
+        "python_ort_ms": {
+          "mean": 0.0017888332350221273,
+          "p50": 0.0017546106380979826,
+          "p95": 0.0019588044370267045,
+          "shorthand_vs_python_reduction_pct": 67.02489360932518
+        },
+        "rust_ort_ffi_ms": {
+          "init_ms_p50": 16.4048565,
+          "mean": 0.0001902698,
+          "p50": 0.000190702,
+          "p95": 0.0001932117,
+          "shorthand_vs_rust_reduction_pct": -211.4503383190383
+        },
+        "shorthand_airuntime_ms": {
+          "mean": 0.0005925959358189575,
+          "p50": 0.0005845734001112966,
+          "p95": 0.0006276907911333704
+        },
+        "threads": 2
+      },
+      {
+        "accuracy_percent": 89.371,
+        "batch": 32,
+        "c11_ort_capi_ms": {
+          "init_ms_p50": 2.353429,
+          "mean": 0.0001407931,
+          "p50": 0.00014143450000000002,
+          "p95": 0.0001446176,
+          "shorthand_vs_c11_reduction_pct": -258.9665327645048
+        },
+        "cell": "ort-b32-t1",
+        "cpp17_ort_cxxapi_ms": {
+          "mean": 0.00027139710072342796,
+          "p50": 0.00027123171953255423,
+          "p95": 0.0002770771368948247,
+          "shorthand_vs_cpp17_reduction_pct": -86.22163173242554
+        },
+        "python_ort_ms": {
+          "mean": 0.0010470068391789135,
+          "p50": 0.001045628788730958,
+          "p95": 0.0010710737664653793,
+          "shorthand_vs_python_reduction_pct": 51.34027866752761
+        },
+        "rust_ort_ffi_ms": {
+          "init_ms_p50": 15.529371000000001,
+          "mean": 0.0001478339,
+          "p50": 0.00014738799999999998,
+          "p95": 0.0001517519,
+          "shorthand_vs_rust_reduction_pct": -241.87024048047303
+        },
+        "shorthand_airuntime_ms": {
+          "mean": 0.000505400109441662,
+          "p50": 0.0005046089779261732,
+          "p95": 0.0005217324531626785
+        },
+        "threads": 1
+      }
+    ],
+    "memory_rss_mb": {
+      "c11-ort-capi": 24.91,
+      "cpp17-ort-cxxapi": 26.36,
+      "python-ort": 71.05,
+      "rust-ort-ffi": 25.95,
+      "shorthand-airuntime": 31.31
+    },
+    "pairs_per_cell": 10,
+    "schema": "shorthand.systems_languages.track2_ort_host.v1"
+  },
+  "track3_static_affine_aot_fp32": {
+    "blocks": 6,
+    "iterations_per_block": 1024,
+    "rows": [
+      {
+        "batch": 1,
+        "cold_init_p50_ms": {
+          "c11_aot": 0.00078,
+          "cpp17_avx2_aot": 0.00069,
+          "ort_all": 15.77801,
+          "ort_basic": 15.39646,
+          "rust_aot": 0.00086,
+          "shorthand_aot": 0.00109
+        },
+        "hot_median_us_per_vector": {
+          "c11_aot": 0.1199,
+          "cpp17_avx2_aot": 0.1224,
+          "ort_all": 1.3033,
+          "ort_basic": 1.2834,
+          "rust_aot": 0.0839,
+          "shorthand_aot": 0.2771
+        },
+        "hot_p95_us_per_vector": {
+          "c11_aot": 0.1347,
+          "cpp17_avx2_aot": 0.1448,
+          "ort_all": 1.3264,
+          "ort_basic": 1.3121,
+          "rust_aot": 0.0911,
+          "shorthand_aot": 0.3007
+        },
+        "object_bytes": {
+          "c11_aot": 5704,
+          "cpp17_avx2_aot": 4456,
+          "rust_aot": 23338374,
+          "shorthand_aot": 6008
+        },
+        "paired_ratio_over_ort_basic_median": {
+          "c11_aot": 0.0955,
+          "cpp17_avx2_aot": 0.0969,
+          "ort_all": 1.0101,
+          "ort_basic": 1.0,
+          "rust_aot": 0.0667,
+          "shorthand_aot": 0.2174
+        },
+        "workspace_bytes": 40
+      },
+      {
+        "batch": 16,
+        "cold_init_p50_ms": {
+          "c11_aot": 0.0025,
+          "cpp17_avx2_aot": 0.00316,
+          "ort_all": 15.90102,
+          "ort_basic": 15.98887,
+          "rust_aot": 0.00282,
+          "shorthand_aot": 0.00751
+        },
+        "hot_median_us_per_vector": {
+          "c11_aot": 0.1097,
+          "cpp17_avx2_aot": 0.1011,
+          "ort_all": 0.149,
+          "ort_basic": 0.1473,
+          "rust_aot": 0.1169,
+          "shorthand_aot": 0.351
+        },
+        "hot_p95_us_per_vector": {
+          "c11_aot": 0.1122,
+          "cpp17_avx2_aot": 0.1027,
+          "ort_all": 0.158,
+          "ort_basic": 0.1509,
+          "rust_aot": 0.1231,
+          "shorthand_aot": 0.3563
+        },
+        "object_bytes": {
+          "c11_aot": 5320,
+          "cpp17_avx2_aot": 5544,
+          "rust_aot": 23339222,
+          "shorthand_aot": 5760
+        },
+        "paired_ratio_over_ort_basic_median": {
+          "c11_aot": 0.7495,
+          "cpp17_avx2_aot": 0.6918,
+          "ort_all": 1.0126,
+          "ort_basic": 1.0,
+          "rust_aot": 0.8024,
+          "shorthand_aot": 2.3638
+        },
+        "workspace_bytes": 640
+      },
+      {
+        "batch": 32,
+        "cold_init_p50_ms": {
+          "c11_aot": 0.00412,
+          "cpp17_avx2_aot": 0.00484,
+          "ort_all": 16.11927,
+          "ort_basic": 16.11902,
+          "rust_aot": 0.00532,
+          "shorthand_aot": 0.01368
+        },
+        "hot_median_us_per_vector": {
+          "c11_aot": 0.1096,
+          "cpp17_avx2_aot": 0.0971,
+          "ort_all": 0.1245,
+          "ort_basic": 0.1223,
+          "rust_aot": 0.1186,
+          "shorthand_aot": 0.3458
+        },
+        "hot_p95_us_per_vector": {
+          "c11_aot": 0.1142,
+          "cpp17_avx2_aot": 0.099,
+          "ort_all": 0.1328,
+          "ort_basic": 0.1331,
+          "rust_aot": 0.1218,
+          "shorthand_aot": 0.3482
+        },
+        "object_bytes": {
+          "c11_aot": 5320,
+          "cpp17_avx2_aot": 5544,
+          "rust_aot": 23339222,
+          "shorthand_aot": 5760
+        },
+        "paired_ratio_over_ort_basic_median": {
+          "c11_aot": 0.9103,
+          "cpp17_avx2_aot": 0.7979,
+          "ort_all": 1.0039,
+          "ort_basic": 1.0,
+          "rust_aot": 0.9536,
+          "shorthand_aot": 2.8358
+        },
+        "workspace_bytes": 1280
+      }
+    ],
+    "schema": "shorthand.systems_languages.track3_aot.v1"
+  }
+}

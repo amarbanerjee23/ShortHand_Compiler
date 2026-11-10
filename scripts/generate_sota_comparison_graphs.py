@@ -13,6 +13,7 @@ import html
 import json
 import math
 import pathlib
+import statistics
 from typing import Any
 
 
@@ -381,22 +382,26 @@ def render_fig4_aot_and_training(aot: dict[str, Any], training: dict[str, Any]) 
 
 
 def render_fig5_memory_rss() -> str:
-    width, height = 980, 440
+    width, height = 980, 480
     lines = svg_header(width, height, "SOTA Memory Footprint Comparison (Peak RSS in MB)")
     lines += [
-        '  <text class="title" x="28" y="34">Cross-Tier Memory Footprint Comparison — Peak Resident Set Size (RSS [MB])</text>',
+        '  <text class="title" x="28" y="34">Cross-Language Memory Footprint — Peak Resident Set Size (RSS [MB])</text>',
         '  <text class="subtitle" x="28" y="54">Measured via /usr/bin/time -f "%M" (ru_maxrss) on Linux x86_64 | Lower bars indicate smaller memory footprint</text>',
-        '  <rect class="panel" x="24" y="70" width="932" height="325" rx="8"/>',
+        '  <rect class="panel" x="24" y="70" width="932" height="365" rx="8"/>',
     ]
 
     entries = [
-        ("ShortHand Static Affine AOT Binary (b16)", 3.35, "#10b981", "Zero ORT dependency; 640 B caller workspace"),
+        ("ISO C11 Native Source Binary (GCC -O3)", 2.52, "#059669", "Static arrays + strtod; zero runtime SDK"),
+        ("Optimized Safe Rust Source Binary (rustc -O3)", 2.93, "#ea580c", "rustc 1.99.1 #![forbid(unsafe_code)]"),
+        ("ISO C11 Native Source Binary (Clang -O3)", 2.99, "#10b981", "Static arrays + restrict pointers"),
+        ("ShortHand Static Affine AOT Binary (b16)", 3.35, "#0d9488", "Zero ORT dependency; 640 B caller workspace"),
+        ("Go 1.27.3 Native Source Binary (go build)", 3.45, "#06b6d4", "Go runtime + GC heap"),
         ("ShortHand Native Source Binary (LLVM -O2)", 3.64, "#0284c7", "Embedded FP64 centroids; zero runtime SDK"),
-        ("C++17 Native Source Baseline (-O3)", 4.08, "#0d9488", "Hand-written C++17 baseline"),
-        ("C++17 Direct ONNX Runtime Probe (b16)", 26.09, "#64748b", "Standalone C++17 + libonnxruntime.so.1.30.0"),
+        ("C++17 Native Source Baseline (Clang++ -O3)", 3.93, "#2563eb", "constexpr std::array + iostream"),
+        ("ISO C11 Direct OrtApi Resident Runner (b16)", 24.91, "#14b8a6", "Pure C11 OrtGetApiBase() + pre-bound OrtValue"),
+        ("Native Rust OrtApi FFI Resident Runner (b16)", 25.95, "#f97316", "Rust 1.99.1 RAII Drop guard over OrtApi"),
         ("ShortHand Compiled Bridge + Session Cache", 26.25, "#0ea5e9", "short_ai_infer_f32 + OnnxPreparedSession"),
-        ("C++17 ONNX Runtime Optdigits Baseline", 26.36, "#475569", "cpp_onnx_baseline.cpp full dataset runner"),
-        ("ShortHand Immutable Model Envelope (1 MiB)", 30.21, "#3b82f6", "ImmutableOnnxEnvelope (vs 30.96 MB mutable)"),
+        ("C++17 ONNX Runtime Optdigits Baseline", 26.36, "#475569", "cpp_onnx_baseline.cpp Ort::Session"),
         ("ShortHand AIRuntime Resident App (b16)", 31.31, "#6366f1", "shorthand_ai_qualify application runner"),
         ("Python 3.12 + NumPy 2.3.5 Source Baseline", 40.51, "#8b5cf6", "source_workload.py --baseline numpy"),
         ("Python 3.12 + ONNX Runtime 1.30.0 Baseline", 71.05, "#f59e0b", "compare_ai_application_baselines.py worker"),
@@ -407,18 +412,148 @@ def render_fig5_memory_rss() -> str:
     max_mb = 240.0
     for tick in (0, 50, 100, 150, 200):
         gx = x0 + (tick / max_mb) * (x1 - x0)
-        lines.append(f'  <line class="grid" x1="{gx:.1f}" y1="88" x2="{gx:.1f}" y2="352"/>')
-        lines.append(f'  <text class="tick" x="{gx:.1f}" y="368" text-anchor="middle">{tick} MB</text>')
-    lines.append(f'  <text class="axis-label" x="{(x0 + x1) / 2:.1f}" y="386" text-anchor="middle">Peak Resident Set Size (MB — linear scale)</text>')
+        lines.append(f'  <line class="grid" x1="{gx:.1f}" y1="86" x2="{gx:.1f}" y2="395"/>')
+        lines.append(f'  <text class="tick" x="{gx:.1f}" y="410" text-anchor="middle">{tick} MB</text>')
+    lines.append(f'  <text class="axis-label" x="{(x0 + x1) / 2:.1f}" y="427" text-anchor="middle">Peak Resident Set Size (MB — linear scale)</text>')
 
     for idx, (label, mb, color, note) in enumerate(entries):
-        by = 92 + idx * 23
+        by = 88 + idx * 20
         w = max(4.0, (mb / max_mb) * (x1 - x0))
-        lines.append(f'  <text class="axis-label" x="{x0 - 10}" y="{by + 13}" text-anchor="end">{esc(label)}</text>')
-        lines.append(f'  <rect x="{x0}" y="{by}" width="{w:.1f}" height="16" fill="{color}" rx="3"/>')
-        lines.append(f'  <text class="val" x="{x0 + w + 6:.1f}" y="{by + 12}">{mb:.2f} MB  <tspan class="note">({esc(note)})</tspan></text>')
+        lines.append(f'  <text class="axis-label" x="{x0 - 10}" y="{by + 12}" text-anchor="end">{esc(label)}</text>')
+        lines.append(f'  <rect x="{x0}" y="{by}" width="{w:.1f}" height="14" fill="{color}" rx="3"/>')
+        lines.append(f'  <text class="val" x="{x0 + w + 6:.1f}" y="{by + 11}">{mb:.2f} MB  <tspan class="note">({esc(note)})</tspan></text>')
 
-    lines.append('  <text class="note" x="28" y="420">ShortHand Static Affine AOT (3.35 MB) uses 87.2% less RAM than C++ ORT (26.09 MB) and 95.3% less RAM than Python ORT (71.05 MB).</text>')
+    lines.append('  <text class="note" x="28" y="458">C11 (2.52 MB), Rust (2.93 MB), ShortHand AOT (3.35 MB), and ShortHand Native (3.64 MB) all stay under 4 MB RSS vs 71-227 MB in Python.</text>')
+    lines.append("</svg>")
+    return "\n".join(lines) + "\n"
+
+
+def render_fig6_systems_languages_comparison(sys_report: dict[str, Any]) -> str:
+    width, height = 980, 600
+    lines = svg_header(width, height, "Systems Languages (C11, C++17, Rust, Go) vs. ShortHand SOTA Comparison")
+    lines += [
+        '  <text class="title" x="28" y="34">Systems Languages Benchmark — ShortHand vs. ISO C11, C++17, Rust 1.99.1 &amp; Go 1.27.3</text>',
+        '  <text class="subtitle" x="28" y="54">Live multi-tier execution on Intel Xeon Platinum 8481C | 89.371% Optdigits test accuracy &amp; exact numerical parity</text>',
+    ]
+
+    t1 = sys_report["track1_source_fp64"]
+    t2 = sys_report["track2_resident_ort_fp32"]
+    t3 = sys_report["track3_static_affine_aot_fp32"]
+
+    # Panel A (Top Left): Track 1 Marginal Pure-Compute Kernel Latency (ns/image) + R=100 Total (ns/image)
+    lines.append('  <rect class="panel" x="24" y="70" width="455" height="245" rx="8"/>')
+    lines.append('  <text class="panel-title" x="40" y="94">A. Track 1: FP64 Classifier — Marginal Kernel vs. R=100 Total (ns/img)</text>')
+
+    r100_map = {c["baseline"]: c["baseline_mean_ms"] * 1e6 for c in t1["r100"]}
+    r100_map["shorthand"] = statistics.mean(c["shorthand_mean_ms"] * 1e6 for c in t1["r100"])
+    marg_map = t1["marginal_compute_ns_per_image"]
+
+    p1_runners = [
+        ("rust-simd-o3", "Rust 1.99 SIMD (-O3 v3)", "#ea580c"),
+        ("c11-clang-o3", "ISO C11 (Clang -O3)", "#10b981"),
+        ("rust-safe-o3", "Safe Rust 1.99 (-O3)", "#f97316"),
+        ("c11-gcc-o3", "ISO C11 (GCC -O3)", "#059669"),
+        ("cpp17-clang-o3", "C++17 (Clang++ -O3)", "#2563eb"),
+        ("shorthand", "ShortHand (MLIR -O2)", "#0284c7"),
+        ("cpp17-gcc-o3", "C++17 (G++ -O3)", "#6366f1"),
+        ("go-native", "Go 1.27.3 (go build)", "#06b6d4"),
+    ]
+    x0_a, x1_a = 175, 420
+    max_ns_a = 600.0
+    for tick in (0, 150, 300, 450, 600):
+        gx = x0_a + (tick / max_ns_a) * (x1_a - x0_a)
+        lines.append(f'  <line class="grid" x1="{gx:.1f}" y1="108" x2="{gx:.1f}" y2="282"/>')
+        lines.append(f'  <text class="tick" x="{gx:.1f}" y="295" text-anchor="middle">{tick}ns</text>')
+
+    for idx, (rk, rlabel, col) in enumerate(p1_runners):
+        by = 110 + idx * 21
+        m_ns = marg_map[rk]
+        tot_ns = r100_map[rk]
+        wm = (m_ns / max_ns_a) * (x1_a - x0_a)
+        wt = (tot_ns / max_ns_a) * (x1_a - x0_a)
+        lines.append(f'  <text class="axis-label" x="{x0_a - 6}" y="{by + 12}" text-anchor="end">{esc(rlabel)}</text>')
+        # Light bar = R=100 total (includes amortized startup/IO), solid bar = pure compute kernel
+        lines.append(f'  <rect x="{x0_a}" y="{by + 2}" width="{wt:.1f}" height="13" fill="{col}" opacity="0.28" rx="2"/>')
+        lines.append(f'  <rect x="{x0_a}" y="{by + 2}" width="{wm:.1f}" height="13" fill="{col}" rx="2"/>')
+        lines.append(f'  <text class="val" x="{x0_a + wt + 5:.1f}" y="{by + 12}">{m_ns:.0f}ns <tspan class="note">({tot_ns:.0f}ns R100)</tspan></text>')
+
+    lines.append('  <text class="note" x="40" y="309">Solid bar: pure-compute kernel slope; shaded bar: R=100 total (kernel + amortized I/O).</text>')
+
+    # Panel B (Top Right): Track 2 Resident FP32 ONNX Runtime 1.30.0 Host Integration (us/image)
+    lines.append('  <rect class="panel" x="498" y="70" width="458" height="245" rx="8"/>')
+    lines.append('  <text class="panel-title" x="514" y="94">B. Track 2: Resident FP32 ONNX Runtime 1.30.0 (Mean us/img)</text>')
+
+    y0_b, y1_b = 118, 265
+    x0_b, x1_b = 548, 936
+    # Log10 scale from 0.1 us to 30 us
+    lmin_b, lmax_b = math.log10(0.1), math.log10(30.0)
+    for tick, tlbl in ((0.1, "0.1us"), (0.3, "0.3us"), (1.0, "1us"), (3.0, "3us"), (10.0, "10us"), (25.0, "25us")):
+        gy = y1_b - ((math.log10(tick) - lmin_b) / (lmax_b - lmin_b)) * (y1_b - y0_b)
+        lines.append(f'  <line class="grid" x1="{x0_b}" y1="{gy:.1f}" x2="{x1_b}" y2="{gy:.1f}"/>')
+        lines.append(f'  <text class="tick" x="{x0_b - 6}" y="{gy + 4:.1f}" text-anchor="end">{tlbl}</text>')
+
+    t2_series = [
+        ("c11_ort_capi_ms", "C11 OrtApi", "#10b981"),
+        ("rust_ort_ffi_ms", "Rust OrtApi FFI", "#f97316"),
+        ("cpp17_ort_cxxapi_ms", "C++17 Ort::Session", "#475569"),
+        ("shorthand_airuntime_ms", "ShortHand AIRuntime", "#0284c7"),
+        ("python_ort_ms", "Python ORT", "#e11d48"),
+    ]
+    for c_idx, cell in enumerate(t2["cells"]):
+        gx_base = x0_b + 14 + c_idx * 94
+        for s_idx, (s_key, _slbl, scol) in enumerate(t2_series):
+            val_us = cell[s_key]["mean"] * 1000.0
+            bx = gx_base + s_idx * 14
+            by = y1_b - ((math.log10(val_us) - lmin_b) / (lmax_b - lmin_b)) * (y1_b - y0_b)
+            bh = y1_b - by
+            lines.append(f'  <rect x="{bx}" y="{by:.1f}" width="12" height="{bh:.1f}" fill="{scol}" rx="2"/>')
+        lines.append(f'  <text class="axis-label" x="{gx_base + 34}" y="{y1_b + 16}" text-anchor="middle">{cell["cell"].replace("ort-", "")}</text>')
+
+    # Legend for Panel B
+    for s_idx, (_s_key, slbl, scol) in enumerate(t2_series):
+        lx = 514 + s_idx * 87
+        lines.append(f'  <rect x="{lx}" y="294" width="9" height="9" fill="{scol}" rx="2"/>')
+        lines.append(f'  <text class="note" x="{lx + 12}" y="302">{esc(slbl)}</text>')
+
+    # Panel C (Bottom Full-Width): Track 3 Static Affine AOT Compilation (ns/vector across batch = 1, 16, 32)
+    lines.append('  <rect class="panel" x="24" y="330" width="932" height="245" rx="8"/>')
+    lines.append('  <text class="panel-title" x="40" y="354">C. Track 3: Static Affine AOT Compilation — Hot-Path Median Latency (ns/vector) vs. ONNX Runtime</text>')
+
+    y0_c, y1_c = 382, 515
+    x0_c, x1_c = 82, 930
+    # Log10 scale from 60 ns to 1600 ns
+    lmin_c, lmax_c = math.log10(60.0), math.log10(1600.0)
+    for tick, tlbl in ((75, "75 ns"), (150, "150 ns"), (300, "300 ns"), (600, "600 ns"), (1300, "1,300 ns")):
+        gy = y1_c - ((math.log10(tick) - lmin_c) / (lmax_c - lmin_c)) * (y1_c - y0_c)
+        lines.append(f'  <line class="grid" x1="{x0_c}" y1="{gy:.1f}" x2="{x1_c}" y2="{gy:.1f}"/>')
+        lines.append(f'  <text class="tick" x="{x0_c - 8}" y="{gy + 4:.1f}" text-anchor="end">{tlbl}</text>')
+
+    t3_series = [
+        ("cpp17_avx2_aot", "C++17 AVX2/FMA 4-Row AOT", "#2563eb"),
+        ("c11_aot", "Pure C11 restrict AOT", "#10b981"),
+        ("rust_aot", "Native Safe Rust staticlib AOT", "#ea580c"),
+        ("shorthand_aot", "ShortHand StaticAffineModel AOT", "#0284c7"),
+        ("ort_basic", "ONNX Runtime (ORT_ENABLE_BASIC)", "#64748b"),
+        ("ort_all", "ONNX Runtime (ORT_ENABLE_ALL)", "#94a3b8"),
+    ]
+
+    for r_idx, row in enumerate(t3["rows"]):
+        gx_base = x0_c + 36 + r_idx * 275
+        med = row["hot_median_us_per_vector"]
+        for s_idx, (r_key, _rlbl, rcol) in enumerate(t3_series):
+            val_ns = med[r_key] * 1000.0
+            bx = gx_base + s_idx * 36
+            by = y1_c - ((math.log10(val_ns) - lmin_c) / (lmax_c - lmin_c)) * (y1_c - y0_c)
+            bh = y1_c - by
+            lines.append(f'  <rect x="{bx}" y="{by:.1f}" width="28" height="{bh:.1f}" fill="{rcol}" rx="3"/>')
+            lines.append(f'  <text class="val" x="{bx + 14}" y="{by - 5:.1f}" text-anchor="middle">{val_ns:.0f}</text>')
+        lines.append(f'  <text class="axis-label" x="{gx_base + 104}" y="{y1_c + 18}" text-anchor="middle">batch = {row["batch"]} (workspace = {row["workspace_bytes"]} B)</text>')
+
+    for s_idx, (_r_key, rlbl, rcol) in enumerate(t3_series):
+        lx = 40 + s_idx * 152
+        lines.append(f'  <rect x="{lx}" y="548" width="11" height="11" fill="{rcol}" rx="2"/>')
+        lines.append(f'  <text class="note" x="{lx + 15}" y="558">{esc(rlbl)}</text>')
+
     lines.append("</svg>")
     return "\n".join(lines) + "\n"
 
@@ -431,6 +566,7 @@ def generate_all(exp_dir: pathlib.Path, docs_fig_dir: pathlib.Path) -> list[path
     immutable = json.loads((exp_dir / "immutable/report.json").read_text())
     aot = json.loads((exp_dir / "aot/report.json").read_text())
     training = json.loads((exp_dir / "training/report.json").read_text())
+    sys_report_path = exp_dir / "systems-languages/report.json"
 
     figures = {
         "fig1_source_workload_comparison.svg": render_fig1_source_workloads(summary),
@@ -439,6 +575,9 @@ def generate_all(exp_dir: pathlib.Path, docs_fig_dir: pathlib.Path) -> list[path
         "fig4_aot_and_persistent_training.svg": render_fig4_aot_and_training(aot, training),
         "fig5_memory_rss_comparison.svg": render_fig5_memory_rss(),
     }
+    if sys_report_path.is_file():
+        sys_report = json.loads(sys_report_path.read_text())
+        figures["fig6_systems_languages_comparison.svg"] = render_fig6_systems_languages_comparison(sys_report)
 
     written: list[pathlib.Path] = []
     for target_dir in (exp_dir / "figures", docs_fig_dir):

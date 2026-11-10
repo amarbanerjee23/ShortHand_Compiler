@@ -63,6 +63,8 @@ Ten balanced process pairs per cell; each process contains three resident-sessio
 
 ![Cross-Tier Peak RSS Memory Comparison](figures/fig5_memory_rss_comparison.svg)
 
+![Systems Languages (C11, C++17, Rust, Go) vs. ShortHand Comparison](figures/fig6_systems_languages_comparison.svg)
+
 ## What the measurements show
 
 At ten repetitions, source-process latency was 85.07% lower than NumPy and 9.20% lower than C++. At 100 repetitions, these reductions were 49.09% and -8.26%. The smaller advantage with more work per process shows why startup and workload size matter.
@@ -79,8 +81,9 @@ This is one shared hosted-runner session with one small classifier. Startup cost
 
 - [summary.json](summary.json): exact numbers and all per-pair values used by the bootstrap.
 - [observations.json](observations.json): ordered pairs, raw durations, completed work and inner trial windows.
+- [systems-languages/report.json](systems-languages/report.json) & [systems-languages/SYSTEMS_LANGUAGES.md](systems-languages/SYSTEMS_LANGUAGES.md): multi-tier C11, C++17, Rust 1.99.1, and Go 1.27.3 SOTA comparison across Source FP64, Resident ONNX Runtime, and Static Affine AOT.
 - [metadata/](metadata/): frozen plans, source captures, build timings, environment, energy availability and original bundle digests.
-- [SOTA_VALIDATION_REPORT.md](SOTA_VALIDATION_REPORT.md): complete 5-tier SOTA comparison ledger and claim-by-claim validation report.
+- [SOTA_VALIDATION_REPORT.md](SOTA_VALIDATION_REPORT.md): complete 6-tier SOTA comparison ledger and claim-by-claim validation report.
 - Full artifact: raw stdout/stderr, predictions/scores, binaries, LLVM IR and replay manifests.
 
 Reproduce with the `experiment-results` workflow, or follow [the experiment instructions](../../README.md). Use `run_verified.py` with the same pinned dependencies and built compiler. Real energy work requires the calibrated-energy protocol, an independently logging whole-host meter, and repeated dedicated-machine sessions.

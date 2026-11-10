@@ -266,10 +266,11 @@ Benchmark scaffolding is under `benchmarks/` and full multi-tier SOTA experiment
 bash scripts/run_benchmarks.sh
 bash scripts/collect_energy.sh
 bash scripts/run_sota_validation_campaign.sh
+python3 experiments/energy/systems_languages_benchmark.py
 python3 scripts/generate_sota_comparison_graphs.py
 ```
 
-Energy scripts report unavailable measurement tools honestly (`joules: null`, `energy_claim_authorized: false`) and never fabricate values. Full campaign tables and claim-by-claim verdicts are documented in [`SOTA_VALIDATION_REPORT.md`](SOTA_VALIDATION_REPORT.md) and [`docs/benchmark_results/sota-validation-2026-11-09.md`](docs/benchmark_results/sota-validation-2026-11-09.md).
+Energy scripts report unavailable measurement tools honestly (`joules: null`, `energy_claim_authorized: false`) and never fabricate values. Full campaign tables and claim-by-claim verdicts (including ISO C11, C++17, Safe/SIMD Rust 1.99.1, and Go 1.27.3 SOTA comparisons) are documented in [`SOTA_VALIDATION_REPORT.md`](SOTA_VALIDATION_REPORT.md) and [`docs/benchmark_results/sota-validation-2026-11-09.md`](docs/benchmark_results/sota-validation-2026-11-09.md).
 
 ![Tier 1 Source Workload Comparison](docs/benchmark_results/figures/fig1_source_workload_comparison.svg)
 
@@ -280,6 +281,8 @@ Energy scripts report unavailable measurement tools honestly (`joules: null`, `e
 ![Tiers 4 & 5 Static Affine AOT & Persistent Training Workers](docs/benchmark_results/figures/fig4_aot_and_persistent_training.svg)
 
 ![Cross-Tier Peak RSS Memory Comparison](docs/benchmark_results/figures/fig5_memory_rss_comparison.svg)
+
+![Tier 6 Systems Languages (C11, C++17, Rust, Go) vs. ShortHand Comparison](docs/benchmark_results/figures/fig6_systems_languages_comparison.svg)
 
 
 ## Developer rules for compiler/runtime changes

@@ -391,6 +391,12 @@ python3 experiments/aot/benchmark.py \
   --cxx "${CXX}" \
   --output "${SPEC_RAW}/aot"
 
+python3 experiments/energy/systems_languages_benchmark.py \
+  --exp-dir "${EXP_DIR}" \
+  --ort-root "${ONNXRUNTIME_ROOT}" \
+  --compiler "${ROOT_DIR}/build/short_hand" \
+  --work-dir "${SPEC_RAW}/systems-languages-work"
+
 # Copy compact JSON/Markdown reports into ${EXP_DIR} (excluding transient ELF binaries & 28MB .so copies)
 python3 - "${SPEC_RAW}" "${EXP_DIR}" << 'PYEOF'
 import pathlib, shutil, sys
