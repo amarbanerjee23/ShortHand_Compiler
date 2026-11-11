@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 500" width="100%" height="100%">
+  <title>Tier 1: Source Workload Latency &amp; Paired Reduction (Optdigits FP64)</title>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 10; }
+    .panel { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1.2; rx: 8; }
+    .title { font: 700 18px "Inter", "Segoe UI", system-ui, sans-serif; fill: #0f172a; }
+    .subtitle { font: 400 12px "Inter", "Segoe UI", system-ui, sans-serif; fill: #475569; }
+    .panel-title { font: 600 14px "Inter", "Segoe UI", system-ui, sans-serif; fill: #1e293b; }
+    .axis-label { font: 500 11px "Inter", "Segoe UI", system-ui, sans-serif; fill: #334155; }
+    .tick { font: 400 10.5px "JetBrains Mono", "Fira Code", monospace; fill: #475569; }
+    .val { font: 600 10px "JetBrains Mono", "Fira Code", monospace; fill: #0f172a; }
+    .note { font: 400 10.5px "Inter", "Segoe UI", system-ui, sans-serif; fill: #64748b; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 3,3; }
+    .axis { stroke: #94a3b8; stroke-width: 1.2; }
+  </style>
+  <rect class="bg" x="1" y="1" width="978" height="498" rx="10"/>
+  <text class="title" x="28" y="34">Tier 1 — Core ShortHand Source Workloads vs. SOTA Baselines (UCI Optdigits FP64)</text>
+  <text class="subtitle" x="28" y="54">30 balanced randomized AB/BA process pairs per baseline after 2 warmups | Accuracy = 89.371% (1,606 / 1,797) across all runners</text>
+  <rect class="panel" x="24" y="70" width="455" height="385" rx="8"/>
+  <text class="panel-title" x="40" y="96">A. Mean Process Latency per Image (ms/img, Log10 Scale)</text>
+  <rect class="panel" x="501" y="70" width="455" height="385" rx="8"/>
+  <text class="panel-title" x="517" y="96">B. Paired Latency Reduction vs. Baseline (%, 95% Bootstrap CI)</text>
+  <line class="grid" x1="165.0" y1="115" x2="165.0" y2="405"/>
+  <text class="tick" x="165.0" y="422" text-anchor="middle">0.0001</text>
+  <line class="grid" x1="235.0" y1="115" x2="235.0" y2="405"/>
+  <text class="tick" x="235.0" y="422" text-anchor="middle">0.001</text>
+  <line class="grid" x1="305.0" y1="115" x2="305.0" y2="405"/>
+  <text class="tick" x="305.0" y="422" text-anchor="middle">0.01</text>
+  <line class="grid" x1="375.0" y1="115" x2="375.0" y2="405"/>
+  <text class="tick" x="375.0" y="422" text-anchor="middle">0.1</text>
+  <line class="grid" x1="445.0" y1="115" x2="445.0" y2="405"/>
+  <text class="tick" x="445.0" y="422" text-anchor="middle">1.0</text>
+  <text class="axis-label" x="305.0" y="442" text-anchor="middle">Elapsed Time per Classified Image (ms/image, log scale — lower is faster)</text>
+  <text class="axis-label" x="157" y="143" text-anchor="end">ShortHand (LLVM -O2)</text>
+  <rect x="165" y="128" width="65.5" height="14" fill="#0284c7" rx="3"/>
+  <text class="val" x="235.5" y="139">R=10: 0.000864</text>
+  <rect x="165" y="146" width="39.1" height="14" fill="#0284c7" fill-opacity="0.6" rx="3"/>
+  <text class="val" x="209.1" y="157">R=100: 0.000362</text>
+  <text class="axis-label" x="157" y="197" text-anchor="end">C++17 (-O3)</text>
+  <rect x="165" y="182" width="68.4" height="14" fill="#0d9488" rx="3"/>
+  <text class="val" x="238.4" y="193">R=10: 0.000948</text>
+  <rect x="165" y="200" width="36.7" height="14" fill="#0d9488" fill-opacity="0.6" rx="3"/>
+  <text class="val" x="206.7" y="211">R=100: 0.000334</text>
+  <text class="axis-label" x="157" y="251" text-anchor="end">NumPy (FP64)</text>
+  <rect x="165" y="236" width="123.4" height="14" fill="#6366f1" rx="3"/>
+  <text class="val" x="293.4" y="247">R=10: 0.005786</text>
+  <rect x="165" y="254" width="59.6" height="14" fill="#6366f1" fill-opacity="0.6" rx="3"/>
+  <text class="val" x="229.6" y="265">R=100: 0.000711</text>
+  <text class="axis-label" x="157" y="305" text-anchor="end">PyTorch Eager</text>
+  <rect x="165" y="290" width="197.4" height="14" fill="#f59e0b" rx="3"/>
+  <text class="val" x="367.4" y="301">R=10: 0.066109</text>
+  <rect x="165" y="308" width="128.5" height="14" fill="#f59e0b" fill-opacity="0.6" rx="3"/>
+  <text class="val" x="298.5" y="319">R=100: 0.006857</text>
+  <text class="axis-label" x="157" y="359" text-anchor="end">torch.compile</text>
+  <rect x="165" y="344" width="252.6" height="14" fill="#e11d48" rx="3"/>
+  <text class="val" x="422.6" y="355">R=10: 0.405883</text>
+  <rect x="165" y="362" width="183.1" height="14" fill="#e11d48" fill-opacity="0.6" rx="3"/>
+  <text class="val" x="353.1" y="373">R=100: 0.041279</text>
+  <line class="grid" x1="635.0" y1="115" x2="635.0" y2="405"/>
+  <text class="tick" x="635.0" y="422" text-anchor="middle">-20%</text>
+  <line class="axis" x1="682.5" y1="115" x2="682.5" y2="405"/>
+  <text class="tick" x="682.5" y="422" text-anchor="middle">0%</text>
+  <line class="grid" x1="730.0" y1="115" x2="730.0" y2="405"/>
+  <text class="tick" x="730.0" y="422" text-anchor="middle">20%</text>
+  <line class="grid" x1="777.5" y1="115" x2="777.5" y2="405"/>
+  <text class="tick" x="777.5" y="422" text-anchor="middle">40%</text>
+  <line class="grid" x1="825.0" y1="115" x2="825.0" y2="405"/>
+  <text class="tick" x="825.0" y="422" text-anchor="middle">60%</text>
+  <line class="grid" x1="872.5" y1="115" x2="872.5" y2="405"/>
+  <text class="tick" x="872.5" y="422" text-anchor="middle">80%</text>
+  <line class="grid" x1="920.0" y1="115" x2="920.0" y2="405"/>
+  <text class="tick" x="920.0" y="422" text-anchor="middle">100%</text>
+  <text class="axis-label" x="777.5" y="442" text-anchor="middle">ShortHand Latency Reduction % (positive = ShortHand faster)</text>
+  <text class="axis-label" x="625" y="153" text-anchor="end">vs. NumPy</text>
+  <rect x="682.5" y="135" width="202.0" height="16" fill="#6366f1" fill-opacity="1.0" rx="3"/>
+  <text class="val" x="889.5" y="147" text-anchor="start">R=10: +85.07% [84.9, 85.2]</text>
+  <rect x="682.5" y="157" width="116.6" height="16" fill="#6366f1" fill-opacity="0.62" rx="3"/>
+  <text class="val" x="804.1" y="169" text-anchor="start">R=100: +49.09% [48.8, 49.4]</text>
+  <text class="axis-label" x="625" y="219" text-anchor="end">vs. C++17 (-O3)</text>
+  <rect x="682.5" y="201" width="21.9" height="16" fill="#0d9488" fill-opacity="1.0" rx="3"/>
+  <text class="val" x="709.4" y="213" text-anchor="start">R=10: +9.20% [8.0, 10.4]</text>
+  <rect x="662.9" y="223" width="19.6" height="16" fill="#0d9488" fill-opacity="0.62" rx="3"/>
+  <text class="val" x="657.9" y="235" text-anchor="end">R=100: -8.26% [-9.8, -6.3]</text>
+  <text class="axis-label" x="625" y="285" text-anchor="end">vs. PyTorch Eager</text>
+  <rect x="682.5" y="267" width="234.4" height="16" fill="#f59e0b" fill-opacity="1.0" rx="3"/>
+  <text class="val" x="921.9" y="279" text-anchor="start">R=10: +98.68% [98.7, 98.7]</text>
+  <rect x="682.5" y="289" width="225.0" height="16" fill="#f59e0b" fill-opacity="0.62" rx="3"/>
+  <text class="val" x="912.5" y="301" text-anchor="start">R=100: +94.72% [94.7, 94.7]</text>
+  <text class="axis-label" x="625" y="351" text-anchor="end">vs. torch.compile</text>
+  <rect x="682.5" y="333" width="237.0" height="16" fill="#e11d48" fill-opacity="1.0" rx="3"/>
+  <text class="val" x="924.5" y="345" text-anchor="start">R=10: +99.78% [99.8, 99.8]</text>
+  <rect x="682.5" y="355" width="235.4" height="16" fill="#e11d48" fill-opacity="0.62" rx="3"/>
+  <text class="val" x="922.9" y="367" text-anchor="start">R=100: +99.12% [99.1, 99.1]</text>
+  <text class="note" x="28" y="480">Source: experiments/energy/results/2026-11-09-antigravity-run/summary.json | Hardware: Intel Xeon Platinum 8481C (2 vCPUs)</text>
+</svg>

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 500" width="100%" height="100%">
+  <title>Tier 3: Compiled Phase Attribution &amp; Immutable Model Envelope</title>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 10; }
+    .panel { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1.2; rx: 8; }
+    .title { font: 700 18px "Inter", "Segoe UI", system-ui, sans-serif; fill: #0f172a; }
+    .subtitle { font: 400 12px "Inter", "Segoe UI", system-ui, sans-serif; fill: #475569; }
+    .panel-title { font: 600 14px "Inter", "Segoe UI", system-ui, sans-serif; fill: #1e293b; }
+    .axis-label { font: 500 11px "Inter", "Segoe UI", system-ui, sans-serif; fill: #334155; }
+    .tick { font: 400 10.5px "JetBrains Mono", "Fira Code", monospace; fill: #475569; }
+    .val { font: 600 10px "JetBrains Mono", "Fira Code", monospace; fill: #0f172a; }
+    .note { font: 400 10.5px "Inter", "Segoe UI", system-ui, sans-serif; fill: #64748b; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; stroke-dasharray: 3,3; }
+    .axis { stroke: #94a3b8; stroke-width: 1.2; }
+  </style>
+  <rect class="bg" x="1" y="1" width="978" height="498" rx="10"/>
+  <text class="title" x="28" y="34">Tier 3 — Phase-Isolated Attribution &amp; Immutable Model Envelope (Zero Warm I/O)</text>
+  <text class="subtitle" x="28" y="54">Left: 17-phase warm call breakdown (generated-infer/phases.json) | Right: ImmutableOnnxEnvelope vs. Mutable path (immutable/report.json)</text>
+  <rect class="panel" x="24" y="70" width="455" height="385" rx="8"/>
+  <text class="panel-title" x="40" y="96">A. Compiled Bridge Warm Call Attribution (b16-t1, ns/call)</text>
+  <rect class="panel" x="501" y="70" width="455" height="385" rx="8"/>
+  <text class="panel-title" x="517" y="96">B. Immutable vs. Mutable Model Envelope (µs/call &amp; strace I/O)</text>
+  <line class="grid" x1="195.0" y1="115" x2="195.0" y2="405"/>
+  <text class="tick" x="195.0" y="422" text-anchor="middle">0k ns</text>
+  <line class="grid" x1="261.7" y1="115" x2="261.7" y2="405"/>
+  <text class="tick" x="261.7" y="422" text-anchor="middle">5k ns</text>
+  <line class="grid" x1="328.3" y1="115" x2="328.3" y2="405"/>
+  <text class="tick" x="328.3" y="422" text-anchor="middle">10k ns</text>
+  <line class="grid" x1="395.0" y1="115" x2="395.0" y2="405"/>
+  <text class="tick" x="395.0" y="422" text-anchor="middle">15k ns</text>
+  <text class="axis-label" x="315.0" y="442" text-anchor="middle">Mean Exclusive Phase Duration (ns/call, b16-t1)</text>
+  <text class="axis-label" x="187" y="135" text-anchor="end">snapshot (file read+SHA)</text>
+  <rect x="195" y="122" width="220.8" height="18" fill="#e11d48" rx="3"/>
+  <text class="val" x="420.8" y="135">16562.0 ns</text>
+  <text class="axis-label" x="187" y="166" text-anchor="end">hardware_probe</text>
+  <rect x="195" y="153" width="98.9" height="18" fill="#f59e0b" rx="3"/>
+  <text class="val" x="298.9" y="166">7417.2 ns</text>
+  <text class="axis-label" x="187" y="197" text-anchor="end">ort_run (ONNX kernel+API)</text>
+  <rect x="195" y="184" width="36.8" height="18" fill="#0284c7" rx="3"/>
+  <text class="val" x="236.8" y="197">2758.2 ns</text>
+  <text class="axis-label" x="187" y="228" text-anchor="end">backend_other</text>
+  <rect x="195" y="215" width="30.5" height="18" fill="#6366f1" rx="3"/>
+  <text class="val" x="230.5" y="228">2286.1 ns</text>
+  <text class="axis-label" x="187" y="259" text-anchor="end">runtime_telemetry</text>
+  <rect x="195" y="246" width="26.9" height="18" fill="#8b5cf6" rx="3"/>
+  <text class="val" x="226.9" y="259">2017.8 ns</text>
+  <text class="axis-label" x="187" y="290" text-anchor="end">oracle (output check)</text>
+  <rect x="195" y="277" width="13.8" height="18" fill="#14b8a6" rx="3"/>
+  <text class="val" x="213.8" y="290">1033.3 ns</text>
+  <text class="axis-label" x="187" y="321" text-anchor="end">registration &amp; routing</text>
+  <rect x="195" y="308" width="5.9" height="18" fill="#64748b" rx="3"/>
+  <text class="val" x="205.9" y="321">442.2 ns</text>
+  <text class="axis-label" x="187" y="352" text-anchor="end">runtime+bridge validation</text>
+  <rect x="195" y="339" width="7.8" height="18" fill="#475569" rx="3"/>
+  <text class="val" x="207.8" y="352">582.1 ns</text>
+  <text class="axis-label" x="187" y="383" text-anchor="end">session_prepare (cached!)</text>
+  <rect x="195" y="370" width="2.0" height="18" fill="#10b981" rx="3"/>
+  <text class="val" x="202.0" y="383">0.0 ns</text>
+  <line class="grid" x1="620.0" y1="115" x2="620.0" y2="335"/>
+  <text class="tick" x="620.0" y="352" text-anchor="middle">0 µs</text>
+  <line class="grid" x1="692.5" y1="115" x2="692.5" y2="335"/>
+  <text class="tick" x="692.5" y="352" text-anchor="middle">40 µs</text>
+  <line class="grid" x1="765.0" y1="115" x2="765.0" y2="335"/>
+  <text class="tick" x="765.0" y="352" text-anchor="middle">80 µs</text>
+  <line class="grid" x1="837.5" y1="115" x2="837.5" y2="335"/>
+  <text class="tick" x="837.5" y="352" text-anchor="middle">120 µs</text>
+  <line class="grid" x1="910.0" y1="115" x2="910.0" y2="335"/>
+  <text class="tick" x="910.0" y="352" text-anchor="middle">160 µs</text>
+  <text class="axis-label" x="765.0" y="372" text-anchor="middle">Median Warm Call Latency (µs/call — lower is faster)</text>
+  <text class="axis-label" x="610" y="148" text-anchor="end">88 B</text>
+  <rect x="620" y="130" width="19.3" height="16" fill="#0284c7" rx="3"/>
+  <text class="val" x="644.3" y="142">Immutable: 10.62 µs (0.3553×)</text>
+  <rect x="620" y="150" width="54.5" height="16" fill="#e11d48" rx="3"/>
+  <text class="val" x="679.5" y="162">Mutable: 30.06 µs</text>
+  <text class="axis-label" x="610" y="214" text-anchor="end">65,536 B</text>
+  <rect x="620" y="196" width="18.9" height="16" fill="#0284c7" rx="3"/>
+  <text class="val" x="643.9" y="208">Immutable: 10.44 µs (0.3174×)</text>
+  <rect x="620" y="216" width="59.9" height="16" fill="#e11d48" rx="3"/>
+  <text class="val" x="684.9" y="228">Mutable: 33.04 µs</text>
+  <text class="axis-label" x="610" y="280" text-anchor="end">1,048,576 B</text>
+  <rect x="620" y="262" width="19.4" height="16" fill="#0284c7" rx="3"/>
+  <text class="val" x="644.4" y="274">Immutable: 10.71 µs (0.0721×)</text>
+  <rect x="620" y="282" width="269.8" height="16" fill="#e11d48" rx="3"/>
+  <text class="val" x="894.8" y="294">Mutable: 148.83 µs</text>
+  <rect x="520" y="385" width="418" height="54" fill="#f0fdf4" stroke="#86efac" rx="6"/>
+  <text class="val" x="532" y="405" fill="#166534">strace -f -yy Warm Model-I/O Verification: PASS (True)</text>
+  <text class="axis-label" x="532" y="425">Immutable: 0 syscalls (0 opens, 0 reads) | Mutable control: 48 syscalls (16 opens, 32 reads)</text>
+  <text class="note" x="28" y="480">OnnxPreparedSession eliminates warm session creation (0.0 ns); ImmutableOnnxEnvelope eliminates the 16.6 µs mutable file snapshot.</text>
+</svg>

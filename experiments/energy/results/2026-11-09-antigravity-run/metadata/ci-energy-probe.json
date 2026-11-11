@@ -1,0 +1,29 @@
+{
+  "amd_hwmon_domains": [],
+  "claim_authorized": false,
+  "hardware": {
+    "cpu_family": "6",
+    "machine": "x86_64",
+    "microcode": "0x1",
+    "model": "143",
+    "model_name": "Intel(R) Xeon(R) Platinum 8481C",
+    "platform": "Linux-6.12.105+-x86_64-with-glibc2.36",
+    "processor": "",
+    "stepping": "8",
+    "vendor_id": "GenuineIntel"
+  },
+  "highest_available_evidence_class": null,
+  "kind": "probe",
+  "matching_profiles": {
+    "E2": null,
+    "E3": null
+  },
+  "perf": {
+    "path": null,
+    "perf_event_paranoid": 2
+  },
+  "physical_system_energy_measured": false,
+  "rapl_domains": [],
+  "recorded_utc": "2026-11-09T18:51:51.727979+00:00",
+  "schema": "shorthand.energy.ci_evidence.v1"
+}

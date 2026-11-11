@@ -9,7 +9,11 @@ The implementation goal is to keep the language syntax simple for end users whil
 For reproducible energy experiments against equivalent Python/NumPy/ONNX workloads,
 see [the experiment protocol and runner](experiments/energy/README.md). It covers
 compiled-source execution, batch/thread sweeps and compilation amortization;
-physical measurements are still required before reporting energy savings.
+physical measurements are still required before reporting energy savings. For the
+complete multi-tier SOTA execution latency, memory, phase-isolation, and C3Eco
+claim validation campaign, see [`SOTA_VALIDATION_REPORT.md`](SOTA_VALIDATION_REPORT.md)
+(archived under [`experiments/energy/results/2026-11-09-antigravity-run/`](experiments/energy/results/2026-11-09-antigravity-run/SOTA_VALIDATION_REPORT.md))
+and the end-to-end runner [`scripts/run_sota_validation_campaign.sh`](scripts/run_sota_validation_campaign.sh).
 
 The [latency and energy optimization PR plan](docs/latency_energy_optimization_pr_plan.md)
 tracks the evidence-directed runtime/compiler work through PR119. The companion
@@ -254,16 +258,32 @@ ShortHand evidence reporting follows an evidence-only policy:
 - Preserve the difference between executed inference and fallback/non-executed inference.
 - Keep certification language out of generated reports unless an external certification body grants it.
 
-## Benchmarks
+## Benchmarks & SOTA Comparison Graphs
 
-Benchmark scaffolding is under `benchmarks/`:
+Benchmark scaffolding is under `benchmarks/` and full multi-tier SOTA experimental validation is under `experiments/energy/`:
 
 ```bash
 bash scripts/run_benchmarks.sh
 bash scripts/collect_energy.sh
+bash scripts/run_sota_validation_campaign.sh
+python3 experiments/energy/systems_languages_benchmark.py
+python3 scripts/generate_sota_comparison_graphs.py
 ```
 
-Energy scripts must report unavailable measurement tools honestly and must not fabricate values.
+Energy scripts report unavailable measurement tools honestly (`joules: null`, `energy_claim_authorized: false`) and never fabricate values. Full campaign tables and claim-by-claim verdicts (including ISO C11, C++17, Safe/SIMD Rust 1.99.1, and Go 1.27.3 SOTA comparisons) are documented in [`SOTA_VALIDATION_REPORT.md`](SOTA_VALIDATION_REPORT.md) and [`docs/benchmark_results/sota-validation-2026-11-09.md`](docs/benchmark_results/sota-validation-2026-11-09.md).
+
+![Tier 1 Source Workload Comparison](docs/benchmark_results/figures/fig1_source_workload_comparison.svg)
+
+![Tier 2 Resident ONNX Runtime Comparison](docs/benchmark_results/figures/fig2_resident_onnx_runtime_comparison.svg)
+
+![Tier 3 Phase Isolation & Immutable Model Envelope](docs/benchmark_results/figures/fig3_phase_isolation_and_immutable_envelope.svg)
+
+![Tiers 4 & 5 Static Affine AOT & Persistent Training Workers](docs/benchmark_results/figures/fig4_aot_and_persistent_training.svg)
+
+![Cross-Tier Peak RSS Memory Comparison](docs/benchmark_results/figures/fig5_memory_rss_comparison.svg)
+
+![Tier 6 Systems Languages (C11, C++17, Rust, Go) vs. ShortHand Comparison](docs/benchmark_results/figures/fig6_systems_languages_comparison.svg)
+
 
 ## Developer rules for compiler/runtime changes
 

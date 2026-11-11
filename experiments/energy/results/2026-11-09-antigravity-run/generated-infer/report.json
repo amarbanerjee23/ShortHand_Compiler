@@ -1,0 +1,101 @@
+{
+  "boundary": "compiled .short entry including zero tensor initialization, registration, inference, runtime validation/telemetry/logging and independent output verification; direct ORT includes its prepared invocation and identical output verification; block wall clocks. The main series queries last-call JSON after timing; separate head/base observer controls consume all four JSON exporters on every timed call.",
+  "energy_claim_authorized": false,
+  "latency_claim_authorized": false,
+  "manifest_sha256": "33e9da4503320ab380c6b1e4eebba8c965c35781ca5b62b745b730a094808feb",
+  "observer_rows": [],
+  "rows": [
+    {
+      "cell": "b1-t1",
+      "direct_all_basic_ratio": 1.0081939235523136,
+      "head_base_ratio": null,
+      "head_direct_all_ratio": 24.439063737732873,
+      "head_direct_ratio": 24.63931555768998,
+      "observations": {
+        "direct": {
+          "maximum_block_ms_per_vector": 0.00145662109375,
+          "mean_ms_per_vector": 0.001288200927734375,
+          "median_block_ms_per_vector": 0.0012881835937500002,
+          "minimum_block_ms_per_vector": 0.0011736328125,
+          "sample_blocks": 16
+        },
+        "direct_all": {
+          "maximum_block_ms_per_vector": 0.00137075390625,
+          "mean_ms_per_vector": 0.00129875634765625,
+          "median_block_ms_per_vector": 0.0012960390625,
+          "minimum_block_ms_per_vector": 0.001244203125,
+          "sample_blocks": 16
+        },
+        "head": {
+          "maximum_block_ms_per_vector": 0.0331941875,
+          "mean_ms_per_vector": 0.03174038916015625,
+          "median_block_ms_per_vector": 0.031686333984375,
+          "minimum_block_ms_per_vector": 0.0302154453125,
+          "sample_blocks": 16
+        }
+      }
+    },
+    {
+      "cell": "b16-t1",
+      "direct_all_basic_ratio": 0.9908590376996913,
+      "head_base_ratio": null,
+      "head_direct_all_ratio": 14.744046039496629,
+      "head_direct_ratio": 14.609271270495574,
+      "observations": {
+        "direct": {
+          "maximum_block_ms_per_vector": 0.00015690966796875,
+          "mean_ms_per_vector": 0.00014716838073730468,
+          "median_block_ms_per_vector": 0.0001472591552734375,
+          "minimum_block_ms_per_vector": 0.000135064697265625,
+          "sample_blocks": 16
+        },
+        "direct_all": {
+          "maximum_block_ms_per_vector": 0.000157320068359375,
+          "mean_ms_per_vector": 0.0001458231201171875,
+          "median_block_ms_per_vector": 0.0001440040283203125,
+          "minimum_block_ms_per_vector": 0.000138334228515625,
+          "sample_blocks": 16
+        },
+        "head": {
+          "maximum_block_ms_per_vector": 0.002979673583984375,
+          "mean_ms_per_vector": 0.0021500227966308595,
+          "median_block_ms_per_vector": 0.0020950853271484377,
+          "minimum_block_ms_per_vector": 0.001957335205078125,
+          "sample_blocks": 16
+        }
+      }
+    },
+    {
+      "cell": "b32-t1",
+      "direct_all_basic_ratio": 1.060492691318094,
+      "head_base_ratio": null,
+      "head_direct_all_ratio": 9.2770154023524,
+      "head_direct_ratio": 9.83820703144011,
+      "observations": {
+        "direct": {
+          "maximum_block_ms_per_vector": 0.00011945458984375,
+          "mean_ms_per_vector": 0.00011145987701416015,
+          "median_block_ms_per_vector": 0.0001109134521484375,
+          "minimum_block_ms_per_vector": 0.000102034912109375,
+          "sample_blocks": 16
+        },
+        "direct_all": {
+          "maximum_block_ms_per_vector": 0.000123954833984375,
+          "mean_ms_per_vector": 0.00011820238494873048,
+          "median_block_ms_per_vector": 0.0001188336181640625,
+          "minimum_block_ms_per_vector": 0.000110579345703125,
+          "sample_blocks": 16
+        },
+        "head": {
+          "maximum_block_ms_per_vector": 0.0012570654296875,
+          "mean_ms_per_vector": 0.0010965653457641602,
+          "median_block_ms_per_vector": 0.0010903236694335939,
+          "minimum_block_ms_per_vector": 0.0010356536865234376,
+          "sample_blocks": 16
+        }
+      }
+    }
+  ],
+  "schema": "shorthand.generated_infer.report.v2",
+  "success": true
+}

@@ -1,12 +1,14 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `2db9d1da7918ed816d499206df71b09d916725f5`
+Comparison base: `0169c4261615b5718aac4b5ad87d941f733fd093`
 
 ## Current PR evidence
 
 This follow-up to merged PR126 connects the native bounded importer and standalone support archive to explicit source `compile-aot` and `compile-hybrid` modes. Supported affine kernels embed snapshot identity and owned constants, preserve increasing-index FP32 reduction order and use bounded per-invocation transactional workspace. Hybrid unsupported graphs require the existing qualified real runtime; malformed/unsafe snapshots reject before compilation output is written. Default modes and the frozen runtime ABI are unchanged.
 
 Local LLVM/MLIR 18 and clang 18 qualification passes 121 source/native commands normally and with generated-artifact/native-preparation ASan/UBSan instrumentation. Local leak detection was explicitly disabled; hosted LSan remains mandatory. Both existing 213-command source suites and all 26 SemanticIR mutations pass. The source tests cover five shapes (including 65,536 output elements), exact scalar-FP32 byte parity from C++ calling the same object, 100 allocation-free calls with a positive control, complete/partial aliases, concurrent calls, finite overflow rollback, policy rejection, recursive/repeated sites and valid/invalid hybrid graphs. Native preparation tests additionally reject partial plans, path/signature/byte-limit failures and excessive traversal depth. Mandatory CI adds these checks under ASan/LSan/UBSan and standalone installed artifacts at O0/O2 in all four native package lanes. Fresh installed-consumer and exact-head hosted results remain pending. No new latency, energy, GA or certification claim is made. The existing successful trusted-push installer release workflow remains enabled.
+
+The current comparison base includes the SOTA benchmark artifacts added to master after PR126. The PR evidence gate validates against that exact base. The editor protocol gate keeps its assertions and uses a bounded session budget that accounts for multiple real compiler invocations.
 
 ## Energy and power result
 

@@ -384,12 +384,31 @@ minimum measurement-window duration; execution-only timings do not waive it.
 
 ## Recorded results
 
-[Results from 22 September 2026](results/2026-09-22-run-35747601906/RESULTS.md)
-contain all 16 comparison rows, confidence intervals, raw paired timings and
-environment metadata. The source and runtime conclusions differ substantially;
-read the regressions as well as improvements. These are latency results, not
-measured energy savings. [Earlier failed captures](results/failed-runs/README.md)
-are retained with their source observations and runtime failure traces.
+- **[9 November 2026 — End-to-End SOTA Validation Campaign (`2026-11-09-antigravity-run`)](results/2026-11-09-antigravity-run/SOTA_VALIDATION_REPORT.md):**
+  Executes the unified 7-step campaign via [`scripts/run_sota_validation_campaign.sh`](../../scripts/run_sota_validation_campaign.sh) across core `.short` source workloads (`source-r10`, `source-r100`), resident Python/C++ ONNX Runtime 1.30.0 baselines (`python-runtime`, `cpp-runtime`), phase-isolated application profiles (`profile/`), compiled `.short` inference bridge probes (`generated-infer/`), `strace`-verified immutable model envelopes (`immutable/`), persistent training worker ablations (`training/`), and static affine AOT compilation (`aot/`). See [`RESULTS.md`](results/2026-11-09-antigravity-run/RESULTS.md), [`VALIDATION.md`](results/2026-11-09-antigravity-run/VALIDATION.md), and [`SOTA_VALIDATION_REPORT.md`](results/2026-11-09-antigravity-run/SOTA_VALIDATION_REPORT.md).
+- **[24 September 2026 (`2026-09-24-run-35989782120`)](results/2026-09-24-run-35989782120/RESULTS.md) & [Profile (`2026-09-24-profile-35952311812`)](results/2026-09-24-profile-35952311812/RESULTS.md):**
+  Retained 4-vCPU hosted-runner captures across all five batch/thread cells (`b1-t1`, `b16-t1`, `b16-t2`, `b16-t4`, `b32-t1`).
+- **[22 September 2026 (`2026-09-22-run-35747601906`)](results/2026-09-22-run-35747601906/RESULTS.md):**
+  Contains all 16 comparison rows, confidence intervals, raw paired timings and environment metadata. The source and runtime conclusions differ substantially; read the regressions as well as improvements. These are latency results, not measured energy savings. [Earlier failed captures](results/failed-runs/README.md) are retained with their source observations and runtime failure traces.
+
+### SOTA Comparison Graphs (`2026-11-09-antigravity-run`)
+
+![Tier 1 Source Workload Comparison](results/2026-11-09-antigravity-run/figures/fig1_source_workload_comparison.svg)
+
+![Tier 2 Resident ONNX Runtime Comparison](results/2026-11-09-antigravity-run/figures/fig2_resident_onnx_runtime_comparison.svg)
+
+![Tier 3 Phase Isolation & Immutable Model Envelope](results/2026-11-09-antigravity-run/figures/fig3_phase_isolation_and_immutable_envelope.svg)
+
+![Tiers 4 & 5 Static Affine AOT & Persistent Training Workers](results/2026-11-09-antigravity-run/figures/fig4_aot_and_persistent_training.svg)
+
+![Cross-Tier Peak RSS Memory Comparison](results/2026-11-09-antigravity-run/figures/fig5_memory_rss_comparison.svg)
 
 The capture workflow is manually dispatched so ordinary report edits do not
-automatically launch another statistical experiment.
+automatically launch another statistical experiment. To reproduce the full
+multi-tier SOTA validation campaign and regenerate all comparison graphs locally, run:
+
+```sh
+bash scripts/run_sota_validation_campaign.sh
+python3 scripts/generate_sota_comparison_graphs.py
+```
+

@@ -1,0 +1,215 @@
+{
+  "energy_availability": [
+    {
+      "available": false,
+      "batch": 1,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.0034405519995743816,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "aot",
+      "samples": 0,
+      "verified_vectors": 1033
+    },
+    {
+      "available": false,
+      "batch": 1,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.03156360799994218,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "ort_basic",
+      "samples": 0,
+      "verified_vectors": 1033
+    },
+    {
+      "available": false,
+      "batch": 1,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.03167060499981744,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "ort_all",
+      "samples": 0,
+      "verified_vectors": 1033
+    },
+    {
+      "available": false,
+      "batch": 16,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.015522375999807991,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "aot",
+      "samples": 0,
+      "verified_vectors": 16528
+    },
+    {
+      "available": false,
+      "batch": 16,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.03155032599988772,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "ort_basic",
+      "samples": 0,
+      "verified_vectors": 16528
+    },
+    {
+      "available": false,
+      "batch": 16,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.031604975999925955,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "ort_all",
+      "samples": 0,
+      "verified_vectors": 16528
+    },
+    {
+      "available": false,
+      "batch": 32,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.015554342000086763,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "aot",
+      "samples": 0,
+      "verified_vectors": 33056
+    },
+    {
+      "available": false,
+      "batch": 32,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.031554773000152636,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "ort_basic",
+      "samples": 0,
+      "verified_vectors": 33056
+    },
+    {
+      "available": false,
+      "batch": 32,
+      "boundary": "whole child process; CPU component counter, not process-attributed",
+      "claim_authorized": false,
+      "evidence_class": null,
+      "hardware_measured_joules": null,
+      "joules_per_verified_vector": null,
+      "method": null,
+      "physical_system_energy_measured": false,
+      "process_elapsed_seconds": 0.03160052299972449,
+      "reason": "amd_hwmon_socket_energy_unavailable",
+      "runner": "ort_all",
+      "samples": 0,
+      "verified_vectors": 33056
+    }
+  ],
+  "energy_claim_authorized": false,
+  "latency_claim_authorized": false,
+  "manifest_sha256": "c97be28dae045fb45229c43c51ff5012bcecea2835e866de1976346045fcee54",
+  "rows": [
+    {
+      "batch": 1,
+      "median_ms_per_vector": {
+        "aot": 0.00027651708984375,
+        "ort_all": 0.00131030126953125,
+        "ort_basic": 0.00128974853515625
+      },
+      "paired_ratios": {
+        "ort_all": {
+          "maximum": 0.21269685113285622,
+          "median": 0.20988199093638965,
+          "minimum": 0.2014121758679143
+        },
+        "ort_basic": {
+          "maximum": 0.23423498672496762,
+          "median": 0.2130923010960583,
+          "minimum": 0.2082866774210839
+        }
+      }
+    },
+    {
+      "batch": 16,
+      "median_ms_per_vector": {
+        "aot": 0.00035069244384765627,
+        "ort_all": 0.00015104354858398437,
+        "ort_basic": 0.0001537113037109375
+      },
+      "paired_ratios": {
+        "ort_all": {
+          "maximum": 2.365214145481528,
+          "median": 2.298199856322956,
+          "minimum": 2.27074601414758
+        },
+        "ort_basic": {
+          "maximum": 2.3888547900671537,
+          "median": 2.2776365318495477,
+          "minimum": 2.1098298907294786
+        }
+      }
+    },
+    {
+      "batch": 32,
+      "median_ms_per_vector": {
+        "aot": 0.00034000765991210936,
+        "ort_all": 0.00011933218383789062,
+        "ort_basic": 0.00012230226135253908
+      },
+      "paired_ratios": {
+        "ort_all": {
+          "maximum": 2.9712052237411593,
+          "median": 2.8782516082419702,
+          "minimum": 2.6418809951389517
+        },
+        "ort_basic": {
+          "maximum": 3.043024117858767,
+          "median": 2.8243115900223446,
+          "minimum": 2.439224438933738
+        }
+      }
+    }
+  ],
+  "schema": "shorthand.aot.report.v1",
+  "success": true
+}

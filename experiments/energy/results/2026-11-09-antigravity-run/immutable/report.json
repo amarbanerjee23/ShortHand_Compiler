@@ -1,0 +1,173 @@
+{
+  "energy": [
+    {
+      "cell": "identity",
+      "evidence": {
+        "available": false,
+        "boundary": "whole child process, including setup/first call/8 warmups/timed calls/teardown; CPU component only",
+        "claim_authorized": false,
+        "evidence_class": null,
+        "hardware_measured_joules": null,
+        "joules_per_verified_call": null,
+        "method": null,
+        "physical_system_energy_measured": false,
+        "reason": "amd_hwmon_socket_energy_unavailable",
+        "samples": 0,
+        "verified_calls": 2057
+      },
+      "mode": "immutable",
+      "name": "identity-energy-immutable"
+    },
+    {
+      "cell": "identity",
+      "evidence": {
+        "available": false,
+        "boundary": "whole child process, including setup/first call/8 warmups/timed calls/teardown; CPU component only",
+        "claim_authorized": false,
+        "evidence_class": null,
+        "hardware_measured_joules": null,
+        "joules_per_verified_call": null,
+        "method": null,
+        "physical_system_energy_measured": false,
+        "reason": "amd_hwmon_socket_energy_unavailable",
+        "samples": 0,
+        "verified_calls": 2057
+      },
+      "mode": "mutable",
+      "name": "identity-energy-mutable"
+    },
+    {
+      "cell": "benchmark-64k",
+      "evidence": {
+        "available": false,
+        "boundary": "whole child process, including setup/first call/8 warmups/timed calls/teardown; CPU component only",
+        "claim_authorized": false,
+        "evidence_class": null,
+        "hardware_measured_joules": null,
+        "joules_per_verified_call": null,
+        "method": null,
+        "physical_system_energy_measured": false,
+        "reason": "amd_hwmon_socket_energy_unavailable",
+        "samples": 0,
+        "verified_calls": 2057
+      },
+      "mode": "immutable",
+      "name": "benchmark-64k-energy-immutable"
+    },
+    {
+      "cell": "benchmark-64k",
+      "evidence": {
+        "available": false,
+        "boundary": "whole child process, including setup/first call/8 warmups/timed calls/teardown; CPU component only",
+        "claim_authorized": false,
+        "evidence_class": null,
+        "hardware_measured_joules": null,
+        "joules_per_verified_call": null,
+        "method": null,
+        "physical_system_energy_measured": false,
+        "reason": "amd_hwmon_socket_energy_unavailable",
+        "samples": 0,
+        "verified_calls": 2057
+      },
+      "mode": "mutable",
+      "name": "benchmark-64k-energy-mutable"
+    },
+    {
+      "cell": "benchmark-1m",
+      "evidence": {
+        "available": false,
+        "boundary": "whole child process, including setup/first call/8 warmups/timed calls/teardown; CPU component only",
+        "claim_authorized": false,
+        "evidence_class": null,
+        "hardware_measured_joules": null,
+        "joules_per_verified_call": null,
+        "method": null,
+        "physical_system_energy_measured": false,
+        "reason": "amd_hwmon_socket_energy_unavailable",
+        "samples": 0,
+        "verified_calls": 2057
+      },
+      "mode": "immutable",
+      "name": "benchmark-1m-energy-immutable"
+    },
+    {
+      "cell": "benchmark-1m",
+      "evidence": {
+        "available": false,
+        "boundary": "whole child process, including setup/first call/8 warmups/timed calls/teardown; CPU component only",
+        "claim_authorized": false,
+        "evidence_class": null,
+        "hardware_measured_joules": null,
+        "joules_per_verified_call": null,
+        "method": null,
+        "physical_system_energy_measured": false,
+        "reason": "amd_hwmon_socket_energy_unavailable",
+        "samples": 0,
+        "verified_calls": 2057
+      },
+      "mode": "mutable",
+      "name": "benchmark-1m-energy-mutable"
+    }
+  ],
+  "energy_claim_authorized": false,
+  "latency_claim_authorized": false,
+  "model_io_trace_verified": true,
+  "revision": "2db9d1da7918ed816d499206df71b09d916725f5",
+  "rows": [
+    {
+      "cell": "identity",
+      "immutable_ns": 10623.1318359375,
+      "model_bytes": 88,
+      "mutable_ns": 30062.67431640625,
+      "paired_ratio_max": 0.36905408520108024,
+      "paired_ratio_median": 0.3553360446398187,
+      "paired_ratio_min": 0.34869327792971005
+    },
+    {
+      "cell": "benchmark-64k",
+      "immutable_ns": 10436.18994140625,
+      "model_bytes": 65536,
+      "mutable_ns": 33042.936279296875,
+      "paired_ratio_max": 0.33238156799270674,
+      "paired_ratio_median": 0.31737832146785944,
+      "paired_ratio_min": 0.30402497003004403
+    },
+    {
+      "cell": "benchmark-1m",
+      "immutable_ns": 10711.966552734375,
+      "model_bytes": 1048576,
+      "mutable_ns": 148832.90161132812,
+      "paired_ratio_max": 0.07346972525810935,
+      "paired_ratio_median": 0.072128155624364,
+      "paired_ratio_min": 0.06770135315815493
+    }
+  ],
+  "schema": "shorthand.immutable_model.report.v1",
+  "success": true,
+  "traces": [
+    {
+      "available": true,
+      "mode": "immutable",
+      "model_io_syscalls": 0,
+      "model_opens": 0,
+      "model_reads": 0,
+      "name": "trace-immutable"
+    },
+    {
+      "available": true,
+      "mode": "mutable",
+      "model_io_syscalls": 48,
+      "model_opens": 16,
+      "model_reads": 32,
+      "name": "trace-mutable"
+    },
+    {
+      "available": true,
+      "mode": "injected-read",
+      "model_io_syscalls": 32,
+      "model_opens": 16,
+      "model_reads": 16,
+      "name": "trace-injected-read"
+    }
+  ]
+}
