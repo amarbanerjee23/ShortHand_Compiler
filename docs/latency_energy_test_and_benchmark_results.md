@@ -1,8 +1,14 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `7ad856960a49a62b5a56197b348d8de3ea5f5ac8`
+Comparison base: `0169c4261615b5718aac4b5ad87d941f733fd093`
 
 ## Current PR evidence
+
+### IR generator optimization checkpoint (PR 127)
+
+This PR changes only `IR_Generator.{h,cpp}`: interval-proved elision of array-bound, loop-step and constant-divisor checks, constant float-divisor handling (exact power-of-two reciprocals only), constant-global-array promotion, fused `printf`, a `getchar_unlocked` fast `read` path with an exact Clinger fast path and `strtod` fallback, and bit-exact unroll-and-jam of reduction loops without reassociation. Checks are removed only when statically proven unnecessary; SHD7001-SHD7004 are otherwise retained.
+
+Local validation: build passes; ctest passes 21/23 (`mlir_dialect` needs LLVM/MLIR 18 and `ai_cpu_energy_qualification` needs `ONNXRUNTIME_ROOT`, both environmental on the authoring VM; the latter passes via `check_ai_energy_qualification.sh` with the SDK set). `check_semantic_differential.sh` passes on a freshly built binary, and native versus interpreter output is identical on valid `read` inputs. No timing or energy measurement was captured for this change, so no speedup, joules or energy-saving claim is made; hardware joules remain null.
 
 This is the single consolidated implementation PR following the October 2026 proposal audit. It is a draft until all bounded implementation packages and exact-head qualification are complete. This checkpoint fixes C++ powercap counter wrap qualification: the maximum possible gap includes the complete ending read, matching the conservative Python sampler. It also adds deterministic delayed-read, hidden-wrap, power-bound, changed-domain and invalid-window regressions.
 
