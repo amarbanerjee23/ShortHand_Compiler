@@ -10,6 +10,8 @@ Local LLVM/MLIR 18 and clang 18 qualification passes 121 source/native commands 
 
 The current comparison base includes the SOTA benchmark artifacts added to master after PR126. The PR evidence gate validates against that exact base. The editor protocol gate keeps its assertions and uses a bounded session budget that accounts for multiple real compiler invocations.
 
+Both hosted CI runs at `525e5078` passed the earlier editor and benchmark evidence gates but failed container qualification before compilation: the build bridge could not resolve Ubuntu archive or security mirror names. The aggregate gate then failed as designed. The hosted kind qualification now uses runner networking only for image build instructions, and both Docker stages bound APT retries and fail immediately if package index retrieval ultimately fails. The mandatory container smoke and Kubernetes deployment checks remain in place. Replacement hosted qualification is pending.
+
 ## Energy and power result
 
 No physical energy runner or valid new calibrated joule observations are available. Energy stays null/unavailable. Static workspace reuse and removal of model/runtime dependencies are implementation properties, not measured energy savings. Previous bounded pilot timings do not establish the new source path's performance.
