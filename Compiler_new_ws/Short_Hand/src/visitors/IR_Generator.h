@@ -61,12 +61,30 @@ private:
     ShortType load_type;
     bool emitting_global_declarations = false;
 
+    struct StaticIntInterval {
+        bool known = false;
+        std::int64_t lo = 0;
+        std::int64_t hi = 0;
+    };
+    std::map<std::string, StaticIntInterval> static_int_intervals;
+
     void emitRuntimeFailureIf(llvm::Value *condition,
                               const std::string &code,
                               const std::string &message);
     ShortType variableType(const std::string &name, bool array) const;
     llvm::Constant *zeroValue(ShortType type);
     llvm::Value *safeStringPointer(llvm::Value *value);
+    StaticIntInterval evaluateStaticIntInterval(AST_EXPRESSION_RULE *expr) const;
+    void collectModifiedScalars(AST_STATEMENT_RULE *stmt,
+                                std::vector<std::string> &modified,
+                                bool &has_unknown_effects) const;
+    bool expressionContainsCall(AST_EXPRESSION_RULE *expr) const;
+    bool expressionReferencesVar(AST_EXPRESSION_RULE *expr, const std::string &var_name) const;
+    void refineIntervalFromCondition(AST_EXPRESSION_RULE *cond, bool branch_taken);
+    bool tryEmitUnrollAndJamReductionLoop(AST_FOR_LOOP_STATEMENT_RULE *for_statement);
+    void promoteConstantGlobalArrays();
+    llvm::Function *ensureFastReadI32();
+    llvm::Function *ensureFastReadF64();
 
     static const int ERROR = 0;
     static const int PLUS = 1;
