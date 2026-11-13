@@ -1,0 +1,48 @@
+{
+  "name": "shorthand-frozen-energy-matrix-v1",
+  "reference_variant": "cpp17_gxx_O2",
+  "candidate_variant": "shorthand_native",
+  "rounds": 30,
+  "warmup_rounds": 2,
+  "idle_windows": 6,
+  "confidence": 0.95,
+  "bootstrap_resamples": 4000,
+  "seed": 104,
+  "minimum_rounds_for_claim": 30,
+  "minimum_hosts_for_claim": 2,
+  "ac_meter_agreement_tolerance": 0.25,
+  "max_idle_load_average": 0.05,
+  "require_performance_governor": true,
+  "workloads": {
+    "chain": {"n": 300000000, "description": "dependent i32 multiply-add-modulo chain; n read from stdin, one checksum printed"}
+  },
+  "variants": {
+    "shorthand_native": {
+      "extension": "short",
+      "build": ["{shorthand}", "{src}", "compile-native"],
+      "produced": "chain",
+      "needs_runtime_library_path": true,
+      "version": ["git", "rev-parse", "HEAD"]
+    },
+    "c11_gcc_O2": {
+      "extension": "c",
+      "build": ["gcc", "-std=c11", "-O2", "{src}", "-o", "{out}"],
+      "version": ["gcc", "--version"]
+    },
+    "cpp17_gxx_O2": {
+      "extension": "cpp",
+      "build": ["g++", "-std=c++17", "-O2", "{src}", "-o", "{out}"],
+      "version": ["g++", "--version"]
+    },
+    "rust_O": {
+      "extension": "rs",
+      "build": ["rustc", "-O", "{src}", "-o", "{out}"],
+      "version": ["rustc", "--version"]
+    },
+    "go": {
+      "extension": "go",
+      "build": ["go", "build", "-o", "{out}", "{src}"],
+      "version": ["go", "version"]
+    }
+  }
+}
