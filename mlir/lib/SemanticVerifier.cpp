@@ -1,5 +1,6 @@
 #include "ShortHand/Conversion/Lowering.h"
 #include <cmath>
+#include <cstring>
 #include <limits>
 #include <map>
 #include <set>
@@ -125,6 +126,7 @@ struct Verifier {
         bool ok=stmtImpl(s); --depth; return ok;
     }
     bool stmtImpl(const S &s) {
+        if(p.aot_mode!=sir::AotMode::Runtime && s.kind==S::Kind::LegacyInfer) return fail("legacy string inference is outside explicit tensor AOT modes");
         for(const auto &e:s.expressions) if(!expr(e)) return false;
         auto count=[&](std::size_t n) { return s.expressions.size()==n||fail("statement operand count mismatch"); };
         switch(s.kind) {
@@ -206,12 +208,42 @@ struct Verifier {
         for(const auto &f:p.functions) {
             if(!identifier(f.name)||reserved.count(f.name)||globals.count(f.name)||!functions.emplace(f.name,&f).second||(!valueType(f.result,f.result_composite)&&!(f.result==T::Void&&f.result_composite.empty()))) return fail("invalid/duplicate/reserved function");
         }
+        if(p.aot_mode!=sir::AotMode::Runtime && p.aot_mode!=sir::AotMode::Only && p.aot_mode!=sir::AotMode::Hybrid) return fail("invalid AOT mode");
+        if(p.aot_mode==sir::AotMode::Only && (!p.contracts.empty() || !p.measurements.empty())) return fail("standalone AOT has runtime measurement dependencies");
+        if(p.aot_mode!=sir::AotMode::Runtime) {
+            if(p.models.size()>16) return fail("AOT model limit exceeded");
+            for(const auto &v:p.globals) if(v.name.rfind("sh_aot_v1_",0)==0) return fail("reserved AOT support symbol");
+            for(const auto &f:p.functions) if(f.name.rfind("sh_aot_v1_",0)==0) return fail("reserved AOT support symbol");
+        }
+        std::map<std::string,const sir::AffineKernel *> identities;
+        std::size_t constants=0;
         std::set<std::string> modelNames,tensorNames,contractNames;
         auto tensorShape=[&](const sir::TensorShape &s) { return s.isStatic()&&s.elementCount()>0&&s.elementCount()<=65536; };
         for(const auto &m:p.models) {
             if(!identifier(m.name)||!modelNames.insert(m.name).second||!tensorShape(m.input_shape)||!tensorShape(m.output_shape)||
                !element(m.precision)||m.format<sir::ModelFormat::Onnx||m.format>sir::ModelFormat::GGUF||m.backend_preference.empty()) return fail("invalid model signature or duplicate model (maximum 65536 tensor elements)");
             for(auto k:m.backend_preference) if(!backend(k)) return fail("unknown model backend");
+            if(p.aot_mode==sir::AotMode::Only && !m.aot) return fail("AOT-only model has no supported kernel");
+            if(m.aot) {
+                const auto &a=*m.aot;
+                if(p.aot_mode==sir::AotMode::Runtime || m.format!=sir::ModelFormat::Onnx || m.precision!=sir::ElementType::Float32 ||
+                   m.backend_preference!=std::vector<sir::BackendKind>{sir::BackendKind::OnnxRuntimeCPU} ||
+                   a.sha256.size()!=64 || a.sha256.find_first_not_of("0123456789abcdef")!=std::string::npos ||
+                   !a.batch || !a.inputs || !a.outputs || a.batch>1024 || a.inputs>1024 || a.outputs>1024 ||
+                   a.batch*a.inputs>65536 || a.batch*a.outputs>65536 || a.weights.size()!=a.inputs*a.outputs || a.bias.size()!=a.outputs ||
+                   m.input_shape.dims!=std::vector<int64_t>{static_cast<int64_t>(a.batch),static_cast<int64_t>(a.inputs)} ||
+                   m.output_shape.dims!=std::vector<int64_t>{static_cast<int64_t>(a.batch),static_cast<int64_t>(a.outputs)}) return fail("invalid bounded AOT descriptor");
+                constants+=a.weights.size()+a.bias.size();if(constants>16*1024*1024) return fail("AOT constant limit exceeded");
+                for(float v:a.weights) if(!std::isfinite(v)) return fail("non-finite AOT weight");
+                for(float v:a.bias) if(!std::isfinite(v)) return fail("non-finite AOT bias");
+                auto previous=identities.emplace(a.sha256,&a);
+                if(!previous.second) {
+                    const auto &other=*previous.first->second;
+                    if(a.batch!=other.batch || a.inputs!=other.inputs || a.outputs!=other.outputs ||
+                       std::memcmp(a.weights.data(),other.weights.data(),a.weights.size()*sizeof(float)) ||
+                       std::memcmp(a.bias.data(),other.bias.data(),a.bias.size()*sizeof(float))) return fail("conflicting AOT identity");
+                }
+            }
         }
         for(const auto &t:p.tensors) {
             if(!identifier(t.name)||!tensorNames.insert(t.name).second||!tensorShape(t.shape)||!element(t.element_type)||

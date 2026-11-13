@@ -4,6 +4,7 @@
 #include "semantic_ir/SemanticIRBuilder.h"
 #include "enterprise/EnterpriseValues.h"
 #include "ShortHand/Conversion/Lowering.h"
+#include "aot/PrepareAot.h"
 #endif
 #include <cerrno>
 #include <cstdlib>
@@ -57,7 +58,7 @@ struct ParsedSourceUnit {
 };
 
 static void print_usage() {
-    fprintf(stderr, "Correct usage: short_hand filename [parse|enterprise-check|module-info|module-graph|package-sbom|lock|run|print|compile|compile-bc|compile-native|emit-mlir|compile-mlir|evidence|c3eco-report|c3eco-check|c3eco-workbook|c3eco-migrate] [--output file]\n");
+    fprintf(stderr, "Correct usage: short_hand filename [parse|enterprise-check|module-info|module-graph|package-sbom|lock|run|print|compile|compile-bc|compile-native|emit-mlir|compile-mlir|compile-aot|compile-hybrid|evidence|c3eco-report|c3eco-check|c3eco-workbook|c3eco-migrate] [--output file]\n");
 }
 
 static bool has_output_arg(int argc, char *argv[]) {
@@ -65,7 +66,7 @@ static bool has_output_arg(int argc, char *argv[]) {
 }
 
 static bool supported_mode(const std::string &mode) {
-    return mode == "emit-mlir" || mode == "compile-mlir" || mode == "parse" || mode == "enterprise-check" || mode == "module-info" || mode == "module-graph" || mode == "package-sbom" || mode == "lock" ||
+    return mode == "emit-mlir" || mode == "compile-mlir" || mode == "compile-aot" || mode == "compile-hybrid" || mode == "parse" || mode == "enterprise-check" || mode == "module-info" || mode == "module-graph" || mode == "package-sbom" || mode == "lock" ||
            mode == "run" || mode == "print" || mode == "compile" || mode == "compile-bc" ||
            mode == "compile-native" || mode == "evidence" || mode == "c3eco-report" ||
            mode == "c3eco-check" || mode == "c3eco-workbook" || mode == "c3eco-migrate";
@@ -315,14 +316,14 @@ int main(int argc, char *argv[])
     }
 
 #ifndef SHORTHAND_HAS_MLIR
-    if (mode == "emit-mlir" || mode == "compile-mlir") {
+    if (mode == "emit-mlir" || mode == "compile-mlir" || mode == "compile-aot" || mode == "compile-hybrid") {
         std::cerr << "error: [SHD6002] MLIR commands require an SDK built with SHORTHAND_BUILD_MLIR=ON\n";
         return 1;
     }
 #endif
 
 #ifdef SHORTHAND_HAS_MLIR
-    if (mode == "emit-mlir" || mode == "compile-mlir") {
+    if (mode == "emit-mlir" || mode == "compile-mlir" || mode == "compile-aot" || mode == "compile-hybrid") {
         shorthand::parser::resetParserGuard();
         if (!validate_regular_file_size(argv[1])) return 1;
         if (shorthand::enterprise::isValueSource(argv[1])) {
@@ -331,7 +332,8 @@ int main(int argc, char *argv[])
             unsigned line = 1;
             std::ostringstream generated;
             if (!shorthand::enterprise::lowerValueSource(argv[1], program, error, line) ||
-                !shorthand::lowering::emitProgram(program, generated, mode == "compile-mlir", error)) {
+                ((mode == "compile-aot" || mode == "compile-hybrid") && !shorthand::aot::prepare(program, mode == "compile-hybrid", error)) ||
+                !shorthand::lowering::emitProgram(program, generated, mode != "emit-mlir", error)) {
                 std::cerr << argv[1] << ':' << line << ":1: error: [SHD6002] " << error << '\n';
                 return 1;
             }
@@ -502,7 +504,7 @@ int main(int argc, char *argv[])
     }
 
 #ifdef SHORTHAND_HAS_MLIR
-    if (mode == "emit-mlir" || mode == "compile-mlir") {
+    if (mode == "emit-mlir" || mode == "compile-mlir" || mode == "compile-aot" || mode == "compile-hybrid") {
         std::vector<std::pair<AST_PROGRAM *, std::string>> libraries;
         if (has_module_contract) for (const auto &name : ordered_modules) {
             if (name != entry_module) libraries.emplace_back(parsed_units.at(name).program, parsed_units.at(name).source_path);
@@ -512,7 +514,8 @@ int main(int argc, char *argv[])
         std::string error;
         std::ostringstream generated;
         if (!bridge.build(libraries, entry.program, path, program, error) ||
-            !shorthand::lowering::emitProgram(program, generated, mode == "compile-mlir", error)) {
+            ((mode == "compile-aot" || mode == "compile-hybrid") && !shorthand::aot::prepare(program, mode == "compile-hybrid", error)) ||
+                !shorthand::lowering::emitProgram(program, generated, mode != "emit-mlir", error)) {
             std::cerr << path << ":1:1: error: [SHD6002] " << error << " [range 1:1-1:1]\n";
             return finish_with(1);
         }

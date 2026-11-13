@@ -1,0 +1,12 @@
+int status;
+tensor input fp32 "1,1" = [42.5];
+tensor output fp32 "1,1";
+model affine {
+  format onnx; path "affine.onnx"; task "affine"; precision float;
+  input_shape "1,1"; output_shape "1,1";
+  backend_preference onnxruntime_cpu; compact false;
+  quality_guardrail accuracy >= 1;
+};
+infer affine(input) -> output;
+infer affine(output) -> input;
+print "Installed AOT values", output[0], input[0];

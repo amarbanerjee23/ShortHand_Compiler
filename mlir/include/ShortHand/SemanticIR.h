@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -109,6 +110,14 @@ struct TensorOp : Operation {
           shape(std::move(tensor_shape)) {}
 };
 
+enum class AotMode { Runtime, Only, Hybrid };
+// Native source preparation verifies snapshot identity. SDK clients constructing
+// owned SemanticIR values are responsible for their provenance.
+struct AffineKernel {
+    std::string sha256;
+    std::size_t batch=0, inputs=0, outputs=0;
+    std::vector<float> weights, bias;
+};
 struct ModelOp : Operation {
     ModelFormat format = ModelFormat::Unknown;
     std::string path;
@@ -118,6 +127,7 @@ struct ModelOp : Operation {
     TensorShape input_shape;
     TensorShape output_shape;
     std::vector<BackendKind> backend_preference;
+    std::optional<AffineKernel> aot;
 
     explicit ModelOp(std::string n, SourceRange r = {})
         : Operation(OperationKind::Model, std::move(n), std::move(r)) {}
@@ -226,6 +236,7 @@ struct Function {
 };
 
 struct ProgramIR {
+    AotMode aot_mode=AotMode::Runtime;
     std::vector<Composite> composites;
     std::vector<ModelOp> models;
     std::vector<TensorOp> tensors;

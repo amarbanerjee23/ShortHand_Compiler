@@ -587,7 +587,14 @@ install(FILES
 
 if(SHORTHAND_BUILD_MLIR)
   add_subdirectory(mlir)
-  target_sources(short_hand PRIVATE ${SRC_DIR}/semantic_ir/SemanticIRBuilder.cpp ${SRC_DIR}/enterprise/EnterpriseValues.cpp)
+  target_sources(short_hand PRIVATE ${SRC_DIR}/semantic_ir/SemanticIRBuilder.cpp ${SRC_DIR}/enterprise/EnterpriseValues.cpp
+    ${SRC_DIR}/aot/PrepareAot.cpp ${SRC_DIR}/aot/StaticAffineModel.cpp)
+  # Native import catches malformed input even in SDKs without ORT.
+  if(MSVC)
+    target_compile_options(short_hand PRIVATE /EHsc)
+  else()
+    target_compile_options(short_hand PRIVATE -fexceptions)
+  endif()
   target_link_libraries(short_hand PRIVATE ShortHandMLIRLowering)
   target_compile_definitions(short_hand PRIVATE SHORTHAND_HAS_MLIR=1)
 endif()

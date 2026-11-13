@@ -1,14 +1,36 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `0169c4261615b5718aac4b5ad87d941f733fd093`
+Comparison base: `211a4e27ade491542a6a4f63d46426709698efec`
 
 ## Current PR evidence
 
-### IR generator optimization checkpoint (PR 127)
+This follow-up to merged PR126 connects the native bounded importer and standalone support archive to explicit source `compile-aot` and `compile-hybrid` modes. Supported affine kernels embed snapshot identity and owned constants, preserve increasing-index FP32 reduction order and use bounded per-invocation transactional workspace. Hybrid unsupported graphs require the existing qualified real runtime; malformed/unsafe snapshots reject before compilation output is written. Default modes and the frozen runtime ABI are unchanged.
+
+Local LLVM/MLIR 18 and clang 18 qualification passes 121 source/native commands normally and with generated-artifact/native-preparation ASan/UBSan instrumentation. Local leak detection was explicitly disabled; hosted LSan remains mandatory. Both existing 213-command source suites and all 26 SemanticIR mutations pass. The source tests cover five shapes (including 65,536 output elements), exact scalar-FP32 byte parity from C++ calling the same object, 100 allocation-free calls with a positive control, complete/partial aliases, concurrent calls, finite overflow rollback, policy rejection, recursive/repeated sites and valid/invalid hybrid graphs. Native preparation tests additionally reject partial plans, path/signature/byte-limit failures and excessive traversal depth. Mandatory CI adds these checks under ASan/LSan/UBSan and standalone installed artifacts at O0/O2 in all four native package lanes. No new latency, energy, GA or certification claim is made. The existing successful trusted-push installer release workflow remains enabled.
+
+The current comparison base includes merged PR127 and the SOTA benchmark artifacts added after PR126. The PR evidence gate validates against that exact base. The editor protocol gate keeps its assertions and uses a bounded session budget that accounts for multiple real compiler invocations.
+
+Both hosted CI runs at `525e5078` passed the earlier editor and benchmark evidence gates but failed container qualification before compilation: the build bridge could not resolve Ubuntu archive or security mirror names. The aggregate gate then failed as designed. The hosted kind qualification now uses runner networking only for image build instructions, and both Docker stages bound APT retries and fail immediately if package index retrieval ultimately fails. The mandatory container smoke and Kubernetes deployment checks remain in place. The [push run for the merged-base tree at `816ae2cc`](https://github.com/amarbanerjee23/ShortHand_Compiler/actions/runs/43277475520) passed profiling, native packaging, deployment qualification and release. Its [development release](https://github.com/amarbanerjee23/ShortHand_Compiler/releases/tag/build-43277475520-1-816ae2cc5b4b) contains installers for Linux x64/arm64, macOS arm64 and Windows x64.
+
+The corresponding PR run failed its preflight because the merge from master had replaced the AOT report with PR127’s report. This change restores the AOT evidence, updates the comparison SHA and retains PR127’s evidence below. The replacement PR run is pending.
+
+## Energy and power result
+
+No physical energy runner or valid new calibrated joule observations are available. Energy stays null/unavailable. Static workspace reuse and removal of model/runtime dependencies are implementation properties, not measured energy savings. Previous bounded pilot timings do not establish the new source path's performance.
+
+## Reproduction
+
+Build the SDK with `SHORTHAND_BUILD_MLIR=ON` and the pinned real ONNX SDK. Run `tests/mlir_lowering/test_aot_execution.py --build <build> --sdk <sdk>` in the pinned Python environment, then repeat with `--sanitizers`. The environment must set `ORT_DISABLE_TELEMETRY=1` before process startup. Retain existing source, SemanticIR, ABI, sanitizer, compiler and installer gates.
+
+## Historical PR127 evidence
+
+Comparison base: `0169c4261615b5718aac4b5ad87d941f733fd093`
 
 This PR changes only `IR_Generator.{h,cpp}`: interval-proved elision of array-bound, loop-step and constant-divisor checks, constant float-divisor handling (exact power-of-two reciprocals only), constant-global-array promotion, fused `printf`, a `getchar_unlocked` fast `read` path with an exact Clinger fast path and `strtod` fallback, and bit-exact unroll-and-jam of reduction loops without reassociation. Checks are removed only when statically proven unnecessary; SHD7001-SHD7004 are otherwise retained.
 
 Local validation: build passes; ctest passes 21/23 (`mlir_dialect` needs LLVM/MLIR 18 and `ai_cpu_energy_qualification` needs `ONNXRUNTIME_ROOT`, both environmental on the authoring VM; the latter passes via `check_ai_energy_qualification.sh` with the SDK set). `check_semantic_differential.sh` passes on a freshly built binary, and native versus interpreter output is identical on valid `read` inputs. No timing or energy measurement was captured for this change, so no speedup, joules or energy-saving claim is made; hardware joules remain null.
+
+## Historical PR126 evidence
 
 This is the single consolidated implementation PR following the October 2026 proposal audit. It is a draft until all bounded implementation packages and exact-head qualification are complete. This checkpoint fixes C++ powercap counter wrap qualification: the maximum possible gap includes the complete ending read, matching the conservative Python sampler. It also adds deterministic delayed-read, hidden-wrap, power-bound, changed-domain and invalid-window regressions.
 

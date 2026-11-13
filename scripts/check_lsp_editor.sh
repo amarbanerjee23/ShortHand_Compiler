@@ -9,7 +9,7 @@ LSP_FLAGS_TEXT="${SHORTHAND_LSP_CXXFLAGS:--std=c++17 -O2 -Wall -Wextra -Wpedanti
 TMP="$(mktemp -d)"
 trap 'rm -rf "${TMP}"' EXIT
 
-for tool in "${CXX}" jq grep timeout wc tr; do
+for tool in "${CXX}" jq grep timeout wc tr tail; do
   command -v "${tool}" >/dev/null 2>&1 || {
     echo "error: required LSP/editor qualification tool unavailable: ${tool}" >&2
     exit 1
@@ -52,6 +52,20 @@ send_message() {
   printf 'Content-Length: %s\r\n\r\n%s' "${bytes}" "${body}"
 }
 
+# A session runs several compiler processes synchronously. Keep a hard limit
+# with headroom for loaded runners and sanitizer startup, and identify failures.
+run_session() {
+  local name="$1" compiler="$2" status
+  if SHORTHAND_COMPILER="${compiler}" timeout --kill-after=5s 30s "${LSP}" >"${TMP}/${name}.out" 2>"${TMP}/${name}.err"; then
+    return 0
+  else
+    status=$?
+    printf 'error: LSP session %s failed (exit %s)\n' "${name}" "${status}" >&2
+    tail -c 4096 "${TMP}/${name}.err" >&2
+    return "${status}"
+  fi
+}
+
 APP="${ROOT_DIR}/tests/modules/resolver/valid_project/src/app.short"
 APP_URI="file://${APP}"
 APP_JSON="$(jq -Rs . <"${APP}")"
@@ -76,7 +90,7 @@ RECOVERED_JSON='"int value;\n"'
   send_message "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didClose\",\"params\":{\"textDocument\":{\"uri\":\"${APP_URI}\"}}}"
   send_message '{"jsonrpc":"2.0","id":6,"method":"shutdown","params":null}'
   send_message '{"jsonrpc":"2.0","method":"exit","params":null}'
-} | SHORTHAND_COMPILER="${SHORTHAND_BIN}" timeout 8s "${LSP}" >"${TMP}/protocol.out" 2>"${TMP}/protocol.err"
+} | run_session protocol "${SHORTHAND_BIN}"
 
 PROTOCOL="${TMP}/protocol.out"
 grep -Fq '"name":"shorthand-lsp"' "${PROTOCOL}"
@@ -105,7 +119,7 @@ UNICODE_JSON="$(jq -Rs . <"${TMP}/unicode.short")"
   send_message "{\"jsonrpc\":\"2.0\",\"id\":11,\"method\":\"textDocument/definition\",\"params\":{\"textDocument\":{\"uri\":\"${UNICODE_URI}\"},\"position\":{\"line\":1,\"character\":8}}}"
   send_message '{"jsonrpc":"2.0","id":12,"method":"shutdown","params":null}'
   send_message '{"jsonrpc":"2.0","method":"exit","params":null}'
-} | SHORTHAND_COMPILER="${SHORTHAND_BIN}" timeout 8s "${LSP}" >"${TMP}/unicode.out" 2>"${TMP}/unicode.err"
+} | run_session unicode "${SHORTHAND_BIN}"
 grep -Fq '"start":{"character":16,"line":0}' "${TMP}/unicode.out"
 grep -Fq '"end":{"character":21,"line":0}' "${TMP}/unicode.out"
 
@@ -115,7 +129,7 @@ grep -Fq '"end":{"character":21,"line":0}' "${TMP}/unicode.out"
   send_message '{"jsonrpc":"2.0","id":20,"method":"initialize","params":{}}'
   send_message '{"jsonrpc":"2.0","id":21,"method":"shutdown","params":null}'
   send_message '{"jsonrpc":"2.0","method":"exit","params":null}'
-} | SHORTHAND_COMPILER="${SHORTHAND_BIN}" timeout 8s "${LSP}" >"${TMP}/parse_error.out" 2>"${TMP}/parse_error.err"
+} | run_session parse_error "${SHORTHAND_BIN}"
 grep -Fq '"code":-32700' "${TMP}/parse_error.out"
 grep -Fq '"id":20' "${TMP}/parse_error.out"
 
@@ -148,7 +162,7 @@ MISSING_URI="file://${TMP}/oracle-missing.short"
   send_message "{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/didOpen\",\"params\":{\"textDocument\":{\"uri\":\"${MISSING_URI}\",\"languageId\":\"shorthand\",\"version\":1,\"text\":${VALID_JSON}}}}"
   send_message '{"jsonrpc":"2.0","id":31,"method":"shutdown","params":null}'
   send_message '{"jsonrpc":"2.0","method":"exit","params":null}'
-} | SHORTHAND_COMPILER="${TMP}/definitely-missing-short-hand" timeout 8s "${LSP}" >"${TMP}/missing_oracle.out" 2>"${TMP}/missing_oracle.err"
+} | run_session missing_oracle "${TMP}/definitely-missing-short-hand"
 grep -Fq '"code":"SHLSP900"' "${TMP}/missing_oracle.out"
 grep -Fq 'compiler oracle unavailable' "${TMP}/missing_oracle.out"
 

@@ -66,7 +66,14 @@ cd "${ROOT_DIR}"
 bash scripts/check_container_kubernetes_hardening.sh
 bash tests/deployment/test_container_kubernetes_hardening_negative.sh
 
-docker build --pull --platform "linux/${image_arch}" -t "${IMAGE}" .
+# Hosted Linux runners can resolve the mirrors from the host even when
+# Docker's build bridge cannot. Use the runner network only for this build;
+# the runtime smoke test and kind cluster retain their own network settings.
+build_network=()
+if [[ "${GITHUB_ACTIONS:-}" == "true" && "${RUNNER_ENVIRONMENT:-}" == "github-hosted" ]]; then
+  build_network=(--network=host)
+fi
+docker build --pull "${build_network[@]}" --platform "linux/${image_arch}" -t "${IMAGE}" .
 bash scripts/check_container_runtime.sh "${IMAGE}" "${image_arch}"
 
 cat >"${TMP}/kind-config.yaml" <<'YAML'

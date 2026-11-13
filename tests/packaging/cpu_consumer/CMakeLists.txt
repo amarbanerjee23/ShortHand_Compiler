@@ -52,6 +52,22 @@ foreach(level 0 2)
     WORKING_DIRECTORY "${MODEL_DIRECTORY}"
     PASS_REGULAR_EXPRESSION "Installed typed inference completed")
 endforeach()
+# Compile once, then execute without the model or ONNX Runtime.
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cpu_aot.ll"
+  COMMAND "${SHORTHAND_COMPILER}" "${CMAKE_CURRENT_SOURCE_DIR}/cpu_aot.short"
+    compile-aot --output "${CMAKE_CURRENT_BINARY_DIR}/cpu_aot.ll"
+  WORKING_DIRECTORY "${MODEL_DIRECTORY}"
+  DEPENDS cpu_aot.short "${MODEL_DIRECTORY}/affine.onnx" VERBATIM)
+foreach(level 0 2)
+  add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cpu_aot_O${level}.o"
+    COMMAND "${SHORTHAND_CLANG}" -c -O${level} cpu_aot.ll -o cpu_aot_O${level}.o
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/cpu_aot.ll" VERBATIM)
+  add_executable(cpu_aot_O${level} "${CMAKE_CURRENT_BINARY_DIR}/cpu_aot_O${level}.o")
+  set_target_properties(cpu_aot_O${level} PROPERTIES LINKER_LANGUAGE CXX)
+  target_link_libraries(cpu_aot_O${level} PRIVATE ShortHand::aot_support)
+  add_test(NAME cpu_aot_O${level} COMMAND cpu_aot_O${level})
+  set_tests_properties(cpu_aot_O${level} PROPERTIES PASS_REGULAR_EXPRESSION "Installed AOT values 86 173")
+endforeach()
 if(WIN32)
   # Windows searches the system directory before PATH. Stage the imported DLLs
   # next to the consumers so a preinstalled older ONNX cannot shadow the bundle.

@@ -2,6 +2,7 @@
 #include "ShortHand/IR/ShortHandOps.h"
 #include "LoweringSupport.h"
 #include "TensorRuntimeLowering.h"
+#include "AotLowering.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Target/LLVMIR/Export.h"
 #include "mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h"
@@ -10,6 +11,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
+#include <functional>
 #include <limits>
 #include <ostream>
 
@@ -53,6 +55,8 @@ struct Generator {
     std::map<std::string,sir::Variable> globals;
     std::vector<std::map<std::string,Binding>> scopes;
     std::map<std::string,ir::ModelOp> models;
+    std::map<std::string,const sir::AffineKernel *> aotModels;
+    Value aotWorkspace;
     std::map<std::string,RankedTensorType> tensors;
     std::map<std::string,ir::GreenAIContractOp> contracts;
     std::vector<std::map<std::string,Block *>> labels;
@@ -348,7 +352,12 @@ struct Generator {
             tensorReady(i.input_tensor_name); tensorReady(i.output_tensor_name);
             auto input=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+i.input_tensor_name));
             auto output=b.create<LLVM::AddressOfOp>(c.loc,module->lookupSymbol<LLVM::GlobalOp>("__sh_tensor_"+i.output_tensor_name));
-            inferTensorBuffers(c,models.at(i.model_name),input,output,
+            auto aot=aotModels.find(i.model_name);
+            if(aot!=aotModels.end()) {
+                const auto &a=*aot->second;
+                auto status=c.call(aotSymbol(a),b.getI32Type(),{input,c.integer(a.batch*a.inputs,64),output,c.integer(a.batch*a.outputs,64),aotWorkspace,c.integer(a.batch*a.outputs,64)}).getResult();
+                failureIf(boolValue(status),"SHD7030","AOT inference rejected buffers, data, CPU policy or FP environment");
+            } else inferTensorBuffers(c,models.at(i.model_name),input,output,
                 [&](Value bad,StringRef reason){failureIf(bad,"SHD7030",reason);});
             break;
         }
@@ -393,6 +402,14 @@ struct Generator {
             models[m.name]=op<ir::ModelOp>({}, {},{attr("sym_name",b.getStringAttr("__sh_model_"+m.name)),attr("signature",TypeAttr::get(signature)),
                 attr("format",b.getStringAttr(format(m.format))),attr("path",b.getStringAttr(m.path)),attr("task",b.getStringAttr(m.task)),
                 attr("quality_guardrail",b.getStringAttr(m.quality_guardrail)),attr("backend",policy),attr("shorthand.backend_preference",b.getStrArrayAttr(preferences))});
+            if(m.aot) {
+                aotModels[m.name]=&*m.aot;
+                models[m.name]->setAttr("shorthand.execution",b.getStringAttr("experimental_aot_f32_v1"));
+                models[m.name]->setAttr("shorthand.snapshot_sha256",b.getStringAttr(m.aot->sha256));
+                models[m.name]->setAttr("shorthand.artifact_symbol",b.getStringAttr(aotSymbol(*m.aot)));
+                models[m.name]->setAttr("shorthand.workspace_elements",b.getI64IntegerAttr(m.aot->batch*m.aot->outputs));
+                emitAffineKernel(c,*m.aot);
+            } else if(p.aot_mode==sir::AotMode::Hybrid) models[m.name]->setAttr("shorthand.execution",b.getStringAttr("requires_real_backend_validation"));
         }
         for(const auto &t:p.tensors) { auto ty=tensorType(t.shape,t.element_type); if(!ty) return failure(); tensors[t.name]=ty; global("__sh_tensor_"+t.name,tensorStorage(ty)); global("__sh_tensor_ready_"+t.name,b.getI1Type()); }
         for(const auto &d:p.contracts) {
@@ -427,6 +444,20 @@ struct Generator {
         for(const auto &f:p.functions) { SmallVector<Type> args; for(const auto &v:f.parameters) args.push_back(type(v.type,v.composite)); c.function(f.name,type(f.result,f.result_composite),args); }
         auto emitFunction=[&](LLVM::LLVMFuncOp fn,const std::vector<sir::Variable> &params,const S &body,bool main) {
             function=fn; auto *entry=c.entryBlock(fn); b.setInsertionPointToStart(entry); scopes.push_back({});
+            // One scratch region per invocation, reused across sequential sites.
+            // Recursive calls get distinct frames; exported kernels borrow workspace.
+            std::function<std::size_t(const S &)> workspaceSize=[&](const S &s) {
+                std::size_t size=0;
+                if(s.kind==S::Kind::Infer) {
+                    auto a=aotModels.find(p.inferences[s.declaration].model_name);
+                    if(a!=aotModels.end()) size=a->second->batch*a->second->outputs;
+                }
+                for(const auto &v:s.body) size=std::max(size,workspaceSize(v));
+                for(const auto &v:s.alternative) size=std::max(size,workspaceSize(v));
+                return size;
+            };
+            const auto scratchSize=workspaceSize(body);
+            aotWorkspace=scratchSize?c.slot(LLVM::LLVMArrayType::get(b.getF32Type(),scratchSize)):Value{};
             for(std::size_t i=0;i<params.size();++i) { declare(params[i]); b.create<LLVM::StoreOp>(c.loc,entry->getArgument(i),scopes.back().at(params[i].name).pointer); }
             stmt(body);
             if(!terminated()) {

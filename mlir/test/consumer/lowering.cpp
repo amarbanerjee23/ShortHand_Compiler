@@ -1,5 +1,6 @@
 #include "ShortHand/Conversion/Lowering.h"
 #include <fstream>
+#include <limits>
 #include <iostream>
 #include <sstream>
 namespace sir=shorthand::semantic_ir;
@@ -45,7 +46,24 @@ int mutations() {
     p=aiProgram("m.onnx"); p.models[0].precision=static_cast<sir::ElementType>(-1); if(!reject(p)) return 15;
     p=aiProgram("m.onnx"); p.models[0].format=static_cast<sir::ModelFormat>(99); if(!reject(p)) return 16;
     p=aiProgram("m.onnx"); p.models[0].backend_preference={static_cast<sir::BackendKind>(99)}; if(!reject(p)) return 17;
-    if(rejected!=15) return 13; std::cout<<"PASS installed SemanticIR mutation and bounded work checks\n"; return 0;
+    auto affine=aiProgram("native.onnx"); affine.aot_mode=sir::AotMode::Only;
+    affine.contracts.clear(); affine.measurements.clear(); affine.body.body.pop_back();
+    affine.models[0].input_shape.dims={1,1}; affine.models[0].output_shape.dims={1,1};
+    for(auto &t:affine.tensors) t.shape.dims={1,1};
+    affine.models[0].aot=sir::AffineKernel{std::string(64,'a'),1,1,1,{2.0f},{1.0f}};
+    if(!shorthand::lowering::verifySemanticIR(affine,error)) return 18;
+    p=affine; p.aot_mode=sir::AotMode::Runtime; if(!reject(p)) return 19;
+    p=affine; p.models[0].aot.reset(); if(!reject(p)) return 20;
+    p=affine; p.models[0].aot->batch=0; if(!reject(p)) return 21;
+    p=affine; p.models[0].aot->sha256="invalid"; if(!reject(p)) return 22;
+    p=affine; p.models[0].aot->weights.clear(); if(!reject(p)) return 23;
+    p=affine; p.models[0].aot->bias[0]=std::numeric_limits<float>::infinity(); if(!reject(p)) return 24;
+    p=affine; auto duplicate=p.models[0]; duplicate.name="second"; duplicate.aot->weights[0]=3; p.models.push_back(duplicate); if(!reject(p)) return 25;
+    p=affine; p.globals.push_back({"sh_aot_v1_commit",T::Int32}); if(!reject(p)) return 26;
+    p=affine; p.aot_mode=static_cast<sir::AotMode>(99); if(!reject(p)) return 27;
+    p=affine; p.body.body[0].kind=S::Kind::LegacyInfer; if(!reject(p)) return 28;
+    p=affine; p.contracts=aiProgram("m.onnx").contracts; if(!reject(p)) return 29;
+    if(rejected!=26) return 13; std::cout<<"PASS installed SemanticIR mutation and bounded work checks\n"; return 0;
 }
 int main(int argc,char **argv) {
     if(argc==2&&std::string(argv[1])=="verify") return mutations(); if(argc<4) return 64;

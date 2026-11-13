@@ -104,6 +104,7 @@ def main():
             models.mkdir()
             model = base64.b64decode((ROOT / "tests/fixtures/onnx/identity_float32_v13.onnx.b64").read_bytes())
             (models / "identity.onnx").write_bytes(model)
+            (models / "affine.onnx").write_bytes(base64.b64decode((ROOT / "tests/fixtures/onnx/affine_float32_v13.onnx.b64").read_bytes()))
             model_path = models / "model with spaces.onnx"
             model_path.write_bytes(model)
             run([sys.executable, ROOT / 'tests/ai_application/test_immutable_model.py',
@@ -136,6 +137,9 @@ def main():
                 output = run([consumer / ("cpu_tensor_O2" + suffix)], cwd=models, env=env, expect_failure=True)
                 if "SHD7030" not in output or "Installed typed inference completed" in output:
                     raise RuntimeError("compiled typed source bypassed the production scope guard")
+                output = run([consumer / ("cpu_aot_O2" + suffix)], cwd=work, env=env, expect_failure=True)
+                if "SHD7030" not in output or "Installed AOT values" in output:
+                    raise RuntimeError("AOT source bypassed the experimental platform guard")
                 env["SHORTHAND_ALLOW_UNQUALIFIED_BACKEND_HARDWARE"] = "1"
                 qualification_mode = "experimental_native_candidate"
             run(["ctest", "--test-dir", consumer, "--output-on-failure", "-V"], cwd=work, env=env)
@@ -164,6 +168,16 @@ def main():
             if runtime is None:
                 raise RuntimeError("bundled ONNX runtime missing")
             runtime.resolve().unlink()
+            for deployed in consumer.glob("*onnxruntime*"):
+                if deployed.is_file(): deployed.unlink()
+            (models / "affine.onnx").unlink()
+            for level in (0, 2):
+                output = run([consumer / (f"cpu_aot_O{level}" + suffix)], cwd=work, env=env)
+                if "Installed AOT values 86 173" not in output:
+                    raise RuntimeError("installed AOT artifact needs model/ORT or returned incorrect values")
+            aot_ir = (consumer / "cpu_aot.ll").read_text()
+            if "__sh_aot_v1_" not in aot_ir or "short_ai_infer" in aot_ir:
+                raise RuntimeError("AOT source did not produce the standalone kernel")
             output = run([*configure, "-B", work / "missing-runtime"], cwd=work, env=env, expect_failure=True)
             if "ShortHand_ONNXRUNTIME_LIBRARY" not in output:
                 raise RuntimeError("missing-runtime negative failed for an unrelated reason")
@@ -177,7 +191,7 @@ def main():
                        "onnxruntime_version": (prefix / "share/shorthand/licenses/onnxruntime/VERSION_NUMBER").read_text().strip(),
                        "compiler_sha256": hashlib.sha256(compiler.read_bytes()).hexdigest(),
                        "checks": ["relocated_archive", "build_and_sdk_hidden", "installed_clis", "static_cpu_numerics",
-                                  "shared_cpu_numerics", "compiled_core_source", "compiled_tensor_source_O0_O2", "compiled_missing_model_rejected", "interpreter_cpu", "nonfinite_rollback",
+                                  "shared_cpu_numerics", "compiled_core_source", "compiled_tensor_source_O0_O2", "compiled_missing_model_rejected", "standalone_aot_source_O0_O2_without_model_or_ort", "interpreter_cpu", "nonfinite_rollback",
                                   "missing_runtime_rejected", "production_scope_guard",
                                   "immutable_owned_snapshot_lifecycle"], "production_claim": False}
             report.write_text(json.dumps(receipt, indent=2) + "\n")

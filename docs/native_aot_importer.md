@@ -1,9 +1,8 @@
 # Native bounded ONNX import
 
-`aot/StaticAffineModel.cpp` is the native compiler foundation for explicit static
-FP32 MatMul+Add AOT. It does not yet connect to a source compilation mode, emit a
-kernel, change runtime routing or remove the runtime dependency from a ShortHand
-program. Those integration and workspace qualifications remain in PR126.
+`aot/StaticAffineModel.cpp` is the native compiler foundation for the explicit
+static FP32 MatMul+Add modes described in [native AOT execution](native_aot_execution.md).
+Default runtime routing and compilation modes remain unchanged.
 
 The importer accepts one owned snapshot, performs no file access and requires
 no Python, protobuf SDK or ONNX SDK. It reuses the existing immutable dependency
