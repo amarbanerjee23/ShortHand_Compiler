@@ -1,0 +1,30 @@
+{
+  "disqualifying_reasons": [
+    "no physical energy source: RAPL package counters and AC meter are both unavailable",
+    "rapl: no readable package energy domains",
+    "host is virtualised (hypervisor flag); counters are not a trustworthy isolated measurement",
+    "host is not quiet: 1m load average 0.16",
+    "CPU governor is not fixed to 'performance': ['unavailable']"
+  ],
+  "host": {
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8481C",
+    "intel_no_turbo": null,
+    "kernel": "6.12.105+",
+    "load_average_1m": 0.15869140625,
+    "logical_cpus": 2,
+    "machine": "x86_64",
+    "scaling_governors": [
+      "unavailable"
+    ],
+    "smt_active": "0",
+    "virtualized": true
+  },
+  "host_id": "f01a39aa59296d91",
+  "kind": "host_qualification",
+  "qualified": false,
+  "schema": "shorthand.frozen_energy_protocol.v1",
+  "sources": {
+    "ac_meter": false,
+    "rapl": false
+  }
+}

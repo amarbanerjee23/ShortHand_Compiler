@@ -1,8 +1,14 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `211a4e27ade491542a6a4f63d46426709698efec`
+Comparison base: `1b58a97f9b358650f32a5b6dbb7d864f195ddf99`
 
 ## Current PR evidence
+
+### Frozen energy protocol checkpoint (experiments only)
+
+This PR adds `experiments/energy/frozen_protocol/` and `docs/FROZEN_ENERGY_PROTOCOL.md`: a frozen workload matrix (ShortHand native, C11, C++17, Rust, Go), host qualification, idle-subtracted paired energy ratios with a deterministic bootstrap CI, and a cross-host aggregation gate. No compiler, runtime or language file is modified.
+
+Local validation: 18 protocol tests pass (RAPL package-only summation, counter wrap and double-wrap rejection, AC-meter integrity, qualification refusals, bootstrap determinism, claim decisions, aggregation gates, and an end-to-end run with a synthetic meter). On the authoring VM `qualify` exits 3 (virtualised, no powercap, governor unavailable), so no physical run was possible. A functional dry run at 0.3 scale confirmed all five variants print identical output. Median wall time per run was C 0.458 s, C++ 0.459 s, Go 0.399 s, Rust 0.508 s and ShortHand 0.632 s. These are time observations on a shared virtual host and are not energy evidence; ShortHand was slower than C and C++ on this workload. Joules are null, evidence class is null and `energy_claim_authorized` is false. No energy-saving, green-AI or power claim is made or supported.
 
 This follow-up to merged PR126 connects the native bounded importer and standalone support archive to explicit source `compile-aot` and `compile-hybrid` modes. Supported affine kernels embed snapshot identity and owned constants, preserve increasing-index FP32 reduction order and use bounded per-invocation transactional workspace. Hybrid unsupported graphs require the existing qualified real runtime; malformed/unsafe snapshots reject before compilation output is written. Default modes and the frozen runtime ABI are unchanged.
 

@@ -1,0 +1,5 @@
+int i, s, n;
+s = 7;
+read n;
+loop i = 0, 1, n { s = (s * 31 + i) % 1000003; }
+print s;

@@ -1,0 +1,1936 @@
+{
+  "created": "2026-11-13T17:20:48.267934+00:00",
+  "energy_claim_authorized": false,
+  "energy_sources": [],
+  "evidence_class": null,
+  "functional_time_dry_run": true,
+  "host_id": "f01a39aa59296d91",
+  "host_qualified": false,
+  "joules": null,
+  "kind": "host_run",
+  "protocol_sha256": "c6a53b7cdee5949e45028ab727179d6151a70399eb6243a613732955cd0b8e0a",
+  "scale": 0.3,
+  "schema": "shorthand.frozen_energy_protocol.v1",
+  "workloads": [
+    {
+      "idle_power_watts": {},
+      "observations": {
+        "c11_gcc_O2": [
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 0,
+            "seconds": 0.45689974700002267
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 1,
+            "seconds": 0.45832529899996644
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 2,
+            "seconds": 0.45377723699999706
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 3,
+            "seconds": 0.45476066000003357
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 4,
+            "seconds": 0.45271966699999666
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 5,
+            "seconds": 0.454327300999978
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 6,
+            "seconds": 0.4566120459999752
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 7,
+            "seconds": 0.4553115790000106
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 8,
+            "seconds": 0.45727267400002347
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 9,
+            "seconds": 0.4553169980000007
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 10,
+            "seconds": 0.4706527240000469
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 11,
+            "seconds": 0.4594102909999833
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 12,
+            "seconds": 0.45955717999999024
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 13,
+            "seconds": 0.4552959279999982
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 14,
+            "seconds": 0.4598603019999814
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 15,
+            "seconds": 0.4598881640000059
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 16,
+            "seconds": 0.45953959299998814
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 17,
+            "seconds": 0.45993160499995156
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 18,
+            "seconds": 0.46008858199996894
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 19,
+            "seconds": 0.4579020539999874
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 20,
+            "seconds": 0.4565446350000002
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 21,
+            "seconds": 0.4599277980000238
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 22,
+            "seconds": 0.45953974800005426
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 23,
+            "seconds": 0.4594461430000365
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 24,
+            "seconds": 0.45984085899999627
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 25,
+            "seconds": 0.4591225260000442
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 26,
+            "seconds": 0.4562200139999959
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 27,
+            "seconds": 0.45592277000002923
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 28,
+            "seconds": 0.4556731809999519
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 29,
+            "seconds": 0.4577472149999835
+          }
+        ],
+        "cpp17_gxx_O2": [
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 0,
+            "seconds": 0.4579924440000127
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 1,
+            "seconds": 0.45791876100003037
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 2,
+            "seconds": 0.4593655999999555
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 3,
+            "seconds": 0.4568043469999452
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 4,
+            "seconds": 0.45491130099998145
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 5,
+            "seconds": 0.455309246000013
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 6,
+            "seconds": 0.4565339669999844
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 7,
+            "seconds": 0.45632065199998806
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 8,
+            "seconds": 0.45925080099999604
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 9,
+            "seconds": 0.454618096000047
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 10,
+            "seconds": 0.46794250499999634
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 11,
+            "seconds": 0.4595050140000012
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 12,
+            "seconds": 0.45964534299997695
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 13,
+            "seconds": 0.4556843259999823
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 14,
+            "seconds": 0.45966911499999696
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 15,
+            "seconds": 0.46039845299998206
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 16,
+            "seconds": 0.4595785029999888
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 17,
+            "seconds": 0.45989529100000937
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 18,
+            "seconds": 0.4545913960000121
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 19,
+            "seconds": 0.45538049300000694
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 20,
+            "seconds": 0.45987052700002096
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 21,
+            "seconds": 0.4596879640000111
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 22,
+            "seconds": 0.45972083800000973
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 23,
+            "seconds": 0.4598714800000039
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 24,
+            "seconds": 0.4598358499999904
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 25,
+            "seconds": 0.4594473809999613
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 26,
+            "seconds": 0.4594285389999868
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 27,
+            "seconds": 0.45442044799995074
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 28,
+            "seconds": 0.45577598900001703
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 29,
+            "seconds": 0.4539570239999762
+          }
+        ],
+        "go": [
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 0,
+            "seconds": 0.39683949800001983
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 1,
+            "seconds": 0.39814455399999815
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 2,
+            "seconds": 0.3958067020000158
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 3,
+            "seconds": 0.3952115719999938
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 4,
+            "seconds": 0.3949909590000402
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 5,
+            "seconds": 0.4081010350000156
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 6,
+            "seconds": 0.3985477870000409
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 7,
+            "seconds": 0.40379043900003353
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 8,
+            "seconds": 0.3962797639999849
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 9,
+            "seconds": 0.39730329600001824
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 10,
+            "seconds": 0.40738637800001243
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 11,
+            "seconds": 0.3998086060000219
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 12,
+            "seconds": 0.4000773850000314
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 13,
+            "seconds": 0.396404820999976
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 14,
+            "seconds": 0.3993091339999637
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 15,
+            "seconds": 0.3992765529999929
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 16,
+            "seconds": 0.39979397799999106
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 17,
+            "seconds": 0.39974285900001405
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 18,
+            "seconds": 0.39982476699998415
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 19,
+            "seconds": 0.395240522999984
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 20,
+            "seconds": 0.39625121399996033
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 21,
+            "seconds": 0.3997123469999906
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 22,
+            "seconds": 0.39960990999998103
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 23,
+            "seconds": 0.3995098990000088
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 24,
+            "seconds": 0.3990434890000074
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 25,
+            "seconds": 0.39981915399999934
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 26,
+            "seconds": 0.3987730989999818
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 27,
+            "seconds": 0.39644928199999185
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 28,
+            "seconds": 0.3971807590000367
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 29,
+            "seconds": 0.3971711070000197
+          }
+        ],
+        "rust_O": [
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 0,
+            "seconds": 0.5077585089999843
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 1,
+            "seconds": 0.5074672459999761
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 2,
+            "seconds": 0.5043526520000228
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 3,
+            "seconds": 0.5054143639999893
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 4,
+            "seconds": 0.5044234979999942
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 5,
+            "seconds": 0.517252625000026
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 6,
+            "seconds": 0.504816725000012
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 7,
+            "seconds": 0.5065053650000095
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 8,
+            "seconds": 0.5048788059999652
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 9,
+            "seconds": 0.5058137180000131
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 10,
+            "seconds": 0.5103951290000168
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 11,
+            "seconds": 0.5268536199999971
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 12,
+            "seconds": 0.5167398950000006
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 13,
+            "seconds": 0.5048243370000023
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 14,
+            "seconds": 0.5101637039999787
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 15,
+            "seconds": 0.5101705979999451
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 16,
+            "seconds": 0.5097818420000522
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 17,
+            "seconds": 0.509442244000013
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 18,
+            "seconds": 0.5048955240000055
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 19,
+            "seconds": 0.5060140969999907
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 20,
+            "seconds": 0.5100004789999844
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 21,
+            "seconds": 0.5100746569999615
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 22,
+            "seconds": 0.5096950349999929
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 23,
+            "seconds": 0.5088766619999774
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 24,
+            "seconds": 0.5092474379999885
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 25,
+            "seconds": 0.5095279209999717
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 26,
+            "seconds": 0.5090636040000049
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 27,
+            "seconds": 0.5056991470000298
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 28,
+            "seconds": 0.5047478079999905
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 29,
+            "seconds": 0.5045027049999931
+          }
+        ],
+        "shorthand_native": [
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 0,
+            "seconds": 0.6318599520000134
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 1,
+            "seconds": 0.629433352000035
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 2,
+            "seconds": 0.6262752769999906
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 3,
+            "seconds": 0.6279852910000159
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 4,
+            "seconds": 0.6284629190000146
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 5,
+            "seconds": 0.6319570580000118
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 6,
+            "seconds": 0.6269140560000324
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 7,
+            "seconds": 0.6312509269999964
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 8,
+            "seconds": 0.6422550130000104
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 9,
+            "seconds": 0.6326726120000217
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 10,
+            "seconds": 0.6273987769999962
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 11,
+            "seconds": 0.6338078900000141
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 12,
+            "seconds": 0.6415621090000059
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 13,
+            "seconds": 0.6303734480000003
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 14,
+            "seconds": 0.6339056670000218
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 15,
+            "seconds": 0.633605455999998
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 16,
+            "seconds": 0.6332790359999763
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 17,
+            "seconds": 0.6341407749999917
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 18,
+            "seconds": 0.6284850920000054
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 19,
+            "seconds": 0.628339125000025
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 20,
+            "seconds": 0.6325915099999975
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 21,
+            "seconds": 0.6335720999999808
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 22,
+            "seconds": 0.6334256080000387
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 23,
+            "seconds": 0.6327288220000469
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 24,
+            "seconds": 0.6333577279999645
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 25,
+            "seconds": 0.6340335460000119
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 26,
+            "seconds": 0.6323998370000368
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 27,
+            "seconds": 0.6264572779999753
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 28,
+            "seconds": 0.6274311669999975
+          },
+          {
+            "gross_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "net_joules": {
+              "ac_meter": null,
+              "rapl": null
+            },
+            "round": 29,
+            "seconds": 0.6274244069999781
+          }
+        ]
+      },
+      "outputs_equivalent": true,
+      "scale": 0.3,
+      "skipped_variants": {},
+      "source_agreement": null,
+      "stdin_n": "90000000",
+      "summary": {
+        "candidate_vs_baseline_energy_ratio": {
+          "c11_gcc_O2": {},
+          "cpp17_gxx_O2": {},
+          "go": {},
+          "rust_O": {}
+        },
+        "energy": {
+          "c11_gcc_O2": {},
+          "cpp17_gxx_O2": {},
+          "go": {},
+          "rust_O": {},
+          "shorthand_native": {}
+        },
+        "time": {
+          "c11_gcc_O2": {
+            "median_seconds": 0.45782463449998545,
+            "p95_seconds": 0.46001794234996113
+          },
+          "cpp17_gxx_O2": {
+            "median_seconds": 0.4593082004999758,
+            "p95_seconds": 0.46017203009999436
+          },
+          "go": {
+            "median_seconds": 0.3989082939999946,
+            "p95_seconds": 0.4057682054500219
+          },
+          "rust_O": {
+            "median_seconds": 0.5083175854999809,
+            "p95_seconds": 0.5170218965000146
+          },
+          "shorthand_native": {
+            "median_seconds": 0.6321784475000243,
+            "p95_seconds": 0.6382225086999994
+          }
+        }
+      },
+      "toolchains": [
+        {
+          "build_command": [
+            "/home/antigravity/amarbanerjee23/ShortHand_Compiler/build/short_hand",
+            "<work>/shorthand_native/chain.short",
+            "compile-native"
+          ],
+          "executable_sha256": "8e1b3cc9f7b49ee1729a78c05f6a1753ae9093c65ad9b9eeae52bcd400eafe62",
+          "toolchain": "1b58a97f9b358650f32a5b6dbb7d864f195ddf99",
+          "variant": "shorthand_native"
+        },
+        {
+          "build_command": [
+            "gcc",
+            "-std=c11",
+            "-O2",
+            "<work>/c11_gcc_O2/chain.c",
+            "-o",
+            "<work>/c11_gcc_O2/run"
+          ],
+          "executable_sha256": "08d146284b7428d99487d90c36d1ff64cd4805da9758cc24f969f7128418b1ca",
+          "toolchain": "gcc (Debian 12.2.0-14+deb12u1) 12.2.0",
+          "variant": "c11_gcc_O2"
+        },
+        {
+          "build_command": [
+            "g++",
+            "-std=c++17",
+            "-O2",
+            "<work>/cpp17_gxx_O2/chain.cpp",
+            "-o",
+            "<work>/cpp17_gxx_O2/run"
+          ],
+          "executable_sha256": "3f78bf82c28dae304718ec25943070723a22c30c1e051d7da0d0b8d105fe0866",
+          "toolchain": "g++ (Debian 12.2.0-14+deb12u1) 12.2.0",
+          "variant": "cpp17_gxx_O2"
+        },
+        {
+          "build_command": [
+            "rustc",
+            "-O",
+            "<work>/rust_O/chain.rs",
+            "-o",
+            "<work>/rust_O/run"
+          ],
+          "executable_sha256": "b2740db1be2e0592f05cb128cc224cc6609786058c4686859d0f04d96fdb9eae",
+          "toolchain": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+          "variant": "rust_O"
+        },
+        {
+          "build_command": [
+            "go",
+            "build",
+            "-o",
+            "<work>/go/run",
+            "<work>/go/chain.go"
+          ],
+          "executable_sha256": "dd7761de131dd068aeed6b0cf19891f14552decb0258dd2bd2370d6c0164c304",
+          "toolchain": "go version go1.27.3 linux/amd64",
+          "variant": "go"
+        }
+      ],
+      "workload": "chain"
+    }
+  ]
+}
