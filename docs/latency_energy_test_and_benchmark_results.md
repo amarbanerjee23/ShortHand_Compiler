@@ -1,8 +1,20 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `1b58a97f9b358650f32a5b6dbb7d864f195ddf99`
+Comparison base: `19b5f57190566878ca1e35099dbaff812561f448`
 
 ## Current PR evidence
+
+### LLVM PassBuilder -O2, PMU energy model & auditor kit checkpoint
+
+This PR implements three improvements without relaxing C3-ECO governance:
+1. **In-process LLVM `PassBuilder` `-O2` pipeline (`IR_Generator::optimizeModuleForNative`)**: runs LLVM middle-end optimization (`mem2reg`/SROA, `InstCombine` division/modulo strength reduction, `LICM`, `LoopVectorize`, `SLPVectorizer`) before `llc -filetype=obj` in `dumpNativeBinary()` (respecting `SHORTHAND_OPT_LEVEL=0|1|3`).
+2. **Calibrated PMU-to-Joules Energy Model (`experiments/energy/pmu_energy_model.py`)**: ridge-regularized regression mapping `(seconds, cycles, instructions, llc_misses)` from bare-metal RAPL+PMU samples to per-component joule attribution; always emits `evidence_class="calibrated_pmu_estimate"` and `energy_claim_authorized=false`.
+3. **External Auditor Verification Kit (`scripts/export_auditor_kit.py`)**: packages `production_truth.tsv`, `release_closeout_ledger.json`, closeout report, known limitations, and frozen protocol into a SHA-256-verified offline kit.
+
+Local validation:
+- `short_hand` builds cleanly; `check_semantic_differential.sh`, `apply_external_runtime_to_ir_source.sh`, `check_functions_control_error_semantics.sh`, and `check_production_type_memory_model.sh` all pass.
+- `test_pmu_energy_model.py` (3/3 tests) and `export_auditor_kit.py export/verify` (8 artifacts) pass.
+- Frozen-protocol dry run (`--allow-unqualified --scale 0.3`, wall time only on virtualized host, not energy): `equiv=True`, median wall time: Go `0.3999 s`, C++17 `0.4598 s`, C11 `0.4600 s`, ShortHand native `0.4797 s` (down from `0.6320 s`, -24.1%), Rust `0.5100 s`. Hardware joules remain null and `energy_claim_authorized` remains `false`.
 
 ### Frozen energy protocol checkpoint (experiments only)
 
