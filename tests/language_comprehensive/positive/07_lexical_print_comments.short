@@ -1,0 +1,9 @@
+// C++ style line comment
+# Hash style line comment
+/* Multi-line
+   block comment */
+int k;
+;
+k = 17;
+;
+print "val:", k, true, false;

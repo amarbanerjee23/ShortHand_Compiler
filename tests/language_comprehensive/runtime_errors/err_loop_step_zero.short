@@ -1,0 +1,5 @@
+int i, s;
+s = 0;
+loop i = 0, s, 5 {
+    print i;
+}

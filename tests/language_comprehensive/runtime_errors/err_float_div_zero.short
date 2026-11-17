@@ -1,0 +1,4 @@
+float d, x;
+d = 0.0;
+x = 1.5 / d;
+print x;

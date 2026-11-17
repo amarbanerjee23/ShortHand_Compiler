@@ -1,0 +1,4 @@
+int a[4], i, x;
+i = -1;
+x = a[i];
+print x;

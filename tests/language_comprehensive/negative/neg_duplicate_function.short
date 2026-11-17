@@ -1,0 +1,4 @@
+int x;
+def int f() { return 1; };
+def int f() { return 2; };
+x = f();

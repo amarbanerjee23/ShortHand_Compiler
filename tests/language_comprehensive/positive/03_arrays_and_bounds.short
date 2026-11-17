@@ -1,0 +1,27 @@
+int a[6], i, sum;
+float w[4], dot;
+bool flags[3];
+loop i = 0, 1, 6 {
+    a[i] = i * i + 1;
+}
+sum = 0;
+loop i = 0, 1, 5 {
+    a[i + 1] = a[i + 1] + a[i];
+}
+loop i = 0, 1, 6 {
+    sum = sum + a[i];
+}
+w[0] = 0.5;
+w[1] = 1.25;
+w[2] = -0.75;
+w[3] = 2.0;
+dot = 0.0;
+loop i = 0, 1, 4 {
+    dot = dot + w[i] * w[3 - i];
+}
+flags[0] = true;
+flags[1] = false;
+flags[2] = true;
+print sum, a[0], a[5];
+print dot;
+print flags[0], flags[1], flags[2];

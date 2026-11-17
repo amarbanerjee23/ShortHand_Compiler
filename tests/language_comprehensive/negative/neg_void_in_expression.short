@@ -1,0 +1,3 @@
+int x;
+def void v() { return; };
+x = v() + 1;

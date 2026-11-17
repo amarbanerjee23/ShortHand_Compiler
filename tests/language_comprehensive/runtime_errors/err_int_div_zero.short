@@ -1,0 +1,4 @@
+int d, x;
+d = 0;
+x = 10 / d;
+print x;

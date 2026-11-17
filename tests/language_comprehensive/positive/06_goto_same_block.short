@@ -1,0 +1,10 @@
+int x, acc;
+x = 0;
+acc = 0;
+again:
+x = x + 1;
+goto skip_add if x == 3;
+acc = acc + x;
+skip_add:
+goto again if x < 5;
+print x, acc;

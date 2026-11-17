@@ -1,0 +1,17 @@
+int x, y;
+bool p, q, sc1, sc2;
+x = 0;
+y = 4;
+p = true;
+q = false;
+sc1 = (x != 0) && (y > 2);
+sc2 = (y == 4) || (x > 1);
+print p, q, sc1, sc2;
+if (y > 2 && y <= 4) && (false == false) {
+    print 101;
+} else {
+    print 102;
+}
+if (y < 0 || x == 0) && (x != y) {
+    print 201;
+}
