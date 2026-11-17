@@ -12,8 +12,8 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#if OPENSSL_VERSION_NUMBER < 0x30000000L || OPENSSL_VERSION_NUMBER >= 0x40000000L
-#error "The auditor tool requires a supported OpenSSL 3.x version."
+#if OPENSSL_VERSION_NUMBER < 0x30000000L || OPENSSL_VERSION_NUMBER >= 0x50000000L
+#error "The auditor tool requires a supported OpenSSL 3.x/4.x version."
 #endif
 #include <algorithm>
 #include <array>
