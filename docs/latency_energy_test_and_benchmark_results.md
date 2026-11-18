@@ -1,6 +1,6 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `1884b8a13e27bbf3622906c1c69da33110658513`
+Comparison base: `5339a5e031e773aeda0317dc7991dba50eb81efc`
 
 ## Current PR evidence
 
@@ -12,6 +12,10 @@ Adds `tests/language_comprehensive/` with 30 standalone scenarios and a 3-way cr
 - **14 negative parser/semantic tests** (clean rejection): `break`/`continue` outside loops, duplicate functions, calling non-functions, whole-array assignment, indexing scalars, missing return, void in expression, bool arithmetic, unary `!`, unterminated comments/strings, empty block, empty program.
 
 Local validation: `tests/language_comprehensive/run_comprehensive_suite.sh` passes 30/30 (`pass=30 fail=0`). No energy measurement was performed; hardware joules remain null and `energy_claim_authorized` remains `false`.
+
+### ONNX Runtime 1.30.0 official NuGet fallback checkpoint
+
+Upstream `github.com/microsoft/onnxruntime` release URLs currently return HTTP 404 across GitHub. `scripts/install_ci_onnxruntime_cpu.sh` now retains the SHA-256-pinned GitHub release download as primary and falls back to the SHA-256-pinned official Microsoft-signed NuGet package (`Microsoft.ML.OnnxRuntime` `1.30.0`, SHA-256 `30df119bd9164eaa187666d93147448fdd4a9a1a3caf83f1505daf7af2d1c5d2`) when the primary download fails, reconstructing the exact `include/`, `lib/`, `LICENSE`, `ThirdPartyNotices.txt`, and `VERSION_NUMBER` SDK layout for `linux-x64`, `linux-aarch64`, `osx-arm64`, and `win-x64`, with `security/third_party_inventory.tsv` updated in lockstep. No compiler, runtime, or energy measurement behavior changed; hardware joules remain null and `energy_claim_authorized` remains `false`.
 
 ### LLVM PassBuilder -O2, PMU energy model & auditor kit checkpoint
 
