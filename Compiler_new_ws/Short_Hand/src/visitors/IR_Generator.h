@@ -85,6 +85,7 @@ private:
     void promoteConstantGlobalArrays();
     llvm::Function *ensureFastReadI32();
     llvm::Function *ensureFastReadF64();
+    void optimizeModuleForNative();
 
     static const int ERROR = 0;
     static const int PLUS = 1;

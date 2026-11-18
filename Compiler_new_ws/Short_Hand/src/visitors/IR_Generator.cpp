@@ -5,6 +5,7 @@
 #include "../ai_runtime/AI_Types.h"
 
 #include <llvm/IR/IRBuilder.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <cmath>
@@ -262,7 +263,31 @@ bool IR_Generator::dumpBitcode() {
     return true;
 }
 
+void IR_Generator::optimizeModuleForNative() {
+    if (!module) return;
+    OptimizationLevel level = OptimizationLevel::O2;
+    if (const char *env = std::getenv("SHORTHAND_OPT_LEVEL")) {
+        std::string v(env);
+        if (v == "0") return;
+        if (v == "1") level = OptimizationLevel::O1;
+        else if (v == "3") level = OptimizationLevel::O3;
+    }
+    LoopAnalysisManager LAM;
+    FunctionAnalysisManager FAM;
+    CGSCCAnalysisManager CGAM;
+    ModuleAnalysisManager MAM;
+    PassBuilder PB;
+    PB.registerModuleAnalyses(MAM);
+    PB.registerCGSCCAnalyses(CGAM);
+    PB.registerFunctionAnalyses(FAM);
+    PB.registerLoopAnalyses(LAM);
+    PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
+    ModulePassManager MPM = PB.buildPerModuleDefaultPipeline(level);
+    MPM.run(*module, MAM);
+}
+
 bool IR_Generator::dumpNativeBinary() {
+    optimizeModuleForNative();
     if (!dumpBitcode()) return false;
     const std::string base = this->getModuleName();
     const std::string object_file = base + ".o";
