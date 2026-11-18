@@ -1,8 +1,12 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `19b5f57190566878ca1e35099dbaff812561f448`
+Comparison base: `1884b8a13e27bbf3622906c1c69da33110658513`
 
 ## Current PR evidence
+
+### ONNX Runtime 1.30.0 official NuGet fallback checkpoint
+
+Upstream `github.com/microsoft/onnxruntime` release URLs currently return HTTP 404 across GitHub. `scripts/install_ci_onnxruntime_cpu.sh` now retains the SHA-256-pinned GitHub release download as primary and falls back to the SHA-256-pinned official Microsoft-signed NuGet package (`Microsoft.ML.OnnxRuntime` `1.30.0`, SHA-256 `30df119bd9164eaa187666d93147448fdd4a9a1a3caf83f1505daf7af2d1c5d2`) when the primary download fails, reconstructing the exact `include/`, `lib/`, `LICENSE`, `ThirdPartyNotices.txt`, and `VERSION_NUMBER` SDK layout for `linux-x64`, `linux-aarch64`, `osx-arm64`, and `win-x64`, with `security/third_party_inventory.tsv` updated in lockstep. No compiler, runtime, or energy measurement behavior changed; hardware joules remain null and `energy_claim_authorized` remains `false`.
 
 ### LLVM PassBuilder -O2, PMU energy model & auditor kit checkpoint
 
