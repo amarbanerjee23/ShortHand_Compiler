@@ -1,0 +1,10 @@
+int a, b, arr[3];
+float x, y, z;
+bool flag;
+read a, b;
+read x, y, z;
+read flag;
+read arr[0], arr[1], arr[2];
+print a, b, flag;
+print x, y, z;
+print arr[0], arr[1], arr[2];

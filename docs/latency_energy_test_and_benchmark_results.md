@@ -1,8 +1,17 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `1884b8a13e27bbf3622906c1c69da33110658513`
+Comparison base: `5339a5e031e773aeda0317dc7991dba50eb81efc`
 
 ## Current PR evidence
+
+### Comprehensive language test suite checkpoint (30 scenarios)
+
+Adds `tests/language_comprehensive/` with 30 standalone scenarios and a 3-way cross-mode runner (`tests/language_comprehensive/run_comprehensive_suite.sh`):
+- **9 positive 3-way parity tests** (Interpreter == `lli` == Native binary): arithmetic/precedence/unary minus, eager boolean logic & comparisons, 1D `int`/`float`/`bool` arrays with computed indices, 2-arg/3-arg/negative-step/condition loops with nested `break`/`continue`, recursion & zero-arg/void functions & nested block shadowing, same-block `goto` / `goto ... if`, comments/empty statements/multi-arg `print`, typed `read` from stdin, and optimization-stress dot-product/argmax reductions.
+- **7 runtime error tests** (3-way clean failure without crashes or sanitizer errors): dynamic `int`/`float` div-by-zero, `int` mod-by-zero, `INT_MIN / -1`, negative/upper array out-of-bounds, and dynamic loop-step zero.
+- **14 negative parser/semantic tests** (clean rejection): `break`/`continue` outside loops, duplicate functions, calling non-functions, whole-array assignment, indexing scalars, missing return, void in expression, bool arithmetic, unary `!`, unterminated comments/strings, empty block, empty program.
+
+Local validation: `tests/language_comprehensive/run_comprehensive_suite.sh` passes 30/30 (`pass=30 fail=0`). No energy measurement was performed; hardware joules remain null and `energy_claim_authorized` remains `false`.
 
 ### ONNX Runtime 1.30.0 official NuGet fallback checkpoint
 

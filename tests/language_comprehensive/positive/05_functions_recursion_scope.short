@@ -1,0 +1,42 @@
+int g;
+
+def int zero_arg() {
+    return 42;
+};
+
+def int fib(int n;) {
+    if n <= 1 {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+};
+
+def int gcd(int a; int b;) {
+    if b == 0 {
+        return a;
+    }
+    return gcd(b, a % b);
+};
+
+def void log_step(int v;) {
+    if v < 0 {
+        return;
+    }
+    g = g + v;
+    return;
+};
+
+g = 100;
+{
+    int g;
+    g = 7;
+    {
+        int g;
+        g = 19;
+        print g;
+    }
+    print g;
+}
+log_step(-5);
+log_step(8);
+print g, zero_arg(), fib(8), gcd(84, 30);

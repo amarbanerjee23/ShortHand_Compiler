@@ -1,0 +1,3 @@
+int x;
+/* unterminated block comment
+x = 1;

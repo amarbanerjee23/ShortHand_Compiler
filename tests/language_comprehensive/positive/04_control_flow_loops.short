@@ -1,0 +1,39 @@
+int i, j, s2, s3, s_neg, s_while, s_nest;
+s2 = 0;
+loop i = 0, 5 {
+    s2 = s2 + i;
+}
+s3 = 0;
+loop i = 1, 2, 10 {
+    s3 = s3 + i;
+}
+s_neg = 0;
+loop i = 10, -3, 0 {
+    s_neg = s_neg + i;
+}
+s_while = 0;
+i = 1;
+loop i <= 6 {
+    if i == 3 {
+        i = i + 1;
+        continue;
+    }
+    if i == 6 {
+        break;
+    }
+    s_while = s_while + i;
+    i = i + 1;
+}
+s_nest = 0;
+loop i = 0, 1, 4 {
+    loop j = 0, 1, 4 {
+        if j == 1 {
+            continue;
+        }
+        if j == 3 {
+            break;
+        }
+        s_nest = s_nest + i * 10 + j;
+    }
+}
+print s2, s3, s_neg, s_while, s_nest;
