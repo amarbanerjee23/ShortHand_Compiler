@@ -1,8 +1,46 @@
 # ShortHand testing, experimentation and benchmark results
 
-Comparison base: `5339a5e031e773aeda0317dc7991dba50eb81efc`
+Comparison base: `44229e041355c1e362f89bfb835f6cf96ca6d97b`
 
 ## Current PR evidence
+
+### Evidence-integrity repair after PR132
+
+The audit reproduced false aggregate authorization from summary-only, incomplete,
+scaled synthetic reports; an invisible counter-wrap window; missing PMU inputs
+reported as zero joules; and acceptance of an empty auditor inventory. The old
+18 protocol and 3 PMU tests passed despite those defects.
+
+Version 2 replays full variant/round observations, output hashes, idle adjustments
+and summaries. Gross energy is the primary comparison; signed net energy stays
+separate. Package/AC agreement is no longer treated as same-boundary validation.
+Aggregate authorization remains false pending independent sensor provenance
+review. This intentionally quarantines the unsafe experimental automatic claim
+path; it does not remove any compiler or runtime qualification.
+
+The PMU solver uses exhaustive active-set nonnegative ridge fitting (four
+features), complete finite inputs and whole-profile digests. Its unvalidated CLI
+output is diagnostic only, with estimated joules null. The existing E2/E3
+calibration integration remains unchanged; no validated profile is supplied.
+Auditor verification requires all eight artifacts, matching sizes and hashes,
+and rejects symlinks. A valid kit proves inventory integrity, not authenticity.
+
+Local validation: 22 frozen-protocol tests, 6 PMU tests and 1 auditor corruption
+suite pass. The existing 11 CI-energy and 3 energy-comparison tests also pass,
+and a real eight-artifact auditor export verifies successfully. These include real C/C++ subprocess smoke execution with synthetic
+meter inputs, replay mutations, hidden wraps and solver KKT checks. No physical
+joules or new compiler performance measurements were collected. All claim flags
+remain false. Hosted full CI and installer qualification are pending for this PR.
+The runtime-profile workflow now runs these tests as mandatory checks and retains
+logs. Trusted-push releases and Windows/Linux/macOS installer gates are unchanged.
+
+Reproduce with `python3 experiments/energy/frozen_protocol/test_frozen_energy_protocol.py`,
+`python3 experiments/energy/test_pmu_energy_model.py`, and
+`python3 scripts/test_export_auditor_kit.py`. See [protocol scope and remaining
+qualification](FROZEN_ENERGY_PROTOCOL.md). Next: controlled representative AI
+comparisons and independently validated hardware-matched estimates where available.
+
+### Historical checkpoints
 
 ### Comprehensive language test suite checkpoint (30 scenarios)
 

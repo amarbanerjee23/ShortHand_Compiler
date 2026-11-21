@@ -51,6 +51,12 @@ jobs:
           APT_SOURCES=(-o Dir::Etc::sourcelist=/etc/apt/sources.list.d/ubuntu.sources -o Dir::Etc::sourceparts=-)
           sudo apt-get "${APT_SOURCES[@]}" update
           sudo apt-get "${APT_SOURCES[@]}" install -y build-essential clang-18 llvm-18-dev llvm-18-tools libmlir-18-dev mlir-18-tools cmake ninja-build python3 python3-venv time flex bison libfl-dev libssl-dev curl binutils strace
+      - name: Reject invalid energy claims and audit evidence
+        run: |
+          set -euo pipefail
+          python3 experiments/energy/frozen_protocol/test_frozen_energy_protocol.py > profile-output/frozen-protocol-tests.txt 2>&1
+          python3 experiments/energy/test_pmu_energy_model.py > profile-output/pmu-model-tests.txt 2>&1
+          python3 scripts/test_export_auditor_kit.py > profile-output/auditor-kit-tests.txt 2>&1
       - name: Install locked Python baseline
         run: |
           set -euo pipefail

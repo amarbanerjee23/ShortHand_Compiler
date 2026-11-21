@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
-"""Frozen-matrix energy protocol for ShortHand versus C, C++, Rust and Go.
+"""Frozen workload capture and strict observational replay.
 
-This tool only measures and judges evidence; it never changes the compiler or
-runtime. It deliberately refuses to produce an energy claim unless every gate
-holds:
-
-* host qualification: a physical energy source (Linux powercap/RAPL package
-  counters and/or a cumulative external AC meter command) is readable, with
-  no virtualisation, a quiet system and recorded CPU frequency policy;
-* functional equivalence: every variant prints the same bytes as the reference;
-* statistics: enough balanced, randomised rounds, idle power subtracted, and a
-  bootstrap confidence interval for the paired energy ratio;
-* replication: at least two distinct hosts when claims are aggregated.
-
-Elapsed time, TDP and CPU utilisation are never substituted for energy. When no
-physical counter exists, joules are null and the claim is unauthorised.
-
+This experimental tool never authorizes public energy claims. It requires full
+workload/variant/round coverage, checks every timed output, and replays gross
+energy comparisons. Independent measurement provenance review remains required.
+Hardware-reported package energy is distinct from calibrated wall energy.
+Missing hardware produces null joules, not time/TDP-derived energy.
 Subcommands: qualify, run, aggregate.
 """
 from __future__ import annotations
@@ -29,6 +19,7 @@ import os
 import pathlib
 import platform
 import random
+import re
 import shutil
 import statistics
 import subprocess
@@ -39,7 +30,7 @@ from typing import Any, Callable
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-SCHEMA = "shorthand.frozen_energy_protocol.v1"
+SCHEMA = "shorthand.frozen_energy_protocol.v2"
 POWERCAP_ROOT = pathlib.Path("/sys/class/powercap")
 
 
@@ -63,6 +54,11 @@ def load_protocol(path: pathlib.Path) -> dict[str, Any]:
     if protocol["reference_variant"] not in protocol["variants"] or \
        protocol["candidate_variant"] not in protocol["variants"]:
         raise ValueError("reference/candidate variant must be declared")
+    for key in ("rounds", "warmup_rounds", "idle_windows", "bootstrap_resamples", "minimum_rounds_for_claim", "minimum_hosts_for_claim"):
+        if type(protocol[key]) is not int or not 1 <= protocol[key] <= 100000:
+            raise ValueError("invalid protocol count: " + key)
+    if protocol["minimum_hosts_for_claim"] < 2 or protocol["rounds"] < protocol["minimum_rounds_for_claim"]:
+        raise ValueError("invalid replication requirements")
     if not 0.5 < protocol["confidence"] < 1.0:
         raise ValueError("confidence must be in (0.5, 1)")
     return protocol
@@ -84,15 +80,15 @@ class RaplSource:
             self.problems.append("powercap directory is absent")
             return
         for entry in sorted(root.iterdir()):
-            # Top-level package domains only: sub-domains (core/dram) are
-            # already included in the package counter and must not be summed.
+            # Package-only scope. Do not add overlapping core domains;
+            # separate DRAM domains are also excluded from this boundary.
             if ":" not in entry.name or entry.name.count(":") != 1:
                 continue
             energy = entry / "energy_uj"
             if not energy.exists():
                 continue
             label = (entry / "name").read_text().strip() if (entry / "name").exists() else ""
-            if label and not label.startswith("package"):
+            if not label.startswith("package-"):
                 continue
             try:
                 int(energy.read_text())
@@ -115,15 +111,20 @@ class RaplSource:
         return [int((entry / "energy_uj").read_text()) for entry, _ in self.domains]
 
     def delta_joules(self, begin: list[int], end: list[int], seconds: float) -> float:
+        if not math.isfinite(seconds) or seconds <= 0 or len(begin) != len(self.domains) or len(end) != len(self.domains):
+            raise RuntimeError("invalid counter window")
         total = 0.0
         for (entry, max_range), first, last in zip(self.domains, begin, end):
+            if any(type(v) is not int or not 0 <= v < max_range for v in (first, last)):
+                raise RuntimeError("counter outside declared range")
+            # Conservative 1 kW/package bound applies even when last >= first:
+            # an entire wrap is otherwise invisible. Long runs must use the
+            # existing sampled collector instead of this endpoint-only adapter.
+            if seconds * 1_000_000_000 >= max_range:
+                raise RuntimeError("ambiguous counter window; use sampled collection")
             diff = last - first
             if diff < 0:
                 diff += max_range
-                # A second wrap would be undetectable. Reject windows that
-                # could contain one assuming an implausible 1 kW package.
-                if seconds * 1_000_000_000 >= max_range:
-                    raise RuntimeError(f"{entry.name}: window may contain more than one counter wrap")
             total += diff / 1_000_000.0
         return total
 
@@ -255,7 +256,7 @@ def idle_power_watts(samples: list[tuple[float, float]]) -> float:
 
 
 def decide_claim(protocol: dict[str, Any], ci: dict[str, float], equivalent: bool) -> str:
-    """Return verdict for 'candidate uses less energy than reference' on one host."""
+    """Descriptive statistical verdict; never a measurement-authenticity decision."""
     if not equivalent:
         return "invalid_outputs_differ"
     if ci["n"] < protocol["minimum_rounds_for_claim"]:
@@ -300,8 +301,10 @@ def build_variant(variant: str, spec: dict[str, Any], workload: str, work: pathl
     version = subprocess.run(spec["version"], capture_output=True, text=True, check=False).stdout.strip().splitlines()
     return [str(produced)], {
         "variant": variant,
+        "source_sha256": sha256_file(source),
         "build_command": [c.replace(str(work), "<work>") for c in command],
         "toolchain": version[0] if version else "unknown",
+        "compiler_sha256": sha256_file(pathlib.Path(tool if os.path.isabs(tool) else shutil.which(tool))),
         "executable_sha256": sha256_file(produced),
     }
 
@@ -363,14 +366,14 @@ def net_energy(sources: list[str], run: dict[str, Any], idle_w: dict[str, float]
     out: dict[str, float | None] = {}
     for source in sources:
         gross = run["joules"][source]
-        out[source] = None if gross is None else max(gross - idle_w[source] * run["seconds"], 0.0)
+        out[source] = None if gross is None else gross - idle_w[source] * run["seconds"]
     return out
 
 
 def summarise(protocol: dict[str, Any], per_variant: dict[str, list[dict[str, Any]]], sources: list[str],
               equivalent: bool) -> dict[str, Any]:
     ref, cand = protocol["reference_variant"], protocol["candidate_variant"]
-    result: dict[str, Any] = {"energy": {}, "time": {}}
+    result: dict[str, Any] = {"energy": {}, "time": {}, "comparison_metric": "gross_joules"}
     for variant, rows in per_variant.items():
         result["time"][variant] = {
             "median_seconds": statistics.median(r["seconds"] for r in rows),
@@ -380,6 +383,7 @@ def summarise(protocol: dict[str, Any], per_variant: dict[str, list[dict[str, An
         for source in sources:
             values = [r["net_joules"][source] for r in rows if r["net_joules"][source] is not None]
             result["energy"][variant][source] = {
+                "median_gross_joules": statistics.median(r["gross_joules"][source] for r in rows),
                 "median_net_joules": statistics.median(values) if values else None,
                 "p95_net_joules": percentile(values, 0.95) if values else None,
             }
@@ -391,10 +395,10 @@ def summarise(protocol: dict[str, Any], per_variant: dict[str, list[dict[str, An
         for source in sources:
             ratios = []
             for a, b in zip(per_variant[cand], per_variant[baseline]):
-                x, y = a["net_joules"][source], b["net_joules"][source]
-                if x and y:
+                x, y = a["gross_joules"][source], b["gross_joules"][source]
+                if x is not None and y is not None and x > 0 and y > 0:
                     ratios.append(x / y)
-            if not ratios:
+            if len(ratios) != len(per_variant[cand]) or not ratios:
                 per_source[source] = {"verdict": "no_energy_data"}
                 continue
             ci = bootstrap_ratio_ci(ratios, protocol["confidence"], protocol["bootstrap_resamples"], protocol["seed"])
@@ -432,6 +436,8 @@ def command_run(args: argparse.Namespace) -> int:
     sources = [name for name, ok in (("rapl", rapl.available), ("ac_meter", ac.available)) if ok and physical]
     meter = Meter(rapl, ac) if sources else None
     scale = args.scale
+    if not math.isfinite(scale) or scale <= 0 or not math.isfinite(args.idle_seconds) or args.idle_seconds <= 0:
+        raise ValueError("scale and idle duration must be finite and positive")
     rng = random.Random(protocol["seed"])
     shorthand = pathlib.Path(args.shorthand).resolve()
     reports = []
@@ -448,12 +454,18 @@ def command_run(args: argparse.Namespace) -> int:
                     skipped[variant] = f"{type(error).__name__}: {error}"
             if protocol["candidate_variant"] not in commands or protocol["reference_variant"] not in commands:
                 raise SystemExit(f"candidate/reference variant could not be built: {skipped}")
-            reference_out = run_once(commands[protocol["reference_variant"]], stdin_text, None, args.cpu)["stdout"]
+            reference_run = run_once(commands[protocol["reference_variant"]], stdin_text, None, args.cpu)
+            if reference_run["returncode"] != 0:
+                raise RuntimeError("reference execution failed")
+            reference_out = reference_run["stdout"]
             equivalent = True
             for variant, command in commands.items():
-                if run_once(command, stdin_text, None, args.cpu)["stdout"] != reference_out:
+                check = run_once(command, stdin_text, None, args.cpu)
+                if check["returncode"] != 0 or check["stdout"] != reference_out:
                     equivalent = False
                     skipped[variant] = "stdout differs from reference"
+            if skipped or not equivalent:
+                raise RuntimeError(f"incomplete or inequivalent workload: {skipped}")
             idle = idle_windows(meter, protocol["idle_windows"], args.idle_seconds) if meter else []
             idle_w = {s: idle_power_watts([(w["joules"][s], w["seconds"]) for w in idle]) for s in sources}
             per_variant: dict[str, list[dict[str, Any]]] = {v: [] for v in commands}
@@ -462,11 +474,16 @@ def command_run(args: argparse.Namespace) -> int:
                 rng.shuffle(order)
                 for variant in order:
                     run = run_once(commands[variant], stdin_text, meter, args.cpu)
-                    if run["returncode"] != 0:
-                        raise SystemExit(f"{variant} failed with {run['returncode']}")
+                    if run["returncode"] != 0 or run["stdout"] != reference_out:
+                        failure = {k: v for k, v in run.items() if k != "stdout"}
+                        failure.update(variant=variant, round=round_index, energy_claim_authorized=False)
+                        (out / "failed-observation.json").write_text(json.dumps(failure, indent=2, allow_nan=False) + "\n")
+                        raise SystemExit(f"{variant}: failed execution or output mismatch; observation retained")
                     if round_index >= protocol["warmup_rounds"]:
                         per_variant[variant].append({
                             "round": round_index - protocol["warmup_rounds"],
+                            "returncode": run["returncode"],
+                            "stdout_sha256": run["stdout_sha256"],
                             "seconds": run["seconds"],
                             "gross_joules": run["joules"],
                             "net_joules": net_energy(sources, run, idle_w) if sources
@@ -474,16 +491,12 @@ def command_run(args: argparse.Namespace) -> int:
                         })
             summary = summarise(protocol, per_variant, sources, equivalent)
             agreement = None
-            if len(sources) == 2:
-                tol = protocol["ac_meter_agreement_tolerance"]
-                a = statistics.median(r["net_joules"]["rapl"] for r in per_variant[protocol["candidate_variant"]])
-                b = statistics.median(r["net_joules"]["ac_meter"] for r in per_variant[protocol["candidate_variant"]])
-                agreement = {"rapl_vs_ac_ratio": a / b if b else None,
-                             "within_tolerance": bool(b) and abs(a / b - 1.0) <= tol}
             reports.append({"workload": workload_name, "stdin_n": stdin_text.strip(), "scale": scale,
                             "outputs_equivalent": equivalent, "skipped_variants": skipped,
                             "toolchains": toolchains,
-                            "idle_power_watts": idle_w, "source_agreement": agreement,
+                            "idle_power_watts": idle_w, "idle_observations": idle,
+                            "reference_stdout_sha256": sha256_bytes(reference_out),
+                            "source_agreement": agreement,
                             "summary": summary, "observations": per_variant})
     quick = bool(args.allow_unqualified and not physical) or scale != 1.0
     result = {
@@ -492,9 +505,13 @@ def command_run(args: argparse.Namespace) -> int:
         "created": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "protocol_sha256": sha256_file(args.protocol),
         "host_id": qualification["host_id"],
+        "qualification": qualification,
+        "revision": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
+        "measurement_boundary": "whole_process_gross_energy",
         "host_qualified": physical,
         "energy_sources": sources,
         "evidence_class": "physical_counter" if (physical and not quick) else None,
+        "source_evidence_classes": {s: "E1" if s == "rapl" else "external_meter_unvalidated" for s in sources},
         "joules": None if not sources else "see observations",
         "energy_claim_authorized": False,  # per-host runs never authorise; aggregate does
         "functional_time_dry_run": not physical,
@@ -506,21 +523,71 @@ def command_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def validate_run(run: dict[str, Any], protocol: dict[str, Any], protocol_path: pathlib.Path) -> None:
+    """Replay complete raw evidence; never trust cached verdicts or host assertions."""
+    def require(condition: bool, message: str) -> None:
+        if not condition:
+            raise ValueError(message)
+
+    def number(value: Any, positive: bool = False) -> bool:
+        return type(value) in (int, float) and math.isfinite(value) and (value > 0 if positive else value >= 0)
+
+    require(run.get("schema") == SCHEMA and run.get("kind") == "host_run", "schema")
+    require(run.get("scale") == 1.0 and run.get("host_qualified") is True, "unqualified or scaled run")
+    require(run.get("evidence_class") == "physical_counter", "source class")
+    require(run.get("protocol_sha256") == sha256_file(protocol_path), "protocol identity")
+    require(run.get("measurement_boundary") == "whole_process_gross_energy", "measurement boundary")
+    require(isinstance(run.get("revision"), str) and re.fullmatch(r"[0-9a-f]{40}", run["revision"]) is not None, "revision")
+    require(isinstance(run.get("host_id"), str) and bool(run["host_id"]), "host identity")
+    q = run["qualification"]
+    require(q["qualified"] is True and not q["disqualifying_reasons"] and q["host_id"] == run["host_id"], "qualification")
+    sources = run["energy_sources"]
+    require(bool(sources) and len(set(sources)) == len(sources) and set(sources) <= {"rapl", "ac_meter"}, "sources")
+    require(all(q["sources"][s] is True for s in sources), "source qualification")
+    workloads = run["workloads"]
+    require(len(workloads) == len(protocol["workloads"]) and {w["workload"] for w in workloads} == set(protocol["workloads"]), "workload coverage")
+    for w in workloads:
+        require(w["scale"] == 1 and int(w["stdin_n"]) == protocol["workloads"][w["workload"]]["n"], "workload scale")
+        require(w["outputs_equivalent"] is True and not w["skipped_variants"], "output or variant failure")
+        obs = w["observations"]
+        require(set(obs) == set(protocol["variants"]), "baseline coverage")
+        records = w["toolchains"]
+        require(len(records) == len(obs) and {r["variant"] for r in records} == set(obs), "toolchains")
+        for r in records:
+            for key in ("source_sha256", "executable_sha256", "compiler_sha256"):
+                require(isinstance(r.get(key), str) and len(r[key]) == 64 and all(c in "0123456789abcdef" for c in r[key]), key)
+        idle = w["idle_observations"]
+        require(len(idle) == protocol["idle_windows"], "idle coverage")
+        for row in idle:
+            require(number(row["seconds"], True) and all(number(row["joules"][s]) for s in sources), "idle observation")
+        idle_w = {s: idle_power_watts([(r["joules"][s], r["seconds"]) for r in idle]) for s in sources}
+        require(idle_w == w["idle_power_watts"], "idle replay")
+        for rows in obs.values():
+            require(len(rows) == protocol["rounds"], "round count")
+            for i, row in enumerate(rows):
+                require(type(row["round"]) is int and row["round"] == i, "round identity")
+                require(row["returncode"] == 0 and row["stdout_sha256"] == w["reference_stdout_sha256"], "output mismatch")
+                require(number(row["seconds"], True), "duration")
+                for source in sources:
+                    require(number(row["gross_joules"][source], True), "gross energy")
+                    require(row["net_joules"][source] == row["gross_joules"][source] - idle_w[source] * row["seconds"], "net replay")
+        require(w["summary"] == summarise(protocol, obs, sources, True), "summary replay")
+
+
 def command_aggregate(args: argparse.Namespace) -> int:
     protocol = load_protocol(args.protocol)
     runs = [json.loads(pathlib.Path(p).read_text()) for p in args.runs]
     reasons: list[str] = []
     eligible = []
     for run in runs:
-        if run.get("schema") != SCHEMA or run.get("kind") != "host_run":
-            reasons.append("an input is not a frozen-protocol host_run")
-        elif not run["host_qualified"] or run["evidence_class"] != "physical_counter":
-            reasons.append(f"host {run.get('host_id')} not qualified or not a full-scale physical run")
-        elif run["protocol_sha256"] != sha256_file(args.protocol):
-            reasons.append(f"host {run['host_id']} used a different protocol (not frozen)")
-        else:
+        try:
+            validate_run(run, protocol, args.protocol)
             eligible.append(run)
+        except (ValueError, KeyError, TypeError, ZeroDivisionError, AttributeError, OverflowError) as error:
+            reasons.append(f"invalid host evidence: {error}")
     hosts = {run["host_id"] for run in eligible}
+    if len(hosts) != len(eligible):
+        reasons.append("duplicate host identity")
     if len(hosts) < protocol["minimum_hosts_for_claim"]:
         reasons.append(f"need at least {protocol['minimum_hosts_for_claim']} distinct qualified hosts, have {len(hosts)}")
     verdicts: dict[str, dict[str, list[str]]] = {}
@@ -536,7 +603,8 @@ def command_aggregate(args: argparse.Namespace) -> int:
         for baseline, values in baselines.items():
             ok = len(values) >= protocol["minimum_hosts_for_claim"] and all(v == "candidate_lower_energy" for v in values)
             claims[f"{workload}:{protocol['candidate_variant']}_vs_{baseline}"] = "supported" if ok else "not_supported"
-    authorized = not reasons and bool(claims) and all(v == "supported" for v in claims.values())
+    reasons.append("independent measurement provenance review required; replay is not sensor authentication")
+    authorized = False
     result = {
         "schema": SCHEMA, "kind": "aggregate", "hosts": sorted(hosts), "claims": claims,
         "blocking_reasons": reasons, "energy_claim_authorized": authorized,
