@@ -147,9 +147,9 @@ class AggregateTests(unittest.TestCase):
             fp.main(["aggregate", "--runs", *paths, "--output", str(out)])
             return json.loads(out.read_text())
 
-    def test_two_qualified_hosts_with_wins_authorise_bounded_claim(self):
+    def test_summary_only_reports_cannot_authorise_claim(self):
         agg = self.aggregate([host_run("a"), host_run("b")])
-        self.assertTrue(agg["energy_claim_authorized"])
+        self.assertFalse(agg["energy_claim_authorized"])
 
     def test_single_host_is_insufficient(self):
         self.assertFalse(self.aggregate([host_run("a")])["energy_claim_authorized"])
@@ -167,6 +167,66 @@ class AggregateTests(unittest.TestCase):
         self.assertFalse(self.aggregate([host_run("a"), host_run("b", scale_full=False)])["energy_claim_authorized"])
         self.assertFalse(self.aggregate([host_run("a"), host_run("b", protocol_sha="0" * 64)])[
             "energy_claim_authorized"])
+
+
+class IntegrityRegressionTests(unittest.TestCase):
+    def complete_run(self):
+        run = host_run("synthetic")
+        run.update(scale=1.0, revision="a" * 40, measurement_boundary="whole_process_gross_energy",
+                   energy_sources=["rapl"], qualification={"qualified": True, "disqualifying_reasons": [],
+                   "host_id": "synthetic", "sources": {"rapl": True}})
+        rows = {}
+        for v in PROTOCOL["variants"]:
+            gross = 2.0 if v == PROTOCOL["candidate_variant"] else 3.0
+            rows[v] = [{"round": i, "seconds": 1.0, "returncode": 0, "stdout_sha256": "b"*64,
+                        "gross_joules": {"rapl": gross}, "net_joules": {"rapl": gross-1}}
+                       for i in range(PROTOCOL["rounds"])]
+        w = {"workload": "chain", "scale": 1, "stdin_n": str(PROTOCOL["workloads"]["chain"]["n"]),
+             "outputs_equivalent": True, "skipped_variants": {}, "observations": rows,
+             "reference_stdout_sha256": "b"*64, "source_agreement": None,
+             "toolchains": [{"variant": v, "source_sha256": "a"*64, "executable_sha256": "c"*64, "compiler_sha256": "d"*64} for v in rows],
+             "idle_observations": [{"seconds": 1.0, "joules": {"rapl": 1.0}} for _ in range(PROTOCOL["idle_windows"])],
+             "idle_power_watts": {"rapl": 1.0}, "summary": fp.summarise(PROTOCOL, rows, ["rapl"], True)}
+        run["workloads"] = [w]
+        return run
+
+    def test_complete_raw_evidence_replays_but_does_not_authenticate_sensor(self):
+        run = self.complete_run()
+        fp.validate_run(run, PROTOCOL, HERE / "protocol.json")
+        other = copy.deepcopy(run)
+        other["host_id"] = other["qualification"]["host_id"] = "other"
+        self.assertFalse(AggregateTests().aggregate([run, other])["energy_claim_authorized"])
+
+    def test_corruption_is_rejected(self):
+        def drop_baseline(r):
+            del r["workloads"][0]["observations"]["go"]
+        def corrupt_output(r):
+            r["workloads"][0]["observations"]["go"][0]["stdout_sha256"] = "wrong"
+        def corrupt_round(r):
+            r["workloads"][0]["observations"]["go"][0]["round"] = 8
+        def corrupt_energy(r):
+            r["workloads"][0]["observations"]["go"][0]["gross_joules"]["rapl"] = float("nan")
+        def corrupt_summary(r):
+            r["workloads"][0]["summary"]["time"]["go"]["median_seconds"] = 0
+        for mutate in (drop_baseline, corrupt_output, corrupt_round, corrupt_energy, corrupt_summary,
+                       lambda r: r.update(scale=0.01), lambda r: r.update(workloads=[])):
+            run = self.complete_run()
+            mutate(run)
+            with self.assertRaises(ValueError):
+                fp.validate_run(run, PROTOCOL, HERE / "protocol.json")
+
+    def test_counter_windows_reject_hidden_wrap_and_malformed_values(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fake_powercap(pathlib.Path(tmp))
+            source = fp.RaplSource(pathlib.Path(tmp))
+            for begin, end, seconds in (([100], [200], 20), ([], [200], .001),
+                                         ([-1], [200], .001), ([1], [10_000_000], .001),
+                                         ([1], [2], float("nan"))):
+                with self.assertRaises(RuntimeError):
+                    source.delta_joules(begin, end, seconds)
+
+    def test_idle_adjustment_preserves_negative_values(self):
+        self.assertEqual(fp.net_energy(["rapl"], {"joules": {"rapl": 1}, "seconds": 2}, {"rapl": 1}), {"rapl": -1})
 
 
 @unittest.skipUnless(shutil.which("gcc") and shutil.which("g++"), "gcc/g++ required")

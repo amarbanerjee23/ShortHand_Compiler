@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
-"""Calibrated PMU-to-Joules Energy Model for CI & Software Energy Attribution.
+"""Experimental nonnegative PMU regression fitter; not a validated calibration.
 
-Fits a non-negative ridge-regularized linear model mapping hardware performance
-counters and elapsed time (seconds, cycles, instructions, LLC misses) from
-qualified bare-metal RAPL+PMU runs to net energy (joules):
-
-    E_hat = max(0, beta_0 * seconds + beta_1 * cycles + beta_2 * instructions + beta_3 * llc_misses)
-
-Governance boundary:
-  - Calibration profiles are host-family specific and stored under
-    experiments/energy/calibration_profiles/.
-  - Predictions ALWAYS emit evidence_class="calibrated_pmu_estimate" and
-    energy_claim_authorized=False. They provide deterministic per-commit
-    energy attribution and bottleneck diagnostics in CI, and NEVER substitute
-    for bare-metal RAPL/AC-meter runs required by frozen_energy_protocol.py.
+Four-feature nonnegative ridge fit with active-set enumeration. Fit metrics are
+in-sample diagnostics only. Correlated counter terms are model contributions,
+not causal or physical component attribution. The CLI never reports calibrated
+joules: use ci_energy_evidence's E2/E3 contract only after independent held-out
+validation, hardware matching and uncertainty qualification.
 """
 from __future__ import annotations
 
@@ -25,8 +17,34 @@ import pathlib
 import sys
 from typing import Any
 
-SCHEMA = "shorthand.pmu_energy_model.v1"
+SCHEMA = "shorthand.pmu_energy_model.v2"
 FEATURES = ("seconds", "cycles", "instructions", "llc_misses")
+
+
+def _number(value: Any) -> float:
+    if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+        raise ValueError("finite nonnegative numeric value required")
+    return float(value)
+
+
+def _digest(value: Any) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, allow_nan=False).encode()).hexdigest()
+
+
+def predict_profile(profile: dict[str, Any], observation: dict[str, Any]) -> dict[str, Any]:
+    """Unvalidated fits are diagnostic mathematics, never calibrated CI joules.
+
+    Real E2/E3 prediction belongs to ci_energy_evidence with its hardware and
+    provenance contract; this experimental fitter does not mint E2 profiles.
+    """
+    body = {k: v for k, v in profile.items() if k != "profile_sha256"}
+    if profile.get("schema") != SCHEMA or profile.get("profile_sha256") != _digest(body):
+        raise ValueError("profile schema or digest mismatch")
+    result = predict_joules(profile["coefficients"], observation)
+    result["diagnostic_model_output_joules"] = result.pop("estimated_joules")
+    result["estimated_joules"] = None
+    result["unavailable_reason"] = "no independently validated hardware-matched calibration"
+    return result
 
 
 def _solve_linear_system(a: list[list[float]], b: list[float]) -> list[float]:
@@ -53,19 +71,19 @@ def fit_model(samples: list[dict[str, float]], ridge_alpha: float = 1e-6) -> dic
     """Fit a ridge-regularized linear energy model from PMU+RAPL observations."""
     if len(samples) < len(FEATURES):
         raise ValueError(f"need at least {len(FEATURES)} calibration samples, got {len(samples)}")
-    if ridge_alpha <= 0:
+    if type(ridge_alpha) not in (int, float) or not math.isfinite(ridge_alpha) or ridge_alpha <= 0:
         raise ValueError("ridge_alpha must be positive")
 
     # Feature scaling so seconds (~0.5) and instructions (~1e9) are well-conditioned.
     scales: dict[str, float] = {}
     for feat in FEATURES:
-        vals = [float(s[feat]) for s in samples]
+        vals = [_number(s[feat]) for s in samples]
         if any(v < 0 or not math.isfinite(v) for v in vals):
             raise ValueError(f"feature {feat} must be finite and non-negative")
         mx = max(vals)
         scales[feat] = mx if mx > 0.0 else 1.0
 
-    y = [float(s["net_joules"]) for s in samples]
+    y = [_number(s["net_joules"]) for s in samples]
     if any(v < 0 or not math.isfinite(v) for v in y):
         raise ValueError("net_joules must be finite and non-negative")
 
@@ -81,12 +99,22 @@ def fit_model(samples: list[dict[str, float]], ridge_alpha: float = 1e-6) -> dic
     for i in range(d):
         xtx[i][i] += ridge_alpha
 
-    theta_scaled = _solve_linear_system(xtx, xty)
-    # Clamp tiny negative numerical artifacts and unscale coefficients.
-    coefficients = {
-        feat: max(0.0, theta_scaled[i] / scales[feat])
-        for i, feat in enumerate(FEATURES)
-    }
+    # Enumerate all 16 active sets. For four features this solves the
+    # nonnegative ridge objective exactly, rather than clipping an unconstrained fit.
+    best = None
+    for mask in range(1 << d):
+        active = [i for i in range(d) if mask & (1 << i)]
+        theta = [0.0] * d
+        if active:
+            solved = _solve_linear_system([[xtx[i][j] for j in active] for i in active], [xty[i] for i in active])
+            if any(v < 0 or not math.isfinite(v) for v in solved):
+                continue
+            for i, value in zip(active, solved):
+                theta[i] = value
+        objective = sum((sum(a*b for a,b in zip(row, theta)) - target)**2 for row,target in zip(x_rows,y)) + ridge_alpha * sum(v*v for v in theta)
+        if best is None or objective < best[0]:
+            best = (objective, theta)
+    coefficients = {feat: best[1][i] / scales[feat] for i, feat in enumerate(FEATURES)}
 
     preds = [predict_joules(coefficients, s)["estimated_joules"] for s in samples]
     residuals = [abs(p - actual) for p, actual in zip(preds, y)]
@@ -95,7 +123,7 @@ def fit_model(samples: list[dict[str, float]], ridge_alpha: float = 1e-6) -> dic
     mean_y = sum(y) / len(y)
     ss_tot = sum((actual - mean_y) ** 2 for actual in y)
     ss_res = sum((p - actual) ** 2 for p, actual in zip(preds, y))
-    r2 = 1.0 - (ss_res / ss_tot) if ss_tot > 0.0 else 1.0
+    r2 = 1.0 - (ss_res / ss_tot) if ss_tot > 0.0 else None
 
     profile = {
         "schema": SCHEMA,
@@ -104,31 +132,36 @@ def fit_model(samples: list[dict[str, float]], ridge_alpha: float = 1e-6) -> dic
         "ridge_alpha": ridge_alpha,
         "sample_count": len(samples),
         "fit_metrics": {"mae_joules": mae, "rmse_joules": rmse, "r2": r2},
-        "evidence_class": "calibrated_pmu_estimate",
+        "evidence_class": "unvalidated_pmu_model",
         "energy_claim_authorized": False,
     }
-    profile["profile_sha256"] = hashlib.sha256(
-        json.dumps(coefficients, sort_keys=True).encode()
-    ).hexdigest()
+    profile["training_samples_sha256"] = _digest(samples)
+    profile["profile_sha256"] = _digest(profile)
     return profile
 
 
 def predict_joules(coefficients: dict[str, float], observation: dict[str, float]) -> dict[str, Any]:
-    """Predict joules and per-component attribution from PMU counters."""
+    """Evaluate an unvalidated model and its algebraic feature contributions."""
+    if not isinstance(coefficients, dict) or set(coefficients) != set(FEATURES):
+        raise ValueError("complete coefficient set required")
+    if not isinstance(observation, dict) or not set(FEATURES) <= set(observation):
+        raise ValueError("complete observation required")
     breakdown: dict[str, float] = {}
     total = 0.0
     for feat in FEATURES:
-        val = float(observation.get(feat, 0.0))
+        val = _number(observation[feat])
         if val < 0 or not math.isfinite(val):
             raise ValueError(f"observation {feat} must be finite and non-negative")
-        contrib = max(0.0, float(coefficients.get(feat, 0.0)) * val)
+        contrib = max(0.0, _number(coefficients[feat]) * val)
         breakdown[feat] = contrib
         total += contrib
+        if not math.isfinite(total):
+            raise ValueError("prediction overflow")
     return {
         "schema": SCHEMA,
         "estimated_joules": total,
-        "component_attribution_joules": breakdown,
-        "evidence_class": "calibrated_pmu_estimate",
+        "model_contributions_joules": breakdown,
+        "evidence_class": "unvalidated_pmu_model",
         "energy_claim_authorized": False,
     }
 
@@ -158,7 +191,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "predict":
         profile = json.loads(args.profile.read_text())
         obs = json.loads(args.observation.read_text())
-        res = predict_joules(profile["coefficients"], obs)
+        res = predict_profile(profile, obs)
         res["profile_sha256"] = profile.get("profile_sha256")
         text = json.dumps(res, indent=2, sort_keys=True)
         if args.output:

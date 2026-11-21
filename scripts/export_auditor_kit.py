@@ -88,15 +88,34 @@ def verify_kit(kit_dir: pathlib.Path) -> tuple[bool, list[str]]:
     manifest_path = kit_dir / "SHA256SUMS.json"
     if not manifest_path.exists():
         return False, ["missing SHA256SUMS.json"]
-    manifest = json.loads(manifest_path.read_text())
+    if manifest_path.is_symlink():
+        return False, ["unsafe manifest"]
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, ValueError):
+        return False, ["invalid manifest JSON"]
+    if not isinstance(manifest, dict):
+        return False, ["invalid manifest object"]
     if manifest.get("schema") != SCHEMA:
         return False, [f"unexpected schema: {manifest.get('schema')}"]
     errors: list[str] = []
-    for rel, meta in manifest.get("artifacts", {}).items():
+    artifacts = manifest.get("artifacts")
+    required = set(CORE_ARTIFACTS) | {"release_closeout_report.json"}
+    if not isinstance(artifacts, dict) or set(artifacts) != required or manifest.get("artifact_count") != len(required):
+        return False, ["incomplete or unexpected artifact inventory"]
+    for rel, meta in artifacts.items():
         target = kit_dir / rel if rel == "release_closeout_report.json" else kit_dir / "artifacts" / rel
-        if not target.exists():
+        if not isinstance(meta, dict):
+            errors.append(f"invalid metadata: {rel}")
+            continue
+        if any(parent.is_symlink() for parent in [target, *target.parents] if parent != kit_dir.parent) or not target.resolve().is_relative_to(kit_dir):
+            errors.append(f"unsafe artifact: {rel}")
+            continue
+        if not target.is_file():
             errors.append(f"missing artifact: {rel}")
             continue
+        if type(meta.get("bytes")) is not int or target.stat().st_size != meta["bytes"]:
+            errors.append(f"size mismatch: {rel}")
         actual = sha256_file(target)
         if actual != meta.get("sha256"):
             errors.append(f"checksum mismatch for {rel}: expected {meta.get('sha256')}, got {actual}")

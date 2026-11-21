@@ -1,5 +1,5 @@
 {
-  "name": "shorthand-frozen-energy-matrix-v1",
+  "name": "shorthand-frozen-energy-matrix-v2-gross",
   "reference_variant": "cpp17_gxx_O2",
   "candidate_variant": "shorthand_native",
   "rounds": 30,
